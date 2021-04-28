@@ -15,10 +15,12 @@
       </v-btn>
     </v-app-bar>
     <v-main>
-      <v-snackbar v-model="snackWithButtons" bottom left timeout="-1">
+      <!-- Add to Home Screen 
+      and PWA update -->
+      <v-snackbar v-model="snackWithButtons" bottom right timeout="-1">
         {{ snackWithBtnText }}
         <template v-slot:action="{ attrs }">
-          <v-btn text color="#00f500" v-bind="attrs" @click.stop="refreshApp">
+          <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
             {{ snackBtnText }}
           </v-btn>
           <v-btn icon class="ml-4" @click="snackWithButtons = false">
@@ -40,6 +42,7 @@ export default {
       snackBtnText: '',
       snackWithBtnText: '',
       snackWithButtons: false,
+      action: '',
     };
   },
 
@@ -56,18 +59,49 @@ export default {
         window.location.reload();
       });
     }
+    document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
+      once: true,
+    });
+
+    document.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+    });
   },
 
   methods: {
+    act() {
+      if (this.action === 'refresh') {
+        this.refreshApp();
+      } else {
+        this.add2HomeScreen();
+      }
+    },
+
     showRefreshUI(e) {
       // Display a snackbar inviting the user to refresh/reload the app due
       // to an app update being available.
       // The new service worker is installed, but not yet active.
       // Store the ServiceWorkerRegistration instance for later use.
+      this.action = 'refresh';
       this.registration = e.detail;
       this.snackBtnText = 'Refresh';
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
+    },
+    showAdd2HsUI(e) {
+      // Display a snackbar inviting the user to refresh/reload the app due
+      // to an app update being available.
+      // The new service worker is installed, but not yet active.
+      // Store the ServiceWorkerRegistration instance for later use.
+      this.action = 'a2Hs';
+      this.registration = e.detail;
+      this.snackBtnText = 'Add';
+      this.snackWithBtnText = 'Add to Home Screen?';
+      this.snackWithButtons = true;
+    },
+
+    add2HomeScreen() {
+      this.snackWithButtons = false;
     },
 
     refreshApp() {
