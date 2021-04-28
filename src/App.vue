@@ -44,6 +44,7 @@ export default {
   },
 
   created() {
+    console.log(process.env.VUE_APP_MAP_API_KEY);
     // Listen for swUpdated event and display refresh snackbar as required.
     document.addEventListener('swUpdated', this.showRefreshUI, { once: true });
 
