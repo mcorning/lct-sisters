@@ -2,14 +2,18 @@
   <v-app>
     <v-app-bar color="primary" app dark>
       <v-app-bar-nav-icon></v-app-bar-nav-icon>
-      <v-toolbar-title>Local Contact Tracing-Sisters</v-toolbar-title>
+      <v-toolbar-title
+        >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
+        {{ namespace }}</v-toolbar-title
+      >
       <v-spacer></v-spacer>
-      <v-btn icon>
+      {{ version }}
+      <!-- <v-btn icon>
         <v-icon>search</v-icon>
       </v-btn>
       <v-btn icon>
         <v-icon>favorite</v-icon>
-      </v-btn>
+      </v-btn> -->
       <v-btn icon>
         <v-icon>more_vert</v-icon>
       </v-btn>
@@ -43,29 +47,17 @@ export default {
       snackWithBtnText: '',
       snackWithButtons: false,
       action: '',
+      bp: null,
+      namespace: '',
     };
   },
-
-  created() {
-    console.log(process.env.VUE_APP_MAP_API_KEY);
-    // Listen for swUpdated event and display refresh snackbar as required.
-    document.addEventListener('swUpdated', this.showRefreshUI, { once: true });
-
-    // Refresh all open app tabs when a new service worker is installed.
-    if (navigator.serviceWorker) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (this.refreshing) return;
-        this.refreshing = true;
-        window.location.reload();
-      });
-    }
-    document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
-      once: true,
-    });
-
-    document.addEventListener('appinstalled', () => {
-      console.log('PWA was installed');
-    });
+  computed: {
+    xxs() {
+      return this.bp?.width < 360;
+    },
+    version() {
+      return this.$version;
+    },
   },
 
   methods: {
@@ -114,6 +106,50 @@ export default {
 
       this.registration.waiting.postMessage('skipWaiting');
     },
+  },
+
+  created() {
+    console.log(process.env.VUE_APP_MAP_API_KEY);
+    console.log(process.env.VUE_APP_NAMESPACE);
+
+    // Listen for swUpdated event and display refresh snackbar as required.
+    document.addEventListener('swUpdated', this.showRefreshUI, { once: true });
+
+    // Refresh all open app tabs when a new service worker is installed.
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (this.refreshing) return;
+        this.refreshing = true;
+        window.location.reload();
+      });
+    }
+    document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
+      once: true,
+    });
+
+    document.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      alert('PWA was installed');
+    });
+  },
+
+  async mounted() {
+    const self = this;
+    const bp = self.$vuetify.breakpoint;
+    console.log(
+      'Breakpoint',
+      bp.name,
+      'width',
+      bp.width,
+      'height',
+      bp.height,
+
+      'mobile?',
+      bp.mobile
+    );
+    console.log('Visitor.vue mounted');
+    self.bp = bp;
+    self.namespace = process.env.VUE_APP_NAMESPACE;
   },
 };
 </script>
