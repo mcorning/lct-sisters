@@ -1,12 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar
-      color="primary"
-      app
-      dark
-    >
+    <v-app-bar color="primary" app dark>
       <v-app-bar-nav-icon></v-app-bar-nav-icon>
-      <v-toolbar-title>Title</v-toolbar-title>
+      <v-toolbar-title>Local Contact Tracing-Sisters</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon>
         <v-icon>search</v-icon>
@@ -19,27 +15,13 @@
       </v-btn>
     </v-app-bar>
     <v-main>
-      <v-snackbar
-        v-model="snackWithButtons"
-        bottom
-        left
-        timeout="-1"
-      >
+      <v-snackbar v-model="snackWithButtons" bottom left timeout="-1">
         {{ snackWithBtnText }}
         <template v-slot:action="{ attrs }">
-          <v-btn
-            text
-            color="#00f500"
-            v-bind="attrs"
-            @click.stop="refreshApp"
-          >
+          <v-btn text color="#00f500" v-bind="attrs" @click.stop="refreshApp">
             {{ snackBtnText }}
           </v-btn>
-          <v-btn
-            icon
-            class="ml-4"
-            @click="snackWithButtons = false"
-          >
+          <v-btn icon class="ml-4" @click="snackWithButtons = false">
             <v-icon>close</v-icon>
           </v-btn>
         </template>
@@ -91,10 +73,12 @@ export default {
       this.snackWithButtons = false;
 
       // Protect against missing registration.waiting.
-      if (!this.registration || !this.registration.waiting) { return; }
+      if (!this.registration || !this.registration.waiting) {
+        return;
+      }
 
       this.registration.waiting.postMessage('skipWaiting');
     },
   },
-}
+};
 </script>
