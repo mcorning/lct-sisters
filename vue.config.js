@@ -16,5 +16,17 @@ module.exports = {
       background_color: '#673AB7',
     },
     start_url: '/',
+    icons: [
+      {
+        src: '/public/img/icons/lct-sisters-icon-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+      },
+      {
+        src: '/public/img/icons/lct-sisters-icon-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+    ],
   },
 };
