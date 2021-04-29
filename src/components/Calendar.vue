@@ -215,7 +215,8 @@
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
-import Visit from '@/models/Visit';
+// TODO put back Visit
+// import Visit from '@/models/Visit';
 
 import {
   getNow,
@@ -224,11 +225,11 @@ import {
   formatSmallTime,
   formatSmallTimeBare,
   updateTime,
-} from '../../utils/luxonHelpers';
-import { error, success, highlight, printJson } from '../../utils/colors';
+} from '../utils/luxonHelpers';
+import { error, success, highlight, printJson } from '../utils/colors';
 
 export default {
-  name: 'calendarCard',
+  name: 'Calendar',
 
   props: {
     selectedSpace: Object,
@@ -247,8 +248,9 @@ export default {
       )}?`;
     },
 
+    // TODO put back Visit
     visitCache() {
-      return Visit.all();
+      return []; //Visit.all();
     },
   },
 
@@ -414,6 +416,7 @@ export default {
         this.dragTime = mouse - this.original.start;
         console.log(highlight('dragtime', this.dragTime));
       }
+      // TODO When will this method addEvent()?
       // new event specified by this.place
       else if (this.place) {
         this.addEvent(mouse);
@@ -643,9 +646,10 @@ export default {
 
     // TODO Test this before using it (duh)
     purge() {
-      Visit.delete((visit) => {
-        return visit.start < 1617815700000;
-      });
+      // TODO put back Visit
+      // Visit.delete((visit) => {
+      //   return visit.start < 1617815700000;
+      // });
     },
 
     addEvent(time) {
@@ -670,41 +674,43 @@ export default {
       newVisit.lat = this.place.lat;
       newVisit.lng = this.place.lng;
 
-      Visit.updatePromise(newVisit)
-        .then((p) => {
-          console.log('Added visit to cache', printJson(p));
-        })
-        .catch((e) => {
-          console.log(error(e));
-        });
+      // TODO put back Visit
+      // Visit.updatePromise(newVisit)
+      //   .then((p) => {
+      //     console.log('Added visit to cache', printJson(p));
+      //   })
+      //   .catch((e) => {
+      //     console.log(error(e));
+      //   });
 
       this.place = null;
     },
 
     deleteVisit() {
       this.confirm = false;
-      const visit = this.getVisit();
-      const id = visit.id;
-      const self = this;
-      this.action = '';
+      // const visit = this.getVisit();
+      // const id = visit.id;
+      // const self = this;
+      // this.action = '';
 
-      Visit.deletePromise(id)
-        .then(() => {
-          self.confirm = false;
-          let visits = self.visits;
-          self.visits = self.arrayRemove(visits, id);
+      // TODO put back Visit
+      // Visit.deletePromise(id)
+      //   .then(() => {
+      //     self.confirm = false;
+      //     let visits = self.visits;
+      //     self.visits = self.arrayRemove(visits, id);
 
-          console.log(success(`Visit ${id} deleted.`));
-          self.status = `DELETED: ${visit.name} ${visit.interval} id: ${visit.id}`;
-          console.log(`New Visit ct: ${self.visits.length} `);
+      //     console.log(success(`Visit ${id} deleted.`));
+      //     self.status = `DELETED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+      //     console.log(`New Visit ct: ${self.visits.length} `);
 
-          self.$emit('deleteVisit', visit);
-        })
-        .catch((e) => {
-          this.status =
-            'Oops. We had trouble logging to server. Notified devs. Sorry.';
-          this.$emit('error', e);
-        });
+      //     self.$emit('deleteVisit', visit);
+      //   })
+      //   .catch((e) => {
+      //     this.status =
+      //       'Oops. We had trouble logging to server. Notified devs. Sorry.';
+      //     this.$emit('error', e);
+      //   });
     },
 
     logVisit() {
@@ -775,9 +781,10 @@ export default {
     saveVisit(visit = this.getVisit()) {
       this.confirm = false;
       console.log(printJson(visit));
-      Visit.updatePromise(visit).then(() => {
-        console.log(success(`New Visit:`, printJson(visit)));
-      });
+      // TODO put back Visit
+      // Visit.updatePromise(visit).then(() => {
+      //   console.log(success(`New Visit:`, printJson(visit)));
+      // });
 
       this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
     },
@@ -949,18 +956,20 @@ export default {
     console.log('sheetHeight:', self.sheetHeight);
     console.log('calendarHeight:', self.calendarHeight);
 
-    Visit.$fetch().then(() => {
-      self.visits = self.visitCache;
+    self.calendarElement = document.getElementById('calendar-target');
 
-      self.calendarElement = document.getElementById('calendar-target');
-      self.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
+    // TODO put back Visit
+    // Visit.$fetch().then(() => {
+    //   self.visits = self.visitCache;
+    // });
+    self.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
 
-      self.place = self.selectedSpace;
-      if (self.place) {
-        self.newEvent();
-      }
-    });
+    self.place = self.selectedSpace;
+    if (self.place) {
+      self.newEvent();
+    }
 
+    // TODO
     // these are window event listeners
     // so we need to restrict them to the calendarCard
     window.addEventListener('keydown', this.handleKeydown);

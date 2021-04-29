@@ -18,11 +18,17 @@
     <v-main>
       <v-container class="fill-height" fluid>
         <v-row align="start" justify="center" no-gutters>
-          <v-col class="text-center">
-            <GoogleMap
-              v-if="showSpaces"
-              v-model="location"
-              @addedPlace="onAddedPlace"
+          <v-col v-if="showSpaces" class="text-center">
+            <GoogleMap v-model="location" @addedPlace="onAddedPlace" />
+          </v-col>
+          <v-col v-else class="text-center">
+            <Calendar
+              :avgStay="avgStay"
+              :selectedSpace="selectedSpace"
+              @logVisit="onLogVisit"
+              @updateLoggedVisit="onLogVisit"
+              @deleteVisit="onDeleteVisit"
+              @error="onError($event)"
             />
           </v-col>
         </v-row>
@@ -78,38 +84,18 @@
 
 <script>
 import GoogleMap from '@/components/GoogleMap';
-// import GoogleMap from '@/components/Vue2GoogleMap';
+import Calendar from '@/components/Calendar';
+import { highlight, printJson } from './utils/colors';
+
+// TODO socket is stubbed out right now
+import socket from './socket';
 
 export default {
   name: 'App',
-  data() {
-    return {
-      // For GoogleMap component
-      location: {},
 
-      // these are footer values
-      value: 0,
-      show: 0,
-      SPACES: 0,
-      CALENDAR: 1,
-      WARNING: 2,
-      rating: 0,
-      dialog: false,
-      userID: '',
-
-      // these are BASE values
-      snackBtnText: '',
-      snackWithBtnText: '',
-      snackWithButtons: false,
-      action: '',
-      refreshing: false,
-      registration: null,
-      bp: null,
-      namespace: '',
-    };
-  },
   components: {
     GoogleMap,
+    Calendar,
   },
 
   computed: {
@@ -136,12 +122,140 @@ export default {
     },
   },
 
+  data() {
+    return {
+      // For GoogleMap component
+      location: {},
+
+      // For Calendar component
+      selectedSpace: {},
+
+      // these are footer values
+      value: 0,
+      show: 0,
+      SPACES: 0,
+      CALENDAR: 1,
+      WARNING: 2,
+      rating: 0,
+      dialog: false,
+      userID: '',
+
+      // these are BASE values
+      snackBtnText: '',
+      snackWithBtnText: '',
+      snackWithButtons: false,
+      action: '',
+      refreshing: false,
+      registration: null,
+      bp: null,
+      namespace: '',
+    };
+  },
+
   methods: {
     //#region GoogMap methods
-    onAddedPlace() {
-      alert('make me');
+    onAddedPlace(place) {
+      if (!place) {
+        alert("oops. I didn't get that. Please try again.");
+        return;
+      }
+      const { name, placeId, lat, lng } = place;
+
+      this.selectedSpace = {
+        name: name,
+        id: placeId,
+        lat: lat,
+        lng: lng,
+      };
+      this.show = this.CALENDAR;
     },
+
     //#endregion
+
+    //#region Calendar methods
+    onDeleteVisit(e) {
+      this.selectedSpace = e;
+      const query = {
+        username: this.username,
+        userID: socket.userID,
+        selectedSpace: e.name,
+        start: e.start,
+        end: e.end,
+      };
+      this.auditor.logEntry(
+        `DELETE Visit query: ${printJson(query)}`,
+        'DELETE Visit'
+      );
+
+      // send the visit to the server
+      socket.emit('deleteVisit', query, (results) => {
+        this.auditor.logEntry(
+          `Delete Visit Results: ${printJson(results)}`,
+          'DELETE Visit'
+        );
+
+        this.confirmationMessage = `You have deleted ${this.selectedSpace.name}`;
+        this.hasSaved = true;
+      });
+    },
+
+    // TODO Whey does Calendar send two events that land at the same place here?
+    onLogVisit(visit) {
+      if (!socket.userID) {
+        this.confirmationColor = 'orange';
+        this.confirmationMessage = `You are not connected to the server`;
+        this.hasSaved = true;
+        return;
+      }
+      const { id, name, start, end, logged, oldStart, oldEnd } = visit;
+      console.log('What is visit.id?', id);
+      this.selectedSpace = visit;
+      const query = {
+        username: this.username,
+        userID: socket.userID,
+        selectedSpace: name,
+        start: start,
+        end: end,
+        logged: logged,
+        oldStart: oldStart,
+        oldEnd: oldEnd,
+      };
+      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+      console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
+      this.auditor.logEntry(`Visit query: ${printJson(query)}`, 'Log Visit');
+
+      // send the visit to the server
+      this.updateVisitOnGraph(query).then((node) => {
+        // here's where we update the logged field to the id of the graph node
+        // TODO Visit is not installed yet
+        // Visit.updateLoggedPromise(id, node.id).then((v) => {
+        //   console.log(success(`Returned Visit:`, printJson(v)));
+        //   console.log(highlight(`Updated Visit to:`, printJson(visit)));
+        // });
+
+        console.log('updateVisitOnGraph', name, node);
+
+        this.auditor.logEntry(
+          `Log Visit Results: ${printJson(node)}`,
+          'Log Visit'
+        );
+
+        this.confirmationColor = '';
+        this.confirmationMessage = `You have logged ${this.selectedSpace.name}`;
+        this.hasSaved = true;
+      });
+    },
+
+    updateVisitOnGraph(query) {
+      console.log('query to update graph:', printJson(query));
+      return new Promise((resolve) => {
+        socket.emit('logVisit', query, (results) => {
+          resolve(results);
+        });
+      });
+    },
+
+    //#endregion Calendar methods
 
     // these are BASE methods
     act() {
@@ -150,6 +264,11 @@ export default {
       } else {
         this.add2HomeScreen();
       }
+    },
+
+    onError(e) {
+      console.log(`Sending error to server`, e);
+      socket.emit('client_error', e);
     },
 
     showRefreshUI(e) {
@@ -198,7 +317,6 @@ export default {
   },
 
   created() {
-    console.log(process.env.VUE_APP_MAP_API_KEY);
     console.log(process.env.VUE_APP_NAMESPACE);
 
     // Listen for swUpdated event and display refresh snackbar as required.
@@ -239,6 +357,10 @@ export default {
     console.log('App.vue mounted');
     self.bp = bp;
     self.namespace = process.env.VUE_APP_NAMESPACE;
+    let x = localStorage.getItem('avgStay');
+    if (x) {
+      self.avgStay = 3600000 * x;
+    }
   },
 };
 </script>

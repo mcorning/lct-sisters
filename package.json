@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.4.2913",
+  "version": "0.4.2916",
   "private": true,
   "scripts": {
     "start": "node server.js",
@@ -11,6 +11,7 @@
   "dependencies": {
     "cli-color": "^2.0.0",
     "express": "^4.17.1",
+    "luxon": "^1.26.0",
     "material-design-icons-iconfont": "^6.1.0",
     "npx": "^10.2.2",
     "register-service-worker": "^1.7.1",
