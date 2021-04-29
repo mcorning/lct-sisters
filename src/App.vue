@@ -8,50 +8,126 @@
       >
       <v-spacer></v-spacer>
       {{ version }}
-      <!-- <v-btn icon>
-        <v-icon>search</v-icon>
-      </v-btn>
-      <v-btn icon>
-        <v-icon>favorite</v-icon>
-      </v-btn> -->
+      <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
+
       <v-btn icon>
         <v-icon>more_vert</v-icon>
       </v-btn>
     </v-app-bar>
+
     <v-main>
-      <!-- Add to Home Screen 
-      and PWA update -->
-      <v-snackbar v-model="snackWithButtons" bottom right timeout="-1">
-        {{ snackWithBtnText }}
-        <template v-slot:action="{ attrs }">
-          <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
-            {{ snackBtnText }}
-          </v-btn>
-          <v-btn icon class="ml-4" @click="snackWithButtons = false">
-            <v-icon>close</v-icon>
-          </v-btn>
-        </template>
-      </v-snackbar>
+      <v-container class="fill-height" fluid>
+        <v-row align="start" justify="center" no-gutters>
+          <v-col class="text-center">
+            <GoogleMap
+              v-if="showSpaces"
+              v-model="location"
+              @addedPlace="onAddedPlace"
+            />
+          </v-col>
+        </v-row>
+        <v-row
+          v-if="snackWithButtons"
+          align="center"
+          justify="center"
+          no-gutters
+        >
+          <v-col class="text-center">
+            <v-snackbar bottom left timeout="-1" height="100px">
+              {{ snackWithBtnText }}
+              <template v-slot:action="{ attrs }">
+                <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
+                  {{ snackBtnText }}
+                </v-btn>
+                <v-btn icon class="ml-4" @click="snackWithButtons = false">
+                  <v-icon>close</v-icon>
+                </v-btn>
+              </template>
+            </v-snackbar>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-main>
+
+    <v-footer app color="primary" class="white--text">
+      <v-bottom-navigation
+        :value="value"
+        color="secondary"
+        background-color="primary"
+        dark
+        grow
+      >
+        <v-btn grow @click="show = SPACES">
+          <span>Spaces</span>
+          <v-icon>mdi-map-marker</v-icon>
+        </v-btn>
+
+        <v-btn fab color="red" dark @click="show = WARNING">
+          <span>Warn</span>
+          <v-icon dark> mdi-alert </v-icon></v-btn
+        >
+
+        <v-btn @click="show = CALENDAR">
+          <span>Calendar</span>
+          <v-icon>mdi-calendar</v-icon>
+        </v-btn>
+      </v-bottom-navigation>
+    </v-footer>
   </v-app>
 </template>
 
 <script>
+import GoogleMap from '@/components/GoogleMap';
+// import GoogleMap from '@/components/Vue2GoogleMap';
+
 export default {
   name: 'App',
   data() {
     return {
-      refreshing: false,
-      registration: null,
+      // For GoogleMap component
+      location: {},
+
+      // these are footer values
+      value: 0,
+      show: 0,
+      SPACES: 0,
+      CALENDAR: 1,
+      WARNING: 2,
+      rating: 0,
+      dialog: false,
+      userID: '',
+
+      // these are BASE values
       snackBtnText: '',
       snackWithBtnText: '',
       snackWithButtons: false,
       action: '',
+      refreshing: false,
+      registration: null,
       bp: null,
       namespace: '',
     };
   },
+  components: {
+    GoogleMap,
+  },
+
   computed: {
+    // Navigation properties
+    showSpaces() {
+      return this.show == this.SPACES;
+    },
+    showWarningButton() {
+      return this.show == this.WARNING;
+    },
+    showCalendar() {
+      return this.show == this.CALENDAR;
+    },
+
+    // BASE computed properties
+    connectIcon() {
+      return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
+    },
     xxs() {
       return this.bp?.width < 360;
     },
@@ -61,6 +137,13 @@ export default {
   },
 
   methods: {
+    //#region GoogMap methods
+    onAddedPlace() {
+      alert('make me');
+    },
+    //#endregion
+
+    // these are BASE methods
     act() {
       if (this.action === 'refresh') {
         this.refreshApp();
@@ -108,6 +191,12 @@ export default {
     },
   },
 
+  watch: {
+    location(location) {
+      console.log(location);
+    },
+  },
+
   created() {
     console.log(process.env.VUE_APP_MAP_API_KEY);
     console.log(process.env.VUE_APP_NAMESPACE);
@@ -147,7 +236,7 @@ export default {
       'mobile?',
       bp.mobile
     );
-    console.log('Visitor.vue mounted');
+    console.log('App.vue mounted');
     self.bp = bp;
     self.namespace = process.env.VUE_APP_NAMESPACE;
   },

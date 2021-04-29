@@ -1,5 +1,12 @@
+const path = require('path');
+
 module.exports = {
   lintOnSave: process.env.NODE_ENV !== 'production',
+  // so we can see the sourtce code after opening the webpacked file in the browser
+  configureWebpack: {
+    devtool: 'source-map',
+  },
+  outputDir: path.resolve(__dirname, './dist'),
 
   pwa: {
     workboxPluginMode: 'InjectManifest',

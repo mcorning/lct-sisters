@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.4.2815",
+  "version": "0.4.2913",
   "private": true,
   "scripts": {
     "start": "node server.js",
@@ -9,11 +9,14 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "cli-color": "^2.0.0",
     "express": "^4.17.1",
     "material-design-icons-iconfont": "^6.1.0",
+    "npx": "^10.2.2",
     "register-service-worker": "^1.7.1",
     "roboto-fontface": "*",
     "vue": "^2.6.12",
+    "vue2-google-maps": "^0.10.7",
     "vuetify": "~2.3.12"
   },
   "devDependencies": {
