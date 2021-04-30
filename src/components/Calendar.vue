@@ -216,7 +216,7 @@ import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
 // TODO put back Visit
-// import Visit from '@/models/Visit';
+import Visit from '@/models/Visit';
 
 import {
   getNow,
@@ -250,7 +250,7 @@ export default {
 
     // TODO put back Visit
     visitCache() {
-      return []; //Visit.all();
+      return Visit.all();
     },
   },
 
@@ -647,9 +647,9 @@ export default {
     // TODO Test this before using it (duh)
     purge() {
       // TODO put back Visit
-      // Visit.delete((visit) => {
-      //   return visit.start < 1617815700000;
-      // });
+      Visit.delete((visit) => {
+        return visit.start < 1617815700000;
+      });
     },
 
     addEvent(time) {
@@ -675,42 +675,42 @@ export default {
       newVisit.lng = this.place.lng;
 
       // TODO put back Visit
-      // Visit.updatePromise(newVisit)
-      //   .then((p) => {
-      //     console.log('Added visit to cache', printJson(p));
-      //   })
-      //   .catch((e) => {
-      //     console.log(error(e));
-      //   });
+      Visit.updatePromise(newVisit)
+        .then((p) => {
+          console.log('Added visit to cache', printJson(p));
+        })
+        .catch((e) => {
+          console.log(error(e));
+        });
 
       this.place = null;
     },
 
     deleteVisit() {
       this.confirm = false;
-      // const visit = this.getVisit();
-      // const id = visit.id;
-      // const self = this;
-      // this.action = '';
+      const visit = this.getVisit();
+      const id = visit.id;
+      const self = this;
+      this.action = '';
 
       // TODO put back Visit
-      // Visit.deletePromise(id)
-      //   .then(() => {
-      //     self.confirm = false;
-      //     let visits = self.visits;
-      //     self.visits = self.arrayRemove(visits, id);
+      Visit.deletePromise(id)
+        .then(() => {
+          self.confirm = false;
+          let visits = self.visits;
+          self.visits = self.arrayRemove(visits, id);
 
-      //     console.log(success(`Visit ${id} deleted.`));
-      //     self.status = `DELETED: ${visit.name} ${visit.interval} id: ${visit.id}`;
-      //     console.log(`New Visit ct: ${self.visits.length} `);
+          console.log(success(`Visit ${id} deleted.`));
+          self.status = `DELETED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+          console.log(`New Visit ct: ${self.visits.length} `);
 
-      //     self.$emit('deleteVisit', visit);
-      //   })
-      //   .catch((e) => {
-      //     this.status =
-      //       'Oops. We had trouble logging to server. Notified devs. Sorry.';
-      //     this.$emit('error', e);
-      //   });
+          self.$emit('deleteVisit', visit);
+        })
+        .catch((e) => {
+          this.status =
+            'Oops. We had trouble logging to server. Notified devs. Sorry.';
+          this.$emit('error', e);
+        });
     },
 
     logVisit() {
@@ -782,9 +782,9 @@ export default {
       this.confirm = false;
       console.log(printJson(visit));
       // TODO put back Visit
-      // Visit.updatePromise(visit).then(() => {
-      //   console.log(success(`New Visit:`, printJson(visit)));
-      // });
+      Visit.updatePromise(visit).then(() => {
+        console.log(success(`New Visit:`, printJson(visit)));
+      });
 
       this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
     },
@@ -959,9 +959,9 @@ export default {
     self.calendarElement = document.getElementById('calendar-target');
 
     // TODO put back Visit
-    // Visit.$fetch().then(() => {
-    //   self.visits = self.visitCache;
-    // });
+    Visit.$fetch().then(() => {
+      self.visits = self.visitCache;
+    });
     self.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
 
     self.place = self.selectedSpace;

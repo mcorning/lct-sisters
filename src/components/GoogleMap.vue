@@ -147,8 +147,7 @@
 <script>
 // See https://github.com/xkjyeah/vue-google-maps
 
-// TODO   PUT ME BACK SOON
-// import Visit from '@/models/Visit';
+import Visit from '@/models/Visit';
 
 import { highlight, printJson } from '../utils/colors';
 
@@ -609,12 +608,14 @@ export default {
     },
 
     getVisits() {
-      // TODO Add back
-      // Visit.$fetch().then((all) => {
-      //   console.log(all.visits);
-      //   this.visits = all.visits;
-      // });
-      return;
+      Visit.$fetch().then((all) => {
+        console.log(
+          'Populating Recent Visits with',
+          all.visits.length,
+          'visits'
+        );
+        this.visits = all.visits;
+      });
     },
 
     getMarkers(map) {

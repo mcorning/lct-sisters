@@ -1,3 +1,4 @@
+// BASE imports
 import Vue from 'vue';
 import 'roboto-fontface/css/roboto/roboto-fontface.css';
 import 'material-design-icons-iconfont/dist/material-design-icons.css';
@@ -5,7 +6,12 @@ import vuetify from './plugins/vuetify';
 import './registerServiceWorker';
 import App from './App.vue';
 
+// import for Map compo9nent
 import * as VueGoogleMaps from 'vue2-google-maps';
+
+// import for Vuex-ORM
+// see Vuex-ORM section in lct-docs app
+import store from './store';
 
 Vue.use(VueGoogleMaps, {
   load: {
@@ -19,17 +25,15 @@ console.log(
   process.env.VUE_APP_LAT,
   process.env.VUE_APP_LNG
 );
-import { version } from '../package.json';
 
+import { version } from '../package.json';
 Vue.prototype.$version = version;
-Vue.prototype.$location = {
-  lat: 44.29160723928563,
-  lng: -121.5441825899421,
-};
 
 Vue.config.productionTip = false;
 
 new Vue({
   vuetify,
+  // use vuex-ORM
+  store,
   render: (h) => h(App),
 }).$mount('#app');
