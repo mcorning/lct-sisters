@@ -86,6 +86,7 @@
 import GoogleMap from '@/components/GoogleMap';
 import Calendar from '@/components/Calendar';
 import { highlight, printJson } from './utils/colors';
+import Visit from '@/models/Visit';
 
 // TODO socket is stubbed out right now
 import socket from './socket';
@@ -228,10 +229,10 @@ export default {
       this.updateVisitOnGraph(query).then((node) => {
         // here's where we update the logged field to the id of the graph node
         // TODO Visit is not installed yet
-        // Visit.updateLoggedPromise(id, node.id).then((v) => {
-        //   console.log(success(`Returned Visit:`, printJson(v)));
-        //   console.log(highlight(`Updated Visit to:`, printJson(visit)));
-        // });
+        Visit.updateLoggedPromise(id, node.id).then((v) => {
+          console.log(success(`Returned Visit:`, printJson(v)));
+          console.log(highlight(`Updated Visit to:`, printJson(visit)));
+        });
 
         console.log('updateVisitOnGraph', name, node);
 
@@ -341,6 +342,8 @@ export default {
   },
 
   async mounted() {
+    Visit.$fetch().then((visits) => console.log('Visits:', printJson(visits)));
+
     const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
