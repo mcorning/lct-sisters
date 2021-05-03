@@ -935,6 +935,8 @@ export default {
   created() {},
 
   mounted() {
+    this.$refs.calendar.checkChange();
+
     const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
