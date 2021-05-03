@@ -40,7 +40,7 @@ Set breakpoints, as necessary, in one or both debuggers.
 
 ## Deploy to Heroku
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/mcorning/vue-socketio-handshake-heroku-starter.git)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/mcorning/lct-sisters.git)
 
 or manually create a new Heroku application and add the `heroku/nodejs` and `https://github.com/heroku/heroku-buildpack-static` buildpacks.
 
