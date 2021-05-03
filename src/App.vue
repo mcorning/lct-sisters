@@ -95,11 +95,9 @@
 import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
 import Calendar from '@/components/Calendar';
-import { highlight, printJson } from './utils/colors';
+import { highlight, success, warn, printJson } from './utils/colors';
 import Visit from '@/models/Visit';
-
-// TODO socket is stubbed out right now
-import socket from './socket';
+import Auditor from './utils/Auditor';
 
 export default {
   name: 'App',
@@ -136,17 +134,22 @@ export default {
 
   data() {
     return {
+      starttime: 1,
+      endtime: 10,
+      editableEvent: { state: 'open' },
+
       // for Welcome component
       isConnected: false,
       usernameAlreadySelected: false,
       sessionID: '',
       username: '',
+      avgStay: 3600000,
 
       // For GoogleMap component
-      location: {},
+      location: null,
 
       // For Calendar component
-      selectedSpace: {},
+      selectedSpace: null,
 
       // these are footer values
       value: 0,
@@ -159,6 +162,7 @@ export default {
       userID: '',
 
       // these are BASE values
+      auditor: new Auditor(),
       snackBtnText: '',
       snackWithBtnText: '',
       snackWithButtons: false,
@@ -197,8 +201,29 @@ export default {
   },
 
   methods: {
-    //#region Welcome methods
-    connectMe(username) {
+    onEditedEvent() {},
+
+    emit(event, data) {
+      this.$socket.client.emit(event, data);
+    },
+
+    //#region Warning method
+    onSendExposureWarning(reason) {
+      console.log(warn(`App.js: Emitting exposureWarning because "${reason}"`));
+
+      this.emit('exposureWarning', this.userID, reason, (results) =>
+        this.auditor.logEntry(
+          `exposureWarning (for ${reason}) results: ${printJson(results)}`,
+          'Warnings'
+        )
+      );
+    },
+    //#endregion
+
+    //#region Welcome method
+    // username passed in from Welcome
+    connectMe(username = this.username) {
+      // create() takes username from localStorage
       this.username = username;
       console.assert(this.username, 'No username available');
       console.assert(this.sessionID, 'No sessionID available');
@@ -211,6 +236,7 @@ export default {
       };
       this.$socket.client.open();
     },
+    //#endregion
 
     //#region GoogMap methods
     onAddedPlace(place) {
@@ -236,7 +262,7 @@ export default {
       this.selectedSpace = e;
       const query = {
         username: this.username,
-        userID: socket.userID,
+        userID: this.$socket.client.userID,
         selectedSpace: e.name,
         start: e.start,
         end: e.end,
@@ -247,7 +273,7 @@ export default {
       );
 
       // send the visit to the server
-      socket.emit('deleteVisit', query, (results) => {
+      this.emit('deleteVisit', query, (results) => {
         this.auditor.logEntry(
           `Delete Visit Results: ${printJson(results)}`,
           'DELETE Visit'
@@ -260,7 +286,7 @@ export default {
 
     // TODO Whey does Calendar send two events that land at the same place here?
     onLogVisit(visit) {
-      if (!socket.userID) {
+      if (!this.$socket.client.userID) {
         this.confirmationColor = 'orange';
         this.confirmationMessage = `You are not connected to the server`;
         this.hasSaved = true;
@@ -271,7 +297,7 @@ export default {
       this.selectedSpace = visit;
       const query = {
         username: this.username,
-        userID: socket.userID,
+        userID: this.$socket.client.userID,
         selectedSpace: name,
         start: start,
         end: end,
@@ -308,7 +334,7 @@ export default {
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve) => {
-        socket.emit('logVisit', query, (results) => {
+        this.emit('logVisit', query, (results) => {
           resolve(results);
         });
       });
@@ -327,7 +353,12 @@ export default {
 
     onError(e) {
       console.log(`Sending error to server`, e);
-      socket.emit('client_error', e);
+      this.emit('client_error', e);
+    },
+
+    onUserFeedback(e) {
+      console.log('userFeedback:', e);
+      this.emit('userFeedback', e);
     },
 
     showRefreshUI(e) {
@@ -428,13 +459,17 @@ export default {
       'mobile?',
       bp.mobile
     );
-    console.log('App.vue mounted');
     self.bp = bp;
     self.namespace = process.env.VUE_APP_NAMESPACE;
     let x = localStorage.getItem('avgStay');
     if (x) {
-      self.avgStay = 3600000 * x;
+      self.avgStay *= x;
     }
+    console.log('Cached avgStay', x || 'empty');
+    console.log('Total avgStay', self.avgStay);
+
+    this.selectedSpace = null;
+    console.log('App.vue mounted');
   },
 };
 </script>

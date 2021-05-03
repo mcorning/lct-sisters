@@ -5,7 +5,7 @@
     <v-navigation-drawer v-model="drawer" absolute temporary>
       <v-list-item>
         <v-list-item-avatar>
-          <v-img src="https://randomuser.me/api/portraits/men/78.jpg"></v-img>
+          <v-img :src="getAvatar()"></v-img>
         </v-list-item-avatar>
 
         <v-list-item-content>
@@ -155,7 +155,7 @@ export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
   components: {
-    ConfirmDlg: () => import('./dialogCard'),
+    ConfirmDlg: () => import('./cards/dialogCard'),
   },
 
   computed: {
@@ -203,6 +203,7 @@ export default {
 
   data() {
     return {
+      gender: ['men', 'women'],
       needInput: false,
       marker: null,
       mapSize: '',
@@ -679,6 +680,19 @@ export default {
 
       localStorage.setItem('markersData', JSON.stringify(this.markersData));
     },
+    getRandomIntInclusive(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
+    },
+
+    getAvatar() {
+      const gender = this.gender[this.getRandomIntInclusive(0, 1)];
+      const id = this.getRandomIntInclusive(1, 99);
+      const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
+      console.log(this.avatar);
+      return avatar;
+    },
   },
 
   watch: {},
@@ -693,7 +707,7 @@ export default {
 
   mounted() {
     const self = this;
-
+    console.log(self.getAvatar());
     const bp = self.$vuetify.breakpoint;
     console.log(bp.name, bp.height);
     const x = bp.height;

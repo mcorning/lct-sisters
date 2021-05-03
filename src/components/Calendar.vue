@@ -101,102 +101,119 @@
               >
             </template>
           </v-calendar>
-        </v-sheet>
-      </v-col>
-    </v-row>
 
-    <v-row id="editorRow" no-gutters align="center" justify="space-around">
-      <v-col cols="3" class="pl-5">
-        <v-dialog
-          ref="dialogStart"
-          v-model="modalStart"
-          :return-value.sync="starttime"
-          persistent
-          width="290px"
-        >
-          <template v-slot:activator="{ on, attrs }">
-            <v-text-field
-              v-model="starttime"
-              :disabled="!editableEvent"
-              label="Start"
-              prepend-icon="mdi-clock-time-four-outline"
-              readonly
-              hide-details
-              v-bind="attrs"
-              v-on="on"
-            ></v-text-field>
-          </template>
-          <v-time-picker
-            v-if="modalStart"
-            v-model="starttime"
-            full-width
-            :allowed-minutes="allowedStep"
-            :max="endtime"
+          <v-menu
+            v-model="selectedOpen"
+            :close-on-content-click="false"
+            :activator="selectedElement"
+            offset-x
           >
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="modalStart = false">
-              Cancel
-            </v-btn>
-            <v-btn
-              text
-              color="primary"
-              @click="$refs.dialogStart.save(starttime)"
+            <v-card
+              v-if="editableEvent"
+              color="grey lighten-4"
+              max-width="300px"
+              flat
             >
-              OK
-            </v-btn>
-          </v-time-picker>
-        </v-dialog>
-      </v-col>
-      <v-col cols="3">
-        <v-dialog
-          ref="dialogEnd"
-          v-model="modalEnd"
-          :return-value.sync="endtime"
-          persistent
-          width="290px"
-        >
-          <template v-slot:activator="{ on, attrs }">
-            <v-text-field
-              v-model="endtime"
-              :disabled="!editableEvent"
-              label="End"
-              prepend-icon="mdi-clock-time-four-outline"
-              readonly
-              hide-details
-              v-bind="attrs"
-              v-on="on"
-            ></v-text-field>
-          </template>
-          <v-time-picker
-            v-if="modalEnd"
-            v-model="endtime"
-            full-width
-            :allowed-minutes="allowedStep"
-            :min="starttime"
-          >
-            <v-spacer></v-spacer>
-            <v-btn text color="primary" @click="modalEnd = false">
-              Cancel
-            </v-btn>
-            <v-btn text color="primary" @click="$refs.dialogEnd.save(endtime)">
-              OK
-            </v-btn>
-          </v-time-picker>
-        </v-dialog>
-      </v-col>
-      <v-col class="text-right mr-5">
-        <v-btn :disabled="!editableEvent" @click="goRight()"
-          ><v-icon>mdi-delete</v-icon></v-btn
-        >
+              <v-toolbar :color="editableEvent.color" dark>
+                <v-toolbar-title v-html="editableEvent.name"></v-toolbar-title>
+              </v-toolbar>
 
-        <v-btn :disabled="!editableEvent" @click="goLeft()"
-          ><v-icon>mdi-graphql</v-icon></v-btn
-        >
+              <v-dialog
+                ref="dialogStart"
+                v-model="modalStart"
+                :return-value.sync="starttime"
+                persistent
+                width="290px"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-text-field
+                    v-model="starttime"
+                    :disabled="!editableEvent"
+                    label="Start"
+                    prepend-icon="mdi-clock-time-four-outline"
+                    readonly
+                    hide-details
+                    v-bind="attrs"
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-time-picker
+                  v-if="modalStart"
+                  v-model="starttime"
+                  full-width
+                  :allowed-minutes="allowedStep"
+                  :max="endtime"
+                >
+                  <v-spacer></v-spacer>
+                  <v-btn text color="primary" @click="modalStart = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="$refs.dialogStart.save(starttime)"
+                  >
+                    OK
+                  </v-btn>
+                </v-time-picker>
+              </v-dialog>
 
-        <!-- add this back later -->
-        <!-- <v-btn :disabled="!changed" @click="undo"
+              <v-dialog
+                ref="dialogEnd"
+                v-model="modalEnd"
+                :return-value.sync="endtime"
+                persistent
+                width="290px"
+              >
+                <template v-slot:activator="{ on, attrs }">
+                  <v-text-field
+                    v-model="endtime"
+                    :disabled="!editableEvent"
+                    label="End"
+                    prepend-icon="mdi-clock-time-four-outline"
+                    readonly
+                    hide-details
+                    v-bind="attrs"
+                    v-on="on"
+                  ></v-text-field>
+                </template>
+                <v-time-picker
+                  v-if="modalEnd"
+                  v-model="endtime"
+                  full-width
+                  :allowed-minutes="allowedStep"
+                  :min="starttime"
+                >
+                  <v-spacer></v-spacer>
+                  <v-btn text color="primary" @click="modalEnd = false">
+                    Cancel
+                  </v-btn>
+                  <v-btn
+                    text
+                    color="primary"
+                    @click="$refs.dialogEnd.save(endtime)"
+                  >
+                    OK
+                  </v-btn>
+                </v-time-picker>
+              </v-dialog>
+              <v-card-actions>
+                <v-btn :disabled="!editableEvent" @click="goRight()"
+                  ><v-icon>mdi-delete</v-icon></v-btn
+                >
+
+                <v-btn :disabled="!editableEvent" @click="goLeft()"
+                  ><v-icon>mdi-graphql</v-icon></v-btn
+                >
+
+                <!-- add this back later -->
+                <!-- <v-btn :disabled="!changed" @click="undo"
           ><v-icon>mdi-undo</v-icon></v-btn
-        > -->
+        > --></v-card-actions
+              >
+            </v-card>
+          </v-menu>
+        </v-sheet>
       </v-col>
     </v-row>
 
@@ -208,6 +225,7 @@
       </v-col>
     </v-row>
     <ConfirmDlg id="confirmDlg" ref="confirm" />
+
   </v-sheet>
 </template>
 
@@ -237,7 +255,7 @@ export default {
   },
 
   components: {
-    ConfirmDlg: () => import('./dialogCard'),
+    ConfirmDlg: () => import('./cards/dialogCard'),
   },
 
   computed: {
@@ -255,6 +273,9 @@ export default {
   },
 
   data: () => ({
+    selectedOpen: false,
+    selectedElement: null,
+
     sheetHeight: 0,
     calendarHeight: 0,
     bp: null,
@@ -290,8 +311,8 @@ export default {
       '4day': '4 Days',
     },
 
+    // used by revert()
     cachedCalendarEvent: {},
-    selectedElement: null,
 
     //#region  drag and drop
     dragEvent: null,
@@ -305,6 +326,10 @@ export default {
   }),
 
   methods: {
+    onEditedEvent() {
+      alert('edited event');
+    },
+
     allowedStep: (m) => m % 15 === 0,
     formatStartEndTime: (t) => formatSmallTime(t),
     getVisit(id = this.visitId) {
@@ -369,7 +394,8 @@ export default {
       // // shallow clone so reset() does not effect visit indirectly
 
       this.visitId = event.id;
-      console.log(nativeEvent.type);
+      this.selectedElement = nativeEvent.target;
+      this.selectedOpen = true;
     },
 
     //#region  Drag and Drop

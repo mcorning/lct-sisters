@@ -125,7 +125,6 @@ io.on('connection', (socket) => {
   const onlineUsers = users.filter((v) => v[1].connected);
   // console.group(`There are ${onlineUsers.length} online users:`);
   console.log(printJson(onlineUsers));
-  // console.groupEnd();
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
   socket.broadcast.emit('userConnected', {
@@ -134,6 +133,7 @@ io.on('connection', (socket) => {
     connected: true,
   });
   console.log('Leaving io.on(connect)');
+  console.groupEnd();
   //#endregion Handling Users
 
   socket.on('disconnectAsync', async () => {
