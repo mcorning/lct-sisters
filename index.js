@@ -10,14 +10,32 @@ const dirPath = path.join(__dirname, './dist');
 
 const { Cache } = require('./Cache.js');
 const sessionCache = new Cache(path.resolve(__dirname, 'sessions.json'));
+const alertsCache = new Cache(path.resolve(__dirname, 'alerts.json'));
+const errorCache = new Cache(path.resolve(__dirname, 'errors.json'));
+const feedbackCache = new Cache(path.resolve(__dirname, 'feedback.json'));
 
 const {
   printJson,
+  error,
   warn,
   highlight,
   info,
   success,
 } = require('./src/utils/colors.js');
+
+const {
+  graphName, // mapped to client nsp (aka namespace or community name)
+  host,
+  deleteVisit,
+  findExposedVisitors,
+  logVisit,
+  onExposureWarning,
+} = require('./redis');
+
+console.log(highlight(new Date().toLocaleString()));
+console.log(highlight('social graph:', graphName));
+console.log(highlight('redis host:', host));
+console.log(highlight('pwd:', dirPath));
 
 const server = express()
   .use(serveStatic(dirPath))
@@ -114,6 +132,15 @@ io.on('connection', (socket) => {
   // we send alerts using the userID stored in redisGraph for visitors
   socket.join(userID);
 
+  // check for pending alerts
+  if (alertsCache.has(userID)) {
+    const msg = 'Your warning was cached, and now you have it.';
+    // sending to individual socketid (private message)
+    io.to(socketID).emit('exposureAlert', msg);
+    alertsCache.delete(userID);
+    alertsCache.print();
+  }
+
   //#endregion Handling socket connection
 
   //#region Handling Users
@@ -136,6 +163,67 @@ io.on('connection', (socket) => {
   console.groupEnd();
   //#endregion Handling Users
 
+  //#region Visit API
+  // socket.on('exposureWarning')
+  // major function:
+  //  1) broadcasts message to all users (online only?) when a case of covid is found in the community
+  //  2) redisGraph queries for anyone connected to the positive case (ignoring the immunity some might have)
+  //  3) returns the number of possible exposures to positive case
+  socket.on('exposureWarning', async (userID, reason, ack) => {
+    let everybody = await io.allSockets();
+    console.log('All Online sockets:', printJson([...everybody]));
+
+    socket.broadcast.emit('alertPending', socket.userID);
+
+    onExposureWarning(userID)
+      .then((exposed) => {
+        exposed.forEach((userID) => {
+          console.log(warn('Processing '), userID);
+          findExposedVisitors(userID).then((userIDs) =>
+            alertOthers(socket, userIDs, reason, ack)
+          );
+        });
+      })
+      .catch((error) => console.log(error(error)));
+  });
+
+  socket.on('logVisit', (data, ack) => {
+    // call the graph
+    console.log(printJson(data));
+    logVisit(data).then((res) => {
+      console.log(res);
+      ack(res);
+    });
+  });
+
+  socket.on('deleteVisit', (data, ack) => {
+    // call the graph
+    console.log(printJson(data));
+    deleteVisit(data).then((res) => {
+      console.log(res);
+      ack(res);
+    });
+  });
+  //#endregion
+
+  //#region Utility handlers
+  socket.on('userFeedback', (data) => {
+    feedbackCache.set(Date.now(), data);
+    feedbackCache.save();
+    feedbackCache.print(null, 'User Feedback:');
+  });
+
+  socket.on('client_error', (data) => {
+    errorCache.set(Date.now(), data);
+    errorCache.save();
+    console.log(error('Incoming client_error!'));
+    errorCache.print(null, 'Errors:');
+    console.log(error('See the errors.json later for details.'));
+  });
+
+  //#endregion
+
+  //#region Disconnect handlers
   socket.on('disconnectAsync', async () => {
     const matchingSockets = await io.in(socket.userID).allSockets();
     const isDisconnected = matchingSockets.size === 0;
@@ -182,4 +270,49 @@ io.on('connection', (socket) => {
         }
       });
   });
+  //#endregion
 });
+
+// alerts is an array of userIDs
+const alertOthers = (socket, alerts, reason, ack) => {
+  const msPerDay = 1000 * 60 * 60 * 24;
+
+  const sendExposureAlert = (to, msg) => {
+    console.log('Alerting:', to); // to is a userID (of the exposed visitor)
+    socket.in(to).emit(
+      'exposureAlert',
+      msg,
+      ack((socketID) => {
+        console.log(success(socketID, 'confirms'));
+      })
+    );
+  };
+
+  const msg = `A fellow visitor warns, '${reason}.' For this reason, please get tested. Quarantine and warn others, if necessary.`;
+  alerts.forEach((to) => {
+    if (io.sockets.adapter.rooms.has(to)) {
+      sendExposureAlert(to, msg);
+      alertsCache.delete(to);
+    } else {
+      alertsCache.set(to, { cached: new Date() });
+    }
+  });
+
+  alertsCache
+    .purge((firstDate) => {
+      (Date.now() - new Date(firstDate).getTime()) / msPerDay > 14;
+    })
+    .then((purged) => console.log('Purged alertsCache of', purged))
+    .catch((err) => console.log('Purge alertsCache error:', err));
+
+  // const ackWarning = (results, ack) => {
+  //   const ret = `Alerting ${results._resultsCount} other visitors.`;
+  //   if (results._resultsCount == 0) {
+  //     if (ack) {
+  //       ack(ret);
+  //     }
+  //     return;
+  //   }
+  //   return results;
+  // };
+};

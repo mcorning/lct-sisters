@@ -201,17 +201,15 @@ export default {
   },
 
   methods: {
-    onEditedEvent() {},
-
-    emit(event, data) {
-      this.$socket.client.emit(event, data);
+    emitFromClient(event, data, ack) {
+      this.$socket.client.emit(event, data, ack);
     },
 
     //#region Warning method
     onSendExposureWarning(reason) {
       console.log(warn(`App.js: Emitting exposureWarning because "${reason}"`));
 
-      this.emit('exposureWarning', this.userID, reason, (results) =>
+      this.emitFromClient('exposureWarning', this.userID, reason, (results) =>
         this.auditor.logEntry(
           `exposureWarning (for ${reason}) results: ${printJson(results)}`,
           'Warnings'
@@ -273,7 +271,7 @@ export default {
       );
 
       // send the visit to the server
-      this.emit('deleteVisit', query, (results) => {
+      this.emitFromClient('deleteVisit', query, (results) => {
         this.auditor.logEntry(
           `Delete Visit Results: ${printJson(results)}`,
           'DELETE Visit'
@@ -334,7 +332,7 @@ export default {
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve) => {
-        this.emit('logVisit', query, (results) => {
+        this.emitFromClient('logVisit', query, (results) => {
           resolve(results);
         });
       });
@@ -353,12 +351,12 @@ export default {
 
     onError(e) {
       console.log(`Sending error to server`, e);
-      this.emit('client_error', e);
+      this.emitFromClient('client_error', e);
     },
 
     onUserFeedback(e) {
       console.log('userFeedback:', e);
-      this.emit('userFeedback', e);
+      this.emitFromClient('userFeedback', e);
     },
 
     showRefreshUI(e) {
