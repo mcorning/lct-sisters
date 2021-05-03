@@ -26,6 +26,17 @@ console.log(
   process.env.VUE_APP_LNG
 );
 
+// Socket.io
+import io from 'socket.io-client';
+import VueSocketIOExt from 'vue-socket.io-extended';
+
+// To set/change the port, modify the .env files
+const socket = io(process.env.VUE_APP_HOST, {
+  autoConnect: false,
+});
+
+Vue.use(VueSocketIOExt, socket);
+
 import { version } from '../package.json';
 Vue.prototype.$version = version;
 

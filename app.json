@@ -1,0 +1,19 @@
+{
+	"name": "vue-socketio-handshake-heroku-starter",
+	"description": "Vue-socket.io boilerplate to set up a new vue application using a node backend and websockets.",
+	"repository": "https://github.com/mcorning/vue-socketio-handshake-heroku-starter.git",
+	"keywords": [
+		"vue",
+		"node",
+		"socket.io",
+		"socketio"
+	],
+	"buildpacks": [
+		{
+			"url": "heroku/nodejs"
+		},
+		{
+			"url": "https://github.com/heroku/heroku-buildpack-static"
+		}
+	]
+}

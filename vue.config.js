@@ -2,6 +2,8 @@ const path = require('path');
 
 module.exports = {
   lintOnSave: process.env.NODE_ENV !== 'production',
+  transpileDependencies: ['vuetify'],
+
   // so we can see the sourtce code after opening the webpacked file in the browser
   configureWebpack: {
     devtool: 'source-map',

@@ -17,7 +17,16 @@
 
     <v-main>
       <v-container class="fill-height" fluid>
-        <v-row align="start" justify="center" no-gutters>
+        <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
+          <Welcome @input="connectMe($event)" />
+        </v-row>
+
+        <v-row
+          v-if="usernameAlreadySelected"
+          align="start"
+          justify="center"
+          no-gutters
+        >
           <v-col v-if="showSpaces" class="text-center">
             <GoogleMap v-model="location" @addedPlace="onAddedPlace" />
           </v-col>
@@ -83,6 +92,7 @@
 </template>
 
 <script>
+import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
 import Calendar from '@/components/Calendar';
 import { highlight, printJson } from './utils/colors';
@@ -95,6 +105,7 @@ export default {
   name: 'App',
 
   components: {
+    Welcome,
     GoogleMap,
     Calendar,
   },
@@ -125,6 +136,12 @@ export default {
 
   data() {
     return {
+      // for Welcome component
+      isConnected: false,
+      usernameAlreadySelected: false,
+      sessionID: '',
+      username: '',
+
       // For GoogleMap component
       location: {},
 
@@ -153,7 +170,48 @@ export default {
     };
   },
 
+  sockets: {
+    /*
+     * 👂 Listen to socket events emitted from the socket server
+     */
+    connect() {
+      console.log('Connected to the socket server.');
+      this.isConnected = true;
+    },
+
+    session({ sessionID, userID, username, graphName }) {
+      // attach the session ID to the next reconnection attempts
+      this.$socket.client.auth = { sessionID };
+      // store it in the localStorage
+      localStorage.setItem('sessionID', sessionID);
+      // save the ID of the user
+      // TODO isn't userID already assigned in middleware?
+      this.$socket.client.userID = userID;
+      // this.sid = sessionID;
+      this.username = username;
+      console.log('on Session', this.username);
+
+      this.userID = userID;
+      this.graphName = graphName;
+    },
+  },
+
   methods: {
+    //#region Welcome methods
+    connectMe(username) {
+      this.username = username;
+      console.assert(this.username, 'No username available');
+      console.assert(this.sessionID, 'No sessionID available');
+      this.usernameAlreadySelected = true;
+
+      console.log('Connecting', this.username);
+      this.$socket.client.auth = {
+        username: this.username,
+        sessionID: this.sessionID,
+      };
+      this.$socket.client.open();
+    },
+
     //#region GoogMap methods
     onAddedPlace(place) {
       if (!place) {
@@ -320,6 +378,7 @@ export default {
   created() {
     console.log(process.env.VUE_APP_NAMESPACE);
 
+    //#region PWA
     // Listen for swUpdated event and display refresh snackbar as required.
     document.addEventListener('swUpdated', this.showRefreshUI, { once: true });
 
@@ -339,6 +398,18 @@ export default {
       console.log('PWA was installed');
       alert('PWA was installed');
     });
+    //#endregion PWA
+
+    //#region Socket.io
+    this.sessionID = localStorage.getItem('sessionID');
+    this.username = localStorage.getItem('username');
+    console.log('created()', this.username);
+    if (this.sessionID) {
+      this.usernameAlreadySelected = true;
+      this.connectMe();
+    }
+
+    //#endregion
   },
 
   async mounted() {

@@ -611,7 +611,7 @@ export default {
       Visit.$fetch().then((all) => {
         console.log(
           'Populating Recent Visits with',
-          all.visits.length,
+          all.visits?.length || 0,
           'visits'
         );
         this.visits = all.visits;
