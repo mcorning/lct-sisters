@@ -1,7 +1,6 @@
 <template>
   <v-app>
     <v-app-bar color="primary" app dark>
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
       <v-toolbar-title
         >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
         {{ namespace }}</v-toolbar-title
@@ -30,7 +29,13 @@
           <v-col v-if="showSpaces" class="text-center">
             <GoogleMap v-model="location" @addedPlace="onAddedPlace" />
           </v-col>
-          <v-col v-else class="text-center">
+          <v-col v-if="showWarning" class="text-center">
+            <Warning
+              @exposureWarning="onExposureWarning($event)"
+              @returnToSpaces="show = SPACES"
+            />
+          </v-col>
+          <v-col v-if="showCalendar" class="text-center">
             <Calendar
               :avgStay="avgStay"
               :selectedSpace="selectedSpace"
@@ -94,6 +99,7 @@
 <script>
 import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
+import Warning from '@/components/Warning';
 import Calendar from '@/components/Calendar';
 import { highlight, success, warn, printJson } from './utils/colors';
 import Visit from '@/models/Visit';
@@ -105,6 +111,7 @@ export default {
   components: {
     Welcome,
     GoogleMap,
+    Warning,
     Calendar,
   },
 
@@ -113,7 +120,7 @@ export default {
     showSpaces() {
       return this.show == this.SPACES;
     },
-    showWarningButton() {
+    showWarning() {
       return this.show == this.WARNING;
     },
     showCalendar() {
@@ -125,7 +132,8 @@ export default {
       return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
     },
     xxs() {
-      return this.bp?.width < 360;
+      console.log('bp.width', this.bp?.width);
+      return this.bp?.width < 400;
     },
     version() {
       return this.$version;
@@ -134,10 +142,6 @@ export default {
 
   data() {
     return {
-      starttime: 1,
-      endtime: 10,
-      editableEvent: { state: 'open' },
-
       // for Welcome component
       isConnected: false,
       usernameAlreadySelected: false,
@@ -201,12 +205,9 @@ export default {
   },
 
   methods: {
-    emitFromClient(event, data, ack) {
-      this.$socket.client.emit(event, data, ack);
-    },
-
     //#region Warning method
-    onSendExposureWarning(reason) {
+    onExposureWarning(reason) {
+      this.show = this.SPACES;
       console.log(warn(`App.js: Emitting exposureWarning because "${reason}"`));
 
       this.emitFromClient('exposureWarning', this.userID, reason, (results) =>
@@ -341,10 +342,6 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
-    resetSpaces() {
-      this.selectedSpace = null;
-      this.show = this.SPACES;
-    },
 
     act() {
       if (this.action === 'refresh') {
@@ -352,6 +349,10 @@ export default {
       } else {
         this.add2HomeScreen();
       }
+    },
+
+    emitFromClient(event, data, ack) {
+      this.$socket.client.emit(event, data, ack);
     },
 
     onError(e) {
@@ -362,6 +363,11 @@ export default {
     onUserFeedback(e) {
       console.log('userFeedback:', e);
       this.emitFromClient('userFeedback', e);
+    },
+
+    resetSpaces() {
+      this.selectedSpace = null;
+      this.show = this.SPACES;
     },
 
     showRefreshUI(e) {

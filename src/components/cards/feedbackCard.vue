@@ -72,7 +72,7 @@ export default {
     return {
       snackBtnText: '',
       snackWithBtnText: '',
-      snackWithButtons: false,
+      snackWithButtons: true,
       action: '',
       devs: 'mcorning@soteriaInstitute.org',
 
