@@ -4,6 +4,14 @@ const socketIO = require('socket.io');
 const serveStatic = require('serve-static');
 const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
+const {
+  printJson,
+  error,
+  warn,
+  highlight,
+  info,
+  success,
+} = require('./src/utils/colors.js');
 
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, './dist');
@@ -13,15 +21,6 @@ const sessionCache = new Cache(path.resolve(__dirname, 'sessions.json'));
 const alertsCache = new Cache(path.resolve(__dirname, 'alerts.json'));
 const errorCache = new Cache(path.resolve(__dirname, 'errors.json'));
 const feedbackCache = new Cache(path.resolve(__dirname, 'feedback.json'));
-
-const {
-  printJson,
-  error,
-  warn,
-  highlight,
-  info,
-  success,
-} = require('./src/utils/colors.js');
 
 const {
   graphName, // mapped to client nsp (aka namespace or community name)

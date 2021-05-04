@@ -2,33 +2,6 @@
 
 const RedisGraph = require('redisgraph.js').Graph;
 
-let host, options, graphName;
-
-if (process.env.NODE_ENV === 'production') {
-  host = process.env.REDIS_HOST;
-
-  options = {
-    host: host,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASSWORD,
-  };
-  console.log(options);
-
-  graphName = process.env.GRAPH_NAME;
-} else {
-  const appConfig = require('./redisConfig.js');
-  host = appConfig.redisHost;
-  options = {
-    host: host,
-    port: appConfig.redisPort,
-    password: appConfig.redisPassword,
-  };
-  console.log(options);
-  graphName = appConfig.graphName;
-}
-
-const Graph = new RedisGraph(graphName, null, null, options);
-
 const {
   printJson,
   warn,
@@ -36,6 +9,34 @@ const {
   success,
 } = require('./src/utils/colors.js');
 const { formatTime } = require('./src/utils/luxonHelpers.js');
+
+let options, graphName;
+
+if (process.env.NODE_ENV === 'production') {
+  console.log('Dereferencing process.env');
+  options = {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+  };
+
+  graphName = process.env.GRAPH_NAME;
+} else {
+  console.log('Dereferencing redisConfig.js');
+  const appConfig = require('./redisConfig.js');
+  options = {
+    host: appConfig.redisHost,
+    port: appConfig.redisPort,
+    password: appConfig.redisPassword,
+  };
+  graphName = appConfig.graphName;
+}
+
+const host = options.host;
+
+console.log(highlight('Redis Options:'), printJson(options));
+
+const Graph = new RedisGraph(graphName, null, null, options);
 
 module.exports = {
   Graph,

@@ -130,14 +130,9 @@ export default {
   beforeUnmount() {},
 
   mounted() {
-    const self = this;
-    // self.returning = localStorage.getItem('returning');
-    // if (self.returning == null) {
-    //   localStorage.setItem('returning', true);
-    //   return;
-    // }
-
-    this.onGo();
+    if (this.username) {
+      this.onGo();
+    }
   },
 };
 </script>
