@@ -72,7 +72,7 @@
         dark
         grow
       >
-        <v-btn grow @click="show = SPACES">
+        <v-btn grow @click="resetSpaces">
           <span>Spaces</span>
           <v-icon>mdi-map-marker</v-icon>
         </v-btn>
@@ -341,6 +341,11 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
+    resetSpaces() {
+      this.selectedSpace = null;
+      this.show = this.SPACES;
+    },
+
     act() {
       if (this.action === 'refresh') {
         this.refreshApp();

@@ -690,7 +690,6 @@ export default {
       const gender = this.gender[this.getRandomIntInclusive(0, 1)];
       const id = this.getRandomIntInclusive(1, 99);
       const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
-      console.log(this.avatar);
       return avatar;
     },
   },
