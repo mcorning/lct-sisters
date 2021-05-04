@@ -43,8 +43,16 @@
 
         <!-- calendar -->
         <!-- in case we need it...
-              @mouseleave.native="cancelDrag" -->
+             @mouseleave.native="cancelDrag" -->
 
+        <!-- touch on phone is too sensitive
+             @touchstart:time="startTime"
+             @touchmove:time="mouseMove"
+             @touchend:time="endDrag"
+             
+             taken from extendBottom event:
+             @touchstart.stop="extendBottom(event)"
+ -->
         <v-sheet :height="calendarHeight">
           <v-calendar
             id="calendar-target"
@@ -55,16 +63,13 @@
             :events="visits"
             :event-ripple="false"
             :event-color="getEventColor"
-            @mousedown:event="startDrag"
-            @touchstart:event="startDrag"
+            @touchstart:event="showEvent"
             @mousedown:time="startTime"
-            @touchstart:time="startTime"
             @mousemove:time="mouseMove"
-            @touchmove:time="mouseMove"
             @click:event="showEvent"
             @click:more="viewDay"
+            @mousedown:event="startDrag"
             @mouseup:time="endDrag"
-            @touchend:time="endDrag"
             @click:date="viewDay"
             @mouseleave.native="cancelDrag"
             v-touch="{
@@ -73,19 +78,14 @@
             }"
           >
             <template v-slot:event="{ event, timed, eventSummary }">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <div
-                    v-bind="attrs"
-                    v-on="on"
-                    class="v-event-draggable"
-                    v-html="eventSummary()"
-                  ></div>
-                </template>
+              <!-- <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }"> -->
+              <div class="v-event-draggable" v-html="eventSummary()"></div>
+              <!-- </template>
                 <span>LOG: Tab key or Left swipe</span><br /><span class="pl-8"
                   >DELETE: Del key or Right swipe
                 </span></v-tooltip
-              >
+              > -->
               <v-tooltip top>
                 <template v-slot:activator="{ on, attrs }">
                   <div
@@ -94,7 +94,6 @@
                     v-on="on"
                     class="v-event-drag-bottom"
                     @mousedown.stop="extendBottom(event)"
-                    @touchstart.stop="extendBottom(event)"
                   ></div>
                 </template>
                 <span>Drag and drop event as necessary </span></v-tooltip
@@ -102,6 +101,7 @@
             </template>
           </v-calendar>
 
+          <!-- Event Menu -->
           <v-menu
             v-model="selectedOpen"
             :close-on-content-click="false"
@@ -198,13 +198,34 @@
                 </v-time-picker>
               </v-dialog>
               <v-card-actions>
-                <v-btn :disabled="!editableEvent" @click="goRight()"
-                  ><v-icon>mdi-delete</v-icon></v-btn
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                      :disabled="!editableEvent"
+                      @click="goRight()"
+                      ><v-icon>mdi-delete</v-icon></v-btn
+                    >
+                  </template>
+                  <span>Delete Visit</span></v-tooltip
+                >
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                      :disabled="!editableEvent"
+                      @click="goLeft()"
+                      ><v-icon>mdi-graphql</v-icon></v-btn
+                    >
+                  </template>
+                  <span>Log Visit on Server</span></v-tooltip
                 >
 
-                <v-btn :disabled="!editableEvent" @click="goLeft()"
-                  ><v-icon>mdi-graphql</v-icon></v-btn
-                >
+                <v-spacer></v-spacer>
+                <v-btn text @click="selectedOpen = false">OK</v-btn>
+                <v-btn text @click="selectedOpen = false">Cancel</v-btn>
 
                 <!-- add this back later -->
                 <!-- <v-btn :disabled="!changed" @click="undo"
@@ -213,6 +234,7 @@
               >
             </v-card>
           </v-menu>
+          <!-- End Event Menu -->
         </v-sheet>
       </v-col>
     </v-row>
@@ -225,7 +247,6 @@
       </v-col>
     </v-row>
     <ConfirmDlg id="confirmDlg" ref="confirm" />
-
   </v-sheet>
 </template>
 
@@ -362,7 +383,6 @@ export default {
     getEventColor(event) {
       const c =
         this.visitId === event.id ? `${event.color} darken-1` : event.color;
-      console.log(c);
       return c;
     },
 
@@ -387,7 +407,7 @@ export default {
     showEvent({ nativeEvent, event }) {
       this.editableEvent = event;
       const { name, start, end, id } = event;
-      this.status = `Selected: ${name} [id: ${id}]`;
+      this.status = `Selected: ${name} [visitID: ${id}]`;
       this.starttime = formatSmallTimeBare(start);
       this.endtime = formatSmallTimeBare(end);
 
@@ -552,7 +572,6 @@ export default {
     },
 
     reset() {
-      this.status = 'Resetting variables';
       this.calendarElement.style.overflowY = 'auto';
 
       this.dragTime = null;
@@ -589,6 +608,7 @@ export default {
     //#region Non Pointer methods
 
     goRight() {
+      this.selectedOpen = false;
       if (!this.editableEvent) {
         console.log('No visit selected');
         return;
@@ -608,6 +628,8 @@ export default {
     },
 
     goLeft() {
+      this.selectedOpen = false;
+
       if (!this.editableEvent) {
         console.log('No visit selected');
 
@@ -961,8 +983,6 @@ export default {
   created() {},
 
   mounted() {
-    this.$refs.calendar.checkChange();
-
     const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
@@ -990,6 +1010,8 @@ export default {
     Visit.$fetch().then(() => {
       self.visits = self.visitCache;
     });
+
+    self.$refs.calendar.checkChange();
     self.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
 
     self.place = self.selectedSpace;
