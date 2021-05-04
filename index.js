@@ -168,7 +168,8 @@ io.on('connection', (socket) => {
   //  1) broadcasts message to all users (online only?) when a case of covid is found in the community
   //  2) redisGraph queries for anyone connected to the positive case (ignoring the immunity some might have)
   //  3) returns the number of possible exposures to positive case
-  socket.on('exposureWarning', async (userID, reason, ack) => {
+  socket.on('exposureWarning', async (data, ack) => {
+    const { userID, reason } = data;
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 

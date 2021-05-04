@@ -5,6 +5,7 @@
         >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
         {{ namespace }}</v-toolbar-title
       >
+
       <v-spacer></v-spacer>
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
@@ -66,6 +67,72 @@
             </v-snackbar>
           </v-col>
         </v-row>
+
+        <!-- Alert Snackbar -->
+        <v-snackbar
+          top
+          :value="alertPending"
+          :timeout="-1"
+          color="orange darken-3"
+          vertical
+          dark
+          max-width="400"
+        >
+          <v-card dark color="orange darken-1" v-if="alertPending">
+            <v-card-title>COVID-19 Detected</v-card-title>
+            <v-card-subtitle>
+              Someone in your community has tested positive for COVID-19.
+            </v-card-subtitle>
+            <v-card-text class="white--text">
+              You will see an exposure alert next only if you shared the same
+              space with that person.</v-card-text
+            >
+          </v-card>
+
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="white"
+              text
+              v-bind="attrs"
+              @click="alertPending = false"
+            >
+              OK
+            </v-btn>
+          </template>
+        </v-snackbar>
+
+        <!-- Alert Snackbar -->
+        <v-snackbar
+          :value="exposureAlert"
+          :timeout="-1"
+          color="red darken-3"
+          vertical
+          centered
+          dark
+          max-width="400"
+        >
+          <v-card dark color="red darken-1" v-if="exposureAlert">
+            <v-card-title>COVID-19 Exposure Alert</v-card-title>
+            <v-card-subtitle>
+              You shared space recently with someone who tested positive
+            </v-card-subtitle>
+            <v-card-text>
+              Please get tested. If you are positive you can spread the virus -
+              even if you are immune.</v-card-text
+            >
+          </v-card>
+
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="white"
+              text
+              v-bind="attrs"
+              @click="exposureAlert = false"
+            >
+              OK
+            </v-btn>
+          </template>
+        </v-snackbar>
       </v-container>
     </v-main>
 
@@ -142,6 +209,11 @@ export default {
 
   data() {
     return {
+      // Exposer data
+      exposureAlert: false,
+      alertPending: false,
+      alertText: '',
+
       // for Welcome component
       isConnected: false,
       usernameAlreadySelected: false,
@@ -202,6 +274,20 @@ export default {
       this.userID = userID;
       this.graphName = graphName;
     },
+
+    // Exposure dialogs
+    alertPending() {
+      this.alertPending = true;
+    },
+
+    exposureAlert(alert, ack) {
+      this.exposureAlert = true;
+      this.alertText = alert;
+      if (ack) {
+        ack(this.$socket.client.id);
+      }
+      this.auditor.logEntry(alert, 'Alert');
+    },
   },
 
   methods: {
@@ -209,8 +295,8 @@ export default {
     onExposureWarning(reason) {
       this.show = this.SPACES;
       console.log(warn(`App.js: Emitting exposureWarning because "${reason}"`));
-
-      this.emitFromClient('exposureWarning', this.userID, reason, (results) =>
+      const data = { userID: this.userID, reason };
+      this.emitFromClient('exposureWarning', data, (results) =>
         this.auditor.logEntry(
           `exposureWarning (for ${reason}) results: ${printJson(results)}`,
           'Warnings'
@@ -352,6 +438,7 @@ export default {
     },
 
     emitFromClient(event, data, ack) {
+      console.log(event, data, ack);
       this.$socket.client.emit(event, data, ack);
     },
 
@@ -480,5 +567,8 @@ export default {
     this.selectedSpace = null;
     console.log('App.vue mounted');
   },
+
+  // TODO Figure out how to unsub events
+  destroyed() {},
 };
 </script>
