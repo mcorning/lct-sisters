@@ -2,30 +2,33 @@
 
 const RedisGraph = require('redisgraph.js').Graph;
 
-// const appConfig = require('./redisConfig.js');
-// const host = appConfig.redisHost;
+let host, options, graphName;
 
-// const options = {
-//   host: host,
-//   port: appConfig.redisPort,
-//   password: appConfig.redisPassword,
-// };
-// console.log(options);
+if (process.env.NODE_ENV === 'production') {
+  host = process.env.REDIS_HOST;
 
-// const graphName = appConfig.graphName;
+  options = {
+    host: host,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+  };
+  console.log(options);
 
-const host = process.env.REDIS_HOST;
-
-const options = {
-  host: host,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD,
-};
-console.log(options);
-
-const graphName = process.env.GRAPH_NAME;
+  graphName = process.env.GRAPH_NAME;
+} else {
+  const appConfig = require('./redisConfig.js');
+  host = appConfig.redisHost;
+  options = {
+    host: host,
+    port: appConfig.redisPort,
+    password: appConfig.redisPassword,
+  };
+  console.log(options);
+  graphName = appConfig.graphName;
+}
 
 const Graph = new RedisGraph(graphName, null, null, options);
+
 const {
   printJson,
   warn,

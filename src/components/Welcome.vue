@@ -98,7 +98,7 @@ export default {
       avgStay: 1,
       intervals: [0.5, 1, 8],
 
-      returning: false,
+      // returning: false,
       dialog: false,
       nsp: 'Sisters',
       username: '',
@@ -131,11 +131,11 @@ export default {
 
   mounted() {
     const self = this;
-    self.returning = localStorage.getItem('returning');
-    if (self.returning == null) {
-      localStorage.setItem('returning', true);
-      return;
-    }
+    // self.returning = localStorage.getItem('returning');
+    // if (self.returning == null) {
+    //   localStorage.setItem('returning', true);
+    //   return;
+    // }
 
     this.onGo();
   },
