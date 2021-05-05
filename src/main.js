@@ -23,8 +23,7 @@ Vue.use(VueGoogleMaps, {
 console.log(
   process.env.VUE_APP_NAMESPACE,
   process.env.VUE_APP_LAT,
-  process.env.VUE_APP_LNG,
-  process.env.VUE_APP_GRAPH_SANDBOX
+  process.env.VUE_APP_LNG
 );
 
 // Socket.io

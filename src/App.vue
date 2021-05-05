@@ -1,6 +1,15 @@
 <template>
   <v-app>
     <v-app-bar color="primary" app dark>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn icon v-bind="attrs" v-on="on" @click="qrDialog = !qrDialog">
+            <v-icon>mdi-qrcode</v-icon>
+          </v-btn>
+        </template>
+        <span>Toggle QR to share LCT</span></v-tooltip
+      >
+
       <v-toolbar-title
         >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
         {{ namespace }}</v-toolbar-title
@@ -10,6 +19,7 @@
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
 
+      <!-- Options -->
       <v-menu bottom left>
         <template v-slot:activator="{ on, attrs }">
           <v-btn dark icon v-bind="attrs" v-on="on">
@@ -26,6 +36,7 @@
             <v-list-item-content>
               <v-list-item-title>Visitor</v-list-item-title>
               <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
+              <v-list-item-subtitle>{{ bpWidth }}</v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
 
@@ -50,10 +61,32 @@
           </template>
         </v-list>
       </v-menu>
+      <!-- End Options -->
     </v-app-bar>
 
     <v-main>
       <v-container class="fill-height" fluid>
+        <!-- QR Dialog -->
+        <v-dialog
+          v-model="qrDialog"
+          hide-overlay
+          transition="dialog-bottom-transition"
+        >
+          <v-card>
+            <v-tooltip top>
+              <template v-slot:activator="{ on, attrs }">
+                <v-img
+                  class="mt-5"
+                  src="../public/img/LCT-Sisters-QR.png"
+                  v-bind="attrs"
+                  v-on="on"
+                  @click="qrDialog = false"
+                ></v-img>
+              </template>
+              <span>Click to dismiss</span></v-tooltip
+            >
+          </v-card>
+        </v-dialog>
         <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
           <Welcome @input="connectMe($event)" />
         </v-row>
@@ -226,6 +259,12 @@ export default {
   },
 
   computed: {
+    bpWidth() {
+      return this.bp
+        ? 'screen width: ' + this.bp.width
+        : 'unknown screen width';
+    },
+
     // Navigation properties
     showSpaces() {
       return this.show == this.SPACES;
@@ -281,6 +320,8 @@ export default {
       userID: '',
 
       // these are BASE values
+      qrDialog: false,
+
       graphName: '',
       // used by getAvatar()
       gender: ['men', 'women'],
@@ -547,21 +588,21 @@ export default {
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
     },
-    showAdd2HsUI(e) {
-      // Display a snackbar inviting the user to refresh/reload the app due
-      // to an app update being available.
-      // The new service worker is installed, but not yet active.
-      // Store the ServiceWorkerRegistration instance for later use.
-      this.action = 'a2Hs';
-      this.registration = e.detail;
-      this.snackBtnText = 'Add';
-      this.snackWithBtnText = 'Add to Home Screen?';
-      this.snackWithButtons = true;
-    },
+    // showAdd2HsUI(e) {
+    //   // Display a snackbar inviting the user to refresh/reload the app due
+    //   // to an app update being available.
+    //   // The new service worker is installed, but not yet active.
+    //   // Store the ServiceWorkerRegistration instance for later use.
+    //   this.action = 'a2Hs';
+    //   this.registration = e.detail;
+    //   this.snackBtnText = 'Add';
+    //   this.snackWithBtnText = 'Add to Home Screen?';
+    //   this.snackWithButtons = true;
+    // },
 
-    add2HomeScreen() {
-      this.snackWithButtons = false;
-    },
+    // add2HomeScreen() {
+    //   this.snackWithButtons = false;
+    // },
 
     refreshApp() {
       this.snackWithButtons = false;
@@ -596,9 +637,9 @@ export default {
         window.location.reload();
       });
     }
-    document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
-      once: true,
-    });
+    // document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
+    //   once: true,
+    // });
 
     document.addEventListener('appinstalled', () => {
       console.log('PWA was installed');
