@@ -27,6 +27,7 @@ const {
   host,
   deleteVisit,
   findExposedVisitors,
+  changeGraph,
   logVisit,
   onExposureWarning,
 } = require('./redis');
@@ -207,6 +208,11 @@ io.on('connection', (socket) => {
   //#endregion
 
   //#region Utility handlers
+  socket.on('changeGraph', (graphName) => {
+    console.log('index.js switching to Sandbox');
+    changeGraph(graphName);
+  });
+
   socket.on('userFeedback', (data) => {
     feedbackCache.set(Date.now(), data);
     feedbackCache.save();

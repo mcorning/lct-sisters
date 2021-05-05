@@ -149,7 +149,7 @@
 
 import Visit from '@/models/Visit';
 
-import { highlight, printJson } from '../utils/colors';
+import { highlight, getRandomIntInclusive, printJson } from '../utils/colors';
 
 export default {
   // see main.js for vue2-google-maps instantiation
@@ -680,15 +680,10 @@ export default {
 
       localStorage.setItem('markersData', JSON.stringify(this.markersData));
     },
-    getRandomIntInclusive(min, max) {
-      min = Math.ceil(min);
-      max = Math.floor(max);
-      return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
-    },
 
     getAvatar() {
-      const gender = this.gender[this.getRandomIntInclusive(0, 1)];
-      const id = this.getRandomIntInclusive(1, 99);
+      const gender = this.gender[getRandomIntInclusive(0, 1)];
+      const id = getRandomIntInclusive(1, 99);
       const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
       return avatar;
     },

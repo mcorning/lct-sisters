@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === 'production') {
     password: process.env.REDIS_PASSWORD,
   };
 
-  graphName = process.env.GRAPH_NAME;
+  graphName = process.env.VUE_APP_NAMESPACE;
 } else {
   console.log('Dereferencing redisConfig.js');
   const appConfig = require('./redisConfig.js');
@@ -36,7 +36,7 @@ const host = options.host;
 
 console.log(highlight('Redis Options:'), printJson(options));
 
-const Graph = new RedisGraph(graphName, null, null, options);
+let Graph = new RedisGraph(graphName, null, null, options);
 
 module.exports = {
   Graph,
@@ -44,9 +44,15 @@ module.exports = {
   host,
   deleteVisit,
   findExposedVisitors,
+  changeGraph,
   logVisit,
   onExposureWarning,
 };
+
+function changeGraph(graphName) {
+  Graph = new RedisGraph(graphName, null, null, options);
+  console.log(highlight(`Graph now using ${graphName}`));
+}
 
 // see if an alerted visitor has potential alerts to share
 function findExposedVisitors(userID, subject = false) {

@@ -10,9 +10,46 @@
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
 
-      <v-btn icon>
-        <v-icon>more_vert</v-icon>
-      </v-btn>
+      <v-menu bottom left>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn dark icon v-bind="attrs" v-on="on">
+            <v-icon>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+
+        <v-list>
+          <v-list-item>
+            <v-list-item-avatar>
+              <v-img :src="getAvatar()"></v-img>
+            </v-list-item-avatar>
+
+            <v-list-item-content>
+              <v-list-item-title>Visitor</v-list-item-title>
+              <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+
+          <template v-for="(item, index) in items">
+            <v-subheader v-if="item.header" :key="item.header" inset>
+              {{ item.header }}
+            </v-subheader>
+
+            <v-divider v-else-if="item.divider" :key="index" inset></v-divider>
+            <v-list-item
+              v-else
+              :key="item.title"
+              ripple
+              @click="changeGraph(item.title)"
+            >
+              <v-list-item-avatar>
+                <v-avatar :color="getColor(item.title)" size="36">
+                  <span class="white--text headline"></span> </v-avatar
+              ></v-list-item-avatar>
+              <v-list-item-title v-html="item.title"> </v-list-item-title>
+            </v-list-item>
+          </template>
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <v-main>
@@ -168,7 +205,13 @@ import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
 import Warning from '@/components/Warning';
 import Calendar from '@/components/Calendar';
-import { highlight, success, warn, printJson } from './utils/colors';
+import {
+  highlight,
+  success,
+  warn,
+  getRandomIntInclusive,
+  printJson,
+} from './utils/colors';
 import Visit from '@/models/Visit';
 import Auditor from './utils/Auditor';
 
@@ -238,6 +281,24 @@ export default {
       userID: '',
 
       // these are BASE values
+      graphName: '',
+      // used by getAvatar()
+      gender: ['men', 'women'],
+
+      // used by more menu icon
+      items: [
+        {
+          header: 'Graphs (Green=active)',
+        },
+        { divider: true },
+        {
+          title: 'Sandbox',
+        },
+        {
+          title: this.$defaultGraphName,
+        },
+      ],
+
       auditor: new Auditor(),
       snackBtnText: '',
       snackWithBtnText: '',
@@ -428,6 +489,25 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
+    getColor(graphName) {
+      const currentGraphName = this.graphName || this.$defaultGraphName;
+      return graphName == currentGraphName ? 'green' : 'red';
+    },
+
+    getAvatar() {
+      const gender = this.gender[getRandomIntInclusive(0, 1)];
+      const id = getRandomIntInclusive(1, 99);
+      const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
+      return avatar;
+    },
+
+    changeGraph(graphName) {
+      // TODO will this setter interfere with session event?
+      this.graphName =
+        graphName === 'Sandbox' ? 'Sandbox' : process.env.VUE_APP_NAMESPACE;
+
+      this.emitFromClient('changeGraph', this.graphName);
+    },
 
     act() {
       if (this.action === 'refresh') {
@@ -438,7 +518,6 @@ export default {
     },
 
     emitFromClient(event, data, ack) {
-      console.log(event, data, ack);
       this.$socket.client.emit(event, data, ack);
     },
 
@@ -563,7 +642,6 @@ export default {
     }
     console.log('Cached avgStay', x || 'empty');
     console.log('Total avgStay', self.avgStay);
-
     this.selectedSpace = null;
     console.log('App.vue mounted');
   },
