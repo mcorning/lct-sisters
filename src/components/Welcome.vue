@@ -3,24 +3,35 @@
     <v-row align="center" justify="center">
       <v-spacer></v-spacer>
       <v-col cols="12">
-        <v-card>
+        <v-card max-width="320">
           <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
           <v-card-subtitle
             >Local Contact Tracing is our community's way of getting back to
             work safely</v-card-subtitle
           >
+
+          <v-card-text>
+            <p>
+              LCT minimizes the time between exposure to the virus and getting
+              tested to know if you're infected.
+            </p>
+            <p>
+              If we deprive the virus of time to replicate and mutate, we can
+              beat this thing.
+            </p>
+          </v-card-text>
+          <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
           <v-card-text>
             <v-text-field
               v-model="username"
               :rules="rules"
               counter="10"
-              hint=""
-              label="Enter your nickname"
+              hint="Tab to go on"
+              label="Enter a nickname to save the day"
               clearable
               @blur="onSubmit()"
             ></v-text-field
           ></v-card-text>
-          <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-dialog v-model="dialog" persistent max-width="400px">
@@ -94,7 +105,7 @@ export default {
     welcomeMessage() {
       let msg = this.sessionID
         ? `Welcome back to your old session, ${this.sessionID}`
-        : `Let's get started, shall we?`;
+        : "So, let's get started, shall we? There's no time to lose...";
       return msg;
     },
   },

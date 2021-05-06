@@ -27,7 +27,7 @@
           </v-btn>
         </template>
 
-        <v-list>
+        <v-list two-line subheader dense>
           <v-list-item>
             <v-list-item-avatar>
               <v-img :src="getAvatar()"></v-img>
@@ -57,7 +57,11 @@
                   <v-icon dark>{{ item.icon }}</v-icon>
                 </v-avatar>
               </v-list-item-avatar>
-              <v-list-item-title v-html="item.title"> </v-list-item-title>
+              <v-list-item-content>
+                <v-list-item-title v-html="item.title"> </v-list-item-title>
+                <v-list-item-subtitle v-html="item.subtitle">
+                </v-list-item-subtitle>
+              </v-list-item-content>
             </v-list-item>
           </template>
         </v-list>
@@ -348,11 +352,13 @@ export default {
         },
         {
           title: 'Sandbox',
+          subtitle: 'Play around with LCT safely',
           moreActionId: 0,
           icon: 'mdi-graphql',
         },
         {
           title: this.$defaultGraphName,
+          subtitle: 'Where real data goes',
           moreActionId: 0,
           icon: 'mdi-graphql',
         },
@@ -360,8 +366,19 @@ export default {
 
         {
           title: 'Feedback',
+          subtitle: 'How are we doing?',
           moreActionId: 1,
           icon: 'mdi-comment-quote-outline',
+          color: 'purple',
+        },
+        { divider: true },
+
+        {
+          title: 'Reset',
+          subtitle: 'Remove localStorage username/sessionID',
+          moreActionId: 1,
+          icon: 'mdi-comment-quote-outline',
+          color: 'orange',
         },
       ],
 
@@ -565,7 +582,7 @@ export default {
         const currentGraphName = this.graphName || this.$defaultGraphName;
         return item.title === currentGraphName ? 'green' : 'red';
       }
-      return 'purple';
+      return item.color;
     },
 
     getAvatar() {
@@ -589,6 +606,11 @@ export default {
       switch (action) {
         case 'Feedback':
           this.feedbackDialog = true;
+          break;
+        case 'Reset':
+          localStorage.removeItem('username');
+          localStorage.removeItem('sessionID');
+          window.location.reload();
           break;
       }
     },
@@ -675,6 +697,9 @@ export default {
   watch: {
     location(location) {
       console.log(location);
+    },
+    usernameAlreadySelected(val) {
+      console.log('usernameAlreadySelected', val);
     },
   },
 
