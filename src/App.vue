@@ -128,26 +128,27 @@
           </v-col>
         </v-row>
         <!--End GoogleMap, Warning, and Calendar components -->
-        <v-row
-          v-if="snackWithButtons"
-          align="center"
-          justify="center"
-          no-gutters
+        <!-- <v-row align="center" justify="center" no-gutters>
+          <v-col class="text-center"> -->
+        <v-snackbar
+          v-model="snackWithButtons"
+          bottom
+          left
+          timeout="-1"
+          height="100px"
         >
-          <v-col class="text-center">
-            <v-snackbar bottom left timeout="-1" height="100px">
-              {{ snackWithBtnText }}
-              <template v-slot:action="{ attrs }">
-                <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
-                  {{ snackBtnText }}
-                </v-btn>
-                <v-btn icon class="ml-4" @click="snackWithButtons = false">
-                  <v-icon>close</v-icon>
-                </v-btn>
-              </template>
-            </v-snackbar>
-          </v-col>
-        </v-row>
+          {{ snackWithBtnText }}
+          <template v-slot:action="{ attrs }">
+            <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
+              {{ snackBtnText }}
+            </v-btn>
+            <v-btn icon class="ml-4" @click="snackWithButtons = false">
+              <v-icon>close</v-icon>
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <!-- </v-col>
+        </v-row> -->
 
         <!-- Alert Snackbar -->
         <v-snackbar
@@ -740,7 +741,8 @@ export default {
     }
     console.log('Cached avgStay', x || 'empty');
     console.log('Total avgStay', self.avgStay);
-    this.selectedSpace = null;
+    self.selectedSpace = null;
+
     console.log('App.vue mounted');
   },
 
