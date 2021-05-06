@@ -54,9 +54,9 @@
             >
               <v-list-item-avatar>
                 <v-avatar :color="getColor(item)" size="36">
-                  <v-icon v-if="item.icon" dark>{{ item.icon }}</v-icon>
-                  <span v-else class="white--text headline"></span> </v-avatar
-              ></v-list-item-avatar>
+                  <v-icon dark>{{ item.icon }}</v-icon>
+                </v-avatar>
+              </v-list-item-avatar>
               <v-list-item-title v-html="item.title"> </v-list-item-title>
             </v-list-item>
           </template>
@@ -291,7 +291,7 @@ export default {
     },
     xxs() {
       console.log('bp.width', this.bp?.width);
-      return this.bp?.width < 400;
+      return this.bp?.width < 420;
     },
     version() {
       return this.$version;
@@ -345,10 +345,12 @@ export default {
         {
           title: 'Sandbox',
           moreActionId: 0,
+          icon: 'mdi-graphql',
         },
         {
           title: this.$defaultGraphName,
           moreActionId: 0,
+          icon: 'mdi-graphql',
         },
         { divider: true },
 
@@ -366,10 +368,13 @@ export default {
       snackWithBtnText: '',
       snackWithButtons: false,
       action: '',
-      refreshing: false,
-      registration: null,
       bp: null,
       namespace: '',
+
+      // for PWA
+      refreshing: false,
+      registration: null,
+      updateExists: false,
     };
   },
 
@@ -626,6 +631,8 @@ export default {
       // Store the ServiceWorkerRegistration instance for later use.
       this.action = 'refresh';
       this.registration = e.detail;
+      this.updateExists = true;
+
       this.snackBtnText = 'Refresh';
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
@@ -647,6 +654,8 @@ export default {
     // },
 
     refreshApp() {
+      this.updateExists = false;
+
       this.snackWithButtons = false;
 
       // Protect against missing registration.waiting.
