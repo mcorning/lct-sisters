@@ -50,11 +50,12 @@
               v-else
               :key="item.title"
               ripple
-              @click="changeGraph(item.title)"
+              @click="onMore(item.title, item.moreActionId)"
             >
               <v-list-item-avatar>
-                <v-avatar :color="getColor(item.title)" size="36">
-                  <span class="white--text headline"></span> </v-avatar
+                <v-avatar :color="getColor(item)" size="36">
+                  <v-icon v-if="item.icon" dark>{{ item.icon }}</v-icon>
+                  <span v-else class="white--text headline"></span> </v-avatar
               ></v-list-item-avatar>
               <v-list-item-title v-html="item.title"> </v-list-item-title>
             </v-list-item>
@@ -87,6 +88,11 @@
             >
           </v-card>
         </v-dialog>
+        <FeedbackCard
+          v-if="feedbackDialog"
+          @endFeedback="feedbackDialog = false"
+        ></FeedbackCard>
+
         <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
           <Welcome @input="connectMe($event)" />
         </v-row>
@@ -238,6 +244,7 @@ import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
 import Warning from '@/components/Warning';
 import Calendar from '@/components/Calendar';
+
 import {
   highlight,
   success,
@@ -247,6 +254,7 @@ import {
 } from './utils/colors';
 import Visit from '@/models/Visit';
 import Auditor from './utils/Auditor';
+import FeedbackCard from './components/cards/feedbackCard.vue';
 
 export default {
   name: 'App',
@@ -256,6 +264,7 @@ export default {
     GoogleMap,
     Warning,
     Calendar,
+    FeedbackCard,
   },
 
   computed: {
@@ -315,12 +324,12 @@ export default {
       SPACES: 0,
       CALENDAR: 1,
       WARNING: 2,
-      rating: 0,
       dialog: false,
       userID: '',
 
       // these are BASE values
       qrDialog: false,
+      feedbackDialog: false,
 
       graphName: '',
       // used by getAvatar()
@@ -328,17 +337,29 @@ export default {
 
       // used by more menu icon
       items: [
+        { divider: true },
+
         {
           header: 'Graphs (Green=active)',
         },
-        { divider: true },
         {
           title: 'Sandbox',
+          moreActionId: 0,
         },
         {
           title: this.$defaultGraphName,
+          moreActionId: 0,
+        },
+        { divider: true },
+
+        {
+          title: 'Feedback',
+          moreActionId: 1,
+          icon: 'mdi-comment-quote-outline',
         },
       ],
+
+      moreActions: ['changeGraph', 'actMore'],
 
       auditor: new Auditor(),
       snackBtnText: '',
@@ -530,9 +551,12 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
-    getColor(graphName) {
-      const currentGraphName = this.graphName || this.$defaultGraphName;
-      return graphName == currentGraphName ? 'green' : 'red';
+    getColor(item) {
+      if (item.moreActionId === 0) {
+        const currentGraphName = this.graphName || this.$defaultGraphName;
+        return item.title === currentGraphName ? 'green' : 'red';
+      }
+      return 'purple';
     },
 
     getAvatar() {
@@ -540,6 +564,24 @@ export default {
       const id = getRandomIntInclusive(1, 99);
       const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
       return avatar;
+    },
+
+    onMore(action, id) {
+      switch (id) {
+        case 0:
+          this.changeGraph(action);
+          break;
+        case 1:
+          this.actOnMore(action);
+      }
+    },
+
+    actOnMore(action) {
+      switch (action) {
+        case 'Feedback':
+          this.feedbackDialog = true;
+          break;
+      }
     },
 
     changeGraph(graphName) {
