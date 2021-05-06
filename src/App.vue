@@ -37,9 +37,6 @@
               <v-list-item-title>Visitor</v-list-item-title>
               <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
               <v-list-item-subtitle>{{ bpWidth }}</v-list-item-subtitle>
-              <v-list-item-subtitle
-                >Registration: {{ registration }}</v-list-item-subtitle
-              >
             </v-list-item-content>
           </v-list-item>
 
@@ -127,9 +124,7 @@
             />
           </v-col>
         </v-row>
-        <!--End GoogleMap, Warning, and Calendar components -->
-        <!-- <v-row align="center" justify="center" no-gutters>
-          <v-col class="text-center"> -->
+        <!-- PWA snackbar -->
         <v-snackbar
           v-model="snackWithButtons"
           bottom
@@ -147,10 +142,9 @@
             </v-btn>
           </template>
         </v-snackbar>
-        <!-- </v-col>
-        </v-row> -->
+        <!-- End PWA snackbar -->
 
-        <!-- Alert Snackbar -->
+        <!-- Community Alert Snackbar -->
         <v-snackbar
           top
           :value="alertPending"
@@ -182,8 +176,9 @@
             </v-btn>
           </template>
         </v-snackbar>
+        <!-- End Community Alert Snackbar -->
 
-        <!-- Alert Snackbar -->
+        <!-- Individual Exposure Alert Snackbar -->
         <v-snackbar
           :value="exposureAlert"
           :timeout="-1"
@@ -215,6 +210,7 @@
             </v-btn>
           </template>
         </v-snackbar>
+        <!-- End Individual Exposure Alert Snackbar -->
       </v-container>
     </v-main>
 
