@@ -17,6 +17,7 @@
 
       <v-spacer></v-spacer>
       {{ version }}
+      can refresh? {{ snackWithButtons }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
 
       <!-- Options -->
@@ -97,6 +98,7 @@
           <Welcome @input="connectMe($event)" />
         </v-row>
 
+        <!-- GoogleMap, Warning, and Calendar components -->
         <v-row
           v-if="usernameAlreadySelected"
           align="start"
@@ -123,6 +125,7 @@
             />
           </v-col>
         </v-row>
+        <!--End GoogleMap, Warning, and Calendar components -->
         <v-row
           v-if="snackWithButtons"
           align="center"
@@ -636,6 +639,7 @@ export default {
       this.snackBtnText = 'Refresh';
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
+      console.log(highlight('Rendering Refesh snackbar'));
     },
     // showAdd2HsUI(e) {
     //   // Display a snackbar inviting the user to refresh/reload the app due

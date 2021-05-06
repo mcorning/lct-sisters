@@ -37,13 +37,18 @@
                 <v-card-text>
                   To fit LCT to your daily routine, we suggest you note some
                   preferences.
+                  <p>
+                    For instance, if you use LCT at work (and of all places,
+                    this should be true), select 8 hours as your default stay
+                    (where you work).
+                  </p>
                   <v-row>
                     <v-col cols="12">
                       <v-select
                         v-model="avgStay"
                         :items="intervals"
                         :menu-props="{ top: true, offsetY: true }"
-                        label="Your average stay per visit (hrs) "
+                        label="Your average stay per visit (in hours) "
                         autofocus
                       ></v-select>
                     </v-col>
