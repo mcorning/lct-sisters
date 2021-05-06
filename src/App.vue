@@ -17,7 +17,6 @@
 
       <v-spacer></v-spacer>
       {{ version }}
-      can refresh? {{ snackWithButtons }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
 
       <!-- Options -->
@@ -38,6 +37,9 @@
               <v-list-item-title>Visitor</v-list-item-title>
               <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
               <v-list-item-subtitle>{{ bpWidth }}</v-list-item-subtitle>
+              <v-list-item-subtitle
+                >Registration: {{ registration }}</v-list-item-subtitle
+              >
             </v-list-item-content>
           </v-list-item>
 
