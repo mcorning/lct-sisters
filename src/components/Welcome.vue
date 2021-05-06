@@ -6,8 +6,8 @@
         <v-card>
           <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
           <v-card-subtitle
-            >LCT is our community's way of getting back to work
-            safely</v-card-subtitle
+            >Local Contact Tracing is our community's way of getting back to
+            work safely</v-card-subtitle
           >
           <v-card-text>
             <v-text-field
@@ -20,27 +20,28 @@
               @blur="onSubmit()"
             ></v-text-field
           ></v-card-text>
-          <v-card-text>{{ welcomeMessage }}</v-card-text>
+          <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-dialog v-model="dialog" persistent max-width="400px">
               <template v-slot:activator="{ on, attrs }">
                 <v-btn color="primary" dark v-bind="attrs" v-on="on">
-                  Thanks
+                  OK
                 </v-btn>
               </template>
               <v-card>
-                <v-card-title class="headline">
+                <v-card-title class="headline ">
                   Let's get to work (safely)
                 </v-card-title>
 
                 <v-card-text>
-                  To fit LCT to your daily routine, we suggest you note some
-                  preferences.
                   <p>
-                    For instance, if you use LCT at work (and of all places,
-                    this should be true), select 8 hours as your default stay
-                    (where you work).
+                    To fit LCT to your daily routine, we suggest you note some
+                    preferences below.
+                  </p>
+                  <p>
+                    For instance, if you use LCT at work (and of all places, you
+                    should), select 8 hours as your default average stay.
                   </p>
                   <v-row>
                     <v-col cols="12">
@@ -93,7 +94,7 @@ export default {
     welcomeMessage() {
       let msg = this.sessionID
         ? `Welcome back to your old session, ${this.sessionID}`
-        : `Welcome to Local Contact Tracing - Sisters`;
+        : `Let's get started, shall we?`;
       return msg;
     },
   },

@@ -142,7 +142,6 @@
                   v-model="starttime"
                   full-width
                   :allowed-minutes="allowedStep"
-                  :max="endtime"
                 >
                   <v-spacer></v-spacer>
                   <v-btn text color="primary" @click="modalStart = false">
@@ -182,7 +181,6 @@
                   v-model="endtime"
                   full-width
                   :allowed-minutes="allowedStep"
-                  :min="starttime"
                 >
                   <v-spacer></v-spacer>
                   <v-btn text color="primary" @click="modalEnd = false">
@@ -352,7 +350,9 @@ export default {
     },
 
     allowedStep: (m) => m % 15 === 0,
+
     formatStartEndTime: (t) => formatSmallTime(t),
+
     getVisit(id = this.visitId) {
       const x = this.visits
         .slice(0) // create copy of "array" for iterating
