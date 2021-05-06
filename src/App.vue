@@ -88,6 +88,7 @@
             >
           </v-card>
         </v-dialog>
+
         <FeedbackCard
           v-if="feedbackDialog"
           @endFeedback="feedbackDialog = false"
@@ -124,6 +125,7 @@
             />
           </v-col>
         </v-row>
+
         <!-- PWA snackbar -->
         <v-snackbar
           v-model="snackWithButtons"
