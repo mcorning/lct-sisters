@@ -12,8 +12,8 @@
             <v-btn fab text small color="grey darken-2" @click="next">
               <v-icon> mdi-chevron-right </v-icon>
             </v-btn>
-            <v-toolbar-title v-if="$refs.calendar">
-              {{ $refs.calendar.title }}
+            <v-toolbar-title v-if="cal">
+              {{ cal.title }}
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-menu bottom right>
@@ -59,6 +59,7 @@
             ref="calendar"
             v-model="focus"
             color="primary"
+            event-overlap-mode="column"
             :type="type"
             :events="visits"
             :event-ripple="false"
@@ -77,6 +78,13 @@
               right: goRight,
             }"
           >
+            <template #day-body="{ date, week }">
+              <div
+                class="v-current-time"
+                :class="{ first: date === week[0].date }"
+                :style="{ top: nowY }"
+              ></div>
+            </template>
             <template v-slot:event="{ event, timed, eventSummary }">
               <!-- <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }"> -->
@@ -107,6 +115,7 @@
             :close-on-content-click="false"
             :activator="selectedElement"
             offset-x
+            offset-y
           >
             <v-card
               v-if="editableEvent"
@@ -114,7 +123,7 @@
               max-width="300px"
               flat
             >
-              <v-toolbar :color="editableEvent.color" dark>
+              <v-toolbar :color="getToolbarColor()" dark>
                 <v-toolbar-title v-html="editableEvent.name"></v-toolbar-title>
               </v-toolbar>
 
@@ -271,6 +280,7 @@ export default {
   props: {
     selectedSpace: Object,
     avgStay: Number,
+    graphName: String,
   },
 
   components: {
@@ -278,6 +288,18 @@ export default {
   },
 
   computed: {
+    cal() {
+      return this.ready ? this.$refs.calendar : null;
+    },
+
+    nowY() {
+      return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px';
+    },
+
+    getGraphName() {
+      return `Using ${this.graphName} graph`;
+    },
+
     updateFeedbackMessage() {
       return `Ready to revert your last edit to its original value? ${this.getInterval(
         this.original.start,
@@ -292,6 +314,7 @@ export default {
   },
 
   data: () => ({
+    ready: false,
     selectedOpen: false,
     selectedElement: null,
 
@@ -302,8 +325,8 @@ export default {
     editableEvent: null,
     modalStart: false,
     modalEnd: false,
-    starttime: null,
-    endtime: null,
+    starttime: '',
+    endtime: '',
     editedStart: '',
     editedEnd: '',
 
@@ -404,18 +427,34 @@ export default {
     },
 
     // @click:event="showEvent"
+    // showEvent will open the Event menu so phone users can reliably change start/end times.
+    // value is an instance of the Visit object which is an event that constitutes the calendar's events array
     showEvent({ nativeEvent, event }) {
       this.editableEvent = event;
-      const { name, start, end, id } = event;
-      this.status = `Selected: ${name} [visitID: ${id}]`;
-      this.starttime = formatSmallTimeBare(start);
-      this.endtime = formatSmallTimeBare(end);
+      const { name, id } = event;
+      const parsedEvent = this.cal.parseEvent(event);
+      console.log('parsed Event', printJson(parsedEvent));
 
-      // // shallow clone so reset() does not effect visit indirectly
+      this.status = `Selected: ${name} [visitID: ${id}]`;
+      const startHour =
+        parsedEvent.start.hour > 12
+          ? parsedEvent.start.hour - 12
+          : parsedEvent.start.hour;
+      const endHour =
+        parsedEvent.end.hour > 12
+          ? parsedEvent.end.hour - 12
+          : parsedEvent.end.hour;
+      const startMinute =
+        parsedEvent.start.minute == 0 ? '00' : parsedEvent.start.minute;
+      const endMinute =
+        parsedEvent.end.minute == 0 ? '00' : parsedEvent.end.minute;
+      this.starttime = `${startHour}:${startMinute}`;
+      this.endtime = `${endHour}:${endMinute}`;
 
       this.visitId = event.id;
       this.selectedElement = nativeEvent.target;
       this.selectedOpen = true;
+      this.status = this.getGraphName;
     },
 
     //#region  Drag and Drop
@@ -528,7 +567,13 @@ export default {
     // handles updates:
     // this.original stores visit's original interval
     // called by drag or extendBottom
-    endDrag(event) {
+    endDrag(calendarTimestamp) {
+      console.log('endDrag produced:');
+      console.log(printJson(calendarTimestamp));
+      this.reset();
+    },
+
+    check(event) {
       if (event && this.changed) {
         console.log(this.visitId);
         console.log('original:');
@@ -549,7 +594,7 @@ export default {
           );
           this.dragEvent.oldStart = this.original.start;
           this.dragEvent.oldEnd = this.original.end;
-          this.dragEvent.id;
+          this.visitId = this.dragEvent.id;
         }
 
         if (this.createEvent) {
@@ -565,10 +610,7 @@ export default {
           this.visitId = this.createEvent.id;
         }
         this.confirmUpdate(this.dragEvent || this.createEvent);
-        return;
       }
-
-      this.reset();
     },
 
     reset() {
@@ -791,9 +833,12 @@ export default {
     confirmUpdate(visit) {
       console.assert(error('wrong visit'), (visit = this.getVisit()));
 
-      this.feedbackMessage = `UPDATE a logged visit to ${
-        visit.name
-      } with new times: ${this.getInterval(visit.start, visit.end)}?`;
+      this.feedbackMessage = `UPDATE ${
+        visit.logged ? 'a logged' : 'an unlogged'
+      } visit to ${visit.name} with new times: ${this.getInterval(
+        visit.start,
+        visit.end
+      )}?`;
       this.action = 'UPDATE';
       this.$refs.confirm.open('Confirm', this.feedbackMessage).then((act) => {
         if (act) this.act();
@@ -839,25 +884,31 @@ export default {
 
     changeType(type) {
       this.type = type;
-      this.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
+      this.scrollToTime();
     },
 
     viewDay({ date }) {
       this.focus = date;
       this.type = 'day';
     },
+
     getEventPrimaryColor(event) {
       return event ? 'primary' : 'secondary';
     },
+    getToolbarColor() {
+      return this.editableEvent.color === 'primary'
+        ? 'primary lighten-2'
+        : 'secondary darken-2';
+    },
     setToday() {
       this.focus = '';
-      this.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
+      this.cal.scrollToTime();
     },
     prev() {
-      this.$refs.calendar.prev();
+      this.cal.prev();
     },
     next() {
-      this.$refs.calendar.next();
+      this.cal.next();
     },
     //#endregion
 
@@ -922,6 +973,30 @@ export default {
           break;
       }
     },
+
+    getCurrentTime() {
+      return this.cal
+        ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
+        : 0;
+    },
+
+    scrollToTime() {
+      const time = this.getCurrentTime();
+      const first = Math.max(0, time - (time % 30) - 30);
+      console.log(
+        'time',
+        time,
+        'first',
+        first,
+        'militaryTime',
+        showCurrentMilitaryTime()
+      );
+      this.cal.scrollToTime(first);
+    },
+
+    updateTime() {
+      setInterval(() => this.cal.updateTimes(), 60 * 1000);
+    },
   },
 
   watch: {
@@ -941,6 +1016,9 @@ export default {
         'cache',
         this.visitCache.length
       );
+    },
+    event(newVal) {
+      console.log('new parsed event:', printJson(this.cal.parseEvent(newVal)));
     },
 
     starttime(newVal, oldVal) {
@@ -978,11 +1056,16 @@ export default {
         this.confirmUpdate(this.editableEvent);
       }
     },
+
+    graphName() {
+      this.status = this.getGraphName;
+    },
   },
 
   created() {},
 
   mounted() {
+    this.ready = true;
     const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
@@ -1011,8 +1094,9 @@ export default {
       self.visits = self.visitCache;
     });
 
-    self.$refs.calendar.checkChange();
-    self.$refs.calendar.scrollToTime(showCurrentMilitaryTime());
+    self.cal.checkChange();
+    self.scrollToTime();
+    self.updateTime();
 
     self.place = self.selectedSpace;
     if (self.place) {
@@ -1023,6 +1107,8 @@ export default {
     // these are window event listeners
     // so we need to restrict them to the calendarCard
     window.addEventListener('keydown', this.handleKeydown);
+
+    self.status = self.getGraphName;
 
     console.log('mounted calendarCard');
   },
