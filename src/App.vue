@@ -74,7 +74,8 @@
         <!-- QR Dialog -->
         <v-dialog
           v-model="qrDialog"
-          hide-overlay
+          max-width="500"
+          max-height="500"
           transition="dialog-bottom-transition"
         >
           <v-card>
@@ -85,6 +86,7 @@
                   src="../public/img/LCT-Sisters-QR.png"
                   v-bind="attrs"
                   v-on="on"
+                  contain
                   @click="qrDialog = false"
                 ></v-img>
               </template>
