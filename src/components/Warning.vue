@@ -1,6 +1,6 @@
 <template>
   <v-sheet class="overflow-auto fill-height">
-    <v-dialog v-model="dialog" persistent min-width="320">
+    <v-dialog v-model="dialog" persistent min-width="320" max-width="400">
       <v-card
         v-if="visits && visits.length"
         color="primary"
@@ -43,14 +43,24 @@
       <v-card v-else>
         <v-card-title class="headline">Exposure Warnings</v-card-title>
         <v-card-subtitle> Oops, there is nobody to warn.</v-card-subtitle>
-        ><v-card-text>
-          1) Be sure you have selected the correct nickname </v-card-text
-        ><v-card-text>
-          2) Check your Visits (you need at least one Entered record before you
-          can warn a Room)</v-card-text
-        >
+        <v-card-text>
+          Exposure warnings are based on visits logged to the server.
+        </v-card-text>
+        <v-card-text>
+          Your browser has no record of any visits, yet. You will be able to
+          warn your community after you:
+          <ol>
+            <li>pick a location on the map</li>
+            <li>mark your calendar with a date and time</li>
+            <li>and log your calendar event on the LCT server</li>
+          </ol>
+        </v-card-text>
+        <v-card-text>
+          The server will alert other visitors who shared a space with you.
+          Otherwise, the server sends no alerts.
+        </v-card-text>
         <v-card-actions>
-          <v-btn text @click="dialog = false">OK</v-btn>
+          <v-btn text @click="cancel">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -105,6 +115,11 @@ export default {
     };
   },
   methods: {
+    cancel() {
+      this.dialog = false;
+      this.returnToSpaces();
+    },
+
     returnToSpaces() {
       this.$emit('returnToSpaces');
     },

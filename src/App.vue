@@ -19,7 +19,7 @@
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
 
-      <!-- Options -->
+      <!-- Options Menu-->
       <v-menu bottom left>
         <template v-slot:activator="{ on, attrs }">
           <v-btn dark icon v-bind="attrs" v-on="on">
@@ -66,7 +66,7 @@
           </template>
         </v-list>
       </v-menu>
-      <!-- End Options -->
+      <!-- End Options Menu-->
     </v-app-bar>
 
     <v-main>
@@ -124,6 +124,7 @@
             <Calendar
               :avgStay="avgStay"
               :selectedSpace="selectedSpace"
+              :graphName="graphName"
               @logVisit="onLogVisit"
               @updateLoggedVisit="onLogVisit"
               @deleteVisit="onDeleteVisit"
@@ -327,6 +328,7 @@ export default {
 
       // For Calendar component
       selectedSpace: null,
+      graphName: '',
 
       // these are footer values
       value: 0,
@@ -341,7 +343,6 @@ export default {
       qrDialog: false,
       feedbackDialog: false,
 
-      graphName: '',
       // used by getAvatar()
       gender: ['men', 'women'],
 
@@ -620,7 +621,7 @@ export default {
     changeGraph(graphName) {
       // TODO will this setter interfere with session event?
       this.graphName =
-        graphName === 'Sandbox' ? 'Sandbox' : process.env.VUE_APP_NAMESPACE;
+        graphName === 'Sandbox' ? 'Sandbox' : this.$defaultGraphName;
 
       this.emitFromClient('changeGraph', this.graphName);
     },
@@ -767,6 +768,7 @@ export default {
     console.log('Cached avgStay', x || 'empty');
     console.log('Total avgStay', self.avgStay);
     self.selectedSpace = null;
+    self.graphName = self.$defaultGraphName;
 
     console.log('App.vue mounted');
   },

@@ -26,7 +26,7 @@
               v-model="username"
               :rules="rules"
               counter="10"
-              hint="Tab to go on"
+              hint="Tab to proceed"
               label="Enter a nickname to save the day"
               clearable
               @blur="onSubmit()"
@@ -36,7 +36,13 @@
             <v-spacer></v-spacer>
             <v-dialog v-model="dialog" persistent max-width="400px">
               <template v-slot:activator="{ on, attrs }">
-                <v-btn color="primary" dark v-bind="attrs" v-on="on">
+                <v-btn
+                  :disabled="username.length < 3"
+                  color="primary"
+                  dark
+                  v-bind="attrs"
+                  v-on="on"
+                >
                   OK
                 </v-btn>
               </template>
