@@ -125,6 +125,7 @@
               :avgStay="avgStay"
               :selectedSpace="selectedSpace"
               :graphName="graphName"
+              :userID="userID"
               @logVisit="onLogVisit"
               @updateLoggedVisit="onLogVisit"
               @deleteVisit="onDeleteVisit"

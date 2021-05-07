@@ -68,6 +68,7 @@
             @mousedown:time="startTime"
             @mousemove:time="mouseMove"
             @click:event="showEvent"
+            @click:interval="showInterval"
             @click:more="viewDay"
             @mousedown:event="startDrag"
             @mouseup:time="endDrag"
@@ -204,41 +205,73 @@
                   </v-btn>
                 </v-time-picker>
               </v-dialog>
+              <v-card-text>Visit ID: {{ editableEvent.id }}</v-card-text>
               <v-card-actions>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
-                    <v-btn
-                      v-bind="attrs"
-                      v-on="on"
-                      :disabled="!editableEvent"
-                      @click="goRight()"
-                      ><v-icon>mdi-delete</v-icon></v-btn
-                    >
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!editableEvent"
+                        @click="goRight()"
+                        ><v-icon>mdi-delete</v-icon></v-btn
+                      ><br />
+                      <small>Delete</small>
+                    </div>
                   </template>
                   <span>Delete Visit</span></v-tooltip
                 >
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
-                    <v-btn
-                      v-bind="attrs"
-                      v-on="on"
-                      :disabled="!editableEvent"
-                      @click="goLeft()"
-                      ><v-icon>mdi-graphql</v-icon></v-btn
-                    >
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!userID"
+                        @click="goLeft()"
+                        ><v-icon>mdi-graphql</v-icon></v-btn
+                      ><br />
+                      <small>{{ userID ? 'Log' : 'Not online' }}</small>
+                    </div>
                   </template>
                   <span>Log Visit on Server</span></v-tooltip
                 >
 
                 <v-spacer></v-spacer>
-                <v-btn text @click="selectedOpen = false">OK</v-btn>
-                <v-btn text @click="selectedOpen = false">Cancel</v-btn>
 
-                <!-- add this back later -->
-                <!-- <v-btn :disabled="!changed" @click="undo"
-          ><v-icon>mdi-undo</v-icon></v-btn
-        > --></v-card-actions
-              >
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!editableEvent"
+                        @click="saveVisit()"
+                        ><v-icon>mdi-content-save</v-icon></v-btn
+                      ><br />
+                      <small>Save</small>
+                    </div>
+                  </template>
+                  <span>Save Visit locally</span></v-tooltip
+                >
+
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!editableEvent"
+                        @click="selectedOpen = false"
+                        ><v-icon>mdi-cancel</v-icon></v-btn
+                      ><br />
+                      <small>Cancel</small>
+                    </div>
+                  </template>
+                  <span>Abandon changes</span></v-tooltip
+                >
+              </v-card-actions>
             </v-card>
           </v-menu>
           <!-- End Event Menu -->
@@ -269,8 +302,6 @@ import {
   showCurrentMilitaryTime,
   formatTime,
   formatSmallTime,
-  formatSmallTimeBare,
-  updateTime,
 } from '../utils/luxonHelpers';
 import { error, success, highlight, printJson } from '../utils/colors';
 
@@ -281,6 +312,7 @@ export default {
     selectedSpace: Object,
     avgStay: Number,
     graphName: String,
+    userID: String,
   },
 
   components: {
@@ -426,6 +458,12 @@ export default {
       this.changed = false;
     },
 
+    // called when you click the interval on the left side of the calendar
+    // not sure what to do with this, but it's cool.
+    showInterval(interval) {
+      console.log('showInterval:', printJson(interval));
+    },
+
     // @click:event="showEvent"
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
@@ -433,7 +471,7 @@ export default {
       this.editableEvent = event;
       const { name, id } = event;
       const parsedEvent = this.cal.parseEvent(event);
-      console.log('parsed Event', printJson(parsedEvent));
+      console.log('parsed Event:', printJson(parsedEvent));
 
       this.status = `Selected: ${name} [visitID: ${id}]`;
       const startHour =
@@ -833,12 +871,7 @@ export default {
     confirmUpdate(visit) {
       console.assert(error('wrong visit'), (visit = this.getVisit()));
 
-      this.feedbackMessage = `UPDATE ${
-        visit.logged ? 'a logged' : 'an unlogged'
-      } visit to ${visit.name} with new times: ${this.getInterval(
-        visit.start,
-        visit.end
-      )}?`;
+      this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
       this.action = 'UPDATE';
       this.$refs.confirm.open('Confirm', this.feedbackMessage).then((act) => {
         if (act) this.act();
@@ -872,14 +905,12 @@ export default {
     },
 
     saveVisit(visit = this.getVisit()) {
+      this.selectedOpen = false;
       this.confirm = false;
-      console.log(printJson(visit));
-      // TODO put back Visit
       Visit.updatePromise(visit).then(() => {
-        console.log(success(`New Visit:`, printJson(visit)));
+        console.log(success(`New/Saved Visit:`, printJson(visit)));
+        this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
       });
-
-      this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
     },
 
     changeType(type) {
@@ -1021,41 +1052,41 @@ export default {
       console.log('new parsed event:', printJson(this.cal.parseEvent(newVal)));
     },
 
-    starttime(newVal, oldVal) {
-      this.status = 'New starttime: ' + newVal + ' (oldVal:' + oldVal + ')';
-      if (!oldVal) {
-        return;
-      }
-      const newTime = updateTime(this.editableEvent.start, newVal, oldVal);
-      this.status = 'New event start: ' + formatTime(newTime);
-      console.log('New event start: ', newTime);
-      this.editableEvent.start = newTime;
-      this.getVisit(this.editableEvent.id).start = newTime;
-    },
+    // starttime(newVal, oldVal) {
+    //   this.status = 'New starttime: ' + newVal + ' (oldVal:' + oldVal + ')';
+    //   if (!oldVal) {
+    //     return;
+    //   }
+    //   const newTime = updateTime(this.editableEvent.start, newVal, oldVal);
+    //   this.status = 'New event start: ' + formatTime(newTime);
+    //   console.log('New event start: ', newTime);
+    //   this.editableEvent.start = newTime;
+    //   this.getVisit(this.editableEvent.id).start = newTime;
+    // },
 
-    endtime(newVal, oldVal) {
-      this.status = 'New endtime: ' + newVal + ' (oldVal:' + oldVal + ')';
-      if (!oldVal) {
-        return;
-      }
-      const newTime = updateTime(this.editableEvent.end, newVal, oldVal);
-      this.status = 'New event end: ' + formatTime(newTime);
-      console.log('New event end: ', newTime);
-      this.editableEvent.end = newTime;
-      this.getVisit(this.editableEvent.id).end = newTime;
-    },
+    // endtime(newVal, oldVal) {
+    //   this.status = 'New endtime: ' + newVal + ' (oldVal:' + oldVal + ')';
+    //   if (!oldVal) {
+    //     return;
+    //   }
+    //   const newTime = updateTime(this.editableEvent.end, newVal, oldVal);
+    //   this.status = 'New event end: ' + formatTime(newTime);
+    //   console.log('New event end: ', newTime);
+    //   this.editableEvent.end = newTime;
+    //   this.getVisit(this.editableEvent.id).end = newTime;
+    // },
 
-    modalStart(newVal, oldVal) {
-      if (!newVal && oldVal) {
-        this.confirmUpdate(this.editableEvent);
-      }
-    },
+    // modalStart(newVal, oldVal) {
+    //   if (!newVal && oldVal) {
+    //     this.confirmUpdate(this.editableEvent);
+    //   }
+    // },
 
-    modalEnd(newVal, oldVal) {
-      if (!newVal && oldVal) {
-        this.confirmUpdate(this.editableEvent);
-      }
-    },
+    // modalEnd(newVal, oldVal) {
+    //   if (!newVal && oldVal) {
+    //     this.confirmUpdate(this.editableEvent);
+    //   }
+    // },
 
     graphName() {
       this.status = this.getGraphName;
