@@ -25,7 +25,8 @@ export default class Visit extends Model {
       timed: this.boolean(true), // True means Visit isn't all day
 
       // From the graph component
-      logged: this.string(''), // ID of the graph node for this Visit
+      loggedNodeId: this.string(''), // ID of the graph node for this Visit
+      graphName: this.string(''), // graphname may be 'Sand box' for users' playground
     };
   }
 
@@ -37,6 +38,7 @@ export default class Visit extends Model {
     });
     return p;
   }
+  // Calendar addEvent() creates the visit (without reference to the exposure graph (see below))
   static updatePromise(val) {
     return new Promise((resolve, reject) => {
       console.log('update Visit with', JSON.stringify(val, null, 3));
@@ -47,15 +49,18 @@ export default class Visit extends Model {
         .catch((e) => reject(e));
     });
   }
-  static updateLoggedPromise(id, val) {
+  // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
+  static updateLoggedPromise(data) {
+    const { visitId, loggedNodeId, useGraphName } = data;
     return new Promise((resolve, reject) => {
-      console.log(
-        `Update Visit ${id} logged field with`,
-        JSON.stringify(val, null, 3)
-      );
+      console.log(`Update Visit with`, JSON.stringify(data, null, 3));
       this.$update({
-        where: id,
-        data: { logged: val, color: 'primary' },
+        where: visitId,
+        data: {
+          loggedNodeId: loggedNodeId,
+          graphName: useGraphName,
+          color: 'primary',
+        },
       })
         .then((p) => resolve(p))
         .catch((e) => reject(e));

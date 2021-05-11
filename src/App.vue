@@ -499,11 +499,8 @@ export default {
     onDeleteVisit(e) {
       this.selectedSpace = e;
       const query = {
-        username: this.username,
-        userID: this.$socket.client.userID,
-        selectedSpace: e.name,
-        start: e.start,
-        end: e.end,
+        loggedNodeId: this.selectedSpace.loggedNodeId,
+        useGraphName: this.selectedSpace.graphName,
       };
       this.auditor.logEntry(
         `DELETE Visit query: ${printJson(query)}`,
@@ -517,7 +514,7 @@ export default {
           'DELETE Visit'
         );
 
-        this.confirmationMessage = `You have deleted ${this.selectedSpace.name}`;
+        this.confirmationMessage = `You have deleted a visit to ${this.selectedSpace.name} on exposure graph ${this.selectedSpace.graphName}`;
         this.hasSaved = true;
       });
     },
@@ -530,7 +527,7 @@ export default {
         this.hasSaved = true;
         return;
       }
-      const { id, name, start, end, logged, oldStart, oldEnd } = visit;
+      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
       console.log('What is visit.id?', id);
       this.selectedSpace = visit;
       const query = {
@@ -539,9 +536,9 @@ export default {
         selectedSpace: name,
         start: start,
         end: end,
-        logged: logged,
-        oldStart: oldStart,
-        oldEnd: oldEnd,
+        interval: interval,
+        loggedNodeId,
+        graphName,
       };
       console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
       console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
@@ -551,7 +548,12 @@ export default {
       this.updateVisitOnGraph(query).then((node) => {
         // here's where we update the logged field to the id of the graph node
         // TODO Visit is not installed yet
-        Visit.updateLoggedPromise(id, node.id).then((v) => {
+        const data = {
+          visitId: id,
+          loggedNodeId: node.id,
+          useGraphName: this.graphName,
+        };
+        Visit.updateLoggedPromise(data).then((v) => {
           console.log(success(`Returned Visit:`, printJson(v)));
           console.log(highlight(`Updated Visit to:`, printJson(visit)));
         });

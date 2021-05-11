@@ -289,7 +289,7 @@
         </div>
       </v-col>
     </v-row>
-    <ConfirmDlg id="confirmDlg" ref="confirm" />
+    <ConfirmDlg id="confirmDlgId" ref="confirmDialog" />
   </v-sheet>
 </template>
 
@@ -352,6 +352,7 @@ export default {
   },
 
   data: () => ({
+    confirmDialog: null,
     calendarEvent: null,
     parsedEvent: null,
     ready: false,
@@ -370,7 +371,6 @@ export default {
     editedEnd: '',
 
     onCalendar: true,
-    changed: false,
     calendarElement: null,
     status: 'Ready',
     original: { start: 0, end: 0 },
@@ -402,7 +402,7 @@ export default {
     extendOriginal: null,
     dragEnd: null,
     pointerType: '',
-    //#endregion
+    //#endregion drag and drop
   }),
 
   methods: {
@@ -433,9 +433,6 @@ export default {
       this.cachedCalendarEvent = this.createEvent;
       this.original.start = event.start;
       this.original.end = event.end;
-
-      // extenstion stops in endDrag(), and that's where we set changed
-      this.changed = false;
     },
 
     // called when you click the interval on the left side of the calendar
@@ -480,7 +477,6 @@ export default {
       console.log(warn(printJson(this.parsedEvent)));
 
       this.status = 'Changing time slot';
-      this.changed = false;
 
       this.pointerType = nativeEvent.type;
       if (nativeEvent.type === 'touchstart') {
@@ -549,7 +545,6 @@ export default {
             this.dragEvent.start,
             this.dragEvent.end
           );
-          this.changed = true;
         }
       }
       // change the (start and) end time on the lower edge of the event
@@ -566,8 +561,6 @@ export default {
           this.createEvent.start,
           this.createEvent.end
         );
-
-        this.changed = true;
       }
     },
 
@@ -591,7 +584,6 @@ export default {
       this.createStart = null;
       this.extendOriginal = null;
       this.place = null;
-      this.changed = false;
     },
 
     // e.g., leaving event movement (e.g., to respond to confirmation dialog)
@@ -626,59 +618,73 @@ export default {
       }
       console.log('Going Right...');
       const visit = this.getCurrentVisit();
-      this.action = 'DELETE';
-      this.$refs.confirm
+      this.confirmDialog
         .open('Confirm', `Are you sure you want to DELETE ${visit.name}`)
         .then((act) => {
           if (act) {
-            this.act();
+            this.act('DELETE');
             this.reset();
             this.parsedEvent = null;
           }
         });
     },
 
+    // this is the only way to call logVisit (indirectly through this.act('LOG'))
     goLeft() {
       this.selectedOpen = false;
 
       if (!this.parsedEvent) {
         console.log('No visit selected');
-
         return;
       }
       console.log('Going Left...');
       const visit = this.getCurrentVisit();
+      const cachedVisit = this.getCurrentVisitFromCache();
 
       this.status = visit.logged
         ? `Updating a previously logged ${visit.name} visit on the server.`
         : 'Logging visit on the server...';
 
-      const feedbackMessage = `Are you sure you want to LOG ${
-        visit.name
-      } from ${formatTime(visit.start)} to ${formatTime(visit.end)} `;
-      this.action = 'LOG';
-      this.$refs.confirm.open('Confirm', feedbackMessage).then((act) => {
-        if (act) {
-          this.act();
+      const feedbackMessage =
+        visit.interval !== cachedVisit.interval
+          ? `You changed ${visit.name} from ${cachedVisit.interval}. Save and continue to log?`
+          : `Are you sure you want to LOG ${visit.name} from ${formatTime(
+              visit.start
+            )} to ${formatTime(visit.end)} `;
+
+      this.confirmDialog
+        .open('Confirm Log Visit', feedbackMessage)
+        .then((act) => {
+          if (!act) {
+            this.revert();
+            return;
+          }
+          // logVisit will save before logging
+          this.act('LOG');
           this.reset();
-        }
-      });
+        });
     },
 
-    act() {
-      switch (this.action) {
+    act(action) {
+      switch (action) {
         case 'DELETE':
           this.deleteVisit();
           break;
         case 'LOG':
           this.logVisit();
           break;
-        case 'UPDATE':
-          this.updateLoggedVisit();
-          break;
         case 'REVERT':
           this.revert();
           break;
+        case 'SAVE':
+          this.saveVisit();
+          break;
+        // case 'UPDATE':
+        //   this.updateLoggedVisit();
+        //   break;
+        default:
+          this.status = `Cannot handle ${action} action`;
+          this.$emit('error', this.status);
       }
 
       this.reset();
@@ -687,6 +693,7 @@ export default {
     revert() {
       this.selectedOpen = false;
       this.visits = Visit.all();
+      this.reset();
     },
 
     arrayRemove(arr, value, prop = 'id') {
@@ -738,6 +745,9 @@ export default {
         })
         .catch((e) => {
           console.log(error(e));
+          this.status = `Oops. We had trouble adding a visit on your calendar. Notified devs. I'm sorry.`;
+
+          this.$emit('error', e);
         });
 
       this.place = null;
@@ -748,7 +758,6 @@ export default {
       const visit = this.getCurrentVisit();
       const id = visit.id;
       const self = this;
-      this.action = '';
 
       // TODO put back Visit
       Visit.deletePromise(id)
@@ -771,15 +780,8 @@ export default {
     },
 
     logVisit() {
-      this.action = '';
-
       try {
         let visit = this.getCurrentVisit();
-        // const logType=visit.logged?'':''
-        if (visit.logged) {
-          this.status = 'You already logged this event to the server';
-          return;
-        }
 
         console.log(
           success('CalendarCard.js: Logging visit:', printJson(visit))
@@ -797,36 +799,35 @@ export default {
       }
     },
 
-    confirmUpdate(visit) {
-      console.assert(error('wrong visit'), (visit = this.getCurrentVisit()));
+    // confirmUpdate(visit) {
+    //   console.assert(error('wrong visit'), (visit = this.getCurrentVisit()));
 
-      this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
-      this.action = 'UPDATE';
-      this.$refs.confirm.open('Confirm', this.feedbackMessage).then((act) => {
-        if (act) this.act();
-      });
-    },
+    //   this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
+    //   this.confirmDialog.open('Confirm', this.feedbackMessage).then((act) => {
+    //     if (act) this.act('UPDATE');
+    //   });
+    // },
 
-    updateLoggedVisit() {
-      this.action = '';
+    // updateLoggedVisit() {
+    //   try {
+    //     // visit was updated in endDrag() and called from there
+    //     let visit = this.getCurrentVisit();
 
-      try {
-        // visit was updated in endDrag() and called from there
-        let visit = this.getCurrentVisit();
-
-        console.log(
-          success('CalendarCard.js: Updating logged visit:', printJson(visit))
-        );
-        this.saveVisit(visit);
-        this.$emit('updateLoggedVisit', visit);
-        this.confirm = false;
-        this.status = 'Updated server. Stay safe out there.';
-      } catch (error) {
-        this.status =
-          'Oops. We had trouble updating server. Devs notified. Sorry.';
-        this.$emit('error', error);
-      }
-    },
+    //     console.log(
+    //       success('CalendarCard.js: Updating logged visit:', printJson(visit))
+    //     );
+    //     // we need to tell the graph how to identify the visit that now has new start/end values
+    //     // either send back the original visit node ID or the old interval
+    //     this.saveVisit(visit);
+    //     this.$emit('updateLoggedVisit', visit);
+    //     this.confirm = false;
+    //     this.status = 'Updated server. Stay safe out there.';
+    //   } catch (error) {
+    //     this.status =
+    //       'Oops. We had trouble updating server. Devs notified. Sorry.';
+    //     this.$emit('error', error);
+    //   }
+    // },
 
     cancel() {
       this.confirm = false;
@@ -838,10 +839,12 @@ export default {
       this.selectedOpen = false;
       this.confirm = false;
       const visit = this.getCurrentVisit();
-      Visit.updatePromise(visit).then(() => {
-        console.log(success(`New/Saved Visit:`, printJson(visit)));
-        this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
-      });
+      Visit.updatePromise(visit)
+        .then(() => {
+          console.log(success(`New/Saved Visit:`, printJson(visit)));
+          this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+        })
+        .catch((err) => alert(err));
     },
 
     changeType(type) {
@@ -910,6 +913,11 @@ export default {
 
         case 'KeyY':
         case 'Enter':
+          if (!this.action) {
+            alert('handleKeydown cannot access this.action');
+            return;
+          }
+
           switch (this.action) {
             case 'DELETE':
               this.deleteVisit();
@@ -919,9 +927,9 @@ export default {
               this.logVisit();
               break;
 
-            case 'UPDATE':
-              this.updateLoggedVisit();
-              break;
+            // case 'UPDATE':
+            //   this.updateLoggedVisit();
+            //   break;
 
             case 'REVERT':
               this.revert();
@@ -954,6 +962,10 @@ export default {
         .find((v) => v.id == this.parsedEvent.input.id);
     },
 
+    getCurrentVisitFromCache() {
+      return Visit.find(this.parsedEvent.input.id);
+    },
+
     scrollToTime() {
       const time = this.getCurrentTime();
       const first = Math.max(0, time - (time % 30) - 100);
@@ -963,6 +975,7 @@ export default {
     updateTime() {
       setInterval(() => this.cal.updateTimes(), 60 * 1000);
     },
+
     calendarTimestampToDate(cts) {
       const parsedDate = DateTime.fromObject({
         month: cts.month,
@@ -971,30 +984,6 @@ export default {
         minute: cts.minute,
       });
       return parsedDate;
-    },
-
-    test(id) {
-      const visibleEvents = this.cal.getVisibleEvents();
-      const selectedEvent = visibleEvents.find(({ input }) => input.id === id);
-      console.log(highlight(printJson(selectedEvent)));
-      const parsedStart = this.cal.parseTimestamp(selectedEvent.input.start);
-      console.log(highlight(printJson(parsedStart)));
-      const parsedEnd = this.cal.parseTimestamp(selectedEvent.input.end);
-      console.log(highlight('start end', printJson(parsedEnd)));
-      parsedEnd.hour += 1;
-      console.log(highlight('updated end hour', printJson(parsedEnd)), '\n');
-
-      const parsedEndDate = this.calendarTimestampToDate({
-        month: parsedEnd.month,
-        day: parsedEnd.day,
-        hour: parsedEnd.hour,
-        minute: parsedEnd.minute,
-      });
-
-      console.log(highlight('end local Date', parsedEndDate));
-      const endTimestamp = parsedEndDate.ts;
-      selectedEvent.end = endTimestamp;
-      console.log(highlight('new end timestamp', endTimestamp));
     },
 
     handleChange(event) {
@@ -1020,6 +1009,7 @@ export default {
 
     visitCache(newVal) {
       this.visits = newVal;
+      this.confirmDialog = this.$refs.confirmDialog;
     },
 
     starttime(newVal, oldVal) {

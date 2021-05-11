@@ -8,7 +8,6 @@ const {
   highlight,
   success,
 } = require('./src/utils/colors.js');
-const { formatTime } = require('./src/utils/luxonHelpers.js');
 
 let options, graphName;
 
@@ -217,10 +216,6 @@ function onExposureWarning(userID) {
   }
 }
 
-function getDuration(start, end) {
-  return formatTime(start) - formatTime(end);
-}
-
 // delegated in index.js to handle socket.on('logVisit')
 // Can add a visit to the graph or can edit the time(s) of a logged visit [when the data includes the logged field (which is the id of the Relationship)]
 // Example query:
@@ -234,42 +229,19 @@ function logVisit(data) {
       selectedSpace,
       start,
       end,
-      logged,
-      oldStart,
-      oldEnd,
+      interval,
+      loggedNodeId,
+      useGraphName,
     } = data;
-
-    if (logged) {
-      if (oldStart && oldEnd) {
-        console.log(getDuration(oldStart, oldEnd));
-      } else {
-        console.log(
-          warn(
-            'We are logged, but may not have enough data (oldStart, oldEnd):'
-          ),
-          oldStart,
-          oldEnd
-        );
-        return;
-      }
+    if (useGraphName && graphName !== useGraphName) {
+      changeGraph(useGraphName);
     }
-
     // if data includes logged, we update
-    let query = logged
-      ? // updated event
-        `MATCH (v:visitor{ name: '${username}', userID: '${userID}'})-[r:visited{start:${oldStart}, end:${oldEnd}, duration: '${formatTime(
-          oldStart
-        )}-${formatTime(oldEnd)}'}]->(s:space{ name: '${selectedSpace}'}) 
-      SET r.start=${start}, r.end=${end}, r.duration='${formatTime(
-          start
-        )}-${formatTime(end)}'
-        RETURN id(r)`
-      : // first log
-        `MERGE (v:visitor{ name: '${username}', userID: '${userID}'}) 
+    let query = loggedNodeId
+      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId} SET v.start=${start}, v.end=${end}, v.interval='${interval}' RETURN id(v)`
+      : `MERGE (v:visitor{ name: '${username}', userID: '${userID}'}) 
       MERGE (s:space{ name: '${selectedSpace}'}) 
-      MERGE (v)-[r:visited{start:${start}, end:${end}, duration: '${formatTime(
-          start
-        )}-${formatTime(end)}'}]->(s)
+      MERGE (v)-[r:visited{start:${start}, end:${end}, interval: '${interval}'}]->(s)
         RETURN id(r)`;
 
     console.log(warn('Visit query:', query));
@@ -280,11 +252,17 @@ function logVisit(data) {
         const stats = results._statistics._raw;
         console.log(`stats: ${printJson(stats)}`);
         console.log(`New Visit graph ID: ${printJson(id)}`);
-        resolve({ logged: true, id: id });
+        resolve({
+          logged: true,
+          id: id,
+        });
       })
       .catch((error) => {
         console.log(error);
-        reject({ logged: false, error: error });
+        reject({
+          logged: false,
+          error: error,
+        });
       });
   });
 }
@@ -294,8 +272,11 @@ function logVisit(data) {
 // MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
 function deleteVisit(data) {
   return new Promise((resolve, reject) => {
-    const { username, userID, selectedSpace, start, end } = data;
-    let query = `MATCH  (:visitor{name:"${username}", userID: "${userID}"})-[v:visited{start:${start}, end:${end}}]->(:space{name:"${selectedSpace}"}) DELETE v`;
+    const { loggedNodeId, useGraphName } = data;
+    if (graphName !== useGraphName) {
+      changeGraph(useGraphName);
+    }
+    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId}  DELETE v`;
     console.log(warn('DELETE Visit query:', query));
     Graph.query(query)
       .then((results) => {
@@ -339,7 +320,7 @@ MATCH p=()-[v:visited]->() where id(v)=9 RETURN p
 
 UPDATE existing RELATIONSHIP
 MATCH ()-[v:visited]->() where id(v)=0 set v.start=1617911100000, v.end=1617912000000
-MATCH (v:visitor{ name: 'dciFoyle', userID: 'dab6b36ae9a3b438'})-[r:visited{start:1618257600000, end:1618261200000, duration:'4/12/2021, 1:00 PM TO 4/12/2021, 2:00 PM'}]->(s:space{ name: 'Sisters'}) SET r.start=1618261200000, r.end=1618264800000, r.duration='hour later'"
+MATCH (v:visitor{ name: 'dciFoyle', userID: 'dab6b36ae9a3b438'})-[r:visited{start:1618257600000, end:1618261200000, interval:'4/12/2021, 1:00 PM TO 4/12/2021, 2:00 PM'}]->(s:space{ name: 'Sisters'}) SET r.start=1618261200000, r.end=1618264800000, r.interval='hour later'"
 
 
 
