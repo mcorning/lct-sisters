@@ -1,6 +1,5 @@
 <template>
   <v-sheet class="overflow-auto fill-height" :height="sheetHeight">
-    {{ visitId ? visitId : 'no selected visit' }}
     <v-row id="calendarRow" align="start">
       <v-col>
         <!-- calendar controls -->
@@ -125,7 +124,9 @@
               flat
             >
               <v-toolbar :color="getToolbarColor()" dark>
-                <v-toolbar-title v-html="parsedEvent.name"></v-toolbar-title>
+                <v-toolbar-title
+                  v-html="parsedEvent.input.name"
+                ></v-toolbar-title>
               </v-toolbar>
 
               <v-dialog
@@ -205,7 +206,7 @@
                   </v-btn>
                 </v-time-picker>
               </v-dialog>
-              <v-card-text>Visit ID: {{ parsedEvent.id }}</v-card-text>
+              <v-card-text>Visit ID: {{ parsedEvent.input.id }}</v-card-text>
               <v-card-actions>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
@@ -369,7 +370,6 @@ export default {
     editedEnd: '',
 
     onCalendar: true,
-    visitId: '',
     changed: false,
     calendarElement: null,
     status: 'Ready',
@@ -414,36 +414,12 @@ export default {
 
     formatStartEndTime: (t) => formatSmallTime(t),
 
-    getVisit(id = this.visitId) {
-      const x = this.visits
-        .slice(0) // create copy of "array" for iterating
-        .reduce((a, c, i, arr) => {
-          if (c.id === id) arr.splice(1);
-          return c;
-        }, {});
-      return x;
-    },
-
-    undo() {
-      this.action = 'REVERT';
-      this.feedbackMessage = this.updateFeedbackMessage;
-      // this.confirm = true;
-      this.$refs.confirm
-        .open('Confirm', this.updateFeedbackMessage)
-        .then((act) => {
-          if (act) this.act();
-        });
-      this.status = `Original interval ${this.getInterval(
-        this.original.start,
-        this.original.end
-      )}`;
-      this.changed = false;
-    },
-
     // called by event-color calendar event
     getEventColor(event) {
       const c =
-        this.visitId === event.id ? `${event.color} darken-1` : event.color;
+        this.parsedEvent?.input.id === event.id
+          ? `${event.color} darken-1`
+          : event.color;
       return c;
     },
 
@@ -451,8 +427,6 @@ export default {
     // @mousedown.stop=
     // @touchstart.stop
     extendBottom(event) {
-      this.visitId = event.id;
-
       this.createEvent = event;
       this.createStart = event.start;
       this.extendOriginal = event.end;
@@ -474,13 +448,11 @@ export default {
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
     showEvent({ nativeEvent, event }) {
-      const { name, id } = event;
+      const { id } = event;
 
       // get access to the event's index and CalendarTimestamp data
       this.parsedEvent = this.getCurrentEvent(id);
       console.log(warn(printJson(this.parsedEvent)));
-
-      this.visitId = id;
 
       this.starttime = this.parsedEvent.start.time;
       this.endtime = this.parsedEvent.end.time;
@@ -492,8 +464,7 @@ export default {
       // if user cancels, we refresh the visits from the cache by calling revert()
       // otherwise we update the cache with the new values by calling saveVisit()
       this.selectedOpen = true;
-
-      this.status = `Selected: ${name} [visitID: ${id}] is using ${this.getGraphName}`;
+      this.status = `Select Save (to ${this.getGraphName}) or Cancel from dialog`;
     },
 
     //#region  Drag and Drop
@@ -505,7 +476,10 @@ export default {
         console.log('Leaving drag');
         return;
       }
-      this.status = '';
+      this.parsedEvent = this.getCurrentEvent(event.id);
+      console.log(warn(printJson(this.parsedEvent)));
+
+      this.status = 'Changing time slot';
       this.changed = false;
 
       this.pointerType = nativeEvent.type;
@@ -513,8 +487,6 @@ export default {
         nativeEvent.preventDefault();
       }
       if (event && timed) {
-        this.visitId = event.id;
-
         this.dragEvent = event;
         this.dragTime = null;
         this.extendOriginal = null;
@@ -561,7 +533,6 @@ export default {
         console.log(
           highlight('changing the time slot using', this.pointerType)
         );
-        this.visitId = this.dragEvent.id;
         const start = this.dragEvent.start;
         const end = this.dragEvent.end;
         const duration = end - start;
@@ -589,7 +560,6 @@ export default {
         const min = Math.min(mouseRounded, this.createStart);
         const max = Math.max(mouseRounded, this.createStart);
 
-        this.visitId = this.createEvent.id;
         this.createEvent.start = min;
         this.createEvent.end = max;
         this.createEvent.interval = this.getInterval(
@@ -612,46 +582,6 @@ export default {
       this.reset();
     },
 
-    check(event) {
-      if (event && this.changed) {
-        console.log(this.visitId);
-        console.log('original:');
-        console.log(
-          this.original.start,
-          formatTime(this.original.start),
-          this.original.end,
-          formatTime(this.original.end)
-        );
-
-        if (this.dragEvent) {
-          console.log('dragEvent:');
-          console.log(
-            this.dragEvent.start,
-            formatTime(this.dragEvent.start),
-            this.dragEvent.end,
-            formatTime(this.dragEvent.end)
-          );
-          this.dragEvent.oldStart = this.original.start;
-          this.dragEvent.oldEnd = this.original.end;
-          this.visitId = this.dragEvent.id;
-        }
-
-        if (this.createEvent) {
-          console.log('createEvent:');
-          console.log(
-            this.createEvent.start,
-            formatTime(this.createEvent.start),
-            this.createEvent.end,
-            formatTime(this.createEvent.end)
-          );
-          this.createEvent.oldStart = this.original.start;
-          this.createEvent.oldEnd = this.original.end;
-          this.visitId = this.createEvent.id;
-        }
-        this.confirmUpdate(this.dragEvent || this.createEvent);
-      }
-    },
-
     reset() {
       this.calendarElement.style.overflowY = 'auto';
 
@@ -662,10 +592,10 @@ export default {
       this.extendOriginal = null;
       this.place = null;
       this.changed = false;
-      this.visitId = '';
     },
 
     // e.g., leaving event movement (e.g., to respond to confirmation dialog)
+    // TODO Revaluate with current revert()
     cancelDrag() {
       if (this.createEvent) {
         if (this.extendOriginal) {
@@ -677,7 +607,7 @@ export default {
 
       this.reset();
     },
-
+    // TODO Revaluate with current revert()
     removeVisit(event) {
       const i = this.visits.indexOf(event);
       if (i !== -1) {
@@ -695,7 +625,7 @@ export default {
         return;
       }
       console.log('Going Right...');
-      const visit = this.getVisit();
+      const visit = this.getCurrentVisit();
       this.action = 'DELETE';
       this.$refs.confirm
         .open('Confirm', `Are you sure you want to DELETE ${visit.name}`)
@@ -717,7 +647,7 @@ export default {
         return;
       }
       console.log('Going Left...');
-      const visit = this.getVisit();
+      const visit = this.getCurrentVisit();
 
       this.status = visit.logged
         ? `Updating a previously logged ${visit.name} visit on the server.`
@@ -756,13 +686,7 @@ export default {
 
     revert() {
       this.selectedOpen = false;
-      this.visits = this.visitCache;
-    },
-    revertX() {
-      this.cachedCalendarEvent.start = this.original.start;
-      this.cachedCalendarEvent.end = this.original.end;
-      this.confirm = false;
-      this.saveVisit();
+      this.visits = Visit.all();
     },
 
     arrayRemove(arr, value, prop = 'id') {
@@ -773,6 +697,7 @@ export default {
       });
     },
 
+    // TODO use parsedEvent instead
     getInterval(start, end) {
       return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
     },
@@ -786,10 +711,9 @@ export default {
     },
 
     addEvent(time) {
-      this.visitId = randomId();
       this.createStart = this.roundTime(time);
       this.createEvent = {
-        id: this.visitId,
+        id: randomId(),
         name: this.place.name,
         start: this.createStart,
         end: this.createStart + this.avgStay,
@@ -821,7 +745,7 @@ export default {
 
     deleteVisit() {
       this.confirm = false;
-      const visit = this.getVisit();
+      const visit = this.getCurrentVisit();
       const id = visit.id;
       const self = this;
       this.action = '';
@@ -850,7 +774,7 @@ export default {
       this.action = '';
 
       try {
-        let visit = this.getVisit();
+        let visit = this.getCurrentVisit();
         // const logType=visit.logged?'':''
         if (visit.logged) {
           this.status = 'You already logged this event to the server';
@@ -874,7 +798,7 @@ export default {
     },
 
     confirmUpdate(visit) {
-      console.assert(error('wrong visit'), (visit = this.getVisit()));
+      console.assert(error('wrong visit'), (visit = this.getCurrentVisit()));
 
       this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
       this.action = 'UPDATE';
@@ -888,7 +812,7 @@ export default {
 
       try {
         // visit was updated in endDrag() and called from there
-        let visit = this.getVisit();
+        let visit = this.getCurrentVisit();
 
         console.log(
           success('CalendarCard.js: Updating logged visit:', printJson(visit))
@@ -914,46 +838,6 @@ export default {
       this.selectedOpen = false;
       this.confirm = false;
       const visit = this.getCurrentVisit();
-      const event = this.getCurrentEvent();
-      visit.interval =
-        event.start.hour +
-        ':' +
-        event.start.minute +
-        '-' +
-        event.end.hour +
-        ':' +
-        event.end.minute;
-      Visit.updatePromise(visit).then(() => {
-        console.log(success(`New/Saved Visit:`, printJson(visit)));
-        this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
-      });
-    },
-
-    saveVisitX(visit) {
-      this.selectedOpen = false;
-      this.confirm = false;
-
-      // update parsedEvent/visit times
-      this.parsedEvent.start.time = this.starttime;
-      this.parsedEvent.start.hour = this.starttime.split(':')[0];
-      this.parsedEvent.start.minute = this.starttime.split(':')[1];
-      let x = DateTime.fromObject({
-        day: this.parsedEvent.start.day,
-        hour: this.parsedEvent.start.hour,
-        minute: this.parsedEvent.start.minute,
-      });
-      console.log(x);
-      const startDate = this.cal.timestampToDate(this.parsedEvent.start);
-      visit.start = startDate.getTime();
-
-      this.parsedEvent.end.time = this.endtime;
-      this.parsedEvent.end.hour = this.endtime.split(':')[0];
-      this.parsedEvent.end.minute = this.endtime.split(':')[1];
-      const endDate = this.cal.timestampToDate(this.parsedEvent.end);
-      visit.end = endDate.getTime();
-
-      visit.interval = `${this.starttime}-${this.endtime}`;
-
       Visit.updatePromise(visit).then(() => {
         console.log(success(`New/Saved Visit:`, printJson(visit)));
         this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
@@ -1119,6 +1003,10 @@ export default {
       // but change the calendar type, and you will see different start.date and end.date values
       console.log(highlight(printJson(event)));
     },
+
+    padTime(number) {
+      return number < 10 ? '0' + number : number + '';
+    },
   },
 
   watch: {
@@ -1129,6 +1017,7 @@ export default {
     // 'dragEvent.start': function (newValue, oldValue) {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },
+
     visitCache(newVal) {
       this.visits = newVal;
     },
@@ -1137,26 +1026,42 @@ export default {
       if (!oldVal) {
         return;
       }
-      this.parsedEvent.start.hour = newVal.slice(0, 2) / 1;
-      this.parsedEvent.start.minute = newVal.slice(3, 5) / 1;
-      const startDate = this.calendarTimestampToDate(this.parsedEvent.start);
-      console.log(warn('editing id', this.parsedEvent.input.id));
-      console.log(warn('orig start', this.getCurrentVisit().start));
-      this.getCurrentVisit().start = startDate.ts;
-      console.log(warn('new start', this.getCurrentVisit().start));
+      const event = this.parsedEvent;
+      const visit = this.getCurrentVisit();
+      console.log(warn('editing id', event.input.id));
+      console.log(warn('Orig end', visit.start, visit.interval));
+
+      event.start.hour = newVal.slice(0, 2) / 1;
+      event.start.minute = newVal.slice(3, 5) / 1;
+
+      const startDate = this.calendarTimestampToDate(event.start);
+      visit.start = startDate.ts;
+      visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
+        event.start.minute
+      )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
+      console.log(warn('New start:', visit.start, visit.interval));
     },
 
     endtime(newVal, oldVal) {
       if (!oldVal) {
         return;
       }
-      this.parsedEvent.end.hour = newVal.slice(0, 2) / 1;
-      this.parsedEvent.end.minute = newVal.slice(3, 5) / 1;
-      const endDate = this.calendarTimestampToDate(this.parsedEvent.end);
-      console.log(warn('editing id', this.parsedEvent.input.id));
-      console.log(warn('orig end', this.getCurrentVisit().end));
-      this.getCurrentVisit().end = endDate.ts;
-      console.log(warn('new end', this.getCurrentVisit().end));
+      const event = this.parsedEvent;
+      const visit = this.getCurrentVisit();
+      console.log(warn('editing id', event.input.id));
+      console.log(warn('Orig end', visit.end, visit.interval));
+
+      event.end.hour = newVal.slice(0, 2) / 1;
+      event.end.minute = newVal.slice(3, 5) / 1;
+
+      const endDate = this.calendarTimestampToDate(event.end);
+
+      visit.end = endDate.ts;
+      visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
+        event.start.minute
+      )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
+
+      console.log(warn('New end', visit.end, visit.interval));
     },
 
     graphName() {
