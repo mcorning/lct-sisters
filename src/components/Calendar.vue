@@ -1,5 +1,6 @@
 <template>
   <v-sheet class="overflow-auto fill-height" :height="sheetHeight">
+    {{ visitId ? visitId : 'no selected visit' }}
     <v-row id="calendarRow" align="start">
       <v-col>
         <!-- calendar controls -->
@@ -42,8 +43,6 @@
         </v-sheet>
 
         <!-- calendar -->
-        <!-- in case we need it...
-             @mouseleave.native="cancelDrag" -->
 
         <!-- touch on phone is too sensitive
              @touchstart:time="startTime"
@@ -74,6 +73,7 @@
             @mouseup:time="endDrag"
             @click:date="viewDay"
             @mouseleave.native="cancelDrag"
+            @change="handleChange"
             v-touch="{
               left: goLeft,
               right: goRight,
@@ -119,13 +119,13 @@
             offset-y
           >
             <v-card
-              v-if="editableEvent"
+              v-if="parsedEvent"
               color="grey lighten-4"
               max-width="300px"
               flat
             >
               <v-toolbar :color="getToolbarColor()" dark>
-                <v-toolbar-title v-html="editableEvent.name"></v-toolbar-title>
+                <v-toolbar-title v-html="parsedEvent.name"></v-toolbar-title>
               </v-toolbar>
 
               <v-dialog
@@ -138,7 +138,7 @@
                 <template v-slot:activator="{ on, attrs }">
                   <v-text-field
                     v-model="starttime"
-                    :disabled="!editableEvent"
+                    :disabled="!parsedEvent"
                     label="Start"
                     prepend-icon="mdi-clock-time-four-outline"
                     readonly
@@ -177,7 +177,7 @@
                 <template v-slot:activator="{ on, attrs }">
                   <v-text-field
                     v-model="endtime"
-                    :disabled="!editableEvent"
+                    :disabled="!parsedEvent"
                     label="End"
                     prepend-icon="mdi-clock-time-four-outline"
                     readonly
@@ -205,7 +205,7 @@
                   </v-btn>
                 </v-time-picker>
               </v-dialog>
-              <v-card-text>Visit ID: {{ editableEvent.id }}</v-card-text>
+              <v-card-text>Visit ID: {{ parsedEvent.id }}</v-card-text>
               <v-card-actions>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
@@ -213,7 +213,7 @@
                       <v-btn
                         v-bind="attrs"
                         v-on="on"
-                        :disabled="!editableEvent"
+                        :disabled="!parsedEvent"
                         @click="goRight()"
                         ><v-icon>mdi-delete</v-icon></v-btn
                       ><br />
@@ -240,13 +240,14 @@
 
                 <v-spacer></v-spacer>
 
+                <!-- btn click calls saveVisit() -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
                       <v-btn
                         v-bind="attrs"
                         v-on="on"
-                        :disabled="!editableEvent"
+                        :disabled="!parsedEvent"
                         @click="saveVisit()"
                         ><v-icon>mdi-content-save</v-icon></v-btn
                       ><br />
@@ -256,14 +257,15 @@
                   <span>Save Visit locally</span></v-tooltip
                 >
 
+                <!-- btn click sets calls revert() -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
                       <v-btn
                         v-bind="attrs"
                         v-on="on"
-                        :disabled="!editableEvent"
-                        @click="selectedOpen = false"
+                        :disabled="!parsedEvent"
+                        @click="revert()"
                         ><v-icon>mdi-cancel</v-icon></v-btn
                       ><br />
                       <small>Cancel</small>
@@ -299,11 +301,11 @@ import Visit from '@/models/Visit';
 
 import {
   getNow,
-  showCurrentMilitaryTime,
+  DateTime,
   formatTime,
   formatSmallTime,
 } from '../utils/luxonHelpers';
-import { error, success, highlight, printJson } from '../utils/colors';
+import { error, success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
   name: 'Calendar',
@@ -329,7 +331,7 @@ export default {
     },
 
     getGraphName() {
-      return `Using ${this.graphName} graph`;
+      return `the ${this.graphName} exposure graph`;
     },
 
     updateFeedbackMessage() {
@@ -343,9 +345,14 @@ export default {
     visitCache() {
       return Visit.all();
     },
+    visibleEvents() {
+      return this.cal.getVisibleEvents();
+    },
   },
 
   data: () => ({
+    calendarEvent: null,
+    parsedEvent: null,
     ready: false,
     selectedOpen: false,
     selectedElement: null,
@@ -354,7 +361,6 @@ export default {
     calendarHeight: 0,
     bp: null,
     editing: false,
-    editableEvent: null,
     modalStart: false,
     modalEnd: false,
     starttime: '',
@@ -468,31 +474,26 @@ export default {
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
     showEvent({ nativeEvent, event }) {
-      this.editableEvent = event;
       const { name, id } = event;
-      const parsedEvent = this.cal.parseEvent(event);
-      console.log('parsed Event:', printJson(parsedEvent));
 
-      this.status = `Selected: ${name} [visitID: ${id}]`;
-      const startHour =
-        parsedEvent.start.hour > 12
-          ? parsedEvent.start.hour - 12
-          : parsedEvent.start.hour;
-      const endHour =
-        parsedEvent.end.hour > 12
-          ? parsedEvent.end.hour - 12
-          : parsedEvent.end.hour;
-      const startMinute =
-        parsedEvent.start.minute == 0 ? '00' : parsedEvent.start.minute;
-      const endMinute =
-        parsedEvent.end.minute == 0 ? '00' : parsedEvent.end.minute;
-      this.starttime = `${startHour}:${startMinute}`;
-      this.endtime = `${endHour}:${endMinute}`;
+      // get access to the event's index and CalendarTimestamp data
+      this.parsedEvent = this.getCurrentEvent(id);
+      console.log(warn(printJson(this.parsedEvent)));
 
-      this.visitId = event.id;
+      this.visitId = id;
+
+      this.starttime = this.parsedEvent.start.time;
+      this.endtime = this.parsedEvent.end.time;
+
+      //selectedElement is the activator for the Event Menu
       this.selectedElement = nativeEvent.target;
+      // open the edit menu
+      // we will adjust the start/end times in realtime
+      // if user cancels, we refresh the visits from the cache by calling revert()
+      // otherwise we update the cache with the new values by calling saveVisit()
       this.selectedOpen = true;
-      this.status = this.getGraphName;
+
+      this.status = `Selected: ${name} [visitID: ${id}] is using ${this.getGraphName}`;
     },
 
     //#region  Drag and Drop
@@ -544,7 +545,7 @@ export default {
       else if (this.place) {
         this.addEvent(mouse);
       } else {
-        this.editableEvent = null;
+        this.parsedEvent = null;
       }
     },
 
@@ -689,7 +690,7 @@ export default {
 
     goRight() {
       this.selectedOpen = false;
-      if (!this.editableEvent) {
+      if (!this.parsedEvent) {
         console.log('No visit selected');
         return;
       }
@@ -702,7 +703,7 @@ export default {
           if (act) {
             this.act();
             this.reset();
-            this.editableEvent = null;
+            this.parsedEvent = null;
           }
         });
     },
@@ -710,7 +711,7 @@ export default {
     goLeft() {
       this.selectedOpen = false;
 
-      if (!this.editableEvent) {
+      if (!this.parsedEvent) {
         console.log('No visit selected');
 
         return;
@@ -754,6 +755,10 @@ export default {
     },
 
     revert() {
+      this.selectedOpen = false;
+      this.visits = this.visitCache;
+    },
+    revertX() {
       this.cachedCalendarEvent.start = this.original.start;
       this.cachedCalendarEvent.end = this.original.end;
       this.confirm = false;
@@ -904,9 +909,51 @@ export default {
       this.reset();
     },
 
-    saveVisit(visit = this.getVisit()) {
+    // visit has new start/end values set by Event edit menu
+    saveVisit() {
       this.selectedOpen = false;
       this.confirm = false;
+      const visit = this.getCurrentVisit();
+      const event = this.getCurrentEvent();
+      visit.interval =
+        event.start.hour +
+        ':' +
+        event.start.minute +
+        '-' +
+        event.end.hour +
+        ':' +
+        event.end.minute;
+      Visit.updatePromise(visit).then(() => {
+        console.log(success(`New/Saved Visit:`, printJson(visit)));
+        this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+      });
+    },
+
+    saveVisitX(visit) {
+      this.selectedOpen = false;
+      this.confirm = false;
+
+      // update parsedEvent/visit times
+      this.parsedEvent.start.time = this.starttime;
+      this.parsedEvent.start.hour = this.starttime.split(':')[0];
+      this.parsedEvent.start.minute = this.starttime.split(':')[1];
+      let x = DateTime.fromObject({
+        day: this.parsedEvent.start.day,
+        hour: this.parsedEvent.start.hour,
+        minute: this.parsedEvent.start.minute,
+      });
+      console.log(x);
+      const startDate = this.cal.timestampToDate(this.parsedEvent.start);
+      visit.start = startDate.getTime();
+
+      this.parsedEvent.end.time = this.endtime;
+      this.parsedEvent.end.hour = this.endtime.split(':')[0];
+      this.parsedEvent.end.minute = this.endtime.split(':')[1];
+      const endDate = this.cal.timestampToDate(this.parsedEvent.end);
+      visit.end = endDate.getTime();
+
+      visit.interval = `${this.starttime}-${this.endtime}`;
+
       Visit.updatePromise(visit).then(() => {
         console.log(success(`New/Saved Visit:`, printJson(visit)));
         this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
@@ -927,7 +974,7 @@ export default {
       return event ? 'primary' : 'secondary';
     },
     getToolbarColor() {
-      return this.editableEvent.color === 'primary'
+      return this.parsedEvent.color === 'primary'
         ? 'primary lighten-2'
         : 'secondary darken-2';
     },
@@ -1011,22 +1058,66 @@ export default {
         : 0;
     },
 
+    // id is passed in with showEvent.
+    // otherwise we refer to the current parsedEvent.input.id value
+    getCurrentEvent(id = this.parsedEvent.input.id) {
+      return this.cal.getVisibleEvents().find(({ input }) => input.id === id);
+    },
+
+    getCurrentVisit() {
+      return this.visitCache
+        .flat()
+        .find((v) => v.id == this.parsedEvent.input.id);
+    },
+
     scrollToTime() {
       const time = this.getCurrentTime();
-      const first = Math.max(0, time - (time % 30) - 30);
-      console.log(
-        'time',
-        time,
-        'first',
-        first,
-        'militaryTime',
-        showCurrentMilitaryTime()
-      );
+      const first = Math.max(0, time - (time % 30) - 100);
       this.cal.scrollToTime(first);
     },
 
     updateTime() {
       setInterval(() => this.cal.updateTimes(), 60 * 1000);
+    },
+    calendarTimestampToDate(cts) {
+      const parsedDate = DateTime.fromObject({
+        month: cts.month,
+        day: cts.day,
+        hour: cts.hour,
+        minute: cts.minute,
+      });
+      return parsedDate;
+    },
+
+    test(id) {
+      const visibleEvents = this.cal.getVisibleEvents();
+      const selectedEvent = visibleEvents.find(({ input }) => input.id === id);
+      console.log(highlight(printJson(selectedEvent)));
+      const parsedStart = this.cal.parseTimestamp(selectedEvent.input.start);
+      console.log(highlight(printJson(parsedStart)));
+      const parsedEnd = this.cal.parseTimestamp(selectedEvent.input.end);
+      console.log(highlight('start end', printJson(parsedEnd)));
+      parsedEnd.hour += 1;
+      console.log(highlight('updated end hour', printJson(parsedEnd)), '\n');
+
+      const parsedEndDate = this.calendarTimestampToDate({
+        month: parsedEnd.month,
+        day: parsedEnd.day,
+        hour: parsedEnd.hour,
+        minute: parsedEnd.minute,
+      });
+
+      console.log(highlight('end local Date', parsedEndDate));
+      const endTimestamp = parsedEndDate.ts;
+      selectedEvent.end = endTimestamp;
+      console.log(highlight('new end timestamp', endTimestamp));
+    },
+
+    handleChange(event) {
+      // this represents the start and end days on the calendar
+      // we see it during mounting (where we call checkChange()) as one day
+      // but change the calendar type, and you will see different start.date and end.date values
+      console.log(highlight(printJson(event)));
     },
   },
 
@@ -1039,54 +1130,34 @@ export default {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },
     visitCache(newVal) {
-      console.log(highlight('visitCache changed'));
       this.visits = newVal;
-      console.log(
-        'visits',
-        this.visits.length,
-        'cache',
-        this.visitCache.length
-      );
-    },
-    event(newVal) {
-      console.log('new parsed event:', printJson(this.cal.parseEvent(newVal)));
     },
 
-    // starttime(newVal, oldVal) {
-    //   this.status = 'New starttime: ' + newVal + ' (oldVal:' + oldVal + ')';
-    //   if (!oldVal) {
-    //     return;
-    //   }
-    //   const newTime = updateTime(this.editableEvent.start, newVal, oldVal);
-    //   this.status = 'New event start: ' + formatTime(newTime);
-    //   console.log('New event start: ', newTime);
-    //   this.editableEvent.start = newTime;
-    //   this.getVisit(this.editableEvent.id).start = newTime;
-    // },
+    starttime(newVal, oldVal) {
+      if (!oldVal) {
+        return;
+      }
+      this.parsedEvent.start.hour = newVal.slice(0, 2) / 1;
+      this.parsedEvent.start.minute = newVal.slice(3, 5) / 1;
+      const startDate = this.calendarTimestampToDate(this.parsedEvent.start);
+      console.log(warn('editing id', this.parsedEvent.input.id));
+      console.log(warn('orig start', this.getCurrentVisit().start));
+      this.getCurrentVisit().start = startDate.ts;
+      console.log(warn('new start', this.getCurrentVisit().start));
+    },
 
-    // endtime(newVal, oldVal) {
-    //   this.status = 'New endtime: ' + newVal + ' (oldVal:' + oldVal + ')';
-    //   if (!oldVal) {
-    //     return;
-    //   }
-    //   const newTime = updateTime(this.editableEvent.end, newVal, oldVal);
-    //   this.status = 'New event end: ' + formatTime(newTime);
-    //   console.log('New event end: ', newTime);
-    //   this.editableEvent.end = newTime;
-    //   this.getVisit(this.editableEvent.id).end = newTime;
-    // },
-
-    // modalStart(newVal, oldVal) {
-    //   if (!newVal && oldVal) {
-    //     this.confirmUpdate(this.editableEvent);
-    //   }
-    // },
-
-    // modalEnd(newVal, oldVal) {
-    //   if (!newVal && oldVal) {
-    //     this.confirmUpdate(this.editableEvent);
-    //   }
-    // },
+    endtime(newVal, oldVal) {
+      if (!oldVal) {
+        return;
+      }
+      this.parsedEvent.end.hour = newVal.slice(0, 2) / 1;
+      this.parsedEvent.end.minute = newVal.slice(3, 5) / 1;
+      const endDate = this.calendarTimestampToDate(this.parsedEvent.end);
+      console.log(warn('editing id', this.parsedEvent.input.id));
+      console.log(warn('orig end', this.getCurrentVisit().end));
+      this.getCurrentVisit().end = endDate.ts;
+      console.log(warn('new end', this.getCurrentVisit().end));
+    },
 
     graphName() {
       this.status = this.getGraphName;
@@ -1139,7 +1210,7 @@ export default {
     // so we need to restrict them to the calendarCard
     window.addEventListener('keydown', this.handleKeydown);
 
-    self.status = self.getGraphName;
+    self.status = 'Using ' + self.getGraphName;
 
     console.log('mounted calendarCard');
   },

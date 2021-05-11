@@ -84,9 +84,8 @@ const updateTime = (time, newVal, oldVal) => {
   );
   const newTime = time + hrs * 3600000 + mins * 60000;
   console.log(
-    `Ms difference in original: ${time} and updated: ${newTime} is ${
-      newTime - time
-    } ms`
+    `Ms difference in original: ${time} and updated: ${newTime} is ${newTime -
+      time} ms`
   );
   console.log('newTime:', newTime, formatTime(newTime));
 
@@ -94,6 +93,7 @@ const updateTime = (time, newVal, oldVal) => {
 };
 
 module.exports = {
+  DateTime,
   getNow,
   getNowAsIso,
   isToday,
