@@ -35,7 +35,7 @@
             :outlined="btn.outlined"
             @click.native="answer(btn.agree)"
           >
-            {{ btn.label }} {{ btn.action }}
+            {{ btn.label }}
           </v-btn>
         </template>
       </v-card-actions>

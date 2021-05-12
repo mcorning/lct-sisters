@@ -71,7 +71,6 @@
             @mousedown:event="startDrag"
             @mouseup:time="endDrag"
             @click:date="viewDay"
-            @mouseleave.native="cancelDrag"
             @change="handleChange"
             v-touch="{
               left: goLeft,
@@ -215,21 +214,6 @@
                       <v-btn
                         v-bind="attrs"
                         v-on="on"
-                        :disabled="!parsedEvent"
-                        @click="goRight()"
-                        ><v-icon>mdi-delete</v-icon></v-btn
-                      ><br />
-                      <small>Delete</small>
-                    </div>
-                  </template>
-                  <span>Delete Visit</span></v-tooltip
-                >
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
                         :disabled="!userID"
                         @click="goLeft()"
                         ><v-icon>mdi-graphql</v-icon></v-btn
@@ -239,10 +223,7 @@
                   </template>
                   <span>Log Visit on Server</span></v-tooltip
                 >
-
                 <v-spacer></v-spacer>
-
-                <!-- btn click calls saveVisit() -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
@@ -250,13 +231,13 @@
                         v-bind="attrs"
                         v-on="on"
                         :disabled="!parsedEvent"
-                        @click="saveVisit()"
-                        ><v-icon>mdi-content-save</v-icon></v-btn
+                        @click="goRight()"
+                        ><v-icon>mdi-delete</v-icon></v-btn
                       ><br />
-                      <small>Save</small>
+                      <small>Delete</small>
                     </div>
                   </template>
-                  <span>Save Visit locally</span></v-tooltip
+                  <span>Delete Visit</span></v-tooltip
                 >
 
                 <!-- btn click sets calls revert() -->
@@ -274,6 +255,24 @@
                     </div>
                   </template>
                   <span>Abandon changes</span></v-tooltip
+                >
+                <!-- btn click calls saveVisit() -->
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!parsedEvent"
+                        outlined
+                        color="secondary"
+                        @click="saveVisit()"
+                        ><v-icon>mdi-content-save</v-icon></v-btn
+                      ><br />
+                      <small>Save</small>
+                    </div>
+                  </template>
+                  <span>Save Visit locally</span></v-tooltip
                 >
               </v-card-actions>
             </v-card>
@@ -302,7 +301,6 @@
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
-// TODO put back Visit
 import Visit from '@/models/Visit';
 
 import {
@@ -342,7 +340,11 @@ export default {
     getGraphNameFromVisit() {
       const status = this.parsedEvent.input.graphName
         ? `is logged on <strong>${this.parsedEvent.input.graphName}</strong>`
-        : `is <strong>not logged</strong> to any graph yet`;
+        : `is <strong>not logged</strong> to any graph yet. ${
+            !this.visitorIsOnline
+              ? 'You are <strong>not</strong> online right now.'
+              : 'During or after your visit, log the visit to the graph'
+          }`;
       return `Visit <strong>${this.parsedEvent.input.id}</strong> ${status}`;
     },
 
@@ -353,7 +355,6 @@ export default {
       )}?`;
     },
 
-    // TODO put back Visit
     visitCache() {
       return Visit.all();
     },
@@ -378,6 +379,7 @@ export default {
         },
       ],
     },
+    action: '', // used by handlekeydown
     ConfirmModernDialog: null,
     calendarEvent: null,
     parsedEvent: null,
@@ -487,6 +489,7 @@ export default {
       // if user cancels, we refresh the visits from the cache by calling revert()
       // otherwise we update the cache with the new values by calling saveVisit()
       this.selectedOpen = true;
+      this.action = 'SAVE'; // Save is the default action
       this.status = `Select Save (to ${this.getGraphName}) or Cancel from dialog`;
     },
 
@@ -610,28 +613,10 @@ export default {
       this.createStart = null;
       this.extendOriginal = null;
       this.place = null;
+      this.confirm = false;
+      this.selectedOpen = false;
     },
 
-    // e.g., leaving event movement (e.g., to respond to confirmation dialog)
-    // TODO Revaluate with current revert()
-    cancelDrag() {
-      if (this.createEvent) {
-        if (this.extendOriginal) {
-          this.createEvent.end = this.extendOriginal;
-        } else {
-          this.removeVisit(this.createEvent);
-        }
-      }
-
-      this.reset();
-    },
-    // TODO Revaluate with current revert()
-    removeVisit(event) {
-      const i = this.visits.indexOf(event);
-      if (i !== -1) {
-        this.visits.splice(i, 1);
-      }
-    },
     //#endregion Drag and Drop
 
     //#region Non Pointer methods
@@ -651,6 +636,8 @@ export default {
       const icon = 'mdi-alert-outline';
       this.customOptions.buttons[0] = null;
       this.customOptions.buttons[2].label = 'Yes';
+
+      this.action = 'DELETE'; // in case keydown is Enter
 
       this.confirmModernDialog
         .open(question, consequences, {
@@ -693,6 +680,8 @@ export default {
 
       this.customOptions.buttons[0] = null;
       this.customOptions.buttons[2].label = 'Yes';
+
+      this.action = 'LOG'; // in case keydown is Enter
 
       this.confirmModernDialog
         .open(question, consequences, {
@@ -843,41 +832,6 @@ export default {
       }
     },
 
-    // confirmUpdate(visit) {
-    //   console.assert(error('wrong visit'), (visit = this.getCurrentVisit()));
-
-    //   this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
-    //   this.confirmModernDialog.open('Confirm', this.feedbackMessage).then((act) => {
-    //     if (act) this.act('UPDATE');
-    //   });
-    // },
-
-    // updateLoggedVisit() {
-    //   try {
-    //     // visit was updated in endDrag() and called from there
-    //     let visit = this.getCurrentVisit();
-
-    //     console.log(
-    //       success('CalendarCard.js: Updating logged visit:', printJson(visit))
-    //     );
-    //     // we need to tell the graph how to identify the visit that now has new start/end values
-    //     // either send back the original visit node ID or the old interval
-    //     this.saveVisit(visit);
-    //     this.$emit('updateLoggedVisit', visit);
-    //     this.confirm = false;
-    //     this.status = 'Updated server. Stay safe out there.';
-    //   } catch (error) {
-    //     this.status =
-    //       'Oops. We had trouble updating server. Devs notified. Sorry.';
-    //     this.$emit('error', error);
-    //   }
-    // },
-
-    cancel() {
-      this.confirm = false;
-      this.reset();
-    },
-
     // visit has new start/end values set by Event edit menu
     saveVisit() {
       this.selectedOpen = false;
@@ -949,49 +903,6 @@ export default {
       this.endDrag();
     },
 
-    // handleKeydown(ev) {
-    //   console.log(highlight('key/action'), ev.code, this.action);
-    //   switch (ev.code) {
-    //     case 'Delete':
-    //       this.goRight(); // calls confirmation with the Del key
-    //       break;
-    //     case 'Tab':
-    //       this.goLeft(); // calls confirmation with the Tab key
-    //       break;
-
-    //     case 'KeyY':
-    //     case 'Enter':
-    //       if (!this.action) {
-    //         alert('handleKeydown cannot access this.action');
-    //         return;
-    //       }
-
-    //       switch (this.action) {
-    //         case 'DELETE':
-    //           this.deleteVisit();
-    //           break;
-
-    //         case 'LOG':
-    //           this.logVisit();
-    //           break;
-
-    //         // case 'UPDATE':
-    //         //   this.updateLoggedVisit();
-    //         //   break;
-
-    //         case 'REVERT':
-    //           this.revert();
-    //           break;
-    //       }
-    //       break;
-
-    //     case 'KeyN':
-    //     case 'Escape':
-    //       this.cancel(); // calls confirmation with the Escape key
-    //       break;
-    //   }
-    // },
-
     getCurrentTime() {
       return this.cal
         ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
@@ -1044,6 +955,55 @@ export default {
     padTime(number) {
       return number < 10 ? '0' + number : number + '';
     },
+
+    handleKeydown(ev) {
+      console.log(highlight('key/action'), ev.code, this.action);
+      switch (ev.code) {
+        case 'Delete':
+          this.goRight(); // calls confirmation with the Del key
+          break;
+        case 'Tab':
+          if (!this.visitorIsOnline) {
+            this.status =
+              'Tab key disabled. You cannot log your visit to the server if you are offline.';
+            return;
+          }
+          this.goLeft(); // calls confirmation with the Tab key
+          break;
+
+        case 'Escape':
+          this.reset(); // calls confirmation with the Escape key
+          break;
+
+        case 'KeyY':
+        case 'Enter':
+          switch (this.action) {
+            case 'SAVE':
+              this.saveVisit();
+              break;
+
+            case 'DELETE':
+              // NOOP. Already deleted
+              break;
+
+            case 'LOG':
+              this.logVisit();
+              break;
+
+            case 'REVERT':
+              this.revert();
+              break;
+
+            default:
+              alert('handleKeydown cannot access this.action');
+          }
+          break;
+
+        case 'KeyN':
+          this.reset(); // calls confirmation with the N key
+          break;
+      }
+    },
   },
 
   watch: {
@@ -1068,25 +1028,6 @@ export default {
       this.visits = newVal;
       // this was the first place after mounted() that could see this.$refs
       this.confirmModernDialog = this.$refs.ConfirmModernDialog;
-      // this.confirmModernDialog
-      //   .open(
-      //     'Do you want to save the changes you made to the Visit?',
-      //     `Your changes will be lost if you don't save them to  ${this.$defaultGraphName}.`,
-      //     { icon: 'mdi-help-circle-outline' }
-      //   )
-      //   .then((act) => {
-      //     console.log(act);
-      //     switch (act) {
-      //       case 1:
-      //         alert('Consider it done');
-      //         break;
-      //       case 0:
-      //         alert('Did nothing');
-      //         break;
-      //       default:
-      //         alert('try again');
-      //     }
-      //   });
     },
 
     starttime(newVal, oldVal) {
@@ -1159,7 +1100,6 @@ export default {
 
     self.calendarElement = document.getElementById('calendar-target');
 
-    // TODO put back Visit
     Visit.$fetch().then(() => {
       self.visits = self.visitCache;
     });
@@ -1173,10 +1113,7 @@ export default {
       self.newEvent();
     }
 
-    // these are window event listeners
-    // so we need to restrict them to the calendarCard
-    // TODO Rebuild with key modifiers
-    // this.calendarElement.addEventListener('keydown', this.handleKeydown);
+    document.addEventListener('keydown', this.handleKeydown);
     console.log('Using ' + self.getGraphName);
     self.status = 'Using ' + self.getGraphName;
 
@@ -1184,7 +1121,7 @@ export default {
   },
 
   destroyed() {
-    this.calendarElement.removeEventListener('keydown', this.handleKeydown);
+    document.removeEventListener('keydown', this.handleKeydown);
   },
 };
 </script>
