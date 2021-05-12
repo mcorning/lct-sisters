@@ -74,8 +74,8 @@
         <!-- QR Dialog -->
         <v-dialog
           v-model="qrDialog"
-          max-width="500"
-          max-height="500"
+          max-width="400"
+          max-height="400"
           transition="dialog-bottom-transition"
         >
           <v-card>
@@ -107,6 +107,7 @@
         <!-- GoogleMap, Warning, and Calendar components -->
         <v-row
           v-if="usernameAlreadySelected"
+          class="fill-height"
           align="start"
           justify="center"
           no-gutters
@@ -120,7 +121,7 @@
               @returnToSpaces="show = SPACES"
             />
           </v-col>
-          <v-col v-if="showCalendar" class="text-center">
+          <v-col v-if="showCalendar" class="text-center fill-height">
             <Calendar
               :avgStay="avgStay"
               :selectedSpace="selectedSpace"
@@ -423,6 +424,9 @@ export default {
       // this.sid = sessionID;
       this.username = username;
       console.log('on Session', this.username);
+      // sessions always load with the configured exposure graph
+      // setting the current graph to Sandbox only happens after connecting to the server
+      console.log('graphName used by redis', this.graphName);
 
       this.userID = userID;
       this.graphName = graphName;
@@ -701,6 +705,10 @@ export default {
   },
 
   watch: {
+    graphName(newVal, oldVal) {
+      console.log('Graph name is', newVal, 'and was', oldVal);
+    },
+
     location(location) {
       console.log(location);
     },

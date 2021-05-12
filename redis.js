@@ -236,11 +236,15 @@ function logVisit(data) {
     if (useGraphName && graphName !== useGraphName) {
       changeGraph(useGraphName);
     }
-    // if data includes logged, we update
+
+    // update visit with loggedNodeId
+    // or add a new visit
+    // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
+    // (otherwise, an apostrophe will throw an exception)
     let query = loggedNodeId
       ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId} SET v.start=${start}, v.end=${end}, v.interval='${interval}' RETURN id(v)`
-      : `MERGE (v:visitor{ name: '${username}', userID: '${userID}'}) 
-      MERGE (s:space{ name: '${selectedSpace}'}) 
+      : `MERGE (v:visitor{ name: "${username}", userID: '${userID}'}) 
+      MERGE (s:space{ name: "${selectedSpace}"}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}, interval: '${interval}'}]->(s)
         RETURN id(r)`;
 

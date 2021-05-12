@@ -1,6 +1,6 @@
 <template>
-  <v-sheet class="overflow-auto fill-height" :height="sheetHeight">
-    <v-row id="calendarRow" align="start">
+  <v-sheet class="overflow-hidden fill-height" :height="sheetHeight">
+    <v-row id="calendarRow" align="start" class="overflow-hidden ">
       <v-col>
         <!-- calendar controls -->
         <v-sheet height="48">
@@ -120,7 +120,7 @@
             <v-card
               v-if="parsedEvent"
               color="grey lighten-4"
-              max-width="300px"
+              max-width="400px"
               flat
             >
               <v-toolbar :color="getToolbarColor()" dark>
@@ -206,7 +206,8 @@
                   </v-btn>
                 </v-time-picker>
               </v-dialog>
-              <v-card-text>Visit ID: {{ parsedEvent.input.id }}</v-card-text>
+
+              <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
               <v-card-actions>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
@@ -282,14 +283,18 @@
       </v-col>
     </v-row>
 
-    <v-row id="statusRow" no-gutters class="mt-0">
-      <v-col
-        ><div class="pl-5">
+    <v-row id="statusRow" no-gutters class="mt-0 ml-0 overflow-hidden">
+      <v-col class="fill-height"
+        ><div class="fill-height">
           <small>{{ status }}</small>
         </div>
       </v-col>
     </v-row>
-    <ConfirmDlg id="confirmDlgId" ref="confirmDialog" />
+    <ConfirmModernDialog
+      id="ConfirmModernDialogId"
+      ref="ConfirmModernDialog"
+      :customOptions="customOptions"
+    />
   </v-sheet>
 </template>
 
@@ -314,12 +319,12 @@ export default {
   props: {
     selectedSpace: Object,
     avgStay: Number,
-    graphName: String,
     userID: String,
+    graphName: String,
   },
 
   components: {
-    ConfirmDlg: () => import('./cards/dialogCard'),
+    ConfirmModernDialog: () => import('./cards/dialogCardModern'),
   },
 
   computed: {
@@ -333,6 +338,12 @@ export default {
 
     getGraphName() {
       return `the ${this.graphName} exposure graph`;
+    },
+    getGraphNameFromVisit() {
+      const status = this.parsedEvent.input.graphName
+        ? `is logged on <strong>${this.parsedEvent.input.graphName}</strong>`
+        : `is <strong>not logged</strong> to any graph yet`;
+      return `Visit <strong>${this.parsedEvent.input.id}</strong> ${status}`;
     },
 
     updateFeedbackMessage() {
@@ -349,10 +360,25 @@ export default {
     visibleEvents() {
       return this.cal.getVisibleEvents();
     },
+    visitorIsOnline() {
+      return this.userID;
+    },
   },
 
   data: () => ({
-    confirmDialog: null,
+    customOptions: {
+      buttons: [
+        { label: "Don't Save" },
+        { label: 'Cancel', agree: 0 },
+        {
+          label: 'Save',
+          color: 'secondary',
+          outlined: true,
+          agree: 1,
+        },
+      ],
+    },
+    ConfirmModernDialog: null,
     calendarEvent: null,
     parsedEvent: null,
     ready: false,
@@ -618,8 +644,18 @@ export default {
       }
       console.log('Going Right...');
       const visit = this.getCurrentVisit();
-      this.confirmDialog
-        .open('Confirm', `Are you sure you want to DELETE ${visit.name}`)
+      const question = `Are you sure you want to DELETE ${visit.name}`;
+      const consequences = visit.loggedNodeId
+        ? "You won't see exposure alerts due to this visit."
+        : "You won't be able to log this visit to the exposure graph.";
+      const icon = 'mdi-alert-outline';
+      this.customOptions.buttons[0] = null;
+      this.customOptions.buttons[2].label = 'Yes';
+
+      this.confirmModernDialog
+        .open(question, consequences, {
+          icon: icon,
+        })
         .then((act) => {
           if (act) {
             this.act('DELETE');
@@ -645,15 +681,23 @@ export default {
         ? `Updating a previously logged ${visit.name} visit on the server.`
         : 'Logging visit on the server...';
 
-      const feedbackMessage =
+      const question =
         visit.interval !== cachedVisit.interval
           ? `You changed ${visit.name} from ${cachedVisit.interval}. Save and continue to log?`
           : `Are you sure you want to LOG ${visit.name} from ${formatTime(
               visit.start
             )} to ${formatTime(visit.end)} `;
+      const consequences =
+        'This change will impact how exposure alerts works with this visit.';
+      const icon = 'mdi-alert-outline';
 
-      this.confirmDialog
-        .open('Confirm Log Visit', feedbackMessage)
+      this.customOptions.buttons[0] = null;
+      this.customOptions.buttons[2].label = 'Yes';
+
+      this.confirmModernDialog
+        .open(question, consequences, {
+          icon: icon,
+        })
         .then((act) => {
           if (!act) {
             this.revert();
@@ -803,7 +847,7 @@ export default {
     //   console.assert(error('wrong visit'), (visit = this.getCurrentVisit()));
 
     //   this.feedbackMessage = `UPDATE a logged visit to ${visit.name} with new times?`;
-    //   this.confirmDialog.open('Confirm', this.feedbackMessage).then((act) => {
+    //   this.confirmModernDialog.open('Confirm', this.feedbackMessage).then((act) => {
     //     if (act) this.act('UPDATE');
     //   });
     // },
@@ -842,7 +886,11 @@ export default {
       Visit.updatePromise(visit)
         .then(() => {
           console.log(success(`New/Saved Visit:`, printJson(visit)));
-          this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+          const destination = this.visitorIsOnline
+            ? `on the ${this.graphName ||
+                this.$defaultGraphName} exposure graph`
+            : `in localStorage`;
+          this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
         })
         .catch((err) => alert(err));
     },
@@ -901,48 +949,48 @@ export default {
       this.endDrag();
     },
 
-    handleKeydown(ev) {
-      console.log(highlight('key/action'), ev.code, this.action);
-      switch (ev.code) {
-        case 'Delete':
-          this.goRight(); // calls confirmation with the Del key
-          break;
-        case 'Tab':
-          this.goLeft(); // calls confirmation with the Tab key
-          break;
+    // handleKeydown(ev) {
+    //   console.log(highlight('key/action'), ev.code, this.action);
+    //   switch (ev.code) {
+    //     case 'Delete':
+    //       this.goRight(); // calls confirmation with the Del key
+    //       break;
+    //     case 'Tab':
+    //       this.goLeft(); // calls confirmation with the Tab key
+    //       break;
 
-        case 'KeyY':
-        case 'Enter':
-          if (!this.action) {
-            alert('handleKeydown cannot access this.action');
-            return;
-          }
+    //     case 'KeyY':
+    //     case 'Enter':
+    //       if (!this.action) {
+    //         alert('handleKeydown cannot access this.action');
+    //         return;
+    //       }
 
-          switch (this.action) {
-            case 'DELETE':
-              this.deleteVisit();
-              break;
+    //       switch (this.action) {
+    //         case 'DELETE':
+    //           this.deleteVisit();
+    //           break;
 
-            case 'LOG':
-              this.logVisit();
-              break;
+    //         case 'LOG':
+    //           this.logVisit();
+    //           break;
 
-            // case 'UPDATE':
-            //   this.updateLoggedVisit();
-            //   break;
+    //         // case 'UPDATE':
+    //         //   this.updateLoggedVisit();
+    //         //   break;
 
-            case 'REVERT':
-              this.revert();
-              break;
-          }
-          break;
+    //         case 'REVERT':
+    //           this.revert();
+    //           break;
+    //       }
+    //       break;
 
-        case 'KeyN':
-        case 'Escape':
-          this.cancel(); // calls confirmation with the Escape key
-          break;
-      }
-    },
+    //     case 'KeyN':
+    //     case 'Escape':
+    //       this.cancel(); // calls confirmation with the Escape key
+    //       break;
+    //   }
+    // },
 
     getCurrentTime() {
       return this.cal
@@ -1007,9 +1055,38 @@ export default {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },
 
+    graphName(newVal, oldVal) {
+      console.log('Graph name is', newVal, 'and was', oldVal);
+      this.status = `You are ${
+        this.graphName === this.$defaultGraphName
+          ? 'using'
+          : 'experimenting with'
+      }  ${this.getGraphName}`;
+    },
+
     visitCache(newVal) {
       this.visits = newVal;
-      this.confirmDialog = this.$refs.confirmDialog;
+      // this was the first place after mounted() that could see this.$refs
+      this.confirmModernDialog = this.$refs.ConfirmModernDialog;
+      // this.confirmModernDialog
+      //   .open(
+      //     'Do you want to save the changes you made to the Visit?',
+      //     `Your changes will be lost if you don't save them to  ${this.$defaultGraphName}.`,
+      //     { icon: 'mdi-help-circle-outline' }
+      //   )
+      //   .then((act) => {
+      //     console.log(act);
+      //     switch (act) {
+      //       case 1:
+      //         alert('Consider it done');
+      //         break;
+      //       case 0:
+      //         alert('Did nothing');
+      //         break;
+      //       default:
+      //         alert('try again');
+      //     }
+      //   });
     },
 
     starttime(newVal, oldVal) {
@@ -1052,10 +1129,6 @@ export default {
       )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
 
       console.log(warn('New end', visit.end, visit.interval));
-    },
-
-    graphName() {
-      this.status = this.getGraphName;
     },
   },
 
@@ -1100,18 +1173,18 @@ export default {
       self.newEvent();
     }
 
-    // TODO
     // these are window event listeners
     // so we need to restrict them to the calendarCard
-    window.addEventListener('keydown', this.handleKeydown);
-
+    // TODO Rebuild with key modifiers
+    // this.calendarElement.addEventListener('keydown', this.handleKeydown);
+    console.log('Using ' + self.getGraphName);
     self.status = 'Using ' + self.getGraphName;
 
     console.log('mounted calendarCard');
   },
 
   destroyed() {
-    window.removeEventListener('keydown', this.handleKeydown);
+    this.calendarElement.removeEventListener('keydown', this.handleKeydown);
   },
 };
 </script>
