@@ -11,6 +11,7 @@ const {
   highlight,
   info,
   success,
+  special,
 } = require('./src/utils/colors.js');
 
 const PORT = process.env.PORT || 3003;
@@ -32,29 +33,41 @@ const {
   onExposureWarning,
 } = require('./redis');
 
-console.log(highlight(new Date().toLocaleString()));
-console.log(highlight('social graph:', graphName));
-console.log(highlight('redis host:', host));
+console.log(special(new Date().toLocaleString()));
+console.log(special('redis host:', host));
 console.log(highlight('pwd:', dirPath));
+console.log(highlight('social graph:'), graphName);
 
 const server = express()
   .use(serveStatic(dirPath))
   .listen(PORT, () => {
-    console.log(`Client running from ${dirPath}`);
-    console.log(highlight(`Listening on http://localhost:${PORT}`));
+    console.log(highlight('Client running from:'));
+    console.log(dirPath);
+    console.log(highlight('Listening on:'));
+    console.log(`http://localhost:${PORT}`, '\n');
+    console.groupCollapsed('Past Sessions:');
+    sessionCache.print(null);
+    console.groupEnd();
     console.log('');
-    sessionCache.print(null, 'Past Sessions:');
   });
 const io = socketIO(server);
 
+function getNow() {
+  return new Date().toJSON();
+}
+
 io.use((socket, next) => {
   const { sessionID, userID, username } = socket.handshake.auth;
+  console.log('Middleware handling socket:');
   console.log(
     warn(
+      'sessionID:',
       sessionID || 'No stored session',
       '\t',
+      'userID:',
       userID || 'No userID',
       '\t',
+      'username:',
       username || 'No username'
     )
   );
@@ -190,7 +203,7 @@ io.on('connection', (socket) => {
 
   socket.on('logVisit', (data, ack) => {
     // call the graph
-    console.log(printJson(data));
+    console.log(highlight(getNow(), printJson(data)));
     logVisit(data).then((res) => {
       console.log(res);
       ack(res);

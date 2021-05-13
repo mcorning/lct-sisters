@@ -53,7 +53,7 @@
               @click="onMore(item.title, item.moreActionId)"
             >
               <v-list-item-avatar>
-                <v-avatar :color="getColor(item)" size="36">
+                <v-avatar :color="getColorOfCurrentGraph(item)" size="36">
                   <v-icon dark>{{ item.icon }}</v-icon>
                 </v-avatar>
               </v-list-item-avatar>
@@ -107,7 +107,6 @@
         <!-- GoogleMap, Warning, and Calendar components -->
         <v-row
           v-if="usernameAlreadySelected"
-          class="fill-height"
           align="start"
           justify="center"
           no-gutters
@@ -134,7 +133,18 @@
             />
           </v-col>
         </v-row>
-
+        <v-banner
+          v-if="loggedMessage"
+          single-line
+          transition="slide-y-transition"
+          v-html="loggedMessage"
+        >
+          <template v-slot:actions="{ dismiss }">
+            <v-btn text color="primary" @click="loggedMessage = ''"
+              >Dismiss</v-btn
+            >
+          </template>
+        </v-banner>
         <!-- PWA snackbar -->
         <v-snackbar
           v-model="snackWithButtons"
@@ -342,6 +352,7 @@ export default {
       userID: '',
 
       // these are BASE values
+      loggedMessage: '',
       qrDialog: false,
       feedbackDialog: false,
 
@@ -448,6 +459,10 @@ export default {
   },
 
   methods: {
+    getGraphName() {
+      return this.graphName || this.$defaultGraphName;
+    },
+
     //#region Warning method
     onExposureWarning(reason) {
       this.show = this.SPACES;
@@ -540,6 +555,7 @@ export default {
         selectedSpace: name,
         start: start,
         end: end,
+        date: new Date(start).toDateString(),
         interval: interval,
         loggedNodeId,
         graphName,
@@ -555,7 +571,7 @@ export default {
         const data = {
           visitId: id,
           loggedNodeId: node.id,
-          useGraphName: this.graphName,
+          useGraphName: this.getGraphName(),
         };
         Visit.updateLoggedPromise(data).then((v) => {
           console.log(success(`Returned Visit:`, printJson(v)));
@@ -563,6 +579,9 @@ export default {
         });
 
         console.log('updateVisitOnGraph', name, node);
+        this.loggedMessage = `${name} logged to ${this.getGraphName()} on node ${
+          node.id
+        }.`;
 
         this.auditor.logEntry(
           `Log Visit Results: ${printJson(node)}`,
@@ -587,10 +606,9 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
-    getColor(item) {
+    getColorOfCurrentGraph(item) {
       if (item.moreActionId === 0) {
-        const currentGraphName = this.graphName || this.$defaultGraphName;
-        return item.title === currentGraphName ? 'green' : 'red';
+        return item.title === this.getGraphName() ? 'green' : 'red';
       }
       return item.color;
     },
@@ -780,7 +798,7 @@ export default {
     console.log('Total avgStay', self.avgStay);
     self.selectedSpace = null;
     self.graphName = self.$defaultGraphName;
-
+    console.log(self.graphName);
     console.log('App.vue mounted');
   },
 

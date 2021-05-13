@@ -7,6 +7,7 @@ const {
   warn,
   highlight,
   success,
+  special,
 } = require('./src/utils/colors.js');
 
 let options, graphName;
@@ -229,6 +230,7 @@ function logVisit(data) {
       selectedSpace,
       start,
       end,
+      date,
       interval,
       loggedNodeId,
       useGraphName,
@@ -242,10 +244,16 @@ function logVisit(data) {
     // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
     // (otherwise, an apostrophe will throw an exception)
     let query = loggedNodeId
-      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId} SET v.start=${start}, v.end=${end}, v.interval='${interval}' RETURN id(v)`
+      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId} 
+      SET 
+      v.start=${start}, 
+      v.end=${end}, 
+      v.date='${date}', 
+      v.interval='${interval}' 
+      RETURN id(v)`
       : `MERGE (v:visitor{ name: "${username}", userID: '${userID}'}) 
       MERGE (s:space{ name: "${selectedSpace}"}) 
-      MERGE (v)-[r:visited{start:${start}, end:${end}, interval: '${interval}'}]->(s)
+      MERGE (v)-[r:visited{start:${start}, end:${end}, date: '${date}', interval: '${interval}'}]->(s)
         RETURN id(r)`;
 
     console.log(warn('Visit query:', query));
@@ -254,8 +262,8 @@ function logVisit(data) {
         let x = results.next();
         let id = x.get('id(r)');
         const stats = results._statistics._raw;
-        console.log(`stats: ${printJson(stats)}`);
-        console.log(`New Visit graph ID: ${printJson(id)}`);
+        console.log(special(`Logged visit stats: ${printJson(stats)}`));
+        console.log(special(`New Visit graph ID: ${printJson(id)}`));
         resolve({
           logged: true,
           id: id,

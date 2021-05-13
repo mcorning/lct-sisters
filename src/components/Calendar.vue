@@ -1,5 +1,5 @@
 <template>
-  <v-sheet class="overflow-hidden fill-height" :height="sheetHeight">
+  <v-sheet class="overflow-hidden " :height="sheetHeight">
     <v-row id="calendarRow" align="start" class="overflow-hidden ">
       <v-col>
         <!-- calendar controls -->
@@ -24,6 +24,9 @@
                 </v-btn>
               </template>
               <v-list>
+                <v-list-item @click="changeType('category')">
+                  <v-list-item-title>Appointments</v-list-item-title>
+                </v-list-item>
                 <v-list-item @click="changeType('day')">
                   <v-list-item-title>Day</v-list-item-title>
                 </v-list-item>
@@ -59,6 +62,7 @@
             color="primary"
             event-overlap-mode="column"
             :type="type"
+            :categories="categories"
             :events="visits"
             :event-ripple="false"
             :event-color="getEventColor"
@@ -303,12 +307,7 @@ const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Visit from '@/models/Visit';
 
-import {
-  getNow,
-  DateTime,
-  formatTime,
-  formatSmallTime,
-} from '../utils/luxonHelpers';
+import { getNow, DateTime, formatSmallTime } from '../utils/luxonHelpers';
 import { error, success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
@@ -318,7 +317,7 @@ export default {
     selectedSpace: Object,
     avgStay: Number,
     userID: String,
-    graphName: String,
+    graphName: String, // changes to graph come from App.js
   },
 
   components: {
@@ -326,6 +325,10 @@ export default {
   },
 
   computed: {
+    ConfirmModernDialog() {
+      return this.$refs.ConfirmModernDialog;
+    },
+
     cal() {
       return this.ready ? this.$refs.calendar : null;
     },
@@ -334,8 +337,8 @@ export default {
       return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px';
     },
 
-    getGraphName() {
-      return `the ${this.graphName} exposure graph`;
+    getGraphNameString() {
+      return `the ${this.getGraphName()} exposure graph`;
     },
     getGraphNameFromVisit() {
       const status = this.parsedEvent.input.graphName
@@ -367,6 +370,7 @@ export default {
   },
 
   data: () => ({
+    categories: ['You', 'Them'],
     customOptions: {
       buttons: [
         { label: "Don't Save" },
@@ -380,7 +384,6 @@ export default {
       ],
     },
     action: '', // used by handlekeydown
-    ConfirmModernDialog: null,
     calendarEvent: null,
     parsedEvent: null,
     ready: false,
@@ -403,16 +406,16 @@ export default {
     status: 'Ready',
     original: { start: 0, end: 0 },
 
-    action: '',
-    confirm: false,
     visits: [],
     place: null,
     type: 'day',
+    categtories: ['You', 'Them'],
     snackBar: false,
     snackBarNew: false,
     feedbackMessage: '',
     focus: '',
     typeToLabel: {
+      category: 'Appointment',
       month: 'Month',
       week: 'Week',
       day: 'Day',
@@ -434,6 +437,14 @@ export default {
   }),
 
   methods: {
+    getGraphName() {
+      return this.graphName || this.$defaultGraphName;
+    },
+
+    toggleCategories() {
+      this.type = this.type === 'day' ? 'category' : 'day';
+      this.status = this.type;
+    },
     onEditedEvent() {
       alert('edited event');
     },
@@ -490,7 +501,7 @@ export default {
       // otherwise we update the cache with the new values by calling saveVisit()
       this.selectedOpen = true;
       this.action = 'SAVE'; // Save is the default action
-      this.status = `Select Save (to ${this.getGraphName}) or Cancel from dialog`;
+      this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
     },
 
     //#region  Drag and Drop
@@ -613,7 +624,6 @@ export default {
       this.createStart = null;
       this.extendOriginal = null;
       this.place = null;
-      this.confirm = false;
       this.selectedOpen = false;
     },
 
@@ -639,17 +649,15 @@ export default {
 
       this.action = 'DELETE'; // in case keydown is Enter
 
-      this.confirmModernDialog
-        .open(question, consequences, {
-          icon: icon,
-        })
-        .then((act) => {
-          if (act) {
-            this.act('DELETE');
-            this.reset();
-            this.parsedEvent = null;
-          }
-        });
+      this.ConfirmModernDialog.open(question, consequences, {
+        icon: icon,
+      }).then((act) => {
+        if (act) {
+          this.act('DELETE');
+          this.reset();
+          this.parsedEvent = null;
+        }
+      });
     },
 
     // this is the only way to call logVisit (indirectly through this.act('LOG'))
@@ -663,19 +671,18 @@ export default {
       console.log('Going Left...');
       const visit = this.getCurrentVisit();
       const cachedVisit = this.getCurrentVisitFromCache();
+      const graphName = visit.graphName || this.getGraphName();
 
       this.status = visit.logged
-        ? `Updating a previously logged ${visit.name} visit on the server.`
-        : 'Logging visit on the server...';
+        ? `Updating a previously logged ${visit.name} visit to ${graphName} graph.`
+        : `Logging visit on the ${graphName} graph...`;
 
       const question =
         visit.interval !== cachedVisit.interval
-          ? `You changed ${visit.name} from ${cachedVisit.interval}. Save and continue to log?`
-          : `Are you sure you want to LOG ${visit.name} from ${formatTime(
-              visit.start
-            )} to ${formatTime(visit.end)} `;
+          ? `You changed your ${visit.name} visit. Save and continue to ${graphName} graph?`
+          : `Are you sure you want to LOG ${visit.name} to ${graphName} graph?`;
       const consequences =
-        'This change will impact how exposure alerts works with this visit.';
+        'Future exposure alerts stem from this updated visit only.';
       const icon = 'mdi-alert-outline';
 
       this.customOptions.buttons[0] = null;
@@ -683,19 +690,17 @@ export default {
 
       this.action = 'LOG'; // in case keydown is Enter
 
-      this.confirmModernDialog
-        .open(question, consequences, {
-          icon: icon,
-        })
-        .then((act) => {
-          if (!act) {
-            this.revert();
-            return;
-          }
-          // logVisit will save before logging
-          this.act('LOG');
-          this.reset();
-        });
+      this.ConfirmModernDialog.open(question, consequences, {
+        icon: icon,
+      }).then((act) => {
+        if (!act) {
+          this.revert();
+          return;
+        }
+        // logVisit will save before logging
+        this.act('LOG');
+        this.reset();
+      });
     },
 
     act(action) {
@@ -757,6 +762,7 @@ export default {
         name: this.place.name,
         start: this.createStart,
         end: this.createStart + this.avgStay,
+        date: new Date(this.createStart).toDateString(),
         interval: this.getInterval(
           this.createStart,
           this.createStart + this.avgStay
@@ -786,8 +792,41 @@ export default {
       this.place = null;
     },
 
+    addOpening(time) {
+      this.createStart = this.roundTime(time);
+      this.createEvent = {
+        id: randomId(),
+        name: 'Barber',
+        start: this.createStart,
+        end: this.createStart + 1800000,
+        date: new Date(this.createStart).toDateString(),
+        interval: this.getInterval(
+          this.createStart,
+          this.createStart + 1800000
+        ),
+        timed: true,
+        marked: getNow(),
+        color: 'secondary',
+        logged: '', // this will contain the internal id of the relationship in redisGraph
+        category: 'Them',
+      };
+
+      let newVisit = { ...this.createEvent };
+
+      // TODO put back Visit
+      Visit.updatePromise(newVisit)
+        .then((p) => {
+          console.log('Added visit to cache', printJson(p));
+        })
+        .catch((e) => {
+          console.log(error(e));
+          this.status = `Oops. We had trouble adding a visit on your calendar. Notified devs. I'm sorry.`;
+
+          this.$emit('error', e);
+        });
+    },
+
     deleteVisit() {
-      this.confirm = false;
       const visit = this.getCurrentVisit();
       const id = visit.id;
       const self = this;
@@ -823,7 +862,6 @@ export default {
 
         // when App.vue sees the callback it will call the Visit entity to update the logged field to the internal ID of the relationship node and the color to primary
         this.$emit('logVisit', visit);
-        this.confirm = false;
         this.status = 'Logged to server. Stay safe out there.';
       } catch (error) {
         this.status =
@@ -835,14 +873,12 @@ export default {
     // visit has new start/end values set by Event edit menu
     saveVisit() {
       this.selectedOpen = false;
-      this.confirm = false;
       const visit = this.getCurrentVisit();
       Visit.updatePromise(visit)
         .then(() => {
           console.log(success(`New/Saved Visit:`, printJson(visit)));
           const destination = this.visitorIsOnline
-            ? `on the ${this.graphName ||
-                this.$defaultGraphName} exposure graph`
+            ? `on the ${this.getGraphName()} exposure graph`
             : `in localStorage`;
           this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
         })
@@ -1014,6 +1050,11 @@ export default {
     // 'dragEvent.start': function (newValue, oldValue) {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },
+    type() {
+      if (this.type === 'category') {
+        this.status = 'Appointment handling is under development.';
+      }
+    },
 
     graphName(newVal, oldVal) {
       console.log('Graph name is', newVal, 'and was', oldVal);
@@ -1021,13 +1062,16 @@ export default {
         this.graphName === this.$defaultGraphName
           ? 'using'
           : 'experimenting with'
-      }  ${this.getGraphName}`;
+      }  ${this.getGraphNameString}`;
     },
 
     visitCache(newVal) {
       this.visits = newVal;
-      // this was the first place after mounted() that could see this.$refs
-      this.confirmModernDialog = this.$refs.ConfirmModernDialog;
+      // // this was the first place after mounted() that could see this.$refs
+      // this.ConfirmModernDialog = this.$refs.ConfirmModernDialog;
+      // console.log(
+      //   highlight('loaded confirmation dialog', this.ConfirmModernDialog)
+      // );
     },
 
     starttime(newVal, oldVal) {
@@ -1114,9 +1158,8 @@ export default {
     }
 
     document.addEventListener('keydown', this.handleKeydown);
-    console.log('Using ' + self.getGraphName);
-    self.status = 'Using ' + self.getGraphName;
-
+    console.log('Using ' + self.getGraphNameString);
+    self.status = 'Using ' + self.getGraphNameString;
     console.log('mounted calendarCard');
   },
 

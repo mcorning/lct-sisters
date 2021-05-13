@@ -21,8 +21,10 @@ export default class Visit extends Model {
       color: this.string('secondary'), // New event: Secondary. Logged event: Primary
       start: this.number(''), // Epoch milliseconds of Visit start
       end: this.number(''), // Epoch milliseconds of Visit end
-      interval: this.string(''), // Date string of start to event values
+      date: this.string(''), // Date string of start to event values
+      interval: this.string(''), // String composed of start and end timestamps
       timed: this.boolean(true), // True means Visit isn't all day
+      category: this.string('You'), // used for COVID-safe appointments
 
       // From the graph component
       loggedNodeId: this.string(''), // ID of the graph node for this Visit

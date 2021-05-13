@@ -8,6 +8,7 @@ const highlight = clc.magenta;
 const bold = clc.bold;
 const bgBlue = clc.bgBlue;
 const bgMagenta = clc.bgMagenta;
+const special = clc.red.bold.bgWhite;
 
 function printJson(json) {
   return JSON.stringify(json, null, 3);
@@ -31,4 +32,5 @@ module.exports = {
   bold,
   bgBlue,
   bgMagenta,
+  special,
 };
