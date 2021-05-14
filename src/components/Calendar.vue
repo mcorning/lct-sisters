@@ -336,6 +336,9 @@ export default {
     nowY() {
       return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px';
     },
+    isDefaultGraph() {
+      return this.graphName === this.$defaultGraphName;
+    },
 
     getGraphNameString() {
       return `the ${this.getGraphName()} exposure graph`;
@@ -501,7 +504,7 @@ export default {
       // otherwise we update the cache with the new values by calling saveVisit()
       this.selectedOpen = true;
       this.action = 'SAVE'; // Save is the default action
-      this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
+      // this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
     },
 
     //#region  Drag and Drop
@@ -516,7 +519,7 @@ export default {
       this.parsedEvent = this.getCurrentEvent(event.id);
       console.log(warn(printJson(this.parsedEvent)));
 
-      this.status = 'Changing time slot';
+      // this.status = 'Changing time slot';
 
       this.pointerType = nativeEvent.type;
       if (nativeEvent.type === 'touchstart') {
@@ -758,6 +761,8 @@ export default {
     },
 
     addEvent(time) {
+      const graphname = this.getGraphName();
+
       this.createStart = this.roundTime(time);
       this.createEvent = {
         id: randomId(),
@@ -771,7 +776,8 @@ export default {
         ),
         timed: true,
         marked: getNow(),
-        color: 'secondary',
+        graphName: graphname,
+        color: this.isDefaultGraph ? 'secondary' : 'accent',
         logged: '', // this will contain the internal id of the relationship in redisGraph
       };
 
@@ -795,6 +801,8 @@ export default {
     },
 
     addOpening(time) {
+      const graphname = this.getGraphName();
+
       this.createStart = this.roundTime(time);
       this.createEvent = {
         id: randomId(),
@@ -808,7 +816,8 @@ export default {
         ),
         timed: true,
         marked: getNow(),
-        color: 'secondary',
+        graphName: graphname,
+        color: this.isDefaultGraph ? 'secondary' : 'accent',
         logged: '', // this will contain the internal id of the relationship in redisGraph
         category: 'Them',
       };
@@ -884,7 +893,7 @@ export default {
           const destination = this.visitorIsOnline
             ? `on the ${this.getGraphName()} exposure graph`
             : `in localStorage`;
-          this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
+          // this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
         })
         .catch((err) => alert(err));
     },
@@ -902,6 +911,7 @@ export default {
     getEventPrimaryColor(event) {
       return event ? 'primary' : 'secondary';
     },
+
     getToolbarColor() {
       return this.parsedEvent.color === 'primary'
         ? 'primary lighten-2'
