@@ -218,22 +218,6 @@
                       <v-btn
                         v-bind="attrs"
                         v-on="on"
-                        :disabled="!userID"
-                        @click="goLeft()"
-                        ><v-icon>mdi-graphql</v-icon></v-btn
-                      ><br />
-                      <small>{{ userID ? 'Log' : 'Not online' }}</small>
-                    </div>
-                  </template>
-                  <span>Log Visit on Server</span></v-tooltip
-                >
-                <v-spacer></v-spacer>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
                         :disabled="!parsedEvent"
                         @click="goRight()"
                         ><v-icon>mdi-delete</v-icon></v-btn
@@ -277,6 +261,23 @@
                     </div>
                   </template>
                   <span>Save Visit locally</span></v-tooltip
+                >
+
+                <v-spacer></v-spacer>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <div class="text-center">
+                      <v-btn
+                        v-bind="attrs"
+                        v-on="on"
+                        :disabled="!userID"
+                        @click="goLeft()"
+                        ><v-icon>mdi-graphql</v-icon></v-btn
+                      ><br />
+                      <small>{{ userID ? 'Log' : 'Not online' }}</small>
+                    </div>
+                  </template>
+                  <span>Log Visit on Server</span></v-tooltip
                 >
               </v-card-actions>
             </v-card>
@@ -777,7 +778,7 @@ export default {
         timed: true,
         marked: getNow(),
         graphName: graphname,
-        color: this.isDefaultGraph ? 'secondary' : 'accent',
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
         logged: '', // this will contain the internal id of the relationship in redisGraph
       };
 
@@ -817,7 +818,7 @@ export default {
         timed: true,
         marked: getNow(),
         graphName: graphname,
-        color: this.isDefaultGraph ? 'secondary' : 'accent',
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
         logged: '', // this will contain the internal id of the relationship in redisGraph
         category: 'Them',
       };
@@ -890,9 +891,9 @@ export default {
       Visit.updatePromise(visit)
         .then(() => {
           console.log(success(`New/Saved Visit:`, printJson(visit)));
-          const destination = this.visitorIsOnline
-            ? `on the ${this.getGraphName()} exposure graph`
-            : `in localStorage`;
+          // const destination = this.visitorIsOnline
+          //   ? `on the ${this.getGraphName()} exposure graph`
+          //   : `in localStorage`;
           // this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
         })
         .catch((err) => alert(err));

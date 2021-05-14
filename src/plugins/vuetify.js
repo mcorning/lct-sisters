@@ -12,6 +12,8 @@ export default new Vuetify({
         secondary: colors[color].lighten3,
         accent: colors.shades.black,
         error: colors.red.accent3,
+        sandboxlogged: colors.brown.darken2,
+        sandboxmarked: colors.brown.lighten3,
       },
       dark: {
         primary: colors.blue.lighten3,
