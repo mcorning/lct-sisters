@@ -213,10 +213,12 @@ io.on('connection', (socket) => {
   socket.on('deleteVisit', (data, ack) => {
     // call the graph
     console.log(printJson(data));
-    deleteVisit(data).then((res) => {
-      console.log(res);
-      ack(res);
-    });
+    deleteVisit(data)
+      .then((res) => {
+        console.log(res);
+        ack(res);
+      })
+      .catch((error) => ack(error));
   });
   //#endregion
 

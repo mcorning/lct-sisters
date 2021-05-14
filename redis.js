@@ -285,6 +285,13 @@ function logVisit(data) {
 function deleteVisit(data) {
   return new Promise((resolve, reject) => {
     const { loggedNodeId, useGraphName } = data;
+    if (!loggedNodeId) {
+      reject({
+        deleted: false,
+        reason: 'No loggedNodeId available for deletion.',
+      });
+      return;
+    }
     if (graphName !== useGraphName) {
       changeGraph(useGraphName);
     }
@@ -298,7 +305,7 @@ function deleteVisit(data) {
       })
       .catch((error) => {
         console.log(error);
-        reject({ deleted: true, error: error });
+        reject({ deleted: false, error: error });
       });
   });
 }

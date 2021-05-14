@@ -89,15 +89,11 @@ export default {
   data() {
     return {
       dialog: true,
-      model: 1,
+      model: 0,
       WarningOptions: [
         {
           icon: 'mdi-alert',
           text: 'I tested positive for COVID-19',
-        },
-        {
-          icon: 'mdi-account-alert',
-          text: 'LCT warned me of exposure',
         },
         {
           icon: 'mdi-account-group',
@@ -108,8 +104,8 @@ export default {
           text: 'I present COVID symptoms',
         },
         {
-          icon: 'mdi-arm-flex',
-          text: 'This is an LCT Drill...',
+          icon: 'mdi-account-alert',
+          text: 'LCT warned me of exposure',
         },
       ],
     };

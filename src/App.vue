@@ -73,6 +73,7 @@
       <v-container class="fill-height" fluid>
         <!-- QR Dialog -->
         <v-dialog
+          id="qrCodeDialog"
           v-model="qrDialog"
           max-width="400"
           max-height="400"
@@ -106,7 +107,9 @@
 
         <!-- GoogleMap, Warning, and Calendar components -->
         <v-row
+          id="controlsContainer"
           v-if="usernameAlreadySelected"
+          class="fill-height"
           align="start"
           justify="center"
           no-gutters
@@ -133,18 +136,7 @@
             />
           </v-col>
         </v-row>
-        <v-banner
-          v-if="loggedMessage"
-          single-line
-          transition="slide-y-transition"
-          v-html="loggedMessage"
-        >
-          <template v-slot:actions="{ dismiss }">
-            <v-btn text color="primary" @click="loggedMessage = ''"
-              >Dismiss</v-btn
-            >
-          </template>
-        </v-banner>
+
         <!-- PWA snackbar -->
         <v-snackbar
           v-model="snackWithButtons"
@@ -155,7 +147,13 @@
         >
           {{ snackWithBtnText }}
           <template v-slot:action="{ attrs }">
-            <v-btn text color="#00f500" v-bind="attrs" @click.stop="act">
+            <v-btn
+              v-if="snackBtnText"
+              text
+              color="#00f500"
+              v-bind="attrs"
+              @click.stop="act"
+            >
               {{ snackBtnText }}
             </v-btn>
             <v-btn icon class="ml-4" @click="snackWithButtons = false">
@@ -352,6 +350,7 @@ export default {
       userID: '',
 
       // these are BASE values
+      v0: true,
       loggedMessage: '',
       qrDialog: false,
       feedbackDialog: false,
@@ -521,6 +520,13 @@ export default {
         loggedNodeId: this.selectedSpace.loggedNodeId,
         useGraphName: this.selectedSpace.graphName,
       };
+      if (!query.loggedNodeId) {
+        this.onError(
+          'error',
+          'Contract violation: Trying to delete an unlogged visit.'
+        );
+        return;
+      }
       this.auditor.logEntry(
         `DELETE Visit query: ${printJson(query)}`,
         'DELETE Visit'
@@ -578,10 +584,13 @@ export default {
           console.log(highlight(`Updated Visit to:`, printJson(visit)));
         });
 
-        console.log('updateVisitOnGraph', name, node);
-        this.loggedMessage = `${name} logged to ${this.getGraphName()} on node ${
+        const msg = `${name} logged to ${this.getGraphName()} on node ${
           node.id
         }.`;
+        this.snackBtnText = '';
+        this.snackWithBtnText = msg;
+        this.snackWithButtons = true;
+        console.log('updateVisitOnGraph', name, msg, node);
 
         this.auditor.logEntry(
           `Log Visit Results: ${printJson(node)}`,

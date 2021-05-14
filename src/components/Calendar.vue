@@ -682,7 +682,9 @@ export default {
           ? `You changed your ${visit.name} visit. Save and continue to ${graphName} graph?`
           : `Are you sure you want to LOG ${visit.name} to ${graphName} graph?`;
       const consequences =
-        'Future exposure alerts stem from this updated visit only.';
+        graphName === this.$defaultGraphName
+          ? `You are logging to ${graphName}. Future exposure alerts will be real (not practice drills).`
+          : `Remember, this visit is going to ${graphName}, so any alerts are practice drills.`;
       const icon = 'mdi-alert-outline';
 
       this.customOptions.buttons[0] = null;
@@ -839,9 +841,11 @@ export default {
           self.visits = self.arrayRemove(visits, id);
 
           console.log(success(`Visit ${id} deleted.`));
-          self.status = `DELETED: ${visit.name} ${visit.interval} id: ${visit.id}`;
+          self.status = `DELETED local data: ${visit.name} ${visit.interval} id: ${visit.id}`;
           console.log(`New Visit ct: ${self.visits.length} `);
-
+          if (!visit.loggedNodeId) {
+            return;
+          }
           self.$emit('deleteVisit', visit);
         })
         .catch((e) => {
