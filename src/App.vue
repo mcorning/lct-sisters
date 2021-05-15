@@ -395,6 +395,13 @@ export default {
           icon: 'mdi-comment-quote-outline',
           color: 'orange',
         },
+        {
+          title: 'Docs',
+          subtitle: 'LCT Docs (applies to all instances of LCT)',
+          moreActionId: 1,
+          icon: 'mdi-comment-quote-outline',
+          color: 'yellow',
+        },
       ],
 
       moreActions: ['changeGraph', 'actMore'],
@@ -641,6 +648,9 @@ export default {
 
     actOnMore(action) {
       switch (action) {
+        case 'Docs':
+          window.location = 'https://lct-docs.netlify.app target=_blank';
+          break;
         case 'Feedback':
           this.feedbackDialog = true;
           break;
