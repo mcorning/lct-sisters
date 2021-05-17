@@ -273,6 +273,7 @@ import {
   getRandomIntInclusive,
   printJson,
 } from './utils/colors';
+
 import Visit from '@/models/Visit';
 import Auditor from './utils/Auditor';
 import FeedbackCard from './components/cards/feedbackCard.vue';
@@ -649,7 +650,8 @@ export default {
     actOnMore(action) {
       switch (action) {
         case 'Docs':
-          window.location = 'https://lct-docs.netlify.app target=_blank';
+          window.location =
+            'https://lct-docs.netlify.app target=_blank rel="noopener noreferrer"';
           break;
         case 'Feedback':
           this.feedbackDialog = true;
@@ -792,7 +794,11 @@ export default {
   },
 
   async mounted() {
-    Visit.$fetch().then((visits) => console.log('Visits:', printJson(visits)));
+    Visit.$fetch().then((visits) => {
+      console.groupCollapsed('Visits:');
+      console.log(printJson(visits));
+      console.groupEnd();
+    });
 
     const self = this;
     const bp = self.$vuetify.breakpoint;
@@ -818,6 +824,11 @@ export default {
     self.selectedSpace = null;
     self.graphName = self.$defaultGraphName;
     console.log(self.graphName);
+    self.show =
+      localStorage.getItem('usesPublicCalendar') === 'true'
+        ? this.CALENDAR
+        : this.SPACES;
+
     console.log('App.vue mounted');
   },
 

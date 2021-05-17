@@ -72,6 +72,22 @@
                     </v-col>
                   </v-row>
                 </v-card-text>
+                <v-card-text>
+                  <p>
+                    If you are a business that requires appointments to meet
+                    customers,
+                  </p>
+                  <v-switch
+                    v-model="usesPublicCalendar"
+                    :label="
+                      `Turn on this switch: ${usesPublicCalendar.toString()}`
+                    "
+                  ></v-switch>
+
+                  <p>
+                    Then specify your current openings in your public calendar
+                  </p>
+                </v-card-text>
 
                 <v-card-text>
                   If you proceed, (using this browser) you will always log on to
@@ -118,6 +134,7 @@ export default {
 
   data() {
     return {
+      usesPublicCalendar: false,
       avgStay: 1,
       intervals: [0.5, 1, 8],
 
@@ -132,18 +149,20 @@ export default {
   methods: {
     onSubmit() {
       localStorage.setItem('username', this.username);
-      // ensure a value for username
       this.dialog = this.username;
     },
 
     onGo() {
       this.dialog = false;
-      this.$emit('input', this.username);
+      this.$emit('input', this.username, this.usesPublicCalendar);
     },
   },
   watch: {
     avgStay(val) {
       localStorage.setItem('avgStay', val);
+    },
+    usesPublicCalendar(val) {
+      localStorage.setItem('usesPublicCalendar', val);
     },
   },
   created() {

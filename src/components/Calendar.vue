@@ -66,6 +66,7 @@
             :events="visits"
             :event-ripple="false"
             :event-color="getEventColor"
+            :start="getStart"
             @touchstart:event="showEvent"
             @mousedown:time="startTime"
             @mousemove:time="mouseMove"
@@ -326,6 +327,13 @@ export default {
   },
 
   computed: {
+    getStart() {
+      const dt = DateTime.now().minus({ week: 2 });
+      const start = dt.toISODate();
+      console.log('start calendar on:', start);
+      return start;
+    },
+
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
     },
@@ -362,9 +370,6 @@ export default {
       )}?`;
     },
 
-    visitCache() {
-      return Visit.all();
-    },
     visibleEvents() {
       return this.cal.getVisibleEvents();
     },
@@ -374,6 +379,9 @@ export default {
   },
 
   data: () => ({
+    start: '2021-05-03',
+    ageOfExpiredEvents: 14,
+    expiredTimestamp: null,
     categories: ['You', 'Them'],
     customOptions: {
       buttons: [
@@ -492,6 +500,11 @@ export default {
 
       // get access to the event's index and CalendarTimestamp data
       this.parsedEvent = this.getCurrentEvent(id);
+      if (!this.parsedEvent) {
+        this.status = `You cannot edit a past event. We delete events older than ${this.ageOfExpiredEvents} days.`;
+        return;
+      }
+
       console.log(warn(printJson(this.parsedEvent)));
 
       this.starttime = this.parsedEvent.start.time;
@@ -753,14 +766,6 @@ export default {
       return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
     },
 
-    // TODO Test this before using it (duh)
-    purge() {
-      // TODO put back Visit
-      Visit.delete((visit) => {
-        return visit.start < 1617815700000;
-      });
-    },
-
     addEvent(time) {
       const graphname = this.getGraphName();
 
@@ -801,13 +806,23 @@ export default {
       this.place = null;
     },
 
-    addOpening(time) {
+    addOpeningsForToday() {
+      let parsedDate = DateTime.fromObject({
+        hour: 8,
+        minute: 0,
+      });
+      console.log('Adding opening:', parsedDate);
+      this.addOpening(parsedDate, 'tony');
+      this.addOpening(parsedDate, 'nico');
+    },
+
+    addOpening(time, name) {
       const graphname = this.getGraphName();
 
       this.createStart = this.roundTime(time);
       this.createEvent = {
         id: randomId(),
-        name: 'Barber',
+        name: name,
         start: this.createStart,
         end: this.createStart + 1800000,
         date: new Date(this.createStart).toDateString(),
@@ -963,11 +978,11 @@ export default {
     // id is passed in with showEvent.
     // otherwise we refer to the current parsedEvent.input.id value
     getCurrentEvent(id = this.parsedEvent.input.id) {
-      return this.cal.getVisibleEvents().find(({ input }) => input.id === id);
+      return this.visibleEvents().find(({ input }) => input.id === id);
     },
 
     getCurrentVisit() {
-      return this.visitCache
+      return Visit.all()
         .flat()
         .find((v) => v.id == this.parsedEvent.input.id);
     },
@@ -1158,9 +1173,23 @@ export default {
     console.log('calendarHeight:', self.calendarHeight);
 
     self.calendarElement = document.getElementById('calendar-target');
-
+    self.expiredTimestamp = DateTime.now().minus({
+      day: this.ageOfExpiredEvents,
+    }).ts;
     Visit.$fetch().then(() => {
-      self.visits = self.visitCache;
+      const expiredVisits = Visit.getVisits(false, self.expiredTimestamp);
+      console.log('Expired visits:', printJson(expiredVisits));
+      expiredVisits.forEach((visit) => {
+        if (visit.loggedNodeId) {
+          self.$emit('deleteVisit', visit);
+        }
+        Visit.delete(visit.id);
+      });
+      const activeVisits = Visit.getVisits(true, self.expiredTimestamp);
+      console.groupCollapsed('Active visits:');
+      console.log(printJson(activeVisits));
+      console.groupEnd();
+      self.visits = activeVisits;
     });
 
     self.cal.checkChange();
@@ -1175,6 +1204,19 @@ export default {
     document.addEventListener('keydown', this.handleKeydown);
     console.log('Using ' + self.getGraphNameString);
     self.status = 'Using ' + self.getGraphNameString;
+
+    self.type =
+      localStorage.getItem('usesPublicCalendar') !== 'true'
+        ? 'day'
+        : 'category';
+    if (self.type === 'category') {
+      const openings = Visit.query()
+        .where('category', 'Them')
+        .exists();
+      if (!openings && confirm('Add openings for today?')) {
+        this.addOpeningsForToday();
+      }
+    }
     console.log('mounted calendarCard');
   },
 

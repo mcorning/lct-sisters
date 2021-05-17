@@ -1,10 +1,13 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
+import { DateTime } from '../utils/luxonHelpers';
+
 console.log('Loading Visit entity');
 
 export default class Visit extends Model {
   static entity = 'visits';
+  ageOfExpiredEvents = 14;
 
   static fields() {
     return {
@@ -30,6 +33,16 @@ export default class Visit extends Model {
       loggedNodeId: this.string(''), // ID of the graph node for this Visit
       graphName: this.string(''), // graphname may be 'Sand box' for users' playground
     };
+  }
+
+  static getVisits(active, expiredTimestamp) {
+    return this.query()
+      .where((visit) =>
+        active
+          ? visit.start >= expiredTimestamp
+          : visit.start < expiredTimestamp
+      )
+      .get();
   }
 
   // val must be an object
