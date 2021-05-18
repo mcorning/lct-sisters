@@ -66,7 +66,6 @@
             :events="visits"
             :event-ripple="false"
             :event-color="getEventColor"
-            :start="getStart"
             @touchstart:event="showEvent"
             @mousedown:time="startTime"
             @mousemove:time="mouseMove"
@@ -327,13 +326,6 @@ export default {
   },
 
   computed: {
-    getStart() {
-      const dt = DateTime.now().minus({ week: 2 });
-      const start = dt.toISODate();
-      console.log('start calendar on:', start);
-      return start;
-    },
-
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
     },
@@ -370,11 +362,25 @@ export default {
       )}?`;
     },
 
+    visitCache() {
+      const activeVisits = Visit.getVisits(true, this.expiredTimestamp);
+      console.groupCollapsed('Active visits:');
+      console.log(printJson(activeVisits));
+      console.log('Your visits', this.getYourEvents(activeVisits));
+      console.groupEnd();
+      return this.type === 'day'
+        ? this.getYourEvents(activeVisits)
+        : activeVisits;
+    },
+
     visibleEvents() {
       return this.cal.getVisibleEvents();
     },
     visitorIsOnline() {
       return this.userID;
+    },
+    its() {
+      return this.type === 'day' ? this.yourEvents : this.visits;
     },
   },
 
@@ -449,6 +455,12 @@ export default {
   }),
 
   methods: {
+    getYourEvents(activeVisits) {
+      const filter = (visit) => visit.category === 'You';
+      let x = activeVisits.filter(filter);
+      return x;
+    },
+
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
@@ -978,11 +990,11 @@ export default {
     // id is passed in with showEvent.
     // otherwise we refer to the current parsedEvent.input.id value
     getCurrentEvent(id = this.parsedEvent.input.id) {
-      return this.visibleEvents().find(({ input }) => input.id === id);
+      return this.cal.getVisibleEvents().find(({ input }) => input.id === id);
     },
 
     getCurrentVisit() {
-      return Visit.all()
+      return this.visitCache
         .flat()
         .find((v) => v.id == this.parsedEvent.input.id);
     },
@@ -1185,11 +1197,8 @@ export default {
         }
         Visit.delete(visit.id);
       });
-      const activeVisits = Visit.getVisits(true, self.expiredTimestamp);
-      console.groupCollapsed('Active visits:');
-      console.log(printJson(activeVisits));
-      console.groupEnd();
-      self.visits = activeVisits;
+
+      self.visits = self.visitCache;
     });
 
     self.cal.checkChange();

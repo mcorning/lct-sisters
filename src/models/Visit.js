@@ -1,7 +1,6 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import { DateTime } from '../utils/luxonHelpers';
 
 console.log('Loading Visit entity');
 
@@ -42,6 +41,11 @@ export default class Visit extends Model {
           ? visit.start >= expiredTimestamp
           : visit.start < expiredTimestamp
       )
+      .get();
+  }
+  static getMyVisits(active, expiredTimestamp) {
+    return this.getVisits(active, expiredTimestamp)
+      .where((visit) => visit.category === 'You')
       .get();
   }
 

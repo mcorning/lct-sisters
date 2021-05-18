@@ -12,102 +12,17 @@
 
           <v-card-text>
             <p>
-              LCT minimizes the time between exposure to the virus and getting
-              tested to know if you're infected.
+              With LCT, we deprive the virus of time to replicate and mutate.
             </p>
             <p>
-              If we deprive the virus of time to replicate and mutate, we can
-              beat this thing.
+              We can beat this thing.
             </p>
           </v-card-text>
           <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
-          <v-card-text>
-            <v-text-field
-              v-model="username"
-              :rules="rules"
-              counter="10"
-              hint="Tab to proceed"
-              label="Enter a nickname to save the day"
-              clearable
-              @blur="onSubmit()"
-            ></v-text-field
-          ></v-card-text>
+
           <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-dialog v-model="dialog" persistent max-width="400px">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  :disabled="username.length < 3"
-                  color="primary"
-                  dark
-                  v-bind="attrs"
-                  v-on="on"
-                >
-                  OK
-                </v-btn>
-              </template>
-              <v-card>
-                <v-card-title class="headline ">
-                  Let's get to work (safely)
-                </v-card-title>
-
-                <v-card-text>
-                  <p>
-                    To fit LCT to your daily routine, we suggest you note some
-                    preferences below.
-                  </p>
-                  <p>
-                    For instance, if you use LCT at work (and of all places, you
-                    should), select 8 hours as your default average stay.
-                  </p>
-                  <v-row>
-                    <v-col cols="12">
-                      <v-select
-                        v-model="avgStay"
-                        :items="intervals"
-                        :menu-props="{ top: true, offsetY: true }"
-                        label="Your average stay per visit (in hours) "
-                        autofocus
-                      ></v-select>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-                <v-card-text>
-                  <p>
-                    If you are a business that requires appointments to meet
-                    customers,
-                  </p>
-                  <v-switch
-                    v-model="usesPublicCalendar"
-                    :label="
-                      `Turn on this switch: ${usesPublicCalendar.toString()}`
-                    "
-                  ></v-switch>
-
-                  <p>
-                    Then specify your current openings in your public calendar
-                  </p>
-                </v-card-text>
-
-                <v-card-text>
-                  If you proceed, (using this browser) you will always log on to
-                  the server as
-                  {{ username }}. Ready to crush this virus?
-                </v-card-text>
-
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-
-                  <v-btn color="primary darken-1" text @click="dialog = false">
-                    No thanks
-                  </v-btn>
-
-                  <v-btn color="primary darken-1" text @click="onGo">
-                    Absolutely
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
+            <myCard @go="onGo"></myCard><v-spacer></v-spacer
+            ><businessCard @go="onGo"></businessCard>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -119,6 +34,11 @@
 export default {
   name: 'Welcome',
 
+  components: {
+    myCard: () => import('./cards/myCard'),
+    businessCard: () => import('./cards/businessCard'),
+  },
+
   computed: {
     sessionID() {
       return localStorage.getItem('sessionID');
@@ -127,42 +47,38 @@ export default {
     welcomeMessage() {
       let msg = this.sessionID
         ? `Welcome back to your old session, ${this.sessionID}`
-        : "So, let's get started, shall we? There's no time to lose...";
+        : "We can beat this thing. Let's get started, shall we? There's no time to lose...";
       return msg;
     },
   },
 
   data() {
     return {
-      usesPublicCalendar: false,
-      avgStay: 1,
-      intervals: [0.5, 1, 8],
-
-      // returning: false,
-      dialog: false,
       nsp: 'Sisters',
-      username: '',
-      rules: [(v) => v?.length > 2 || 'Between 3 and 10 characters'],
     };
   },
 
   methods: {
-    onSubmit() {
-      localStorage.setItem('username', this.username);
-      this.dialog = this.username;
-    },
+    onGo(username, usesPublicCalendar) {
+      console.log('username', username);
+      localStorage.setItem('username', username);
+      localStorage.setItem('usesPublicCalendar', usesPublicCalendar);
 
-    onGo() {
       this.dialog = false;
-      this.$emit('input', this.username, this.usesPublicCalendar);
+      this.$emit('connectMe', username, usesPublicCalendar);
     },
   },
+
   watch: {
+    userName(val, oldVal) {
+      if (!oldVal) {
+        this.username = 'Anon';
+      }
+      console.log(val);
+    },
+
     avgStay(val) {
       localStorage.setItem('avgStay', val);
-    },
-    usesPublicCalendar(val) {
-      localStorage.setItem('usesPublicCalendar', val);
     },
   },
   created() {
@@ -172,9 +88,10 @@ export default {
   beforeUnmount() {},
 
   mounted() {
-    if (this.username) {
-      this.onGo();
-    }
+    // const self = this;
+    // if (self.username) {
+    //   self.onGo();
+    // }
   },
 };
 </script>

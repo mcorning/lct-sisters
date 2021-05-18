@@ -102,7 +102,7 @@
         ></FeedbackCard>
 
         <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
-          <Welcome @input="connectMe($event)" />
+          <Welcome @connectMe="onConnectMe($event)" />
         </v-row>
 
         <!-- GoogleMap, Warning, and Calendar components -->
@@ -486,7 +486,7 @@ export default {
 
     //#region Welcome method
     // username passed in from Welcome
-    connectMe(username = this.username) {
+    onConnectMe(username = this.username) {
       // create() takes username from localStorage
       this.username = username;
       console.assert(this.username, 'No username available');
@@ -787,7 +787,7 @@ export default {
     console.log('created()', this.username);
     if (this.sessionID) {
       this.usernameAlreadySelected = true;
-      this.connectMe();
+      this.onConnectMe();
     }
 
     //#endregion
@@ -824,6 +824,7 @@ export default {
     self.selectedSpace = null;
     self.graphName = self.$defaultGraphName;
     console.log(self.graphName);
+    self.usernameAlreadySelected = localStorage.getItem('username');
     self.show =
       localStorage.getItem('usesPublicCalendar') === 'true'
         ? this.CALENDAR
