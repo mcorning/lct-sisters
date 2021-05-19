@@ -6,23 +6,19 @@
         <v-card max-width="320">
           <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
           <v-card-subtitle
-            >Local Contact Tracing is our community's way of getting back to
-            work safely</v-card-subtitle
-          >
+            >Local Contact Tracing can deprive the virus of time to replicate
+            and mutate.
+          </v-card-subtitle>
 
           <v-card-text>
-            <p>
-              With LCT, we deprive the virus of time to replicate and mutate.
-            </p>
-            <p>
-              We can beat this thing.
-            </p>
+            LCT is our community's way of getting back to work safely. This
+            means we can balance the risk of infection against the risk of
+            bankruptcy.
           </v-card-text>
           <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
 
           <v-card-actions>
-            <myCard @go="onGo"></myCard><v-spacer></v-spacer
-            ><businessCard @go="onGo"></businessCard>
+            <myCard @go="onGo"></myCard>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -36,7 +32,6 @@ export default {
 
   components: {
     myCard: () => import('./cards/myCard'),
-    businessCard: () => import('./cards/businessCard'),
   },
 
   computed: {
@@ -87,11 +82,6 @@ export default {
 
   beforeUnmount() {},
 
-  mounted() {
-    // const self = this;
-    // if (self.username) {
-    //   self.onGo();
-    // }
-  },
+  mounted() {},
 };
 </script>

@@ -489,8 +489,7 @@ export default {
     onConnectMe(username = this.username) {
       // create() takes username from localStorage
       this.username = username;
-      console.assert(this.username, 'No username available');
-      console.assert(this.sessionID, 'No sessionID available');
+
       this.usernameAlreadySelected = true;
 
       console.log('Connecting', this.username);
@@ -508,13 +507,16 @@ export default {
         alert("oops. I didn't get that. Please try again.");
         return;
       }
-      const { name, placeId, lat, lng } = place;
+      const { name, placeId, lat, lng, startTime, stay } = place;
 
+      // set the Calendar prop
       this.selectedSpace = {
         name: name,
         id: placeId,
         lat: lat,
         lng: lng,
+        startTime,
+        stay,
       };
       this.show = this.CALENDAR;
     },
@@ -659,6 +661,12 @@ export default {
         case 'Reset':
           localStorage.removeItem('username');
           localStorage.removeItem('sessionID');
+          localStorage.removeItem('usesPublicCalendar');
+          localStorage.removeItem('people');
+          localStorage.removeItem('slotInterval');
+          localStorage.removeItem('openAt');
+          localStorage.removeItem('closeAt');
+          Visit.deleteAll();
           window.location.reload();
           break;
       }

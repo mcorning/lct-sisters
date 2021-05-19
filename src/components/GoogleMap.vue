@@ -75,7 +75,6 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
-                  small
                   fab
                   v-bind="attrs"
                   v-on="on"
@@ -89,16 +88,17 @@
               <span>Remove marker</span></v-tooltip
             >
             <v-spacer></v-spacer>
+            <businessCard :name="InfoWinContent.name" @go="onGo"></businessCard>
+            <v-spacer></v-spacer>
+
             <v-tooltip top>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"
                   v-on="on"
-                  color="success"
+                  color="primary"
                   fab
-                  small
                   dark
-                  class="ml-5"
                   @click="addVisit"
                 >
                   <v-icon>mdi-calendar</v-icon>
@@ -150,12 +150,14 @@
 import Visit from '@/models/Visit';
 
 import { highlight, getRandomIntInclusive, printJson } from '../utils/colors';
+import { DateTime } from '../utils/luxonHelpers';
 
 export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
   components: {
     ConfirmDlg: () => import('./cards/dialogCard'),
+    businessCard: () => import('./cards/businessCard'),
   },
 
   computed: {
@@ -254,6 +256,21 @@ export default {
   },
 
   methods: {
+    onGo() {
+      this.dialog = false;
+      this.$emit('connectMe');
+      const openAt = localStorage.getItem('openAt').split(':');
+      // const closeAt = localStorage.getItem('closeAt').split(':')[0];
+      // // const shift = (closeAt - openAt) * 3600000;
+      const startTime = DateTime.fromObject({
+        hour: openAt[0] / 1,
+        minute: openAt[1] / 1,
+      }).ts;
+      console.log(`onGo() startTime: ${startTime}`);
+      // we hare calling a click handler here, so set first arg to null since we don't have a nativeEvent to pass
+      this.addVisit(null, startTime);
+    },
+
     toggleInfoWindow(marker, idx) {
       this.infoWindowPos = marker.position;
 
@@ -429,8 +446,10 @@ export default {
       });
     },
 
-    addVisit() {
+    // called by onGo() with the shift start time
+    addVisit(nativeEvent, startTime = Date.now(), stay) {
       const { name, placeId, position } = this.marker;
+      console.log('Start Time:', startTime.toString());
       // position can be lat() and lng functions, or they can be values.
       // we want values
       const lat =
@@ -443,6 +462,8 @@ export default {
         placeId,
         lat: lat,
         lng: lng,
+        startTime: startTime,
+        stay: stay,
       });
     },
 

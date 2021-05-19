@@ -326,6 +326,14 @@ export default {
   },
 
   computed: {
+    stay() {
+      const openAt = localStorage.getItem('openAt')?.split(':')[0];
+      const closeAt = localStorage.getItem('closeAt')?.split(':')[0];
+      const shift = (closeAt - openAt) * 3600000;
+
+      return shift || this.avgStay;
+    },
+
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
     },
@@ -379,13 +387,13 @@ export default {
     visitorIsOnline() {
       return this.userID;
     },
-    its() {
+    yourVisits() {
       return this.type === 'day' ? this.yourEvents : this.visits;
     },
   },
 
   data: () => ({
-    start: '2021-05-03',
+    shift: 0,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
     categories: ['You', 'Them'],
@@ -780,18 +788,22 @@ export default {
 
     addEvent(time) {
       const graphname = this.getGraphName();
-
       this.createStart = this.roundTime(time);
+      const endTime = this.createStart + this.stay;
+
+      const name = this.place.name;
+      console.log(
+        `Adding an event. Start: ${
+          this.createStart
+        }  End: ${endTime}  ET: ${endTime - this.createStart}`
+      );
       this.createEvent = {
         id: randomId(),
-        name: this.place.name,
+        name: name,
         start: this.createStart,
-        end: this.createStart + this.avgStay,
+        end: endTime,
         date: new Date(this.createStart).toDateString(),
-        interval: this.getInterval(
-          this.createStart,
-          this.createStart + this.avgStay
-        ),
+        interval: this.getInterval(this.createStart, endTime),
         timed: true,
         marked: getNow(),
         graphName: graphname,
@@ -800,8 +812,16 @@ export default {
       };
 
       let newVisit = { ...this.createEvent };
-      newVisit.lat = this.place.lat;
-      newVisit.lng = this.place.lng;
+      const lat =
+        typeof this.place.lat === 'function'
+          ? this.place.lat()
+          : this.place.lat;
+      const lng =
+        typeof this.place.lng === 'function'
+          ? this.place.lng()
+          : this.place.lng;
+      newVisit.lat = lat;
+      newVisit.lng = lng;
 
       // TODO put back Visit
       Visit.updatePromise(newVisit)
@@ -819,16 +839,48 @@ export default {
     },
 
     addOpeningsForToday() {
-      let parsedDate = DateTime.fromObject({
-        hour: 8,
-        minute: 0,
-      });
-      console.log('Adding opening:', parsedDate);
-      this.addOpening(parsedDate, 'tony');
-      this.addOpening(parsedDate, 'nico');
+      const people = localStorage.getItem('people').split(',');
+      const openAt = localStorage.getItem('openAt').split(':');
+      const closeAt = localStorage.getItem('closeAt').split(':');
+      const slotInterval = localStorage.getItem('slotInterval');
+      const defaultName = 'Opening';
+
+      let hrs = closeAt[0] - openAt[0];
+      let hr = openAt[0] / 1;
+      let parsedDate;
+      // caveat emptor: assuming 30 minute intervals, so two openings per hour
+      while (hrs--) {
+        parsedDate = DateTime.fromObject({
+          hour: hr,
+          minute: 0,
+        });
+        people.forEach((person) => {
+          this.addOpening(
+            parsedDate,
+            person || defaultName,
+            slotInterval * 60000
+          );
+        });
+
+        parsedDate = DateTime.fromObject({
+          hour: hr,
+          minute: slotInterval,
+        });
+        people.forEach((person) => {
+          this.addOpening(
+            parsedDate,
+            person || defaultName,
+            slotInterval * 60000
+          );
+        });
+        hr += 1;
+      }
+      this.scrollToTime();
+
+      this.status = 'Use the calendar to adjust openings for the day';
     },
 
-    addOpening(time, name) {
+    addOpening(time, name, slotInterval) {
       const graphname = this.getGraphName();
 
       this.createStart = this.roundTime(time);
@@ -836,11 +888,11 @@ export default {
         id: randomId(),
         name: name,
         start: this.createStart,
-        end: this.createStart + 1800000,
+        end: this.createStart + slotInterval,
         date: new Date(this.createStart).toDateString(),
         interval: this.getInterval(
           this.createStart,
-          this.createStart + 1800000
+          this.createStart + slotInterval
         ),
         timed: true,
         marked: getNow(),
@@ -977,7 +1029,9 @@ export default {
     },
 
     newEvent() {
-      this.addEvent(Date.now());
+      const time = this.place.startTime || Date.now();
+
+      this.addEvent(time);
       this.endDrag();
     },
 
@@ -1003,10 +1057,10 @@ export default {
       return Visit.find(this.parsedEvent.input.id);
     },
 
-    scrollToTime() {
-      const time = this.getCurrentTime();
+    scrollToTime(time = this.getCurrentTime()) {
       const first = Math.max(0, time - (time % 30) - 100);
       this.cal.scrollToTime(first);
+      this.status = `scrolled to time at ${first}`;
     },
 
     updateTime() {
@@ -1027,7 +1081,16 @@ export default {
       // this represents the start and end days on the calendar
       // we see it during mounting (where we call checkChange()) as one day
       // but change the calendar type, and you will see different start.date and end.date values
-      console.log(highlight(printJson(event)));
+      console.log(highlight(this.type, printJson(event)));
+      if (this.type === 'category') {
+        const openings = this.cal
+          .getVisibleEvents()
+          .some((v) => v.category === 'Them');
+        if (!openings) {
+          this.addOpeningsForToday();
+        }
+        this.scrollToTime();
+      }
     },
 
     padTime(number) {
@@ -1109,11 +1172,6 @@ export default {
 
     visitCache(newVal) {
       this.visits = newVal;
-      // // this was the first place after mounted() that could see this.$refs
-      // this.ConfirmModernDialog = this.$refs.ConfirmModernDialog;
-      // console.log(
-      //   highlight('loaded confirmation dialog', this.ConfirmModernDialog)
-      // );
     },
 
     starttime(newVal, oldVal) {
@@ -1205,6 +1263,7 @@ export default {
     self.scrollToTime();
     self.updateTime();
 
+    // selectedSpace set in App.onAddedPlace()
     self.place = self.selectedSpace;
     if (self.place) {
       self.newEvent();
@@ -1218,14 +1277,7 @@ export default {
       localStorage.getItem('usesPublicCalendar') !== 'true'
         ? 'day'
         : 'category';
-    if (self.type === 'category') {
-      const openings = Visit.query()
-        .where('category', 'Them')
-        .exists();
-      if (!openings && confirm('Add openings for today?')) {
-        this.addOpeningsForToday();
-      }
-    }
+
     console.log('mounted calendarCard');
   },
 

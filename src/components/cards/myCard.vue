@@ -2,32 +2,22 @@
   <v-dialog v-model="dialog" persistent max-width="400px">
     <template v-slot:activator="{ on, attrs }">
       <v-btn color="primary" dark v-bind="attrs" v-on="on">
-        I'm ready
+        Set me up
       </v-btn>
     </template>
     <v-card>
-      <v-card-title class="headline ">
-        Let's get to work (safely)
-      </v-card-title>
+      <h3 class="headline pt-5 pl-5">Your Personal Preferences</h3>
       <v-card-text>
         <v-text-field
           v-model="username"
           :rules="rules"
           counter="10"
           hint="Use any value that you would recognize later as you."
-          label="Save the day with a nickname"
+          label="Your nickname can save the day"
           clearable
         ></v-text-field
       ></v-card-text>
       <v-card-text>
-        <p>
-          To fit LCT to your daily routine, we suggest you note some preferences
-          below.
-        </p>
-        <p>
-          For instance, if you use LCT at work (and of all places, you should),
-          select 8 hours as your default average stay.
-        </p>
         <v-row>
           <v-col cols="12">
             <v-select
@@ -35,16 +25,15 @@
               :items="intervals"
               :menu-props="{ top: true, offsetY: true }"
               label="Your average stay per visit (in hours) "
+              hint="This value controls your calendar event height."
               autofocus
             ></v-select>
           </v-col>
         </v-row>
       </v-card-text>
 
-      <v-card-text>
-        If you proceed, (using this browser) you will always log on to the
-        server as
-        {{ username }}. Ready to crush this virus?
+      <v-card-text v-html="html">
+        <p>Ready to crush this virus?</p>
       </v-card-text>
 
       <v-card-actions>
@@ -64,6 +53,14 @@
 
 <script>
 export default {
+  computed: {
+    html() {
+      return this.username
+        ? `From now on this browser always logs you on to the server as
+        <strong>${this.username}</strong>.`
+        : '';
+    },
+  },
   data() {
     return {
       avgStay: 1,

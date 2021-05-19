@@ -1,33 +1,43 @@
 <template>
   <v-dialog v-model="dialog" persistent max-width="400px">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn color="primary" dark v-bind="attrs" v-on="on">
-        We are ready
+      <v-btn fab color="green" dark v-bind="attrs" v-on="on">
+        <v-icon>mdi-facebook-workplace</v-icon>
       </v-btn>
     </template>
     <v-card>
-      <v-card-title class="headline ">
+      <v-card-title class="headline">{{ name }}</v-card-title>
+      <v-card-subtitle>
         Let's open the doors (safely)
-      </v-card-title>
+      </v-card-subtitle>
+
       <v-card-text>
-        <v-text-field
-          v-model="username"
-          :rules="rules"
-          counter="10"
-          hint="Use the name on the map for your business."
-          label="Save the day with your business name"
-          clearable
-        ></v-text-field
-      ></v-card-text>
-      <v-card-text>
-        <p>
-          If you require appointments to meet customers...
-        </p>
         <v-switch
           v-model="usesPublicCalendar"
-          :label="`Turn on this switch: ${usesPublicCalendar.toString()}`"
+          :label="
+            `We require appointments. Currently: ${usesPublicCalendar.toString()}`
+          "
         ></v-switch>
+
+        <!-- Optional settings -->
         <v-row v-if="usesPublicCalendar">
+          <v-col cols="4">
+            <v-text-field
+              v-model="slotInterval"
+              label="How long are appointments (in minutes)?"
+              clearable
+            ></v-text-field>
+          </v-col>
+          <v-col cols="8">
+            <v-text-field
+              v-model="people"
+              label="List service providers"
+              hint="Separate names with commas"
+              clearable
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
           <v-col cols="6">
             <v-menu
               ref="menu1"
@@ -91,8 +101,7 @@
         </v-row>
 
         <v-card-text>
-          ...Then specify your current openings in your public calendar. Ready
-          to get to work?
+          Ready to get to work?
         </v-card-text>
       </v-card-text>
       <v-card-actions>
@@ -112,22 +121,22 @@
 
 <script>
 export default {
+  props: {
+    name: String,
+  },
   data() {
     return {
       dialog: false,
-      username: '',
+      usesPublicCalendar: false,
 
-      time1: null,
-      time2: null,
+      username: '',
+      people: '',
+      slotInterval: 30,
+
+      time1: '08:00',
+      time2: '17:00',
       menu1: false,
       menu2: false,
-
-      openAt: '07:00',
-      closeAt: '17:00',
-      slotInterval: 30,
-      modalOpen: false,
-      modalClose: false,
-      usesPublicCalendar: false,
 
       rules: [(v) => v?.length > 2 || 'Between 3 and 10 characters'],
     };
@@ -136,7 +145,20 @@ export default {
   methods: {
     onGo() {
       this.dialog = false;
-      this.$emit('go', this.username, this.usesPublicCalendar);
+      // localStorage accessed later when usesPublicCalendar is true
+      localStorage.setItem('usesPublicCalendar', this.usesPublicCalendar);
+      localStorage.setItem('people', this.people);
+      localStorage.setItem('slotInterval', this.slotInterval);
+      localStorage.setItem('openAt', this.time1);
+      localStorage.setItem('closeAt', this.time2);
+      const data = {
+        usesPublicCalendar: this.usesPublicCalendar,
+        people: this.people,
+        slotInterval: this.slotInterval,
+        time1: this.time1,
+        time2: this.time2,
+      };
+      this.$emit('go', data);
     },
   },
 
