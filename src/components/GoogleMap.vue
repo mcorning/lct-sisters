@@ -72,7 +72,7 @@
             >
           </v-card-text>
           <v-card-actions class="pb-1">
-            <v-tooltip bottom>
+            <v-tooltip top>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   fab
@@ -91,7 +91,7 @@
             <businessCard :name="InfoWinContent.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
-            <v-tooltip top>
+            <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
                   v-bind="attrs"

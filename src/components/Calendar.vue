@@ -131,85 +131,131 @@
                   v-html="parsedEvent.input.name"
                 ></v-toolbar-title>
               </v-toolbar>
-
-              <v-dialog
-                ref="dialogStart"
-                v-model="modalStart"
-                :return-value.sync="starttime"
-                persistent
-                width="290px"
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field
-                    v-model="starttime"
-                    :disabled="!parsedEvent"
-                    label="Start"
-                    prepend-icon="mdi-clock-time-four-outline"
-                    readonly
-                    hide-details
-                    v-bind="attrs"
-                    v-on="on"
-                  ></v-text-field>
-                </template>
-                <v-time-picker
-                  v-if="modalStart"
-                  v-model="starttime"
-                  full-width
-                  :allowed-minutes="allowedStep"
-                >
-                  <v-spacer></v-spacer>
-                  <v-btn text color="primary" @click="modalStart = false">
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    text
-                    color="primary"
-                    @click="$refs.dialogStart.save(starttime)"
+              <v-row justify="space-around">
+                <v-spacer></v-spacer>
+                <v-col cols="4">
+                  <v-dialog
+                    ref="dialogStart"
+                    v-model="modalStart"
+                    :return-value.sync="starttime"
+                    persistent
+                    width="290px"
                   >
-                    OK
-                  </v-btn>
-                </v-time-picker>
-              </v-dialog>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-text-field
+                        v-model="starttime"
+                        :disabled="!parsedEvent"
+                        label="Start"
+                        prepend-icon="mdi-clock-time-four-outline"
+                        readonly
+                        hide-details
+                        v-bind="attrs"
+                        v-on="on"
+                      ></v-text-field>
+                    </template>
+                    <v-time-picker
+                      v-if="modalStart"
+                      v-model="starttime"
+                      full-width
+                      :allowed-minutes="allowedStep"
+                    >
+                      <v-spacer></v-spacer>
+                      <v-btn text color="primary" @click="modalStart = false">
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="$refs.dialogStart.save(starttime)"
+                      >
+                        OK
+                      </v-btn>
+                    </v-time-picker>
+                  </v-dialog>
+                </v-col>
+                <v-spacer></v-spacer>
 
-              <v-dialog
-                ref="dialogEnd"
-                v-model="modalEnd"
-                :return-value.sync="endtime"
-                persistent
-                width="290px"
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <v-text-field
-                    v-model="endtime"
-                    :disabled="!parsedEvent"
-                    label="End"
-                    prepend-icon="mdi-clock-time-four-outline"
-                    readonly
-                    hide-details
-                    v-bind="attrs"
-                    v-on="on"
-                  ></v-text-field>
-                </template>
-                <v-time-picker
-                  v-if="modalEnd"
-                  v-model="endtime"
-                  full-width
-                  :allowed-minutes="allowedStep"
-                >
-                  <v-spacer></v-spacer>
-                  <v-btn text color="primary" @click="modalEnd = false">
-                    Cancel
-                  </v-btn>
-                  <v-btn
-                    text
-                    color="primary"
-                    @click="$refs.dialogEnd.save(endtime)"
+                <v-col cols="4">
+                  <v-dialog
+                    ref="dialogEnd"
+                    v-model="modalEnd"
+                    :return-value.sync="endtime"
+                    persistent
+                    width="290px"
                   >
-                    OK
-                  </v-btn>
-                </v-time-picker>
-              </v-dialog>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-text-field
+                        v-model="endtime"
+                        :disabled="!parsedEvent"
+                        label="End"
+                        prepend-icon="mdi-clock-time-four-outline"
+                        readonly
+                        hide-details
+                        v-bind="attrs"
+                        v-on="on"
+                      ></v-text-field>
+                    </template>
+                    <v-time-picker
+                      v-if="modalEnd"
+                      v-model="endtime"
+                      full-width
+                      :allowed-minutes="allowedStep"
+                    >
+                      <v-spacer></v-spacer>
 
+                      <v-btn text color="primary" @click="modalEnd = false">
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="$refs.dialogEnd.save(endtime)"
+                      >
+                        OK
+                      </v-btn>
+                    </v-time-picker>
+                  </v-dialog>
+                </v-col>
+                <v-spacer></v-spacer>
+              </v-row>
+              <v-row justify="space-around">
+                <v-col cols="9">
+                  <v-row align="center" justify="space-around">
+                    <v-col class="text-center">Modify Event</v-col>
+                  </v-row>
+                  <v-row dense>
+                    <v-col>Move</v-col>
+                    <v-col>
+                      <v-btn outlined icon>
+                        <v-icon>mdi-arrow-up</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col>
+                      <v-btn outlined icon>
+                        <v-icon>mdi-arrow-down</v-icon>
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                  <v-row dense>
+                    <v-col>Expand</v-col>
+                    <v-col>
+                      <v-btn outlined icon>
+                        <v-icon>mdi-arrow-expand-up</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col>
+                      <v-btn outlined icon>
+                        <v-icon>mdi-arrow-expand-vertical</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col>
+                      <v-btn outlined icon>
+                        <v-icon>mdi-arrow-expand-down</v-icon>
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                </v-col>
+              </v-row>
               <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
               <v-card-actions>
                 <v-tooltip bottom>

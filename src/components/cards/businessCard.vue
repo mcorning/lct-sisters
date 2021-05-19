@@ -1,10 +1,22 @@
 <template>
   <v-dialog v-model="dialog" persistent max-width="400px">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn fab color="green" dark v-bind="attrs" v-on="on">
-        <v-icon>mdi-facebook-workplace</v-icon>
-      </v-btn>
+      <v-hover v-model="buttonHovering">
+        <v-btn class="tooltip" fab color="green" dark v-bind="attrs" v-on="on">
+          <v-icon>mdi-facebook-workplace</v-icon>
+        </v-btn></v-hover
+      >
+
+      <!-- this is a hack because tooltip inside a dialog activator template fails -->
+      <v-tooltip
+        v-model="showToolTip"
+        :disabled="!buttonHovering"
+        :attach="attachToBtn"
+      >
+        <span>I work here</span>
+      </v-tooltip>
     </template>
+
     <v-card>
       <v-card-title class="headline">{{ name }}</v-card-title>
       <v-card-subtitle>
@@ -124,8 +136,12 @@ export default {
   props: {
     name: String,
   },
+  computed: {},
   data() {
     return {
+      attachToBtn: null,
+      buttonHovering: false,
+      showToolTip: false,
       dialog: false,
       usesPublicCalendar: false,
 
@@ -163,6 +179,12 @@ export default {
   },
 
   watch: {
+    buttonHovering(newVal) {
+      this.attachToBtn = document.querySelector('.tooltip');
+
+      this.showToolTip = newVal;
+    },
+
     userName(val, oldVal) {
       if (!oldVal) {
         this.username = 'Anon';
@@ -178,6 +200,7 @@ export default {
       alert(val);
     },
   },
+  mounted() {},
 };
 </script>
 
