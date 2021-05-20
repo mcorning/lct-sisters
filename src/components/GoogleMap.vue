@@ -335,7 +335,10 @@ export default {
           }
         );
       } else {
-        const latLng = { lat: space.latLng.lat(), lng: space.latLng.lng() };
+        const latLng = {
+          lat: space.lat || space.latLng.lat(),
+          lng: space.lng || space.latLng.lng(),
+        };
         this.geocoder.geocode({ location: latLng }, (results, status) => {
           if (status === 'OK') {
             const space = results[0];
@@ -343,7 +346,7 @@ export default {
 
             this.addMarker({
               title: 'Space',
-              name: space.name,
+              name: space.name || 'Here',
               address: space.formatted_address,
               plus_code: space.plus_code.global_code,
               placeId: space.place_id,
@@ -529,10 +532,11 @@ export default {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
               };
-              infoWindow.setPosition(pos);
-              infoWindow.setContent('Here you are.');
-              infoWindow.open(map);
-              map.setCenter(pos);
+              this.setMarker(pos);
+              // infoWindow.setPosition(pos);
+              // infoWindow.setContent('Here you are.');
+              // infoWindow.open(map);
+              // map.setCenter(pos);
             },
             () => {
               this.handleLocationError(true, infoWindow, map.getCenter());
@@ -564,10 +568,11 @@ export default {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
               };
-              infoWindow.setPosition(pos);
-              infoWindow.setContent('Here you are.');
-              infoWindow.open(map);
-              map.setCenter(pos);
+              // infoWindow.setPosition(pos);
+              // infoWindow.setContent('Here you are.');
+              // infoWindow.open(map);
+              // map.setCenter(pos);
+              this.setMarker(pos);
             },
             () => {
               this.handleLocationError(true, infoWindow, map.getCenter());

@@ -364,8 +364,6 @@ import Visit from '@/models/Visit';
 
 import { getNow, DateTime, formatSmallTime } from '../utils/luxonHelpers';
 import { error, success, warn, highlight, printJson } from '../utils/colors';
-import Memento from '../utils/Memento';
-import Caretaker from '../utils/Caretaker';
 
 export default {
   name: 'Calendar',
@@ -449,7 +447,6 @@ export default {
   },
 
   data: () => ({
-    caretaker: new Caretaker(),
     memento: null,
     mementoID: '',
     shift: 0,
@@ -524,7 +521,7 @@ export default {
   methods: {
     modifyEvent(type, direction) {
       const event = this.parsedEvent;
-      const visit = this.memento.dehydrate(this.caretaker.get(this.mementoID));
+      const visit = this.getCurrentVisit();
       console.log(warn('Editing event ID:', event.input.id));
       console.log(warn('Orig visit start:', visit.start, visit.interval));
 
@@ -533,7 +530,10 @@ export default {
 
       let endDate = this.calendarTimestampToDate(event.end);
       console.log('Event end', endDate.hour, endDate.minute);
-
+      if (endDate.hour === 23 && endDate.minute === 45) {
+        alert('End of day. LCT does not support multiday events currently.');
+        return;
+      }
       const incr = 1000 * 60 * 15;
       if (type === 'move') {
         switch (direction) {
@@ -566,10 +566,13 @@ export default {
       visit.end = endDate.ts;
       const dt1 = new Date(visit.start);
       const dt2 = new Date(visit.end);
-      this.starttime = dt1.getHours() + ':' + dt1.getMinutes();
-      this.endtime = dt2.getHours() + ':' + dt2.getMinutes();
+      const starttime = dt1.getHours() + ':' + dt1.getMinutes();
+      const endtime = dt2.getHours() + ':' + dt2.getMinutes();
+      console.log('modifyEvent', starttime, endtime);
 
-      this.caretaker.add(this.mementoID, this.memento.hydrate());
+      this.starttime = starttime;
+
+      this.endtime = endtime;
     },
 
     getYourEvents(activeVisits) {
@@ -629,9 +632,9 @@ export default {
 
       // get access to the event's index and CalendarTimestamp data
       this.parsedEvent = this.getCurrentEvent(id);
-      this.mementoID = this.parsedEvent.input.id;
-      this.memento = new Memento(this.getCurrentVisit());
-      this.caretaker.add(this.mementoID, this.memento.hydrate());
+      // this.mementoID = this.parsedEvent.input.id;
+      // this.memento = new Memento(this.getCurrentVisit());
+      // this.caretaker.add(this.mementoID, this.memento.hydrate());
 
       if (!this.parsedEvent) {
         this.status = `You cannot edit a past event. We delete events older than ${this.ageOfExpiredEvents} days.`;
@@ -1182,13 +1185,20 @@ export default {
     },
 
     calendarTimestampToDate(cts) {
-      const parsedDate = DateTime.fromObject({
-        month: cts.month,
-        day: cts.day,
-        hour: cts.hour,
-        minute: cts.minute,
-      });
-      return parsedDate;
+      console.log('calendarTimestampToDate(cts):');
+      console.log(printJson(cts));
+
+      try {
+        const parsedDate = DateTime.fromObject({
+          month: cts.month,
+          day: cts.day,
+          hour: cts.hour,
+          minute: cts.minute,
+        });
+        return parsedDate;
+      } catch (error) {
+        this.status = 'You have moved the event to past today.';
+      }
     },
 
     handleChange(event) {
@@ -1295,11 +1305,15 @@ export default {
       const event = this.parsedEvent;
       const visit = this.getCurrentVisit();
       console.log(warn('editing id', event.input.id));
-      console.log(warn('Orig end', visit.start, visit.interval));
+      console.log(warn('Last start/interval', visit.start, visit.interval));
 
-      event.start.hour = newVal.slice(0, 2) / 1;
-      event.start.minute = newVal.slice(3, 5) / 1;
-
+      // requires padded hour and minute
+      // event.start.hour = newVal.slice(0, 2) / 1;
+      // event.start.minute = newVal.slice(3, 5) / 1;
+      const times = newVal.split(':');
+      event.start.hour = times[0] / 1;
+      event.start.minute = times[1] / 1;
+      console.log('New event start:', event.start);
       const startDate = this.calendarTimestampToDate(event.start);
       visit.start = startDate.ts;
       visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
@@ -1315,11 +1329,14 @@ export default {
       const event = this.parsedEvent;
       const visit = this.getCurrentVisit();
       console.log(warn('editing id', event.input.id));
-      console.log(warn('Orig end', visit.end, visit.interval));
+      console.log(warn('Last end/interval', visit.end, visit.interval));
 
-      event.end.hour = newVal.slice(0, 2) / 1;
-      event.end.minute = newVal.slice(3, 5) / 1;
-
+      // requires padded hour and minute
+      // event.end.hour = newVal.slice(0, 2) / 1;
+      // event.end.minute = newVal.slice(3, 5) / 1;
+      const times = newVal.split(':');
+      event.end.hour = times[0] / 1;
+      event.end.minute = times[1] / 1;
       const endDate = this.calendarTimestampToDate(event.end);
 
       visit.end = endDate.ts;
