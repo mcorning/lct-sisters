@@ -44,8 +44,7 @@
           </v-toolbar>
         </v-sheet>
 
-        <!-- calendar -->
-
+        <!-- calendar sheet-->
         <!-- touch on phone is too sensitive
              @touchstart:time="startTime"
              @touchmove:time="mouseMove"
@@ -131,8 +130,9 @@
                   v-html="parsedEvent.input.name"
                 ></v-toolbar-title>
               </v-toolbar>
-              <v-row justify="space-around">
+              <v-row id="pickersRow" justify="space-around">
                 <v-spacer></v-spacer>
+                <!-- StartTime picker -->
                 <v-col cols="4">
                   <v-dialog
                     ref="dialogStart"
@@ -173,8 +173,9 @@
                     </v-time-picker>
                   </v-dialog>
                 </v-col>
-                <v-spacer></v-spacer>
 
+                <v-spacer></v-spacer>
+                <!-- EndTime Picker -->
                 <v-col cols="4">
                   <v-dialog
                     ref="dialogEnd"
@@ -216,40 +217,46 @@
                     </v-time-picker>
                   </v-dialog>
                 </v-col>
+
                 <v-spacer></v-spacer>
               </v-row>
-              <v-row justify="space-around">
+
+              <v-row id="modifyEventRow" justify="space-around">
                 <v-col cols="9">
                   <v-row align="center" justify="space-around">
                     <v-col class="text-center">Modify Event</v-col>
                   </v-row>
-                  <v-row dense>
+                  <v-row id="moveVisitRow" dense>
                     <v-col>Move</v-col>
                     <v-col>
-                      <v-btn outlined icon>
+                      <v-btn outlined icon @click="modifyEvent('move', 'up')">
                         <v-icon>mdi-arrow-up</v-icon>
                       </v-btn>
                     </v-col>
                     <v-col>
-                      <v-btn outlined icon>
+                      <v-btn outlined icon @click="modifyEvent('move', 'dn')">
                         <v-icon>mdi-arrow-down</v-icon>
                       </v-btn>
                     </v-col>
                   </v-row>
-                  <v-row dense>
+                  <v-row id="expandVisitRow" dense>
                     <v-col>Expand</v-col>
                     <v-col>
-                      <v-btn outlined icon>
+                      <v-btn outlined icon @click="modifyEvent('expand', 'up')">
                         <v-icon>mdi-arrow-expand-up</v-icon>
                       </v-btn>
                     </v-col>
                     <v-col>
-                      <v-btn outlined icon>
+                      <v-btn
+                        outlined
+                        icon
+                        @click="modifyEvent('expand', 'both')"
+                      >
                         <v-icon>mdi-arrow-expand-vertical</v-icon>
                       </v-btn>
                     </v-col>
                     <v-col>
-                      <v-btn outlined icon>
+                      <v-btn outlined icon @click="modifyEvent('expand', 'dn')">
                         <v-icon>mdi-arrow-expand-down</v-icon>
                       </v-btn>
                     </v-col>
@@ -258,6 +265,7 @@
               </v-row>
               <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
               <v-card-actions>
+                <!-- Delete Visit -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
@@ -274,7 +282,7 @@
                   <span>Delete Visit</span></v-tooltip
                 >
 
-                <!-- btn click sets calls revert() -->
+                <!-- Abandon changes with revert() -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
@@ -290,7 +298,7 @@
                   </template>
                   <span>Abandon changes</span></v-tooltip
                 >
-                <!-- btn click calls saveVisit() -->
+                <!-- Save Visit -->
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <div class="text-center">
@@ -308,7 +316,7 @@
                   </template>
                   <span>Save Visit locally</span></v-tooltip
                 >
-
+                <!-- Log Visit -->
                 <v-spacer></v-spacer>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
@@ -356,6 +364,8 @@ import Visit from '@/models/Visit';
 
 import { getNow, DateTime, formatSmallTime } from '../utils/luxonHelpers';
 import { error, success, warn, highlight, printJson } from '../utils/colors';
+import Memento from '../utils/Memento';
+import Caretaker from '../utils/Caretaker';
 
 export default {
   name: 'Calendar',
@@ -439,6 +449,9 @@ export default {
   },
 
   data: () => ({
+    caretaker: new Caretaker(),
+    memento: null,
+    mementoID: '',
     shift: 0,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
@@ -509,6 +522,56 @@ export default {
   }),
 
   methods: {
+    modifyEvent(type, direction) {
+      const event = this.parsedEvent;
+      const visit = this.memento.dehydrate(this.caretaker.get(this.mementoID));
+      console.log(warn('Editing event ID:', event.input.id));
+      console.log(warn('Orig visit start:', visit.start, visit.interval));
+
+      let startDate = this.calendarTimestampToDate(event.start);
+      console.log('Event start', startDate.hour, startDate.minute);
+
+      let endDate = this.calendarTimestampToDate(event.end);
+      console.log('Event end', endDate.hour, endDate.minute);
+
+      const incr = 1000 * 60 * 15;
+      if (type === 'move') {
+        switch (direction) {
+          case 'dn':
+            startDate.ts += incr;
+            endDate.ts += incr;
+            break;
+          case 'up':
+            startDate.ts -= incr;
+            endDate.ts -= incr;
+            break;
+        }
+      } else {
+        // reduce top/increase bottom or both
+        switch (direction) {
+          case 'dn':
+            endDate.ts += incr;
+            break;
+          case 'up':
+            startDate.ts -= incr;
+            break;
+          case 'both':
+            startDate.ts -= incr;
+            endDate.ts += incr;
+            break;
+        }
+      }
+
+      visit.start = startDate.ts;
+      visit.end = endDate.ts;
+      const dt1 = new Date(visit.start);
+      const dt2 = new Date(visit.end);
+      this.starttime = dt1.getHours() + ':' + dt1.getMinutes();
+      this.endtime = dt2.getHours() + ':' + dt2.getMinutes();
+
+      this.caretaker.add(this.mementoID, this.memento.hydrate());
+    },
+
     getYourEvents(activeVisits) {
       const filter = (visit) => visit.category === 'You';
       let x = activeVisits.filter(filter);
@@ -566,6 +629,10 @@ export default {
 
       // get access to the event's index and CalendarTimestamp data
       this.parsedEvent = this.getCurrentEvent(id);
+      this.mementoID = this.parsedEvent.input.id;
+      this.memento = new Memento(this.getCurrentVisit());
+      this.caretaker.add(this.mementoID, this.memento.hydrate());
+
       if (!this.parsedEvent) {
         this.status = `You cannot edit a past event. We delete events older than ${this.ageOfExpiredEvents} days.`;
         return;
@@ -708,6 +775,7 @@ export default {
       this.extendOriginal = null;
       this.place = null;
       this.selectedOpen = false;
+      this.mementoID = '';
     },
 
     //#endregion Drag and Drop
