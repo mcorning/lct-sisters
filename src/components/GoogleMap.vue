@@ -150,7 +150,7 @@
 import Visit from '@/models/Visit';
 
 import { highlight, getRandomIntInclusive, printJson } from '../utils/colors';
-import DateTime from '../utils/luxonHelpers';
+import { DateTime } from '../utils/luxonHelpers';
 
 export default {
   // see main.js for vue2-google-maps instantiation
@@ -161,10 +161,6 @@ export default {
   },
 
   computed: {
-    markers() {
-      return [...this.markersDataMap].flat();
-    },
-
     InfoWinContent() {
       return this.marker ? this.marker : '';
     },
@@ -209,6 +205,8 @@ export default {
 
   data() {
     return {
+      markers: [],
+      markersMap: new Map(),
       markersDataMap: new Map(),
       gender: ['men', 'women'],
       needInput: false,
@@ -406,15 +404,22 @@ export default {
     },
 
     removeMarker() {
-      this.marker.setMap(null);
-
+      console.log(this.marker);
       console.log(
-        `Removed ${this.marker.name}`,
-        this.markersDataMap.delete(this.marker.plus_code)
+        `Removed ${this.marker.name} from markersDataMap`,
+        this.markersDataMap.delete(this.marker.name)
+      );
+      localStorage.setItem(
+        'markersDataMap',
+        JSON.stringify([...this.markersDataMap])
+      );
+      console.log(
+        `Removed ${this.marker.name} from markersMap`,
+        this.markersMap.delete(this.marker.name)
       );
 
-      // TODO make this.markers into a Map
-      // this.markers.splice(this.currentMidx, 1);
+      this.marker.setMap(null);
+      this.marker = null;
       this.infoWinOpen = false;
     },
 
@@ -646,26 +651,23 @@ export default {
       });
     },
 
-    getMarkers(map) {
+    // Called by getMarkersFromCachedData below
+    deserializeMarkersData(value, key) {
+      console.log(`map.get('${key}') = ${value}`);
+      const newMarker = new window.google.maps.Marker(value);
+      newMarker.setMap(this.map);
+      this.markersMap.set(value.name, newMarker);
+    },
+
+    // Google map object needed for making markers from data
+    getMarkersFromCachedData(map) {
       let data = localStorage.getItem('markersDataMap');
       this.markersDataMap = new Map(data ? JSON.parse(data) : null);
       try {
-        // this.markers = this.markersData
-        //   ? this.markersData.map((c) => {
-        //       // const label = c.label?.text || c.label || 'V?';
-        //       const marker = new window.google.maps.Marker({
-        //         title: c.title,
-        //         // label: { text: label, color: 'white' },
-        //         name: c.name,
-        //         placeId: c.placeId,
-        //         address: c.address,
-        //         position: c.position,
-        //         plus_code: c.plus_code,
-        //         map: map,
-        //       });
-        //       return marker;
-        //     })
-        //   : [];
+        this.markersDataMap.forEach(this.deserializeMarkersData);
+        this.markers = [...this.markersMap].flat();
+        console.log([...this.markers]);
+        console.log([...this.markersMap]);
       } catch (error) {
         console.log(error);
         this.emit('error', error);
@@ -681,6 +683,8 @@ export default {
         );
         return;
       }
+
+      // TODO Replace with ConfirmDialogModern version
       this.$refs.confirm
         .open('Confirm', `Mark your calendar with ${val[0]}?`)
         .then((add) => {
@@ -738,7 +742,7 @@ export default {
 
     self.$refs.mapRef.$mapPromise
       .then((map) => self.showMap(map))
-      .then((map) => self.getMarkers(map))
+      .then((map) => self.getMarkersFromCachedData(map))
       .then(() => self.getAssets())
       .then(() => self.getVisits())
       .then(() => {
