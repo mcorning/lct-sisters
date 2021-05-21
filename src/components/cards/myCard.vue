@@ -17,7 +17,7 @@
           clearable
         ></v-text-field
       ></v-card-text>
-      <v-card-text>
+      <!-- <v-card-text>
         <v-row>
           <v-col cols="12">
             <v-select
@@ -30,7 +30,7 @@
             ></v-select>
           </v-col>
         </v-row>
-      </v-card-text>
+      </v-card-text> -->
 
       <v-card-text v-html="html">
         <p>Ready to crush this virus?</p>
@@ -63,7 +63,7 @@ export default {
   },
   data() {
     return {
-      avgStay: 1,
+      // avgStay: 1,
       intervals: [0.5, 1, 8],
       dialog: false,
       username: '',

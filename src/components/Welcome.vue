@@ -71,10 +71,6 @@ export default {
       }
       console.log(val);
     },
-
-    avgStay(val) {
-      localStorage.setItem('avgStay', val);
-    },
   },
   created() {
     this.username = localStorage.getItem('username');

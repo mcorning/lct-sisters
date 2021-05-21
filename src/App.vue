@@ -508,7 +508,8 @@ export default {
         return;
       }
       const { name, placeId, lat, lng, startTime, stay } = place;
-
+      console.log(warn('App.onAddedPlace(place):'));
+      console.log(warn(printJson(place)));
       // set the Calendar prop
       this.selectedSpace = {
         name: name,
@@ -823,12 +824,6 @@ export default {
     );
     self.bp = bp;
     self.namespace = process.env.VUE_APP_NAMESPACE;
-    let x = localStorage.getItem('avgStay');
-    if (x) {
-      self.avgStay *= x;
-    }
-    console.log('Cached avgStay', x || 'empty');
-    console.log('Total avgStay', self.avgStay);
     self.selectedSpace = null;
     self.graphName = self.$defaultGraphName;
     console.log(self.graphName);

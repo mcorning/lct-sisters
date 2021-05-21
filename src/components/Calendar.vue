@@ -59,12 +59,13 @@
             ref="calendar"
             v-model="focus"
             color="primary"
-            event-overlap-mode="column"
             :type="type"
             :categories="categories"
             :events="visits"
             :event-ripple="false"
             :event-color="getEventColor"
+            event-overlap-mode="column"
+            event-overlap-threshold="15"
             @touchstart:event="showEvent"
             @mousedown:time="startTime"
             @mousemove:time="mouseMove"
@@ -221,7 +222,7 @@
                 <v-spacer></v-spacer>
               </v-row>
 
-              <v-row id="modifyEventRow" justify="space-around">
+              <v-row dense id="modifyEventRow" justify="space-around">
                 <v-col cols="9">
                   <v-row align="center" justify="space-around">
                     <v-col class="text-center">Modify Event</v-col>
@@ -236,6 +237,36 @@
                     <v-col>
                       <v-btn outlined icon @click="modifyEvent('move', 'dn')">
                         <v-icon>mdi-arrow-down</v-icon>
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                  <v-row id="expandVisitRow" dense>
+                    <v-col>Collapse</v-col>
+                    <v-col>
+                      <v-btn
+                        outlined
+                        icon
+                        @click="modifyEvent('collapse', 'up')"
+                      >
+                        <v-icon>mdi-arrow-collapse-up</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col>
+                      <v-btn
+                        outlined
+                        icon
+                        @click="modifyEvent('collapse', 'both')"
+                      >
+                        <v-icon>mdi-arrow-collapse-vertical</v-icon>
+                      </v-btn>
+                    </v-col>
+                    <v-col>
+                      <v-btn
+                        outlined
+                        icon
+                        @click="modifyEvent('collapse', 'dn')"
+                      >
+                        <v-icon>mdi-arrow-collapse-down</v-icon>
                       </v-btn>
                     </v-col>
                   </v-row>
@@ -535,31 +566,51 @@ export default {
         return;
       }
       const incr = 1000 * 60 * 15;
-      if (type === 'move') {
-        switch (direction) {
-          case 'dn':
-            startDate.ts += incr;
-            endDate.ts += incr;
-            break;
-          case 'up':
-            startDate.ts -= incr;
-            endDate.ts -= incr;
-            break;
-        }
-      } else {
-        // reduce top/increase bottom or both
-        switch (direction) {
-          case 'dn':
-            endDate.ts += incr;
-            break;
-          case 'up':
-            startDate.ts -= incr;
-            break;
-          case 'both':
-            startDate.ts -= incr;
-            endDate.ts += incr;
-            break;
-        }
+      switch (type) {
+        case 'move':
+          switch (direction) {
+            case 'dn':
+              startDate.ts += incr;
+              endDate.ts += incr;
+              break;
+            case 'up':
+              startDate.ts -= incr;
+              endDate.ts -= incr;
+              break;
+          }
+          break;
+
+        case 'collapse':
+          // increase top/decrease bottom or both
+          switch (direction) {
+            case 'dn':
+              endDate.ts -= incr;
+              break;
+            case 'up':
+              startDate.ts += incr;
+              break;
+            case 'both':
+              startDate.ts += incr;
+              endDate.ts -= incr;
+              break;
+          }
+          break;
+
+        case 'expand':
+          // decrease top/increase bottom or both
+          switch (direction) {
+            case 'dn':
+              endDate.ts += incr;
+              break;
+            case 'up':
+              startDate.ts -= incr;
+              break;
+            case 'both':
+              startDate.ts -= incr;
+              endDate.ts += incr;
+              break;
+          }
+          break;
       }
 
       visit.start = startDate.ts;
@@ -903,10 +954,10 @@ export default {
       return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
     },
 
-    addEvent(time) {
+    addEvent(time, stay = this.avgStay) {
       const graphname = this.getGraphName();
       this.createStart = this.roundTime(time);
-      const endTime = this.createStart + this.stay;
+      const endTime = this.createStart + stay;
 
       const name = this.place.name;
       console.log(
@@ -1147,8 +1198,8 @@ export default {
 
     newEvent() {
       const time = this.place.startTime || Date.now();
-
-      this.addEvent(time);
+      const stay = this.place.stay;
+      this.addEvent(time, stay);
       this.endDrag();
     },
 
@@ -1205,7 +1256,9 @@ export default {
       // this represents the start and end days on the calendar
       // we see it during mounting (where we call checkChange()) as one day
       // but change the calendar type, and you will see different start.date and end.date values
+      console.groupCollapsed('handleChange(event)');
       console.log(highlight(this.type, printJson(event)));
+      console.groupEnd();
       if (this.type === 'category') {
         const openings = this.cal
           .getVisibleEvents()

@@ -17,38 +17,14 @@
       </v-tooltip>
     </template>
 
-    <v-card>
+    <v-card dark>
       <v-card-title class="headline">{{ name }}</v-card-title>
       <v-card-subtitle>
         Let's open the doors (safely)
       </v-card-subtitle>
 
       <v-card-text>
-        <v-switch
-          v-model="usesPublicCalendar"
-          :label="
-            `We require appointments. Currently: ${usesPublicCalendar.toString()}`
-          "
-        ></v-switch>
-
-        <!-- Optional settings -->
-        <v-row v-if="usesPublicCalendar">
-          <v-col cols="4">
-            <v-text-field
-              v-model="slotInterval"
-              label="How long are appointments (in minutes)?"
-              clearable
-            ></v-text-field>
-          </v-col>
-          <v-col cols="8">
-            <v-text-field
-              v-model="people"
-              label="List service providers"
-              hint="Separate names with commas"
-              clearable
-            ></v-text-field>
-          </v-col>
-        </v-row>
+        <!-- Shift duration -->
         <v-row>
           <v-col cols="6">
             <v-menu
@@ -65,7 +41,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
                   v-model="time1"
-                  label="Opening hr:min"
+                  label="Shift starts at hr:min"
                   prepend-icon="access_time"
                   readonly
                   v-bind="attrs"
@@ -95,7 +71,7 @@
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
                   v-model="time2"
-                  label="Closing hr:min"
+                  label="Shift ends at hr:min"
                   prepend-icon="access_time"
                   readonly
                   v-bind="attrs"
@@ -111,6 +87,30 @@
             </v-menu>
           </v-col>
         </v-row>
+        <v-switch
+          v-model="usesPublicCalendar"
+          :label="
+            `By appointment only. Currently: ${usesPublicCalendar.toString()}`
+          "
+        ></v-switch>
+        <!-- Optional settings -->
+        <v-row v-if="usesPublicCalendar">
+          <v-col cols="4">
+            <v-text-field
+              v-model="slotInterval"
+              label="How long are appointments (in minutes)?"
+              clearable
+            ></v-text-field>
+          </v-col>
+          <v-col cols="8">
+            <v-text-field
+              v-model="people"
+              label="List service providers"
+              hint="Separate names with commas"
+              clearable
+            ></v-text-field>
+          </v-col>
+        </v-row>
 
         <v-card-text>
           Ready to get to work?
@@ -119,12 +119,12 @@
       <v-card-actions>
         <v-spacer></v-spacer>
 
-        <v-btn color="primary darken-1" text @click="dialog = false">
-          No thanks
+        <v-btn color="secondary darken-1" text @click="dialog = false">
+          Never mind
         </v-btn>
 
-        <v-btn color="primary darken-1" text @click="onGo">
-          Absolutely
+        <v-btn color="secondary darken-1" text @click="onGo">
+          Yes
         </v-btn>
       </v-card-actions>
     </v-card>

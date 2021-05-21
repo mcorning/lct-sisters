@@ -53,7 +53,7 @@
         <v-card>
           <v-card-title class="mt-0 pt-0">
             <v-text-field
-              v-if="!InfoWinContent.name"
+              v-if="!InfoWinContent.name || InfoWinContent.name === 'Here'"
               @change="updateName"
               dense
               hide-details
@@ -150,7 +150,7 @@
 import Visit from '@/models/Visit';
 
 import { highlight, getRandomIntInclusive, printJson } from '../utils/colors';
-import { DateTime } from '../utils/luxonHelpers';
+import DateTime from '../utils/luxonHelpers';
 
 export default {
   // see main.js for vue2-google-maps instantiation
@@ -161,6 +161,10 @@ export default {
   },
 
   computed: {
+    markers() {
+      return [...this.markersDataMap].flat();
+    },
+
     InfoWinContent() {
       return this.marker ? this.marker : '';
     },
@@ -205,6 +209,7 @@ export default {
 
   data() {
     return {
+      markersDataMap: new Map(),
       gender: ['men', 'women'],
       needInput: false,
       marker: null,
@@ -233,7 +238,6 @@ export default {
       content: 'Default info',
       zoom: 15,
       center: null,
-      markers: [],
       places: [],
       placeName: '',
       lastId: 1,
@@ -256,19 +260,31 @@ export default {
   },
 
   methods: {
-    onGo() {
+    onGo(data) {
+      console.log(data);
       this.dialog = false;
       this.$emit('connectMe');
-      const openAt = localStorage.getItem('openAt').split(':');
-      // const closeAt = localStorage.getItem('closeAt').split(':')[0];
-      // // const shift = (closeAt - openAt) * 3600000;
+      const openAt = (data.time1 || localStorage.getItem('openAt')).split(':');
+      const closeAt = (data.time2 || localStorage.getItem('closeAt')).split(
+        ':'
+      );
+
       const startTime = DateTime.fromObject({
         hour: openAt[0] / 1,
         minute: openAt[1] / 1,
-      }).ts;
-      console.log(`onGo() startTime: ${startTime}`);
+      });
+      const endTime = DateTime.fromObject({
+        hour: closeAt[0] / 1,
+        minute: closeAt[1] / 1,
+      });
+      const stay = endTime.diff(startTime);
+
+      console.log(`onGo() startTime: ${startTime.toString()} `);
+
+      console.log(`onGo() endTime:  ${endTime.toString()}`);
+      console.log(`onGo() startTime/stay: ${startTime}`, printJson(stay));
       // we hare calling a click handler here, so set first arg to null since we don't have a nativeEvent to pass
-      this.addVisit(null, startTime);
+      this.addVisit(null, startTime, stay.milliseconds);
     },
 
     toggleInfoWindow(marker, idx) {
@@ -361,31 +377,12 @@ export default {
     },
 
     addMarker(data) {
-      const {
-        title,
-        label,
-        name,
-        address,
-        placeId,
-        position,
-        plus_code,
-      } = data;
+      const { title, name, address, placeId, position, plus_code } = data;
 
-      this.markersData.push({
-        title,
-        label,
-        name,
-        position,
-        address,
-        placeId,
-        plus_code,
-      });
-      localStorage.setItem('markersData', JSON.stringify(this.markersData));
-
-      const marker = new window.google.maps.Marker({
+      const markerData = {
         // for tooltips and visible marker labels
         title: title, // "Place" or "Gathering"
-        label: { text: 'V' + this.markersData.length, color: 'white' }, // label is assigned a value before
+        label: { text: 'V' + this.markersDataMap.size, color: 'white' }, // label is assigned a value before
 
         // to cache place data for logging
         // displayed in map and sent to Calendar
@@ -395,21 +392,29 @@ export default {
         address, // Address or Plus_Code of public space
         placeId, // For known places, a unique identifier
         plus_code, // unique global address (shorter than placeId)
+      };
 
-        map: this.map, // Used by mapping platform to show markers
-      });
-      this.markers.push(marker);
+      const markerDataWithMap = { ...markerData, ...{ map: this.map } }; // Used by mapping platform to show markers
+      const marker = new window.google.maps.Marker(markerDataWithMap);
       this.marker = marker;
+      this.markersDataMap.set(name, markerData);
+      localStorage.setItem(
+        'markersDataMap',
+        JSON.stringify([...this.markersDataMap])
+      );
       this.toggleInfoWindow(marker);
     },
 
     removeMarker() {
-      this.markersData.splice(this.currentMidx, 1);
-      localStorage.setItem('markersData', JSON.stringify(this.markersData));
-
-      // const marker = this.markers[this.currentMidx];
       this.marker.setMap(null);
-      this.markers.splice(this.currentMidx, 1);
+
+      console.log(
+        `Removed ${this.marker.name}`,
+        this.markersDataMap.delete(this.marker.plus_code)
+      );
+
+      // TODO make this.markers into a Map
+      // this.markers.splice(this.currentMidx, 1);
       this.infoWinOpen = false;
     },
 
@@ -533,10 +538,6 @@ export default {
                 lng: position.coords.longitude,
               };
               this.setMarker(pos);
-              // infoWindow.setPosition(pos);
-              // infoWindow.setContent('Here you are.');
-              // infoWindow.open(map);
-              // map.setCenter(pos);
             },
             () => {
               this.handleLocationError(true, infoWindow, map.getCenter());
@@ -646,25 +647,25 @@ export default {
     },
 
     getMarkers(map) {
-      const data = localStorage.getItem('markersData');
-      this.markersData = data ? JSON.parse(data) : [];
+      let data = localStorage.getItem('markersDataMap');
+      this.markersDataMap = new Map(data ? JSON.parse(data) : null);
       try {
-        this.markers = this.markersData
-          ? this.markersData.map((c) => {
-              // const label = c.label?.text || c.label || 'V?';
-
-              const marker = new window.google.maps.Marker({
-                title: c.title,
-                // label: { text: label, color: 'white' },
-                name: c.name,
-                placeId: c.placeId,
-                address: c.address,
-                position: c.position,
-                map: map,
-              });
-              return marker;
-            })
-          : [];
+        // this.markers = this.markersData
+        //   ? this.markersData.map((c) => {
+        //       // const label = c.label?.text || c.label || 'V?';
+        //       const marker = new window.google.maps.Marker({
+        //         title: c.title,
+        //         // label: { text: label, color: 'white' },
+        //         name: c.name,
+        //         placeId: c.placeId,
+        //         address: c.address,
+        //         position: c.position,
+        //         plus_code: c.plus_code,
+        //         map: map,
+        //       });
+        //       return marker;
+        //     })
+        //   : [];
       } catch (error) {
         console.log(error);
         this.emit('error', error);
@@ -673,7 +674,7 @@ export default {
     },
 
     goRecent(val) {
-      this.marker = this.markersData.find(({ name }) => name === val[0]);
+      this.marker = this.markersDataMap.get(val[0]);
       if (!this.marker) {
         alert(
           `The marker for ${val[0]} is missing. Please mark your map again, and use the marker to mark your calendar.`
@@ -696,15 +697,15 @@ export default {
 
     updateName(name) {
       this.marker.name = name;
-      this.markersData.find(
-        ({ placeId }) => placeId === this.marker.placeId
-      ).name = name;
       console.log(
-        highlight('markersData'),
-        JSON.stringify(this.markersData, null, 3)
+        highlight('markersDataMap'),
+        JSON.stringify([...this.markersDataMap], null, 3)
       );
 
-      localStorage.setItem('markersData', JSON.stringify(this.markersData));
+      localStorage.setItem(
+        'markersDataMap',
+        JSON.stringify([...this.markersDataMap])
+      );
     },
 
     getAvatar() {
