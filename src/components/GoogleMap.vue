@@ -1,7 +1,11 @@
 <template>
   <v-sheet class="fill-height position:absolute">
-    <ConfirmDlg ref="confirm" />
-
+    <ConfirmModernDialog
+      id="ConfirmModernDialogId"
+      ref="ConfirmModernDialog"
+      :customOptions="customOptions"
+    />
+    <!-- Recent Visits -->
     <v-navigation-drawer v-model="drawer" absolute temporary>
       <v-list-item>
         <v-list-item-avatar>
@@ -48,7 +52,7 @@
         :options="infoOptions"
         :position="infoWindowPos"
         :opened="infoWinOpen"
-        @closeclick="infoWinOpen = false"
+        @closeclick="removeMarker"
       >
         <v-card>
           <v-card-title class="mt-0 pt-0">
@@ -64,13 +68,9 @@
           <v-card-subtitle class="pb-0">{{
             InfoWinContent.address
           }}</v-card-subtitle>
-          <v-card-text class="pt-3"
-            ><small
-              >Plus_Code: {{ InfoWinContent.plus_code }} <br />
-              Place ID: {{ InfoWinContent.placeId }} <br />
-              Position: {{ InfoWinContent.position }}</small
-            >
-          </v-card-text>
+
+          <v-select :items="addresses" dense></v-select>
+
           <v-card-actions class="pb-1">
             <v-tooltip top>
               <template v-slot:activator="{ on, attrs }">
@@ -109,7 +109,6 @@
           </v-card-actions>
         </v-card>
       </GmapInfoWindow>
-
       <GmapMarker
         :key="index"
         v-for="(m, index) in markers"
@@ -146,21 +145,42 @@
 
 <script>
 // See https://github.com/xkjyeah/vue-google-maps
+import crypto from 'crypto';
+const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Visit from '@/models/Visit';
+import Place from '@/models/Place';
 
-import { highlight, getRandomIntInclusive, printJson } from '../utils/colors';
+import {
+  error,
+  highlight,
+  warn,
+  getRandomIntInclusive,
+  printJson,
+} from '../utils/colors';
 import { DateTime } from '../utils/luxonHelpers';
 
 export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
   components: {
-    ConfirmDlg: () => import('./cards/dialogCard'),
+    ConfirmModernDialog: () => import('./cards/dialogCardModern'),
     businessCard: () => import('./cards/businessCard'),
   },
 
   computed: {
+    addresses() {
+      return [
+        `Plus_Code: ${this.InfoWinContent.plus_code}`,
+        `Place ID:  ${this.InfoWinContent.placeId}`,
+        `Position:  ${this.InfoWinContent.position}`,
+      ];
+    },
+
+    ConfirmModernDialog() {
+      return this.$refs.ConfirmModernDialog;
+    },
+
     InfoWinContent() {
       return this.marker ? this.marker : '';
     },
@@ -201,10 +221,31 @@ export default {
       const x = new window.google.maps.InfoWindow({ content: this.content });
       return x;
     },
+    mapPromise() {
+      return this.$refs.mapRef.$mapPromise;
+    },
   },
 
   data() {
     return {
+      customOptions: {
+        buttons: [
+          { label: "Don't Save" },
+          { label: 'Cancel', agree: 0 },
+          {
+            label: 'Save',
+            color: 'secondary',
+            outlined: true,
+            agree: 1,
+          },
+        ],
+      },
+      // promises
+
+      visitsPromise: Visit.$fetch(),
+      placePromise: Place.$fetch(),
+
+      minimalMarkers: new Map(),
       markers: [],
       markersMap: new Map(),
       markersDataMap: new Map(),
@@ -309,71 +350,6 @@ export default {
       this.toggleInfoWindow(marker, idx);
     },
 
-    // click the map, mark the place, get a marker there
-    // space is this.$event (and includes the placeId string and the latLng object)
-    setMarker(space) {
-      this.center = space.latLng;
-      console.log(highlight('placeId:'), printJson(space));
-      // this.getSpaceDetails(space);
-      if (space.placeId) {
-        this.placesService.getDetails(
-          {
-            placeId: space.placeId,
-            fields: [
-              'name',
-              'formatted_address',
-              'place_id',
-              'geometry',
-              'plus_code',
-            ],
-          },
-          (place, status) => {
-            if (
-              status === window.google.maps.places.PlacesServiceStatus.OK &&
-              place &&
-              place.geometry &&
-              place.geometry.location
-            ) {
-              const position = place.geometry.location;
-              this.addMarker({
-                title: 'Place',
-                name: place.name,
-                address: place.formatted_address,
-                plus_code: place.plus_code.global_code,
-                placeId: place.place_id,
-                position: position,
-              });
-            } else {
-              console.log('Error:', status);
-            }
-          }
-        );
-      } else {
-        const latLng = {
-          lat: space.lat || space.latLng.lat(),
-          lng: space.lng || space.latLng.lng(),
-        };
-        this.geocoder.geocode({ location: latLng }, (results, status) => {
-          if (status === 'OK') {
-            const space = results[0];
-            const position = space.geometry.location;
-
-            this.addMarker({
-              title: 'Space',
-              name: space.name || 'Here',
-              address: space.formatted_address,
-              plus_code: space.plus_code.global_code,
-              placeId: space.place_id,
-              position: position,
-            });
-            console.log(results);
-          } else {
-            console.log('Error:', status);
-          }
-        });
-      }
-    },
-
     addMarker(data) {
       const { title, name, address, placeId, position, plus_code } = data;
 
@@ -391,33 +367,32 @@ export default {
         placeId, // For known places, a unique identifier
         plus_code, // unique global address (shorter than placeId)
       };
-
-      const markerDataWithMap = { ...markerData, ...{ map: this.map } }; // Used by mapping platform to show markers
-      const marker = new window.google.maps.Marker(markerDataWithMap);
-      this.marker = marker;
+      const icon = {
+        path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+        scale: 5,
+      };
+      this.marker = new window.google.maps.Marker(markerData);
+      this.marker.setDraggable(true);
+      this.marker.setMap(this.map);
+      this.marker.setIcon(icon);
       this.markersDataMap.set(name, markerData);
-      localStorage.setItem(
-        'markersDataMap',
-        JSON.stringify([...this.markersDataMap])
-      );
-      this.toggleInfoWindow(marker);
+      console.log(warn('Caching new marker'));
+      console.log(printJson([...this.markersDataMap]), '\n');
+      // TODO use markersMap for this
+      // localStorage.setItem(
+      //   'markersDataMap',
+      //   JSON.stringify([...this.markersDataMap])
+      // );
+      this.toggleInfoWindow(this.marker);
     },
 
     removeMarker() {
       console.log(this.marker);
       console.log(
-        `Removed ${this.marker.name} from markersDataMap`,
-        this.markersDataMap.delete(this.marker.name)
-      );
-      localStorage.setItem(
-        'markersDataMap',
-        JSON.stringify([...this.markersDataMap])
-      );
-      console.log(
         `Removed ${this.marker.name} from markersMap`,
         this.markersMap.delete(this.marker.name)
       );
-
+      localStorage.setItem('markersMap', [...this.markersMap]);
       this.marker.setMap(null);
       this.marker = null;
       this.infoWinOpen = false;
@@ -574,10 +549,6 @@ export default {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
               };
-              // infoWindow.setPosition(pos);
-              // infoWindow.setContent('Here you are.');
-              // infoWindow.open(map);
-              // map.setCenter(pos);
               this.setMarker(pos);
             },
             () => {
@@ -626,56 +597,18 @@ export default {
       // );
       this.setUpRecentVisits(map);
       this.setUpGeolocation(map);
-      this.map = map;
       return map;
     },
 
-    getAssets() {
-      const self = this;
+    getAssets(map) {
       this.$gmapApiPromiseLazy().then(() => {
-        self.geocoder = new window.google.maps.Geocoder();
-        self.placesService = new window.google.maps.places.PlacesService(
-          self.map
-        );
+        this.geocoder = new window.google.maps.Geocoder();
+        this.placesService = new window.google.maps.places.PlacesService(map);
       });
-    },
-
-    getVisits() {
-      Visit.$fetch().then((all) => {
-        console.log(
-          'Populating Recent Visits with',
-          all.visits?.length || 0,
-          'visits'
-        );
-        this.visits = all.visits;
-      });
-    },
-
-    // Called by getMarkersFromCachedData below
-    deserializeMarkersData(value, key) {
-      console.log(`map.get('${key}') = ${value}`);
-      const newMarker = new window.google.maps.Marker(value);
-      newMarker.setMap(this.map);
-      this.markersMap.set(value.name, newMarker);
-    },
-
-    // Google map object needed for making markers from data
-    getMarkersFromCachedData(map) {
-      let data = localStorage.getItem('markersDataMap');
-      this.markersDataMap = new Map(data ? JSON.parse(data) : null);
-      try {
-        this.markersDataMap.forEach(this.deserializeMarkersData);
-        this.markers = [...this.markersMap].flat();
-        console.log([...this.markers]);
-        console.log([...this.markersMap]);
-      } catch (error) {
-        console.log(error);
-        this.emit('error', error);
-      }
-      this.map = map;
     },
 
     goRecent(val) {
+      // TODO replace this with code working from markers array
       this.marker = this.markersDataMap.get(val[0]);
       if (!this.marker) {
         alert(
@@ -684,15 +617,19 @@ export default {
         return;
       }
 
-      // TODO Replace with ConfirmDialogModern version
-      this.$refs.confirm
-        .open('Confirm', `Mark your calendar with ${val[0]}?`)
-        .then((add) => {
-          if (add) {
-            console.log(printJson(printJson(this.marker)));
-            this.addVisit();
-          }
-        });
+      const question = `Mark your calendar with ${val[0]}?`;
+      const consequences =
+        'This will add an event to your calendar and a marker to your map.';
+      const icon = 'mdi-question';
+
+      this.ConfirmModernDialog.open(question, consequences, {
+        icon: icon,
+      }).then((act) => {
+        if (act) {
+          console.log(printJson(printJson(this.marker)));
+          this.addVisit();
+        }
+      });
     },
 
     getIcon() {
@@ -718,6 +655,119 @@ export default {
       const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
       return avatar;
     },
+
+    makeMarker(visit, map) {
+      return new window.google.maps.Marker({
+        title: visit.name,
+        label: { text: 'V', color: 'white' },
+
+        name: visit.name,
+        position: { lat: visit.lat, lng: visit.lng },
+        placeId: visit.placeId,
+
+        map: map,
+      });
+    },
+
+    deserializeVisitAsMarker(visits, map) {
+      let visitMarkerMap = new Map();
+      visits.forEach((visit) => {
+        let m = this.makeMarker(visit, map);
+        visitMarkerMap.set(visit.name, m);
+      });
+      return visitMarkerMap;
+    },
+
+    getVisits() {
+      Visit.$fetch().then((all) => {
+        console.log(
+          'Populating Recent Visits with',
+          all.visits?.length || 0,
+          'visits'
+        );
+        this.visits = all.visits;
+        this.resolve(all.visits);
+      });
+      return new Promise((resolve, reject) => {
+        this.resolve = resolve;
+        this.reject = reject;
+      });
+    },
+
+    // click the map, mark the place, get a marker there
+    // space is this.$event (and includes the placeId string and the latLng object)
+    setMarker(space) {
+      this.center = space.latLng;
+      console.log(highlight('Selected space:'), printJson(space));
+      // this.getSpaceDetails(space);
+      if (space.placeId) {
+        this.placesService.getDetails(
+          {
+            placeId: space.placeId,
+            fields: [
+              'name',
+              'formatted_address',
+              'place_id',
+              'geometry',
+              'plus_code',
+            ],
+          },
+          (place, status) => {
+            if (
+              status === window.google.maps.places.PlacesServiceStatus.OK &&
+              place &&
+              place.geometry &&
+              place.geometry.location
+            ) {
+              const position = place.geometry.location;
+
+              Place.updatePromise({
+                id: randomId(),
+                name: place.name,
+                address: place.formatted_address,
+                placeId: place.place_id,
+                plusCode: place.plus_code.global_code,
+                lat: position.lat(),
+                lng: position.lng(),
+              })
+                .then((result) =>
+                  console.log('Updated Place:', printJson(result))
+                )
+                .catch((err) => {
+                  console.log(error(err));
+                  this.$emit('error', err);
+                });
+            } else {
+              console.log('Error:', status);
+            }
+          }
+        );
+      } else {
+        const latLng = {
+          lat: space.lat || space.latLng.lat(),
+          lng: space.lng || space.latLng.lng(),
+        };
+        this.geocoder.geocode({ location: latLng }, (results, status) => {
+          if (status === 'OK') {
+            const spot = results[0];
+            console.log('Spot', printJson(spot));
+            const position = spot.geometry.location;
+
+            this.addMarker({
+              title: 'A spot',
+              name: spot.name || 'Here',
+              address: spot.formatted_address,
+              plus_code: spot.plus_code?.global_code, // sometimes plus_code is undefined (check Spot debug spew above)
+              placeId: spot.place_id,
+              position: position,
+            });
+            console.log(results);
+          } else {
+            console.log('Error:', status);
+          }
+        });
+      }
+    },
   },
 
   watch: {},
@@ -740,18 +790,21 @@ export default {
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
 
-    self.$refs.mapRef.$mapPromise
-      .then((map) => self.showMap(map))
-      .then((map) => self.getMarkersFromCachedData(map))
-      .then(() => self.getAssets())
-      .then(() => self.getVisits())
-      .then(() => {
-        console.log('Mounted GoogleMaps');
-        self.loading = false;
-      })
-      .catch((error) => {
-        this.$emit('error', error);
-      });
+    Promise.all([self.mapPromise, self.visitsPromise, self.placePromise]).then(
+      (results) => {
+        const map = results[0];
+        const visits = results[1].visits;
+        const places = results[2].places;
+        console.log('places:', places);
+        self.showMap(map);
+        const markersMap = self.deserializeVisitAsMarker(visits, map);
+        self.markers = Array.from(markersMap.values());
+        self.getAssets(map);
+
+        this.map = map;
+        this.markersMap = markersMap;
+      }
+    );
   },
 };
 </script>
