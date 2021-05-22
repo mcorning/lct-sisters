@@ -46,7 +46,7 @@
       :zoom="zoom"
       :style="mapSize"
       ref="mapRef"
-      @click="setMarker($event)"
+      @click="addPlace($event)"
     >
       <GmapInfoWindow
         :options="infoOptions"
@@ -54,22 +54,20 @@
         :opened="infoWinOpen"
         @closeclick="removeMarker"
       >
-        <v-card>
+        <v-card v-if="place">
           <v-card-title class="mt-0 pt-0">
             <v-text-field
-              v-if="!InfoWinContent.name || InfoWinContent.name === 'Here'"
+              v-if="!place.name || place.name === 'Here'"
               @change="updateName"
               dense
               hide-details
               placeholder="Give this gathering a name"
             ></v-text-field>
-            <span v-else> {{ InfoWinContent.name }} </span>
+            <span v-else> {{ place.name }} </span>
           </v-card-title>
-          <v-card-subtitle class="pb-0">{{
-            InfoWinContent.address
-          }}</v-card-subtitle>
+          <v-card-subtitle class="pb-0">{{ place.address }}</v-card-subtitle>
 
-          <v-select :items="addresses" dense></v-select>
+          <v-select :items="addresses" dense label="Coordinates"></v-select>
 
           <v-card-actions class="pb-1">
             <v-tooltip top>
@@ -88,7 +86,7 @@
               <span>Remove marker</span></v-tooltip
             >
             <v-spacer></v-spacer>
-            <businessCard :name="InfoWinContent.name" @go="onGo"></businessCard>
+            <businessCard :name="place.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
             <v-tooltip bottom>
@@ -171,9 +169,11 @@ export default {
   computed: {
     addresses() {
       return [
-        `Plus_Code: ${this.InfoWinContent.plus_code}`,
-        `Place ID:  ${this.InfoWinContent.placeId}`,
-        `Position:  ${this.InfoWinContent.position}`,
+        `Position:  ${this.place.lat.toFixed(6)} by ${this.place.lng.toFixed(
+          6
+        )}`,
+        `Plus_Code: ${this.place.plusCode}`,
+        `Place ID:  ${this.place.placeId}`,
       ];
     },
 
@@ -182,7 +182,7 @@ export default {
     },
 
     InfoWinContent() {
-      return this.marker ? this.marker : '';
+      return this.place ? this.place : '';
     },
 
     visitMap() {
@@ -228,6 +228,7 @@ export default {
 
   data() {
     return {
+      place: null,
       customOptions: {
         buttons: [
           { label: "Don't Save" },
@@ -517,7 +518,7 @@ export default {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
               };
-              this.setMarker(pos);
+              this.addPlace(pos);
             },
             () => {
               this.handleLocationError(true, infoWindow, map.getCenter());
@@ -549,7 +550,7 @@ export default {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude,
               };
-              this.setMarker(pos);
+              this.addPlace(pos);
             },
             () => {
               this.handleLocationError(true, infoWindow, map.getCenter());
@@ -696,7 +697,7 @@ export default {
 
     // click the map, mark the place, get a marker there
     // space is this.$event (and includes the placeId string and the latLng object)
-    setMarker(space) {
+    addPlace(space) {
       this.center = space.latLng;
       console.log(highlight('Selected space:'), printJson(space));
       // this.getSpaceDetails(space);
@@ -730,9 +731,14 @@ export default {
                 lat: position.lat(),
                 lng: position.lng(),
               })
-                .then((result) =>
-                  console.log('Updated Place:', printJson(result))
-                )
+                .then((result) => {
+                  this.place = result[0];
+                  console.log('Updated Place:', printJson(this.place));
+                  const protoMarker = {
+                    position: { lat: this.place.lat, lng: this.place.lng },
+                  };
+                  this.toggleInfoWindow(protoMarker);
+                })
                 .catch((err) => {
                   console.log(error(err));
                   this.$emit('error', err);
