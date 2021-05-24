@@ -66,9 +66,9 @@
             <span v-else> {{ place.name }} </span>
           </v-card-title>
           <v-card-subtitle class="pb-0">{{ place.address }}</v-card-subtitle>
-
-          <v-select :items="addresses" dense label="Coordinates"></v-select>
-
+          <v-card-text>
+            <v-select :items="addresses" dense label="Coordinates"></v-select>
+          </v-card-text>
           <v-card-actions class="pb-1">
             <v-tooltip top>
               <template v-slot:activator="{ on, attrs }">
@@ -143,8 +143,6 @@
 
 <script>
 // See https://github.com/xkjyeah/vue-google-maps
-import crypto from 'crypto';
-const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
@@ -167,6 +165,12 @@ export default {
   },
 
   computed: {
+    markers() {
+      return this.markersMap ? Array.from(this.markersMap.values()) : [];
+    },
+
+    // these are the addresses for the currently selected space (used by the InfoWindow select)
+    // access the currently selected Place using the placeId
     addresses() {
       return [
         `Position:  ${this.place.lat.toFixed(6)} by ${this.place.lng.toFixed(
@@ -228,6 +232,15 @@ export default {
 
   data() {
     return {
+      svgMarker: {
+        path:
+          'M13.3,126.4V37.4c0-2.4,.9-4.5,2.6-6.3c1.7-1.8,3.8-2.6 6.2-2.6h8.8v-6.7c0-3.1,1.1-5.7,3.2-7.9c2.2-2.2,4.7-3.3,7.8-3.3h4.4c3,0 5.6,1.1,7.8,3.3c2.2,2.2,3.2,4.8,3.2,7.9v6.7h26.4v-6.7c0-3.1,1.1-5.7 3.2-7.9c2.2-2.2,4.7-3.3,7.8-3.3h4.4c3,0,5.6,1.1,7.8,3.3c2.2,2.2,3.2 4.8,3.2,7.9v6.7h8.8c2.4,0,4.4,.9,6.2,2.6c1.7,1.8,2.6,3.8,2.6,6.3v88.9c0 2.4-.9,4.5-2.6,6.3c-1.7,1.8-3.8,2.6-6.2,2.6H22.1c-2.4,0-4.4-.9-6.2-2.6C14.2,130.8 13.3,128.8,13.3,126.4z M22.1,126.4h96.8V55.2H22.1V126.4z M39.7,41.9c0,.6,.2,1.2 .6,1.6c.4,.4,.9,.6,1.6,.6h4.4c.6,0,1.2-.2,1.6-.6c.4-.4 .6-.9,.6-1.6v-20c0-.6-.2-1.2-.6-1.6c-.4-.4-.9-.6-1.6-.6h-4.4c-.6,0-1.2,.2-1.6 .6c-.4,.4-.6,1-.6,1.6V41.9z M92.5,41.9c0,.6,.2,1.2,.6,1.6c.4,.4,.9,.6 1.6,.6h4.4c.6,0,1.2-.2,1.6-.6c.4-.4 .6-.9,.6-1.6v-20c0-.6-.2-1.2-.6-1.6c-.4-.4-.9-.6-1.6-.6h-4.4c-.6 0-1.2,.2-1.6,.6c-.4,.4-.6,1-.6,1.6V41.9z',
+        fillColor: 'primary',
+        fillOpacity: 0.6,
+        strokeWeight: 0,
+        rotation: 0,
+        scale: 0.25,
+      },
       place: null,
       customOptions: {
         buttons: [
@@ -246,9 +259,9 @@ export default {
       visitsPromise: Visit.$fetch(),
       placePromise: Place.$fetch(),
 
+      placeMap: new Map(),
       minimalMarkers: new Map(),
-      markers: [],
-      markersMap: new Map(),
+      markersMap: null,
       markersDataMap: new Map(),
       gender: ['men', 'women'],
       needInput: false,
@@ -351,9 +364,8 @@ export default {
       this.toggleInfoWindow(marker, idx);
     },
 
-    addMarker(data) {
-      const { title, name, address, placeId, position, plus_code } = data;
-
+    addMarker(data = this.place) {
+      const { title, name, address, placeId, plus_code, lat, lng } = data;
       const markerData = {
         // for tooltips and visible marker labels
         title: title, // "Place" or "Gathering"
@@ -362,20 +374,22 @@ export default {
         // to cache place data for logging
         // displayed in map and sent to Calendar
         name, // POI name or name given by Visitor
-        position, // Latitude and Longitude of space or place
+        position: { lat, lng }, // Latitude and Longitude of space or place
         // displayed in map
         address, // Address or Plus_Code of public space
         placeId, // For known places, a unique identifier
         plus_code, // unique global address (shorter than placeId)
-      };
-      const icon = {
-        path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-        scale: 5,
+        image: {
+          // TODO use the url from heroku after you ship this version
+          url:
+            'https://upload.wikimedia.org/wikipedia/commons/c/ca/Calendar_icon_2.svg',
+          scaledSize: { width: 28, height: 28 },
+          labelOrigin: { x: 16, y: -10 },
+        },
       };
       this.marker = new window.google.maps.Marker(markerData);
       this.marker.setDraggable(true);
       this.marker.setMap(this.map);
-      this.marker.setIcon(icon);
       this.markersDataMap.set(name, markerData);
       console.log(warn('Caching new marker'));
       console.log(printJson([...this.markersDataMap]), '\n');
@@ -388,14 +402,20 @@ export default {
     },
 
     removeMarker() {
+      // we may have opened the InfoWindow, but then closed it without marking calendar
+      // that is, markers only exist with marked calendars (no pun intended)
+      if (!this.marker) {
+        return;
+      }
       console.log(this.marker);
+      // markersMap.delete() changes the markers computed property and
+      // vue2-google-maps updates with a smaller array prop
       console.log(
         `Removed ${this.marker.name} from markersMap`,
         this.markersMap.delete(this.marker.name)
       );
-      localStorage.setItem('markersMap', [...this.markersMap]);
-      this.marker.setMap(null);
-      this.marker = null;
+      // this.marker.setMap(null);
+      // this.marker = null;
       this.infoWinOpen = false;
     },
 
@@ -419,9 +439,9 @@ export default {
         title: 'Place',
         label: place.name,
         name: place.name,
-        address: place.formatted_address,
+        formatted_address: place.formatted_address,
         plus_code: place.plus_code?.global_code,
-        placeId: place.place_id,
+        place_id: place.place_id,
         position: place.geometry.location,
       });
     },
@@ -437,20 +457,17 @@ export default {
 
     // called by onGo() with the shift start time
     addVisit(nativeEvent, startTime = Date.now(), stay) {
-      const { name, placeId, position } = this.marker;
       console.log('Start Time:', startTime.toString());
       // position can be lat() and lng functions, or they can be values.
       // we want values
-      const lat =
-        typeof position.lat === 'function' ? position.lat() : position.lat;
-      const lng =
-        typeof position.lng === 'function' ? position.lng() : position.lng;
+      // const lat =
+      //   typeof position.lat === 'function' ? position.lat() : position.lat;
+      // const lng =
+      //   typeof position.lng === 'function' ? position.lng() : position.lng;
 
       this.$emit('addedPlace', {
-        name,
-        placeId,
-        lat: lat,
-        lng: lng,
+        ...this.place,
+        plus_code: this.place.plus_code.global_code,
         startTime: startTime,
         stay: stay,
       });
@@ -658,24 +675,33 @@ export default {
     },
 
     makeMarker(visit, map) {
-      return new window.google.maps.Marker({
+      const { lat, lng, plusCode } = placeMap.get(visit.placeId);
+      const position = { lat, lng };
+      return {
         title: visit.name,
         label: { text: 'V', color: 'white' },
 
         name: visit.name,
-        position: { lat: visit.lat, lng: visit.lng },
+        position: position,
         placeId: visit.placeId,
-
-        map: map,
-      });
+        plusCode: plusCode,
+        image: {
+          url:
+            'https://upload.wikimedia.org/wikipedia/commons/c/ca/Calendar_icon_2.svg',
+          scaledSize: { width: 28, height: 28 },
+          labelOrigin: { x: 16, y: -10 },
+        },
+      };
     },
 
     deserializeVisitAsMarker(visits, map) {
       let visitMarkerMap = new Map();
-      visits.forEach((visit) => {
-        let m = this.makeMarker(visit, map);
-        visitMarkerMap.set(visit.name, m);
-      });
+      if (visits) {
+        visits.forEach((visit) => {
+          let m = this.makeMarker(visit, map);
+          visitMarkerMap.set(visit.name, m);
+        });
+      }
       return visitMarkerMap;
     },
 
@@ -693,6 +719,16 @@ export default {
         this.resolve = resolve;
         this.reject = reject;
       });
+    },
+
+    openInfoWindowWithSelectedPlace(result) {
+      this.place = result[0];
+      console.log('Updated Place:', printJson(this.place));
+      const protoMarker = {
+        position: { lat: this.place.lat, lng: this.place.lng },
+      };
+      this.placeMap.set(this.place.place_id, this.place);
+      this.toggleInfoWindow(protoMarker);
     },
 
     // click the map, mark the place, get a marker there
@@ -714,31 +750,9 @@ export default {
             ],
           },
           (place, status) => {
-            if (
-              status === window.google.maps.places.PlacesServiceStatus.OK &&
-              place &&
-              place.geometry &&
-              place.geometry.location
-            ) {
-              const position = place.geometry.location;
-
-              Place.updatePromise({
-                id: randomId(),
-                name: place.name,
-                address: place.formatted_address,
-                placeId: place.place_id,
-                plusCode: place.plus_code.global_code,
-                lat: position.lat(),
-                lng: position.lng(),
-              })
-                .then((result) => {
-                  this.place = result[0];
-                  console.log('Updated Place:', printJson(this.place));
-                  const protoMarker = {
-                    position: { lat: this.place.lat, lng: this.place.lng },
-                  };
-                  this.toggleInfoWindow(protoMarker);
-                })
+            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+              Place.updatePromise(place)
+                .then((result) => this.openInfoWindowWithSelectedPlace(result))
                 .catch((err) => {
                   console.log(error(err));
                   this.$emit('error', err);
@@ -803,9 +817,9 @@ export default {
         const places = results[2].places;
         console.log('places:', places);
         self.showMap(map);
-        const markersMap = self.deserializeVisitAsMarker(visits, map);
-        self.markers = Array.from(markersMap.values());
         self.getAssets(map);
+        const markersMap = self.deserializeVisitAsMarker(visits, map);
+        // self.markers = Array.from(markersMap.values());
 
         this.map = map;
         this.markersMap = markersMap;

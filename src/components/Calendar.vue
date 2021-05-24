@@ -949,7 +949,7 @@ export default {
       });
     },
 
-    // TODO use parsedEvent instead
+    // TODO use parsedEvent instead and make this a filter
     getInterval(start, end) {
       return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
     },
@@ -990,8 +990,8 @@ export default {
           : this.place.lng;
       newVisit.lat = lat;
       newVisit.lng = lng;
+      newVisit.place_id = this.place.place_id;
 
-      // TODO put back Visit
       Visit.updatePromise(newVisit)
         .then((p) => {
           console.log('Added visit to cache', printJson(p));
@@ -1448,6 +1448,7 @@ export default {
     self.updateTime();
 
     // selectedSpace set in App.onAddedPlace()
+    // TODO do we change place on the Calendar? i hope not. if not, use selectedSpace instead of place
     self.place = self.selectedSpace;
     if (self.place) {
       self.newEvent();

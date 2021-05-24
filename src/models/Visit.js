@@ -14,7 +14,7 @@ export default class Visit extends Model {
 
       // From Map component (for the graph component (calendar uses only name))
       name: this.string(''), // POI or "Gathering"
-      placeId: this.string(''), // Unique ID of space or place
+      place_id: this.string(''), // Unique ID of space or place
       lat: this.number(), // Latitude of Visit space/place
       lng: this.number(), // Longitude of Visit space/place
 

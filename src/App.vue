@@ -507,18 +507,20 @@ export default {
         alert("oops. I didn't get that. Please try again.");
         return;
       }
-      const { name, placeId, lat, lng, startTime, stay } = place;
+      // const { name, placeId, lat, lng, startTime, stay } = place;
       console.log(warn('App.onAddedPlace(place):'));
       console.log(warn(printJson(place)));
       // set the Calendar prop
-      this.selectedSpace = {
-        name: name,
-        id: placeId,
-        lat: lat,
-        lng: lng,
-        startTime,
-        stay,
-      };
+      this.selectedSpace = place;
+      // {
+      //   name: name,
+      //   id: placeId,
+      //   lat: lat,
+      //   lng: lng,
+      //   startTime,
+      //   stay,
+      // };
+      console.log(success('Showing calendar'));
       this.show = this.CALENDAR;
     },
 
