@@ -52,9 +52,10 @@
         :options="infoOptions"
         :position="infoWindowPos"
         :opened="infoWinOpen"
+        @closeclick="infoWinOpen = false"
       >
         <v-card v-if="place">
-          <v-card-title class="mt-0 pt-0">
+          <h3 class="headline">
             <v-text-field
               v-if="!place.name || place.name === 'Here'"
               @change="updateName"
@@ -63,13 +64,14 @@
               placeholder="Give this gathering a name"
             ></v-text-field>
             <span v-else> {{ place.name }} </span>
-          </v-card-title>
-          <v-card-subtitle class="pb-0">{{ place.address }}</v-card-subtitle>
+          </h3>
+          <v-card-subtitle class="pb-0">{{
+            place.formatted_address
+          }}</v-card-subtitle>
           <v-card-text>
             <v-select :items="addresses" dense label="Coordinates"></v-select>
           </v-card-text>
           <v-card-actions class="pb-1">
-            <v-spacer></v-spacer>
             <businessCard :name="place.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
@@ -273,6 +275,8 @@ export default {
       placesService: null,
       LatLngBounds: { north: 45, south: 45.5, west: -122.0, east: -121.0 }, // get definition from Google
       GeocoderComponentRestrictions: {}, // get definition from Google
+
+      // not used currently:
       geocoderRequest: {
         address: 'Sisters+OR',
         location: null, //{}, //{ lat: 0, lng: 0 },
@@ -454,15 +458,8 @@ export default {
     },
 
     updateName(name) {
-      this.marker.name = name;
-      console.log(
-        highlight('markersDataMap'),
-        JSON.stringify([...this.markersDataMap], null, 3)
-      );
-
-      localStorage.setItem(
-        'markersDataMap',
-        JSON.stringify([...this.markersDataMap])
+      Place.updateFieldPromise(this.marker.place_id, { name: name }).then((p) =>
+        console.log(highlight('Updated place'), printJson(p))
       );
     },
 
