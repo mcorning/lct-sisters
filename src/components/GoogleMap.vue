@@ -13,9 +13,12 @@
         </v-list-item-avatar>
 
         <v-list-item-content>
-          <v-list-item-title>{{ username }}'s Recent Visits</v-list-item-title>
+          <v-list-item-title
+            ><strong>{{ username }}'s</strong> Recent Visits</v-list-item-title
+          >
         </v-list-item-content>
       </v-list-item>
+      <v-card-text>Click outside this box to use Map</v-card-text>
 
       <v-divider></v-divider>
 
@@ -234,7 +237,7 @@ export default {
       visits: null,
       recent: false,
       loading: true,
-      drawer: null,
+      drawer: true,
 
       markersData: [],
       edit: true,
@@ -528,7 +531,6 @@ export default {
             console.log('Non-POI (spot) results:', printJson(spot));
 
             // Place.updatePromise() returns all affected places (of which there is always only one)
-            //
             Place.updatePromise(spot)
               .then((result) => this.openInfoWindowWithSelectedPlace(result[0]))
               .catch((err) => {

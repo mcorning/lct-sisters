@@ -715,6 +715,13 @@ export default {
       this.snackWithButtons = true;
       console.log(highlight('Rendering Refesh snackbar'));
     },
+    showOfflineUI(e) {
+      this.snackBtnText = 'Offline';
+      this.snackWithBtnText =
+        'You are offline right now. You can use the Recent Visits list, however.';
+      this.snackWithButtons = true;
+      console.log(highlight('Rendering Offline snackbar'));
+    },
     // showAdd2HsUI(e) {
     //   // Display a snackbar inviting the user to refresh/reload the app due
     //   // to an app update being available.
@@ -764,6 +771,7 @@ export default {
     //#region PWA
     // Listen for swUpdated event and display refresh snackbar as required.
     document.addEventListener('swUpdated', this.showRefreshUI, { once: true });
+    document.addEventListener('offline', this.showOfflineUI, { once: true });
 
     // Refresh all open app tabs when a new service worker is installed.
     if (navigator.serviceWorker) {
