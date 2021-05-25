@@ -62,6 +62,7 @@
               dense
               hide-details
               placeholder="Give this gathering a name"
+              autofocus
             ></v-text-field>
             <span v-else> {{ place.name }} </span>
           </h3>
@@ -163,8 +164,8 @@ export default {
         `Position:  ${this.place.lat.toFixed(6)} by ${this.place.lng.toFixed(
           6
         )}`,
-        `Plus_Code: ${this.place.plus_code}`,
         `Place ID:  ${this.place.place_id}`,
+        `Plus_Code: ${this.place.plus_code}`,
       ];
     },
 
@@ -458,8 +459,11 @@ export default {
     },
 
     updateName(name) {
-      Place.updateFieldPromise(this.marker.place_id, { name: name }).then((p) =>
-        console.log(highlight('Updated place'), printJson(p))
+      Place.updateFieldPromise(this.place.place_id, { name: name }).then(
+        (p) => {
+          console.log(highlight('Updated place'), printJson(p));
+          this.place = p;
+        }
       );
     },
 

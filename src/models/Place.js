@@ -38,7 +38,9 @@ export default class Place extends Model {
         where: id,
         data: val,
       })
-        .then((p) => resolve(p))
+        .then((p) => {
+          resolve(p[0]);
+        })
         .catch((e) => reject(e));
     });
   }
