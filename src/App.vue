@@ -715,7 +715,7 @@ export default {
       this.snackWithButtons = true;
       console.log(highlight('Rendering Refesh snackbar'));
     },
-    showOfflineUI(e) {
+    showOfflineUI() {
       this.snackBtnText = 'Offline';
       this.snackWithBtnText =
         'You are offline right now. You can use the Recent Visits list, however.';

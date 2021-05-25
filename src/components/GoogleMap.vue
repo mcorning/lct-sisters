@@ -155,7 +155,10 @@ export default {
 
   computed: {
     places() {
-      const p = Place.all();
+      const p = Place.query()
+        .where('name', (v) => v) // ignore places without names (if any)
+        .get();
+
       return p;
     },
 
