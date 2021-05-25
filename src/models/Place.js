@@ -6,7 +6,7 @@ console.log('Loading Place entity');
 
 export default class Place extends Model {
   static entity = 'places';
-  static primaryKey = 'placeId';
+  static primaryKey = 'place_id';
 
   static fields() {
     return {
@@ -19,6 +19,13 @@ export default class Place extends Model {
       lat: this.number(), // Latitude of visited space/place
       lng: this.number(), // Longitude of visited space/place
     };
+  }
+
+  static getPlaceMap() {
+    return Place.all().reduce((a, c) => {
+      a.set(c.place_id, c);
+      return a;
+    }, new Map());
   }
 
   // val must be an object

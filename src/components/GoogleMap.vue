@@ -52,7 +52,6 @@
         :options="infoOptions"
         :position="infoWindowPos"
         :opened="infoWinOpen"
-        @closeclick="removeMarker"
       >
         <v-card v-if="place">
           <v-card-title class="mt-0 pt-0">
@@ -70,21 +69,6 @@
             <v-select :items="addresses" dense label="Coordinates"></v-select>
           </v-card-text>
           <v-card-actions class="pb-1">
-            <v-tooltip top>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                  fab
-                  v-bind="attrs"
-                  v-on="on"
-                  dark
-                  color="orange"
-                  @click="removeMarker"
-                >
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
-              </template>
-              <span>Remove marker</span></v-tooltip
-            >
             <v-spacer></v-spacer>
             <businessCard :name="place.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
@@ -130,7 +114,6 @@
       "
     >
     </GmapAutocomplete>
-
     <v-banner v-if="needInput" single-line transition="slide-y-transition">
       No details available for input value. Be sure you select the location from
       the dropdown.
@@ -166,27 +149,25 @@ export default {
 
   computed: {
     markers() {
-      return this.markersMap ? Array.from(this.markersMap.values()) : [];
+      const m = this.markersMap ? Array.from(this.markersMap.values()) : [];
+      console.log(warn('markers:', printJson(m)));
+      return m;
     },
 
     // these are the addresses for the currently selected space (used by the InfoWindow select)
-    // access the currently selected Place using the placeId
+    // access the currently selected Place using the place_id
     addresses() {
       return [
         `Position:  ${this.place.lat.toFixed(6)} by ${this.place.lng.toFixed(
           6
         )}`,
-        `Plus_Code: ${this.place.plusCode}`,
-        `Place ID:  ${this.place.placeId}`,
+        `Plus_Code: ${this.place.plus_code}`,
+        `Place ID:  ${this.place.place_id}`,
       ];
     },
 
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
-    },
-
-    InfoWinContent() {
-      return this.place ? this.place : '';
     },
 
     visitMap() {
@@ -232,15 +213,6 @@ export default {
 
   data() {
     return {
-      svgMarker: {
-        path:
-          'M13.3,126.4V37.4c0-2.4,.9-4.5,2.6-6.3c1.7-1.8,3.8-2.6 6.2-2.6h8.8v-6.7c0-3.1,1.1-5.7,3.2-7.9c2.2-2.2,4.7-3.3,7.8-3.3h4.4c3,0 5.6,1.1,7.8,3.3c2.2,2.2,3.2,4.8,3.2,7.9v6.7h26.4v-6.7c0-3.1,1.1-5.7 3.2-7.9c2.2-2.2,4.7-3.3,7.8-3.3h4.4c3,0,5.6,1.1,7.8,3.3c2.2,2.2,3.2 4.8,3.2,7.9v6.7h8.8c2.4,0,4.4,.9,6.2,2.6c1.7,1.8,2.6,3.8,2.6,6.3v88.9c0 2.4-.9,4.5-2.6,6.3c-1.7,1.8-3.8,2.6-6.2,2.6H22.1c-2.4,0-4.4-.9-6.2-2.6C14.2,130.8 13.3,128.8,13.3,126.4z M22.1,126.4h96.8V55.2H22.1V126.4z M39.7,41.9c0,.6,.2,1.2 .6,1.6c.4,.4,.9,.6,1.6,.6h4.4c.6,0,1.2-.2,1.6-.6c.4-.4 .6-.9,.6-1.6v-20c0-.6-.2-1.2-.6-1.6c-.4-.4-.9-.6-1.6-.6h-4.4c-.6,0-1.2,.2-1.6 .6c-.4,.4-.6,1-.6,1.6V41.9z M92.5,41.9c0,.6,.2,1.2,.6,1.6c.4,.4,.9,.6 1.6,.6h4.4c.6,0,1.2-.2,1.6-.6c.4-.4 .6-.9,.6-1.6v-20c0-.6-.2-1.2-.6-1.6c-.4-.4-.9-.6-1.6-.6h-4.4c-.6 0-1.2,.2-1.6,.6c-.4,.4-.6,1-.6,1.6V41.9z',
-        fillColor: 'primary',
-        fillOpacity: 0.6,
-        strokeWeight: 0,
-        rotation: 0,
-        scale: 0.25,
-      },
       place: null,
       customOptions: {
         buttons: [
@@ -261,7 +233,7 @@ export default {
 
       placeMap: new Map(),
       minimalMarkers: new Map(),
-      markersMap: null,
+      markersMap: null, // initialize as null so markers computed property works properly
       markersDataMap: new Map(),
       gender: ['men', 'women'],
       needInput: false,
@@ -304,7 +276,7 @@ export default {
       geocoderRequest: {
         address: 'Sisters+OR',
         location: null, //{}, //{ lat: 0, lng: 0 },
-        placeId: '',
+        place_id: '',
         bounds: null, //, //LatLngBounds,
         componentRestrictions: this.GeocoderComponentRestrictions,
         region: '',
@@ -340,83 +312,15 @@ export default {
       this.addVisit(null, startTime, stay.milliseconds);
     },
 
-    toggleInfoWindow(marker, idx) {
-      this.infoWindowPos = marker.position;
-
-      //check if its the same marker that was selected if yes toggle
-      if (this.currentMidx == idx) {
-        this.infoWinOpen = !this.infoWinOpen;
-      }
-      //if different marker set infowindow to open and reset current marker index
-      else {
-        this.infoWinOpen = true;
-        this.currentMidx = idx;
-      }
-    },
-
     // click on a marker
-    getMarker(marker, idx) {
+    getMarker(marker) {
       if (marker != this.marker) {
         this.infoWinOpen = false;
       }
       this.marker = marker;
-      this.currentMidx = idx;
-      this.toggleInfoWindow(marker, idx);
-    },
-
-    addMarker(data = this.place) {
-      const { title, name, address, placeId, plus_code, lat, lng } = data;
-      const markerData = {
-        // for tooltips and visible marker labels
-        title: title, // "Place" or "Gathering"
-        label: { text: 'V' + this.markersDataMap.size, color: 'white' }, // label is assigned a value before
-
-        // to cache place data for logging
-        // displayed in map and sent to Calendar
-        name, // POI name or name given by Visitor
-        position: { lat, lng }, // Latitude and Longitude of space or place
-        // displayed in map
-        address, // Address or Plus_Code of public space
-        placeId, // For known places, a unique identifier
-        plus_code, // unique global address (shorter than placeId)
-        image: {
-          // TODO use the url from heroku after you ship this version
-          url:
-            'https://upload.wikimedia.org/wikipedia/commons/c/ca/Calendar_icon_2.svg',
-          scaledSize: { width: 28, height: 28 },
-          labelOrigin: { x: 16, y: -10 },
-        },
-      };
-      this.marker = new window.google.maps.Marker(markerData);
-      this.marker.setDraggable(true);
-      this.marker.setMap(this.map);
-      this.markersDataMap.set(name, markerData);
-      console.log(warn('Caching new marker'));
-      console.log(printJson([...this.markersDataMap]), '\n');
-      // TODO use markersMap for this
-      // localStorage.setItem(
-      //   'markersDataMap',
-      //   JSON.stringify([...this.markersDataMap])
-      // );
-      this.toggleInfoWindow(this.marker);
-    },
-
-    removeMarker() {
-      // we may have opened the InfoWindow, but then closed it without marking calendar
-      // that is, markers only exist with marked calendars (no pun intended)
-      if (!this.marker) {
-        return;
-      }
-      console.log(this.marker);
-      // markersMap.delete() changes the markers computed property and
-      // vue2-google-maps updates with a smaller array prop
-      console.log(
-        `Removed ${this.marker.name} from markersMap`,
-        this.markersMap.delete(this.marker.name)
-      );
-      // this.marker.setMap(null);
-      // this.marker = null;
-      this.infoWinOpen = false;
+      this.place = Place.find(marker.place_id);
+      this.infoWindowPos = marker.position;
+      this.infoWinOpen = true;
     },
 
     // handled when component calls $autocomplete.getPlace()
@@ -435,116 +339,16 @@ export default {
       } else {
         this.map.setCenter(place.geometry.location);
       }
-      this.addMarker({
-        title: 'Place',
-        label: place.name,
-        name: place.name,
-        formatted_address: place.formatted_address,
-        plus_code: place.plus_code?.global_code,
-        place_id: place.place_id,
-        position: place.geometry.location,
-      });
-    },
-
-    geolocate: function() {
-      navigator.geolocation.getCurrentPosition((position) => {
-        this.center = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-      });
     },
 
     // called by onGo() with the shift start time
     addVisit(nativeEvent, startTime = Date.now(), stay) {
       console.log('Start Time:', startTime.toString());
-      // position can be lat() and lng functions, or they can be values.
-      // we want values
-      // const lat =
-      //   typeof position.lat === 'function' ? position.lat() : position.lat;
-      // const lng =
-      //   typeof position.lng === 'function' ? position.lng() : position.lng;
-
       this.$emit('addedPlace', {
         ...this.place,
         plus_code: this.place.plus_code.global_code,
         startTime: startTime,
         stay: stay,
-      });
-    },
-
-    recentsControl(controlDiv) {
-      // Set CSS for the control border.
-      const controlUI = document.createElement('div');
-      controlUI.style.cursor = 'pointer';
-      controlUI.style.textAlign = 'center';
-      controlUI.title = 'Set of recent visits sorted by name';
-      controlUI.classList.add('custom-map-control-button');
-      controlDiv.appendChild(controlUI);
-      // Set CSS for the control interior.
-      const controlText = document.createElement('div');
-      controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
-      controlText.style.fontSize = '16px';
-      controlText.style.fontWeight = '300';
-      controlText.style.lineHeight = '38px';
-      controlText.style.paddingLeft = '5px';
-      controlText.style.paddingRight = '5px';
-      controlText.innerHTML = 'See Recent Visits';
-      controlUI.appendChild(controlText);
-      // Setup the click event listeners: it talks to Vue, not the map.
-      controlUI.addEventListener('click', () => {
-        this.drawer = !this.drawer;
-      });
-    },
-
-    // alternative to Google documentation
-    geolocateControl(controlDiv, map) {
-      // Set CSS for the control border.
-      const controlUI = document.createElement('div');
-      controlUI.style.backgroundColor = '#fff';
-      controlUI.style.border = '3px solid #fff';
-      controlUI.style.borderRadius = '3px';
-      controlUI.style.boxShadow = '0 2px 6px rgba(0,0,0,.3)';
-      controlUI.style.cursor = 'pointer';
-      controlUI.style.marginTop = '8px';
-      controlUI.style.marginBottom = '22px';
-      controlUI.style.textAlign = 'center';
-      controlUI.title = 'Find me';
-      controlUI.classList.add('custom-map-control-button');
-      controlDiv.appendChild(controlUI);
-
-      // Set CSS for the control interior.
-      const controlText = document.createElement('div');
-      controlText.style.color = 'rgb(25,25,25)';
-      controlText.style.fontFamily = 'Roboto,Arial,sans-serif';
-      controlText.style.fontSize = '16px';
-      controlText.style.fontWeight = '200';
-      controlText.style.lineHeight = '38px';
-      controlText.style.paddingLeft = '5px';
-      controlText.style.paddingRight = '5px';
-      controlText.innerHTML = 'See Recent Visits';
-      controlUI.appendChild(controlText);
-      // Setup the click event listeners: it talks to Vue, not the map.
-      const infoWindow = new window.google.maps.InfoWindow();
-      controlUI.addEventListener('click', () => {
-        // Try HTML5 geolocation.
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const pos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude,
-              };
-              this.addPlace(pos);
-            },
-            () => {
-              this.handleLocationError(true, infoWindow, map.getCenter());
-            }
-          );
-        } else {
-          // Browser doesn't support Geolocation
-          this.handleLocationError(false, infoWindow, map.getCenter());
-        }
       });
     },
 
@@ -608,11 +412,6 @@ export default {
     },
 
     showMap(map) {
-      // const recentsControlDiv = document.createElement('div');
-      // this.recentsControl(recentsControlDiv);
-      // map.controls[window.google.maps.ControlPosition.LEFT_BOTTOM].push(
-      //   recentsControlDiv
-      // );
       this.setUpRecentVisits(map);
       this.setUpGeolocation(map);
       return map;
@@ -674,35 +473,22 @@ export default {
       return avatar;
     },
 
-    makeMarker(visit, map) {
-      const { lat, lng, plusCode } = placeMap.get(visit.placeId);
-      const position = { lat, lng };
-      return {
-        title: visit.name,
-        label: { text: 'V', color: 'white' },
-
-        name: visit.name,
-        position: position,
-        placeId: visit.placeId,
-        plusCode: plusCode,
-        image: {
-          url:
-            'https://upload.wikimedia.org/wikipedia/commons/c/ca/Calendar_icon_2.svg',
-          scaledSize: { width: 28, height: 28 },
-          labelOrigin: { x: 16, y: -10 },
-        },
-      };
-    },
-
-    deserializeVisitAsMarker(visits, map) {
-      let visitMarkerMap = new Map();
+    deserializeVisitAsMarker(visits) {
+      this.place_map = Place.getPlaceMap();
+      this.markersMap = new Map();
       if (visits) {
-        visits.forEach((visit) => {
-          let m = this.makeMarker(visit, map);
-          visitMarkerMap.set(visit.name, m);
+        visits.forEach((visit, index) => {
+          const place = this.place_map.get(visit.place_id);
+          let m = {
+            title: visit.name,
+            label: { text: 'V' + index, color: 'white' },
+            name: visit.name,
+            place_id: visit.place_id,
+            position: { lat: place.lat, lng: place.lng },
+          };
+          this.markersMap.set(visit.name, m);
         });
       }
-      return visitMarkerMap;
     },
 
     getVisits() {
@@ -722,21 +508,34 @@ export default {
     },
 
     openInfoWindowWithSelectedPlace(result) {
-      this.place = result[0];
+      this.place = result;
       console.log('Updated Place:', printJson(this.place));
       const protoMarker = {
         position: { lat: this.place.lat, lng: this.place.lng },
       };
       this.placeMap.set(this.place.place_id, this.place);
-      this.toggleInfoWindow(protoMarker);
+      this.infoWindowPos = protoMarker.position;
+      this.infoWinOpen = true;
     },
 
-    // click the map, mark the place, get a marker there
-    // space is this.$event (and includes the placeId string and the latLng object)
+    // click the map (different than using Autocomplete (see setPlace()))
+    // space is this.$event and includes the placeId (not place_id) string (place_id is returned in the getDetails() result)
+    // and the latLng object
     addPlace(space) {
-      this.center = space.latLng;
+      // since we serialize strings, we convert the latLng class into the latLng literal
+      const latLng = {
+        lat: space.lat || space.latLng.lat(),
+        lng: space.lng || space.latLng.lng(),
+      };
       console.log(highlight('Selected space:'), printJson(space));
-      // this.getSpaceDetails(space);
+      /* From googlemaps docs:
+          A place ID is a unique reference to a place on a Google Map.
+          Place IDs are available for most locations, including
+            businesses,
+            landmarks,
+            parks, and
+            intersections.
+      */
       if (space.placeId) {
         this.placesService.getDetails(
           {
@@ -752,7 +551,9 @@ export default {
           (place, status) => {
             if (status === window.google.maps.places.PlacesServiceStatus.OK) {
               Place.updatePromise(place)
-                .then((result) => this.openInfoWindowWithSelectedPlace(result))
+                .then((result) =>
+                  this.openInfoWindowWithSelectedPlace(result[0])
+                )
                 .catch((err) => {
                   console.log(error(err));
                   this.$emit('error', err);
@@ -763,30 +564,45 @@ export default {
           }
         );
       } else {
-        const latLng = {
-          lat: space.lat || space.latLng.lat(),
-          lng: space.lng || space.latLng.lng(),
-        };
+        // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
+        // geocode could take the space.latLng class instance, but for broad consistency,
+        // we use the latLng literal because we can't conveniently serialize functions
         this.geocoder.geocode({ location: latLng }, (results, status) => {
           if (status === 'OK') {
-            const spot = results[0];
-            console.log('Spot', printJson(spot));
-            const position = spot.geometry.location;
+            // results array provides different levels of address details. we use the first element in the array
+            const {
+              name,
+              formatted_address,
+              place_id,
+              geometry,
+              plus_code,
+            } = results[0];
 
-            this.addMarker({
-              title: 'A spot',
-              name: spot.name || 'Here',
-              address: spot.formatted_address,
-              plus_code: spot.plus_code?.global_code, // sometimes plus_code is undefined (check Spot debug spew above)
-              placeId: spot.place_id,
-              position: position,
-            });
-            console.log(results);
+            // note name will be empty because the spot is...well, nameless. Vistor provides the name using the InfoWindow.
+            const spot = {
+              name,
+              formatted_address,
+              place_id,
+              geometry,
+              plus_code,
+            };
+            // geocode results do include the place_id, even for a spot not otherwise noteworthy
+            console.log('Non-POI (spot) results:', printJson(spot));
+
+            // Place.updatePromise() returns all affected places (of which there is always only one)
+            //
+            Place.updatePromise(spot)
+              .then((result) => this.openInfoWindowWithSelectedPlace(result[0]))
+              .catch((err) => {
+                console.log(error(err));
+                this.$emit('error', err);
+              });
           } else {
             console.log('Error:', status);
           }
         });
       }
+      this.center = latLng;
     },
   },
 
@@ -814,15 +630,13 @@ export default {
       (results) => {
         const map = results[0];
         const visits = results[1].visits;
-        const places = results[2].places;
-        console.log('places:', places);
         self.showMap(map);
         self.getAssets(map);
-        const markersMap = self.deserializeVisitAsMarker(visits, map);
-        // self.markers = Array.from(markersMap.values());
 
+        // we don't use results[2] here, but the promise resolved with fetched Place records used next
+        self.deserializeVisitAsMarker(visits, map);
+        // TODO why do you need map? you are no longer creating markers directly, only through vue2-googlemaps using this.markers array
         this.map = map;
-        this.markersMap = markersMap;
       }
     );
   },
