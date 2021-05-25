@@ -21,6 +21,10 @@ export default class Place extends Model {
     };
   }
 
+  static getPlace(id) {
+    return Place.find(id);
+  }
+
   static getPlaceMap() {
     return Place.all().reduce((a, c) => {
       a.set(c.place_id, c);
@@ -28,12 +32,15 @@ export default class Place extends Model {
     }, new Map());
   }
 
-  // val must be an object
-  static async update(val) {
-    let p = await this.$create({
-      data: val,
+  static updateFieldPromise(id, val) {
+    return new Promise((resolve, reject) => {
+      this.$update({
+        where: id,
+        data: val,
+      })
+        .then((p) => resolve(p))
+        .catch((e) => reject(e));
     });
-    return p;
   }
 
   static updatePromise(place) {
