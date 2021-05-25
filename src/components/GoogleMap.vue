@@ -23,18 +23,18 @@
       <v-list dense nav>
         <v-list-item-group v-model="recent" mandatory color="primary">
           <v-list-item
-            v-for="visit in getFavoriteVisits"
-            :key="visit.name"
+            v-for="place in places"
+            :key="place.name"
             link
-            :value="visit"
-            @click="goRecent(visit)"
+            :value="place"
+            @click="goRecent(place)"
           >
             <v-list-item-icon>
-              <v-icon>{{ getIcon(visit) }}</v-icon>
+              <v-icon>{{ getIcon(place) }}</v-icon>
             </v-list-item-icon>
 
             <v-list-item-content>
-              <v-list-item-title>{{ visit[0] }}</v-list-item-title>
+              <v-list-item-title>{{ place.name }}</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </v-list-item-group>
@@ -72,7 +72,7 @@
           <v-card-text>
             <v-select :items="addresses" dense label="Coordinates"></v-select>
           </v-card-text>
-          <v-card-actions class="pb-1">
+          <v-card-actions v-if="place.name" class="pb-1">
             <businessCard :name="place.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
@@ -151,6 +151,11 @@ export default {
   },
 
   computed: {
+    places() {
+      const p = Place.all();
+      return p;
+    },
+
     markers() {
       const m = this.markersMap ? Array.from(this.markersMap.values()) : [];
       console.log(warn('markers:', printJson(m)));
@@ -171,21 +176,6 @@ export default {
 
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
-    },
-
-    visitMap() {
-      const map =
-        this.visits && this.visits.length
-          ? this.visits.reduce((a, c) => {
-              a.set(c.name, { lat: c.lat, lng: c.lng });
-              return a;
-            }, new Map())
-          : [];
-      return map;
-    },
-
-    getFavoriteVisits() {
-      return [...this.visitMap];
     },
 
     username() {
@@ -237,13 +227,12 @@ export default {
       placeMap: new Map(),
       minimalMarkers: new Map(),
       markersMap: null, // initialize as null so markers computed property works properly
-      markersDataMap: new Map(),
       gender: ['men', 'women'],
       needInput: false,
       marker: null,
       mapSize: '',
       visits: null,
-      recent: '',
+      recent: false,
       loading: true,
       drawer: null,
 
@@ -266,7 +255,7 @@ export default {
       content: 'Default info',
       zoom: 15,
       center: null,
-      places: [],
+      // places: [],
       placeName: '',
       lastId: 1,
       ifw: true,
@@ -429,26 +418,19 @@ export default {
       });
     },
 
-    goRecent(val) {
-      // TODO replace this with code working from markers array
-      this.marker = this.markersDataMap.get(val[0]);
-      if (!this.marker) {
-        alert(
-          `The marker for ${val[0]} is missing. Please mark your map again, and use the marker to mark your calendar.`
-        );
-        return;
-      }
-
-      const question = `Mark your calendar with ${val[0]}?`;
+    goRecent(place) {
+      console.log(place);
+      const question = `Mark your calendar with ${place.name}?`;
       const consequences =
         'This will add an event to your calendar and a marker to your map.';
-      const icon = 'mdi-question';
-
+      const icon = 'mdi-help-circle-outline';
+      this.customOptions.buttons[0].label = '';
+      this.customOptions.buttons[2].label = 'Yes';
       this.ConfirmModernDialog.open(question, consequences, {
         icon: icon,
       }).then((act) => {
         if (act) {
-          console.log(printJson(printJson(this.marker)));
+          this.place = place;
           this.addVisit();
         }
       });
@@ -472,51 +454,6 @@ export default {
       const id = getRandomIntInclusive(1, 99);
       const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
       return avatar;
-    },
-
-    deserializeVisitAsMarker(visits) {
-      this.place_map = Place.getPlaceMap();
-      this.markersMap = new Map();
-      if (visits) {
-        visits.forEach((visit, index) => {
-          const place = this.place_map.get(visit.place_id);
-          let m = {
-            title: visit.name,
-            label: { text: 'V' + index, color: 'white' },
-            name: visit.name,
-            place_id: visit.place_id,
-            position: { lat: place.lat, lng: place.lng },
-          };
-          this.markersMap.set(visit.name, m);
-        });
-      }
-    },
-
-    getVisits() {
-      Visit.$fetch().then((all) => {
-        console.log(
-          'Populating Recent Visits with',
-          all.visits?.length || 0,
-          'visits'
-        );
-        this.visits = all.visits;
-        this.resolve(all.visits);
-      });
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve;
-        this.reject = reject;
-      });
-    },
-
-    openInfoWindowWithSelectedPlace(result) {
-      this.place = result;
-      console.log('Updated Place:', printJson(this.place));
-      const protoMarker = {
-        position: { lat: this.place.lat, lng: this.place.lng },
-      };
-      this.placeMap.set(this.place.place_id, this.place);
-      this.infoWindowPos = protoMarker.position;
-      this.infoWinOpen = true;
     },
 
     // click the map (different than using Autocomplete (see setPlace()))
@@ -605,6 +542,36 @@ export default {
       }
       this.center = latLng;
     },
+
+    deserializeVisitAsMarker(visits) {
+      this.place_map = Place.getPlaceMap();
+      this.markersMap = new Map();
+      if (visits) {
+        this.visitSet = new Set(visits);
+        visits.forEach((visit, index) => {
+          const place = this.place_map.get(visit.place_id);
+          let m = {
+            title: visit.name,
+            label: { text: 'V' + index, color: 'white' },
+            name: visit.name,
+            place_id: visit.place_id,
+            position: { lat: place.lat, lng: place.lng },
+          };
+          this.markersMap.set(visit.name, m);
+        });
+      }
+    },
+
+    openInfoWindowWithSelectedPlace(result) {
+      this.place = result;
+      console.log('Updated Place:', printJson(this.place));
+      const protoMarker = {
+        position: { lat: this.place.lat, lng: this.place.lng },
+      };
+      this.placeMap.set(this.place.place_id, this.place);
+      this.infoWindowPos = protoMarker.position;
+      this.infoWinOpen = true;
+    },
   },
 
   watch: {},
@@ -634,10 +601,13 @@ export default {
         self.showMap(map);
         self.getAssets(map);
 
-        // we don't use results[2] here, but the promise resolved with fetched Place records used next
+        // we don't use results[2] here,
+        // but the promise resolved with fetched Place records used next
         self.deserializeVisitAsMarker(visits, map);
-        // TODO why do you need map? you are no longer creating markers directly, only through vue2-googlemaps using this.markers array
         this.map = map;
+
+        // not sure we need this...
+        this.recent = true;
       }
     );
   },

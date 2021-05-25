@@ -1072,7 +1072,6 @@ export default {
 
       let newVisit = { ...this.createEvent };
 
-      // TODO put back Visit
       Visit.updatePromise(newVisit)
         .then((p) => {
           console.log('Added visit to cache', printJson(p));
@@ -1090,7 +1089,6 @@ export default {
       const id = visit.id;
       const self = this;
 
-      // TODO put back Visit
       Visit.deletePromise(id)
         .then(() => {
           self.confirm = false;
