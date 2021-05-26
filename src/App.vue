@@ -18,7 +18,10 @@
       <v-spacer></v-spacer>
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
-
+      <nestedMenu
+        :menu-items="fileMenuItems"
+        @nestedMenu-click="onMenuItemClick"
+      />
       <!-- Options Menu-->
       <v-menu bottom left>
         <template v-slot:activator="{ on, attrs }">
@@ -70,6 +73,12 @@
     </v-app-bar>
 
     <v-main>
+      <v-spacer></v-spacer>
+      <MenuCard
+        :username="username"
+        @changeGraph="changeGraph"
+        @act="actOnMore"
+      />
       <v-container class="fill-height" fluid>
         <!-- QR Dialog -->
         <v-dialog
@@ -115,7 +124,11 @@
           no-gutters
         >
           <v-col v-if="showSpaces" class="text-center">
-            <GoogleMap v-model="location" @addedPlace="onAddedPlace" />
+            <GoogleMap
+              v-model="location"
+              :auditor="auditor"
+              @addedPlace="onAddedPlace"
+            />
           </v-col>
           <v-col v-if="showWarning" class="text-center">
             <Warning
@@ -287,9 +300,95 @@ export default {
     Warning,
     Calendar,
     FeedbackCard,
+    // AuditorCard: () => import('./components/cards/AuditorCard.vue'),
+    MenuCard: () => import('./components/cards/menuCard.vue'),
+    nestedMenu: () => import('./components/cards/nestedMenuCard'),
   },
 
   computed: {
+    tail() {
+      return this.auditLog;
+    },
+
+    fileMenuItems() {
+      const x = [
+        { isDivider: true },
+        {
+          name: 'Select a Graph',
+          menu: [
+            {
+              name: 'Sisters',
+              subtitle: 'Where real data goes',
+              icon: 'mdi-graphql',
+              action: 'Sisters',
+            },
+            {
+              name: 'Sandbox',
+              subtitle: 'Play around with LCT safely',
+              icon: 'mdi-graphql',
+              action: 'Sandbox',
+            },
+          ],
+        },
+        { isDivider: true },
+        {
+          name: 'Audit Log Tail:',
+          subtitle: 'Captures key runtime data for review',
+          icon: 'mdi-information-outline',
+          color: 'yellow',
+          menu: this.tail,
+          // menu: [
+          //   { name: '1.1' },
+          //   { name: '1.2' },
+          //   {
+          //     name: 'Sub-menu 2',
+          //     menu: [
+          //       { name: '2.1' },
+          //       { name: '2.2' },
+          //       {
+          //         name: 'Sub-menu 3',
+          //         menu: [
+          //           { name: '3.1' },
+          //           { name: '3.2' },
+          //           {
+          //             name: 'Sub-menu 4',
+          //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
+          //           },
+          //         ],
+          //       },
+          //     ],
+          //   },
+          // ],
+        },
+
+        { isDivider: true },
+        {
+          subtitle: 'How are we doing?',
+          name: 'Feedback',
+          action: 'Feedback',
+          icon: 'mdi-comment-quote-outline',
+          color: 'purple',
+        },
+        {
+          name: 'Docs',
+          subtitle: 'LCT Docs (applies to all instances of LCT)',
+          action: 'Docs',
+          icon: 'mdi-information-variant',
+          color: 'yellow',
+        },
+
+        { isDivider: true },
+
+        {
+          subtitle: 'Remove localStorage username/sessionID',
+          name: 'Reset',
+          action: 'Reset',
+          icon: 'mdi-comment-quote-outline',
+          color: 'orange',
+        },
+      ];
+      return x;
+    },
     bpWidth() {
       return this.bp
         ? 'screen width: ' + this.bp.width
@@ -312,7 +411,6 @@ export default {
       return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
     },
     xxs() {
-      console.log('bp.width', this.bp?.width);
       return this.bp?.width < 420;
     },
     version() {
@@ -351,15 +449,18 @@ export default {
       userID: '',
 
       // these are BASE values
+
       v0: true,
       loggedMessage: '',
       qrDialog: false,
       feedbackDialog: false,
+      showAuditLog: false,
 
       // used by getAvatar()
       gender: ['men', 'women'],
 
       // used by more menu icon
+
       items: [
         { divider: true },
 
@@ -400,7 +501,14 @@ export default {
           title: 'Docs',
           subtitle: 'LCT Docs (applies to all instances of LCT)',
           moreActionId: 1,
-          icon: 'mdi-comment-quote-outline',
+          icon: 'mdi-information-variant',
+          color: 'yellow',
+        },
+        {
+          title: 'Audit Log',
+          subtitle: 'Captures key runtime data for review',
+          moreActionId: 1,
+          icon: 'mdi-information-outline',
           color: 'yellow',
         },
       ],
@@ -466,6 +574,21 @@ export default {
   },
 
   methods: {
+    onMenuItemClick(item) {
+      if (typeof item.action === 'function') {
+        item.action();
+        return;
+      }
+      switch (item.action) {
+        case 'Sisters':
+        case 'Sandbox':
+          this.changeGraph(item.action);
+          break;
+        // default:
+        //   this.act(item.action);
+      }
+    },
+
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
@@ -619,11 +742,13 @@ export default {
     //#endregion Calendar methods
 
     // these are BASE methods
-    getColorOfCurrentGraph(item) {
-      if (item.moreActionId === 0) {
-        return item.title === this.getGraphName() ? 'green' : 'red';
-      }
-      return item.color;
+
+    changeGraph(graphName) {
+      // TODO will this setter interfere with session event?
+      this.graphName =
+        graphName === 'Sandbox' ? 'Sandbox' : this.$defaultGraphName;
+
+      this.emitFromClient('changeGraph', this.graphName);
     },
 
     getAvatar() {
@@ -633,6 +758,20 @@ export default {
       return avatar;
     },
 
+    getColorOfCurrentGraph(item) {
+      if (item.moreActionId === 0) {
+        return item.title === this.getGraphName() ? 'green' : 'red';
+      }
+      return item.color;
+    },
+
+    act() {
+      if (this.action === 'refresh') {
+        this.refreshApp();
+      } else {
+        this.add2HomeScreen();
+      }
+    },
     onMore(action, id) {
       switch (id) {
         case 0:
@@ -645,9 +784,15 @@ export default {
 
     actOnMore(action) {
       switch (action) {
+        case 'Audit Log':
+          this.showAuditLog = true;
+          break;
         case 'Docs':
-          window.location =
-            'https://lct-docs.netlify.app target=_blank rel="noopener noreferrer"';
+          window.open(
+            'https://lct-docs.netlify.app',
+            '_blank',
+            'noopener noreferrer'
+          );
           break;
         case 'Feedback':
           this.feedbackDialog = true;
@@ -663,22 +808,6 @@ export default {
           Visit.deleteAll();
           window.location.reload();
           break;
-      }
-    },
-
-    changeGraph(graphName) {
-      // TODO will this setter interfere with session event?
-      this.graphName =
-        graphName === 'Sandbox' ? 'Sandbox' : this.$defaultGraphName;
-
-      this.emitFromClient('changeGraph', this.graphName);
-    },
-
-    act() {
-      if (this.action === 'refresh') {
-        this.refreshApp();
-      } else {
-        this.add2HomeScreen();
       }
     },
 
@@ -752,20 +881,11 @@ export default {
     },
   },
 
-  watch: {
-    graphName(newVal, oldVal) {
-      console.log('Graph name is', newVal, 'and was', oldVal);
-    },
-
-    location(location) {
-      console.log(location);
-    },
-    usernameAlreadySelected(val) {
-      console.log('usernameAlreadySelected', val);
-    },
-  },
+  watch: {},
 
   created() {
+    console.groupCollapsed('Creating App:');
+
     console.log(process.env.VUE_APP_NAMESPACE);
 
     //#region PWA
@@ -799,16 +919,14 @@ export default {
       this.usernameAlreadySelected = true;
       this.onConnectMe();
     }
-
+    console.groupEnd();
     //#endregion
   },
 
   async mounted() {
-    Visit.$fetch().then((visits) => {
-      console.groupCollapsed('Visits:');
-      console.log(printJson(visits));
-      console.groupEnd();
-    });
+    console.groupCollapsed('Mounting App:');
+
+    Visit.$fetch();
 
     const self = this;
     const bp = self.$vuetify.breakpoint;
@@ -835,6 +953,7 @@ export default {
         : this.SPACES;
 
     console.log('App.vue mounted');
+    console.groupEnd();
   },
 
   // TODO Figure out how to unsub events

@@ -21,6 +21,10 @@ class Auditor {
   findAllLogEntries() {
     return [...this.log.values()];
   }
+
+  getLog() {
+    return this.log;
+  }
 }
 
 module.exports = Auditor;

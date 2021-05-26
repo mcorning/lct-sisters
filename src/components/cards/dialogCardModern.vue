@@ -99,15 +99,10 @@ export default {
     },
   },
 
-  watch: {
-    customOptions(n, o) {
-      console.log(n, o);
-    },
-  },
+  watch: {},
 
   mounted() {
     // window.addEventListener('keydown', this.handleKeydown);
-    console.log(this.customOptions);
     this.options = { ...this.options, ...this.customOptions };
   },
 };

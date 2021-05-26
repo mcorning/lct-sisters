@@ -101,7 +101,7 @@
         :key="index"
         v-for="(m, index) in markers"
         :position="m.position"
-        :draggable="false"
+        :draggable="true"
         @click="getMarker(m, index)"
         >{{ m.title }}
       </GmapMarker>
@@ -203,13 +203,15 @@ export default {
       };
     },
 
-    infowindow() {
-      const x = new window.google.maps.InfoWindow({ content: this.content });
-      return x;
-    },
-
+    // promises
     mapPromise() {
       return this.$refs.mapRef.$mapPromise;
+    },
+    visitsPromise() {
+      return Visit.$fetch();
+    },
+    placePromise() {
+      return Place.$fetch();
     },
   },
 
@@ -228,10 +230,6 @@ export default {
           },
         ],
       },
-      // promises
-
-      visitsPromise: Visit.$fetch(),
-      placePromise: Place.$fetch(),
 
       placeMap: new Map(),
       minimalMarkers: new Map(),
@@ -253,6 +251,7 @@ export default {
       infoWindowPos: null,
       infoWinOpen: false,
       currentMidx: null,
+
       //optional: offset infowindow so it visually sits nicely on top of our marker
       infoOptions: {
         pixelOffset: {
@@ -555,11 +554,16 @@ export default {
     deserializeVisitAsMarker(visits) {
       this.place_map = Place.getPlaceMap();
       this.markersMap = new Map();
+      console.groupCollapsed(
+        warn(
+          `deserializeVisitAsMarker(visits) making ${visits.length} markers:`
+        )
+      );
       if (visits) {
         this.visitSet = new Set(visits);
         visits.forEach((visit, index) => {
           const place = this.place_map.get(visit.place_id);
-          console.log('Using place:', printJson(place));
+          console.log('using place:', printJson(place));
           let m = {
             title: visit.name,
             label: { text: 'V' + index, color: 'white' },
@@ -569,6 +573,7 @@ export default {
           };
           this.markersMap.set(visit.name, m);
         });
+        console.groupEnd();
       }
     },
 
@@ -596,13 +601,14 @@ export default {
 
   mounted() {
     const self = this;
-    console.log(self.getAvatar());
+    console.groupCollapsed('Mounting GoogleMap');
     const bp = self.$vuetify.breakpoint;
     console.log(bp.name, bp.height);
     const x = bp.height;
     const y = 175;
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
+    console.groupEnd();
 
     Promise.all([self.mapPromise, self.visitsPromise, self.placePromise]).then(
       (results) => {
@@ -618,6 +624,7 @@ export default {
 
         // not sure we need this...
         this.recent = true;
+        console.log(success('GoogleMap loaded successfully'));
       }
     );
   },
