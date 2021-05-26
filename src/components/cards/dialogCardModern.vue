@@ -46,6 +46,8 @@
 <script>
 export default {
   name: 'modernDialog',
+
+  computed: {},
   data() {
     return {
       dialog: false,
@@ -74,6 +76,8 @@ export default {
     },
 
     // options is an object with name-value pairs (as opposed to props)
+    // NOTE: if the caller set a buttons array element to null
+    // that element will not appear withe the remaining buttons
     open(title, message, options) {
       this.dialog = true;
       this.title = title;

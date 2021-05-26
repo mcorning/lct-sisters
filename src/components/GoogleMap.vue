@@ -139,6 +139,7 @@ import Place from '@/models/Place';
 import {
   error,
   highlight,
+  success,
   warn,
   getRandomIntInclusive,
   printJson,
@@ -148,6 +149,7 @@ import { DateTime } from '../utils/luxonHelpers';
 export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
+
   components: {
     ConfirmModernDialog: () => import('./cards/dialogCardModern'),
     businessCard: () => import('./cards/businessCard'),
@@ -157,6 +159,7 @@ export default {
     places() {
       const p = Place.query()
         .where('name', (v) => v) // ignore places without names (if any)
+        .orderBy('name')
         .get();
 
       return p;
@@ -164,7 +167,6 @@ export default {
 
     markers() {
       const m = this.markersMap ? Array.from(this.markersMap.values()) : [];
-      console.log(warn('markers:', printJson(m)));
       return m;
     },
 
@@ -205,6 +207,7 @@ export default {
       const x = new window.google.maps.InfoWindow({ content: this.content });
       return x;
     },
+
     mapPromise() {
       return this.$refs.mapRef.$mapPromise;
     },
@@ -430,8 +433,9 @@ export default {
       const consequences =
         'This will add an event to your calendar and a marker to your map.';
       const icon = 'mdi-help-circle-outline';
-      this.customOptions.buttons[0].label = '';
+      this.customOptions.buttons[0] = null;
       this.customOptions.buttons[2].label = 'Yes';
+
       this.ConfirmModernDialog.open(question, consequences, {
         icon: icon,
       }).then((act) => {
@@ -555,6 +559,7 @@ export default {
         this.visitSet = new Set(visits);
         visits.forEach((visit, index) => {
           const place = this.place_map.get(visit.place_id);
+          console.log('Using place:', printJson(place));
           let m = {
             title: visit.name,
             label: { text: 'V' + index, color: 'white' },
