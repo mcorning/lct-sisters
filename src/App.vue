@@ -362,44 +362,61 @@ export default {
           ],
         },
         { isDivider: true },
-        {
-          name: 'Audit Log Tail:',
-          subtitle: 'Captures key runtime data for review',
-          icon: 'mdi-information-outline',
-          color: 'yellow',
-          menu: [],
-          // menu: [
-          //   { name: '1.1' },
-          //   { name: '1.2' },
-          //   {
-          //     name: 'Sub-menu 2',
-          //     menu: [
-          //       { name: '2.1' },
-          //       { name: '2.2' },
-          //       {
-          //         name: 'Sub-menu 3',
-          //         menu: [
-          //           { name: '3.1' },
-          //           { name: '3.2' },
-          //           {
-          //             name: 'Sub-menu 4',
-          //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
-          //           },
-          //         ],
-          //       },
-          //     ],
-          //   },
-          // ],
-        },
+        // {
+        //   name: 'Audit Log Tail:',
+        //   subtitle: 'Captures key runtime data for review',
+        //   icon: 'mdi-information-outline',
+        //   color: 'yellow',
+        //   menu: [],
+        //   // menu: [
+        //   //   { name: '1.1' },
+        //   //   { name: '1.2' },
+        //   //   {
+        //   //     name: 'Sub-menu 2',
+        //   //     menu: [
+        //   //       { name: '2.1' },
+        //   //       { name: '2.2' },
+        //   //       {
+        //   //         name: 'Sub-menu 3',
+        //   //         menu: [
+        //   //           { name: '3.1' },
+        //   //           { name: '3.2' },
+        //   //           {
+        //   //             name: 'Sub-menu 4',
+        //   //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
+        //   //           },
+        //   //         ],
+        //   //       },
+        //   //     ],
+        //   //   },
+        //   // ],
+        // },
 
         {
-          name: 'Docs',
-          subtitle: 'LCT Docs (applies to all instances of LCT)',
-          action: 'Docs',
-          icon: 'mdi-information-variant',
-          color: 'yellow',
+          name: 'Support',
+          menu: [
+            {
+              name: 'Docs',
+              subtitle: 'LCT Docs (applies to all instances of LCT)',
+              action: 'Docs',
+              icon: 'mdi-information-variant',
+              color: 'yellow',
+            },
+            {
+              subtitle: 'How can we support you?',
+              name: 'Feedback',
+              action: 'Feedback',
+              icon: 'mdi-comment-quote-outline',
+              color: 'purple',
+            },
+            {
+              name: 'Donate',
+              subtitle: 'How can you support us?',
+              icon: 'mdi-help',
+              action: 'Donate',
+            },
+          ],
         },
-
         { isDivider: true },
 
         {
@@ -408,14 +425,6 @@ export default {
           action: 'Reset',
           icon: 'mdi-comment-quote-outline',
           color: 'orange',
-        },
-        { isDivider: true },
-        {
-          subtitle: 'How are we doing?',
-          name: 'Feedback',
-          action: 'Feedback',
-          icon: 'mdi-comment-quote-outline',
-          color: 'purple',
         },
       ],
 
@@ -594,9 +603,9 @@ export default {
         case 'Sandbox':
           this.changeGraph(item.action);
           break;
-        case 'Audit Log':
-          this.showAuditLog = true;
-          break;
+        // case 'Audit Log':
+        //   this.showAuditLog = true;
+        //   break;
         case 'Docs':
           window.open(
             'https://lct-docs.netlify.app',
@@ -606,6 +615,11 @@ export default {
           break;
         case 'Feedback':
           this.feedbackDialog = true;
+          break;
+        case 'Donate':
+          alert(
+            'Your financial support makes this work possible. Email mcorning@soteriaInstitute.org for details. Thanks a 0xF4240.'
+          );
           break;
         case 'Reset':
           localStorage.removeItem('username');
@@ -913,11 +927,13 @@ export default {
     },
     onLog(msg, heading = 'Info') {
       this.auditor.logEntry(msg, heading);
-      const x = [...this.auditor.getLog().values()];
-      const y = x.map((v) => {
-        return { name: v.message };
-      });
-      this.fileMenuItems[3].menu = y;
+
+      // not sure menu items are best way to show log
+      // const x = [...this.auditor.getLog().values()];
+      // const y = x.map((v) => {
+      //   return { name: v.message };
+      // });
+      // this.fileMenuItems[3].menu = y;
     },
   },
 
