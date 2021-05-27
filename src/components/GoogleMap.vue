@@ -287,6 +287,7 @@ export default {
   },
 
   methods: {
+    // businessCard go event handler
     onGo(data) {
       console.log(data);
       this.dialog = false;
@@ -312,6 +313,17 @@ export default {
       console.log(`onGo() startTime/stay: ${startTime}`, printJson(stay));
       // we hare calling a click handler here, so set first arg to null since we don't have a nativeEvent to pass
       this.addVisit(null, startTime, stay.milliseconds);
+    },
+
+    getIcon() {
+      return 'mdi-account-group';
+    },
+
+    getAvatar() {
+      const gender = this.gender[getRandomIntInclusive(0, 1)];
+      const id = getRandomIntInclusive(1, 99);
+      const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
+      return avatar;
     },
 
     // click on a marker
@@ -354,6 +366,128 @@ export default {
       });
     },
 
+    goRecent(place) {
+      const question = `Mark your calendar with ${place.name}?`;
+      const consequences =
+        'This will add an event to your calendar and a marker to your map.';
+      const icon = 'mdi-help-circle-outline';
+      this.customOptions.buttons[0] = null;
+      this.customOptions.buttons[2].label = 'Yes';
+
+      this.ConfirmModernDialog.open(question, consequences, {
+        icon: icon,
+      }).then((act) => {
+        if (act) {
+          this.place = place;
+          this.addVisit();
+        }
+      });
+    },
+
+    updateName(name) {
+      Place.updateFieldPromise(this.place.place_id, { name: name })
+        .then((p) => {
+          console.log(highlight('Updated place'), printJson(p));
+          this.place = p;
+        })
+        .catch((error) => {
+          this.$emit('error', error);
+        });
+    },
+
+    // click the map (different than using Autocomplete (see setPlace()))
+    // space is this.$event and includes the placeId (not place_id) string (place_id is returned in the getDetails() result)
+    // and the latLng object
+    addPlace(space) {
+      try {
+        // since we serialize strings, we convert the latLng class into the latLng literal
+        const latLng = {
+          lat: space.lat || space.latLng.lat(),
+          lng: space.lng || space.latLng.lng(),
+        };
+        console.log(highlight('Selected space:'), printJson(space));
+        /* From googlemaps docs:
+          A place ID is a unique reference to a place on a Google Map.
+          Place IDs are available for most locations, including
+            businesses,
+            landmarks,
+            parks, and
+            intersections.
+      */
+        if (space.placeId) {
+          this.placesService.getDetails(
+            {
+              placeId: space.placeId,
+              fields: [
+                'name',
+                'formatted_address',
+                'place_id',
+                'geometry',
+                'plus_code',
+              ],
+            },
+            (place, status) => {
+              if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+                Place.updatePromise(place)
+                  .then((result) =>
+                    this.openInfoWindowWithSelectedPlace(result[0])
+                  )
+                  .catch((err) => {
+                    console.log(error(err));
+                    this.$emit('error', err);
+                  });
+              } else {
+                console.log('Error:', status);
+              }
+            }
+          );
+        } else {
+          // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
+          // geocode could take the space.latLng class instance, but for broad consistency,
+          // we use the latLng literal because we can't conveniently serialize functions
+          this.geocoder.geocode({ location: latLng }, (results, status) => {
+            if (status === 'OK') {
+              // results array provides different levels of address details. we use the first element in the array
+              const {
+                name,
+                formatted_address,
+                place_id,
+                geometry,
+                plus_code,
+              } = results[0];
+
+              // note name will be empty because the spot is...well, nameless. Vistor provides the name using the InfoWindow.
+              const spot = {
+                name,
+                formatted_address,
+                place_id,
+                geometry,
+                plus_code,
+              };
+              // geocode results do include the place_id, even for a spot not otherwise noteworthy
+              console.log('Non-POI (spot) results:', printJson(spot));
+
+              // Place.updatePromise() returns all affected places (of which there is always only one)
+              Place.updatePromise(spot)
+                .then((result) =>
+                  this.openInfoWindowWithSelectedPlace(result[0])
+                )
+                .catch((err) => {
+                  console.log(error(err));
+                  this.$emit('error', err);
+                });
+            } else {
+              console.log('Error:', status);
+            }
+          });
+        }
+        this.center = latLng;
+      } catch (error) {
+        this.$emit('error', error);
+      }
+    },
+
+    //#region Methods for mount()
     setUpGeolocation(map) {
       const infoWindow = new window.google.maps.InfoWindow();
 
@@ -426,168 +560,52 @@ export default {
       });
     },
 
-    goRecent(place) {
-      console.log(place);
-      const question = `Mark your calendar with ${place.name}?`;
-      const consequences =
-        'This will add an event to your calendar and a marker to your map.';
-      const icon = 'mdi-help-circle-outline';
-      this.customOptions.buttons[0] = null;
-      this.customOptions.buttons[2].label = 'Yes';
-
-      this.ConfirmModernDialog.open(question, consequences, {
-        icon: icon,
-      }).then((act) => {
-        if (act) {
-          this.place = place;
-          this.addVisit();
-        }
-      });
-    },
-
-    getIcon() {
-      return 'mdi-account-group';
-    },
-
-    updateName(name) {
-      Place.updateFieldPromise(this.place.place_id, { name: name }).then(
-        (p) => {
-          console.log(highlight('Updated place'), printJson(p));
-          this.place = p;
-        }
-      );
-    },
-
-    getAvatar() {
-      const gender = this.gender[getRandomIntInclusive(0, 1)];
-      const id = getRandomIntInclusive(1, 99);
-      const avatar = `https://randomuser.me/api/portraits/${gender}/${id}.jpg`;
-      return avatar;
-    },
-
-    // click the map (different than using Autocomplete (see setPlace()))
-    // space is this.$event and includes the placeId (not place_id) string (place_id is returned in the getDetails() result)
-    // and the latLng object
-    addPlace(space) {
-      // since we serialize strings, we convert the latLng class into the latLng literal
-      const latLng = {
-        lat: space.lat || space.latLng.lat(),
-        lng: space.lng || space.latLng.lng(),
-      };
-      console.log(highlight('Selected space:'), printJson(space));
-      /* From googlemaps docs:
-          A place ID is a unique reference to a place on a Google Map.
-          Place IDs are available for most locations, including
-            businesses,
-            landmarks,
-            parks, and
-            intersections.
-      */
-      if (space.placeId) {
-        this.placesService.getDetails(
-          {
-            placeId: space.placeId,
-            fields: [
-              'name',
-              'formatted_address',
-              'place_id',
-              'geometry',
-              'plus_code',
-            ],
-          },
-          (place, status) => {
-            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-              Place.updatePromise(place)
-                .then((result) =>
-                  this.openInfoWindowWithSelectedPlace(result[0])
-                )
-                .catch((err) => {
-                  console.log(error(err));
-                  this.$emit('error', err);
-                });
-            } else {
-              console.log('Error:', status);
-            }
-          }
-        );
-      } else {
-        // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
-        // geocode could take the space.latLng class instance, but for broad consistency,
-        // we use the latLng literal because we can't conveniently serialize functions
-        this.geocoder.geocode({ location: latLng }, (results, status) => {
-          if (status === 'OK') {
-            // results array provides different levels of address details. we use the first element in the array
-            const {
-              name,
-              formatted_address,
-              place_id,
-              geometry,
-              plus_code,
-            } = results[0];
-
-            // note name will be empty because the spot is...well, nameless. Vistor provides the name using the InfoWindow.
-            const spot = {
-              name,
-              formatted_address,
-              place_id,
-              geometry,
-              plus_code,
-            };
-            // geocode results do include the place_id, even for a spot not otherwise noteworthy
-            console.log('Non-POI (spot) results:', printJson(spot));
-
-            // Place.updatePromise() returns all affected places (of which there is always only one)
-            Place.updatePromise(spot)
-              .then((result) => this.openInfoWindowWithSelectedPlace(result[0]))
-              .catch((err) => {
-                console.log(error(err));
-                this.$emit('error', err);
-              });
-          } else {
-            console.log('Error:', status);
-          }
-        });
-      }
-      this.center = latLng;
-    },
-
     deserializeVisitAsMarker(visits) {
-      this.place_map = Place.getPlaceMap();
-      this.markersMap = new Map();
-      console.groupCollapsed(
-        warn(
-          `deserializeVisitAsMarker(visits) making ${visits.length} markers:`
-        )
-      );
-      if (visits) {
-        this.visitSet = new Set(visits);
-        visits.forEach((visit, index) => {
-          const place = this.place_map.get(visit.place_id);
-          console.log('using place:', printJson(place));
-          let m = {
-            title: visit.name,
-            label: { text: 'V' + index, color: 'white' },
-            name: visit.name,
-            place_id: visit.place_id,
-            position: { lat: place.lat, lng: place.lng },
-          };
-          this.markersMap.set(visit.name, m);
-          this.$emit('log', `added marker for ${visit.name}`);
-        });
-        console.groupEnd();
+      try {
+        this.place_map = Place.getPlaceMap();
+        this.markersMap = new Map();
+        console.groupCollapsed(
+          warn(
+            `deserializeVisitAsMarker(visits) making ${visits.length} markers:`
+          )
+        );
+        if (visits) {
+          this.visitSet = new Set(visits);
+          visits.forEach((visit, index) => {
+            const place = this.place_map.get(visit.place_id);
+            console.log('using place:', printJson(place));
+            let m = {
+              title: visit.name,
+              label: { text: 'V' + index, color: 'white' },
+              name: visit.name,
+              place_id: visit.place_id,
+              position: { lat: place.lat, lng: place.lng },
+            };
+            this.markersMap.set(visit.name, m);
+            this.$emit('log', `added marker for ${visit.name}`);
+          });
+          console.groupEnd();
+        }
+      } catch (error) {
+        this.$emit('error', error);
       }
     },
 
     openInfoWindowWithSelectedPlace(result) {
-      this.place = result;
-      console.log('Updated Place:', printJson(this.place));
-      const protoMarker = {
-        position: { lat: this.place.lat, lng: this.place.lng },
-      };
-      this.placeMap.set(this.place.place_id, this.place);
-      this.infoWindowPos = protoMarker.position;
-      this.infoWinOpen = true;
+      try {
+        this.place = result;
+        console.log('Updated Place:', printJson(this.place));
+        const protoMarker = {
+          position: { lat: this.place.lat, lng: this.place.lng },
+        };
+        this.placeMap.set(this.place.place_id, this.place);
+        this.infoWindowPos = protoMarker.position;
+        this.infoWinOpen = true;
+      } catch (error) {
+        this.$emit('error', error);
+      }
     },
+    //#endregion
   },
 
   watch: {},
@@ -628,6 +646,7 @@ export default {
         console.log(success('GoogleMap loaded successfully'));
       }
     );
+    // throw 'Oops';
   },
 };
 </script>

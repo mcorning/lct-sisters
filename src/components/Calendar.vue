@@ -1462,6 +1462,7 @@ export default {
         : 'category';
 
     console.log('mounted calendarCard');
+    throw 'Bad day';
   },
 
   destroyed() {
