@@ -646,7 +646,6 @@ export default {
         console.log(success('GoogleMap loaded successfully'));
       }
     );
-    // throw 'Oops';
   },
 };
 </script>
