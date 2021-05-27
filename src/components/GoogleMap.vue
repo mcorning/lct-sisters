@@ -572,6 +572,7 @@ export default {
             position: { lat: place.lat, lng: place.lng },
           };
           this.markersMap.set(visit.name, m);
+          this.$emit('log', `added marker for ${visit.name}`);
         });
         console.groupEnd();
       }

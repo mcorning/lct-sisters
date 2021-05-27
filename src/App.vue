@@ -18,12 +18,13 @@
       <v-spacer></v-spacer>
       {{ version }}
       <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
+
+      <!-- Options Menu-->
       <nestedMenu
         :menu-items="fileMenuItems"
         @nestedMenu-click="onMenuItemClick"
       />
-      <!-- Options Menu-->
-      <v-menu bottom left>
+      <!-- <v-menu bottom left>
         <template v-slot:activator="{ on, attrs }">
           <v-btn dark icon v-bind="attrs" v-on="on">
             <v-icon>mdi-dots-vertical</v-icon>
@@ -68,17 +69,11 @@
             </v-list-item>
           </template>
         </v-list>
-      </v-menu>
+      </v-menu> -->
       <!-- End Options Menu-->
     </v-app-bar>
 
     <v-main>
-      <v-spacer></v-spacer>
-      <MenuCard
-        :username="username"
-        @changeGraph="changeGraph"
-        @act="actOnMore"
-      />
       <v-container class="fill-height" fluid>
         <!-- QR Dialog -->
         <v-dialog
@@ -128,6 +123,7 @@
               v-model="location"
               :auditor="auditor"
               @addedPlace="onAddedPlace"
+              @log="onLog"
             />
           </v-col>
           <v-col v-if="showWarning" class="text-center">
@@ -301,94 +297,11 @@ export default {
     Calendar,
     FeedbackCard,
     // AuditorCard: () => import('./components/cards/AuditorCard.vue'),
-    MenuCard: () => import('./components/cards/menuCard.vue'),
+    // MenuCard: () => import('./components/cards/menuCard.vue'),
     nestedMenu: () => import('./components/cards/nestedMenuCard'),
   },
 
   computed: {
-    tail() {
-      return this.auditLog;
-    },
-
-    fileMenuItems() {
-      const x = [
-        { isDivider: true },
-        {
-          name: 'Select a Graph',
-          menu: [
-            {
-              name: 'Sisters',
-              subtitle: 'Where real data goes',
-              icon: 'mdi-graphql',
-              action: 'Sisters',
-            },
-            {
-              name: 'Sandbox',
-              subtitle: 'Play around with LCT safely',
-              icon: 'mdi-graphql',
-              action: 'Sandbox',
-            },
-          ],
-        },
-        { isDivider: true },
-        {
-          name: 'Audit Log Tail:',
-          subtitle: 'Captures key runtime data for review',
-          icon: 'mdi-information-outline',
-          color: 'yellow',
-          menu: this.tail,
-          // menu: [
-          //   { name: '1.1' },
-          //   { name: '1.2' },
-          //   {
-          //     name: 'Sub-menu 2',
-          //     menu: [
-          //       { name: '2.1' },
-          //       { name: '2.2' },
-          //       {
-          //         name: 'Sub-menu 3',
-          //         menu: [
-          //           { name: '3.1' },
-          //           { name: '3.2' },
-          //           {
-          //             name: 'Sub-menu 4',
-          //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
-          //           },
-          //         ],
-          //       },
-          //     ],
-          //   },
-          // ],
-        },
-
-        { isDivider: true },
-        {
-          subtitle: 'How are we doing?',
-          name: 'Feedback',
-          action: 'Feedback',
-          icon: 'mdi-comment-quote-outline',
-          color: 'purple',
-        },
-        {
-          name: 'Docs',
-          subtitle: 'LCT Docs (applies to all instances of LCT)',
-          action: 'Docs',
-          icon: 'mdi-information-variant',
-          color: 'yellow',
-        },
-
-        { isDivider: true },
-
-        {
-          subtitle: 'Remove localStorage username/sessionID',
-          name: 'Reset',
-          action: 'Reset',
-          icon: 'mdi-comment-quote-outline',
-          color: 'orange',
-        },
-      ];
-      return x;
-    },
     bpWidth() {
       return this.bp
         ? 'screen width: ' + this.bp.width
@@ -420,6 +333,83 @@ export default {
 
   data() {
     return {
+      fileMenuItems: [
+        { isDivider: true },
+        {
+          name: 'Select a Graph',
+          menu: [
+            {
+              name: 'Sisters',
+              subtitle: 'Where real data goes',
+              icon: 'mdi-graphql',
+              action: 'Sisters',
+            },
+            {
+              name: 'Sandbox',
+              subtitle: 'Play around with LCT safely',
+              icon: 'mdi-graphql',
+              action: 'Sandbox',
+            },
+          ],
+        },
+        { isDivider: true },
+        {
+          name: 'Audit Log Tail:',
+          subtitle: 'Captures key runtime data for review',
+          icon: 'mdi-information-outline',
+          color: 'yellow',
+          menu: [],
+          // menu: [
+          //   { name: '1.1' },
+          //   { name: '1.2' },
+          //   {
+          //     name: 'Sub-menu 2',
+          //     menu: [
+          //       { name: '2.1' },
+          //       { name: '2.2' },
+          //       {
+          //         name: 'Sub-menu 3',
+          //         menu: [
+          //           { name: '3.1' },
+          //           { name: '3.2' },
+          //           {
+          //             name: 'Sub-menu 4',
+          //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
+          //           },
+          //         ],
+          //       },
+          //     ],
+          //   },
+          // ],
+        },
+
+        {
+          name: 'Docs',
+          subtitle: 'LCT Docs (applies to all instances of LCT)',
+          action: 'Docs',
+          icon: 'mdi-information-variant',
+          color: 'yellow',
+        },
+
+        { isDivider: true },
+
+        {
+          subtitle: 'Remove localStorage username/sessionID',
+          name: 'Reset',
+          action: 'Reset',
+          icon: 'mdi-comment-quote-outline',
+          color: 'orange',
+        },
+        { isDivider: true },
+        {
+          subtitle: 'How are we doing?',
+          name: 'Feedback',
+          action: 'Feedback',
+          icon: 'mdi-comment-quote-outline',
+          color: 'purple',
+        },
+      ],
+
       // Exposer data
       exposureAlert: false,
       alertPending: false,
@@ -479,15 +469,7 @@ export default {
           moreActionId: 0,
           icon: 'mdi-graphql',
         },
-        { divider: true },
 
-        {
-          title: 'Feedback',
-          subtitle: 'How are we doing?',
-          moreActionId: 1,
-          icon: 'mdi-comment-quote-outline',
-          color: 'purple',
-        },
         { divider: true },
 
         {
@@ -510,6 +492,15 @@ export default {
           moreActionId: 1,
           icon: 'mdi-information-outline',
           color: 'yellow',
+        },
+
+        { divider: true },
+        {
+          title: 'Feedback',
+          subtitle: 'How are we doing?',
+          moreActionId: 1,
+          icon: 'mdi-comment-quote-outline',
+          color: 'purple',
         },
       ],
 
@@ -584,8 +575,30 @@ export default {
         case 'Sandbox':
           this.changeGraph(item.action);
           break;
-        // default:
-        //   this.act(item.action);
+        case 'Audit Log':
+          this.showAuditLog = true;
+          break;
+        case 'Docs':
+          window.open(
+            'https://lct-docs.netlify.app',
+            '_blank',
+            'noopener noreferrer'
+          );
+          break;
+        case 'Feedback':
+          this.feedbackDialog = true;
+          break;
+        case 'Reset':
+          localStorage.removeItem('username');
+          localStorage.removeItem('sessionID');
+          localStorage.removeItem('usesPublicCalendar');
+          localStorage.removeItem('people');
+          localStorage.removeItem('slotInterval');
+          localStorage.removeItem('openAt');
+          localStorage.removeItem('closeAt');
+          Visit.deleteAll();
+          window.location.reload();
+          break;
       }
     },
 
@@ -879,9 +892,25 @@ export default {
 
       this.registration.waiting.postMessage('skipWaiting');
     },
+    onLog(msg, heading = 'Info') {
+      this.auditor.logEntry(msg, heading);
+      const x = [...this.auditor.getLog().values()];
+      const y = x.map((v) => {
+        return { name: v.message };
+      });
+      this.fileMenuItems[3].menu = y;
+    },
   },
 
-  watch: {},
+  watch: {
+    // this only works once (when newValue happens to be null)
+    // 'auditor.log': {
+    //   immediate: true,
+    //   handler(newValue) {
+    //     this.result = newValue.message;
+    //   },
+    // },
+  },
 
   created() {
     console.groupCollapsed('Creating App:');
