@@ -30,7 +30,7 @@
             :key="place.name"
             link
             :value="place"
-            @click="goRecent(place)"
+            @click="openInfoWindowWithSelectedPlace(place)"
           >
             <v-list-item-icon>
               <v-icon>{{ getIcon(place) }}</v-icon>
@@ -109,7 +109,7 @@
 
     <GmapAutocomplete
       class="pl-3"
-      @place_changed="setPlace"
+      @place_changed="openInfoWindowWithSelectedPlace"
       auto-select-first
       :options="options"
       style="
@@ -170,16 +170,27 @@ export default {
       return m;
     },
 
+    translatedPosition() {
+      const lat = this.place.lat || this.place.geometry.location.lat() || 0;
+      const lng = this.place.lng || this.place.geometry.location.lng() || 0;
+      const plus_code =
+        this.place.plus_code?.global_code ||
+        this.place.plus_code ||
+        'not available';
+      return { lat, lng, plus_code };
+    },
+
     // these are the addresses for the currently selected space (used by the InfoWindow select)
     // access the currently selected Place using the place_id
     addresses() {
-      return [
-        `Position:  ${this.place.lat.toFixed(6)} by ${this.place.lng.toFixed(
-          6
-        )}`,
+      const { lat, lng, plus_code } = this.translatedPosition;
+      let x = [
+        `Position:  ${lat.toFixed(6)} by ${lng.toFixed(6)}`,
         `Place ID:  ${this.place.place_id}`,
-        `Plus_Code: ${this.place.plus_code}`,
+        `Plus_Code: ${plus_code}`,
       ];
+      console.log('addresses:', x);
+      return x;
     },
 
     ConfirmModernDialog() {
@@ -217,6 +228,8 @@ export default {
 
   data() {
     return {
+      drawer: false,
+
       place: null,
       customOptions: {
         buttons: [
@@ -241,7 +254,6 @@ export default {
       visits: null,
       recent: false,
       loading: true,
-      drawer: true,
 
       markersData: [],
       edit: true,
@@ -337,6 +349,28 @@ export default {
       this.infoWinOpen = true;
     },
 
+    // called by onGo() with the shift start time
+    addVisit(nativeEvent, startTime = Date.now(), stay) {
+      console.log('Start Time:', startTime.toString());
+      this.$emit('addedPlace', {
+        ...this.place,
+        plus_code: this.place.plus_code.global_code,
+        startTime: startTime,
+        stay: stay,
+      });
+    },
+
+    updateName(name) {
+      Place.updateFieldPromise(this.place.place_id, { name: name })
+        .then((p) => {
+          console.log(highlight('Updated place'), printJson(p));
+          this.place = p;
+        })
+        .catch((error) => {
+          this.$emit('error', error);
+        });
+    },
+
     // handled when component calls $autocomplete.getPlace()
     setPlace(place) {
       if (!place.geometry || !place.geometry.location) {
@@ -355,44 +389,23 @@ export default {
       }
     },
 
-    // called by onGo() with the shift start time
-    addVisit(nativeEvent, startTime = Date.now(), stay) {
-      console.log('Start Time:', startTime.toString());
-      this.$emit('addedPlace', {
-        ...this.place,
-        plus_code: this.place.plus_code.global_code,
-        startTime: startTime,
-        stay: stay,
-      });
-    },
+    openInfoWindowWithSelectedPlace(place) {
+      try {
+        this.drawer = false;
+        this.place = place;
+        console.log('Updated Place:', printJson(this.place));
+        const { lat, lng } = this.translatedPosition;
 
-    goRecent(place) {
-      const question = `Mark your calendar with ${place.name}?`;
-      const consequences =
-        'This will add an event to your calendar and a marker to your map.';
-      const icon = 'mdi-help-circle-outline';
-      this.customOptions.buttons[0] = null;
-      this.customOptions.buttons[2].label = 'Yes';
-
-      this.ConfirmModernDialog.open(question, consequences, {
-        icon: icon,
-      }).then((act) => {
-        if (act) {
-          this.place = place;
-          this.addVisit();
-        }
-      });
-    },
-
-    updateName(name) {
-      Place.updateFieldPromise(this.place.place_id, { name: name })
-        .then((p) => {
-          console.log(highlight('Updated place'), printJson(p));
-          this.place = p;
-        })
-        .catch((error) => {
-          this.$emit('error', error);
-        });
+        const protoMarker = {
+          position: { lat, lng },
+        };
+        console.log(printJson(protoMarker.position));
+        this.placeMap.set(this.place.place_id, this.place);
+        this.infoWindowPos = protoMarker.position;
+        this.infoWinOpen = true;
+      } catch (error) {
+        this.$emit('error', error);
+      }
     },
 
     // click the map (different than using Autocomplete (see setPlace()))
@@ -590,22 +603,7 @@ export default {
         this.$emit('error', error);
       }
     },
-
-    openInfoWindowWithSelectedPlace(result) {
-      try {
-        this.place = result;
-        console.log('Updated Place:', printJson(this.place));
-        const protoMarker = {
-          position: { lat: this.place.lat, lng: this.place.lng },
-        };
-        this.placeMap.set(this.place.place_id, this.place);
-        this.infoWindowPos = protoMarker.position;
-        this.infoWinOpen = true;
-      } catch (error) {
-        this.$emit('error', error);
-      }
-    },
-    //#endregion
+    //#endregion Methods for mount()
   },
 
   watch: {},

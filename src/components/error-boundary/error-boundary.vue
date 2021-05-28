@@ -6,8 +6,14 @@
       v-bind:err="err"
       v-bind:vm="vm"
       v-bind:info="info"
-      ><p>An unexpected error occurred at: {{ info }}</p>
-      <p>{{ err }}</p>
+    >
+      <v-alert type="error" dismissible>
+        <p>An unexpected error occurred at: {{ info }}</p>
+        <p>
+          {{ err }}
+        </p>
+        <v-btn href="http://localhost:8080">Go Back</v-btn>
+      </v-alert>
     </slot>
     <slot v-else></slot>
   </div>
