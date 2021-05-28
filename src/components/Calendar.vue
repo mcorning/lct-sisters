@@ -113,12 +113,10 @@
           </v-calendar>
 
           <!-- Event Menu -->
-          <v-menu
+          <v-dialog
             v-model="selectedOpen"
-            :close-on-content-click="false"
             :activator="selectedElement"
-            offset-x
-            offset-y
+            max-width="400"
           >
             <v-card
               v-if="parsedEvent"
@@ -294,6 +292,7 @@
                   </v-row>
                 </v-col>
               </v-row>
+
               <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
               <v-card-actions>
                 <!-- Delete Visit -->
@@ -366,7 +365,7 @@
                 >
               </v-card-actions>
             </v-card>
-          </v-menu>
+          </v-dialog>
           <!-- End Event Menu -->
         </v-sheet>
       </v-col>
@@ -438,14 +437,17 @@ export default {
       return `the ${this.getGraphName()} exposure graph`;
     },
     getGraphNameFromVisit() {
-      const status = this.parsedEvent.input.graphName
-        ? `is logged on <strong>${this.parsedEvent.input.graphName}</strong>`
+      const status = this.parsedEvent.input.loggedNodeId
+        ? `is logged on the <strong>${this.parsedEvent.input.graphName}</strong> graph`
         : `is <strong>not logged</strong> to any graph yet. ${
             !this.visitorIsOnline
-              ? 'You are <strong>not</strong> online right now.'
-              : 'During or after your visit, log the visit to the graph'
+              ? '<br/>You are <strong>not</strong> online right now.'
+              : '<br/>During or after your visit, log the visit to the graph'
           }`;
-      return `Visit <strong>${this.parsedEvent.input.id}</strong> ${status}`;
+      return `<small>Place ID: <strong>${this.parsedEvent.input.place_id}</strong>
+      <br/>
+      Visit ID: <strong>${this.parsedEvent.input.id}</strong>
+      <br/> ${status}</small>`;
     },
 
     updateFeedbackMessage() {
