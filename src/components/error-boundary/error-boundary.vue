@@ -12,7 +12,7 @@
         <p>
           {{ err }}
         </p>
-        <v-btn href="http://localhost:8080">Go Back</v-btn>
+        <v-btn href="https://lct-sisters.herokuapp.com">Go Back</v-btn>
       </v-alert>
     </slot>
     <slot v-else></slot>

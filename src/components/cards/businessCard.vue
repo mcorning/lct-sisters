@@ -95,14 +95,15 @@
         ></v-switch>
         <!-- Optional settings -->
         <v-row v-if="usesPublicCalendar">
-          <v-col cols="4">
+          <v-col>
             <v-text-field
               v-model="slotInterval"
-              label="How long are appointments (in minutes)?"
+              label="Appointment length?"
+              hint="in minutes"
               clearable
             ></v-text-field>
           </v-col>
-          <v-col cols="8">
+          <v-col>
             <v-text-field
               v-model="people"
               label="List service providers"
@@ -112,9 +113,7 @@
           </v-col>
         </v-row>
 
-        <v-card-text>
-          Ready to get to work?
-        </v-card-text>
+        Ready to get to work?
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

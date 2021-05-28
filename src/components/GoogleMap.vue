@@ -636,7 +636,9 @@ export default {
 
         // we don't use results[2] here,
         // but the promise resolved with fetched Place records used next
-        self.deserializeVisitAsMarker(visits, map);
+        if (visits) {
+          self.deserializeVisitAsMarker(visits, map);
+        }
         this.map = map;
 
         // not sure we need this...

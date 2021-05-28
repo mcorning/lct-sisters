@@ -1,37 +1,31 @@
 <template>
   <v-app>
-    <error-boundary @error="onError($event)">
-      <v-app-bar color="primary" app dark>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn icon v-bind="attrs" v-on="on" @click="qrDialog = !qrDialog">
-              <v-icon>mdi-qrcode</v-icon>
-            </v-btn>
-          </template>
-          <span>Toggle QR to share LCT</span></v-tooltip
-        >
-
-        <v-toolbar-title
-          >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
-          {{ namespace }}</v-toolbar-title
-        >
-
-        <v-spacer></v-spacer>
-        {{ version }}
-        <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
-
-        <!-- Options Menu-->
-        <nestedMenu
-          :menu-items="fileMenuItems"
-          @nestedMenu-click="onMenuItemClick"
-        />
-        <!-- <v-menu bottom left>
+    <v-app-bar color="primary" app dark>
+      <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
-          <v-btn dark icon v-bind="attrs" v-on="on">
-            <v-icon>mdi-dots-vertical</v-icon>
+          <v-btn icon v-bind="attrs" v-on="on" @click="qrDialog = !qrDialog">
+            <v-icon>mdi-qrcode</v-icon>
           </v-btn>
         </template>
+        <span>Toggle QR to share LCT</span></v-tooltip
+      >
 
+      <v-toolbar-title
+        >{{ xxs ? 'LCT' : 'Local Contact Tracing' }} -
+        {{ namespace }}</v-toolbar-title
+      >
+
+      <v-spacer></v-spacer>
+      {{ version }}
+      <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
+
+      <!-- Options Menu-->
+      <nestedMenu
+        :menu-items="fileMenuItems"
+        @nestedMenu-click="onMenuItemClick"
+      />
+      <!-- <v-menu bottom left>
+TODO Incorporate this header data into nestedMenu
         <v-list two-line subheader dense>
           <v-list-item>
             <v-list-item-avatar>
@@ -43,38 +37,19 @@
               <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
               <v-list-item-subtitle>{{ bpWidth }}</v-list-item-subtitle>
             </v-list-item-content>
-          </v-list-item>
+          </v-list-item>-->
 
-          <template v-for="(item, index) in items">
-            <v-subheader v-if="item.header" :key="item.header" inset>
-              {{ item.header }}
-            </v-subheader>
-
-            <v-divider v-else-if="item.divider" :key="index" inset></v-divider>
-            <v-list-item
-              v-else
-              :key="item.title"
-              ripple
-              @click="onMore(item.title, item.moreActionId)"
-            >
-              <v-list-item-avatar>
-                <v-avatar :color="getColorOfCurrentGraph(item)" size="36">
-                  <v-icon dark>{{ item.icon }}</v-icon>
-                </v-avatar>
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title v-html="item.title"> </v-list-item-title>
-                <v-list-item-subtitle v-html="item.subtitle">
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </template>
-        </v-list>
-      </v-menu> -->
-        <!-- End Options Menu-->
-      </v-app-bar>
-
+      <!-- End Options Menu-->
+    </v-app-bar>
+    <error-boundary @error="onError($event)">
       <v-main>
+        <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
+          <div>
+            We failed to handle a possible error that now has occurred at:
+            {{ errorState.source }}
+            <p>Exception: {{ errorState.message }}</p>
+          </div>
+        </v-alert>
         <v-container class="fill-height" fluid>
           <!-- QR Dialog -->
           <v-dialog
@@ -245,32 +220,32 @@
           <!-- End Individual Exposure Alert Snackbar -->
         </v-container>
       </v-main>
-
-      <v-footer app color="primary" class="white--text">
-        <v-bottom-navigation
-          :value="value"
-          color="secondary"
-          background-color="primary"
-          dark
-          grow
-        >
-          <v-btn grow @click="resetSpaces">
-            <span>Spaces</span>
-            <v-icon>mdi-map-marker</v-icon>
-          </v-btn>
-
-          <v-btn fab color="red" dark @click="show = WARNING">
-            <span>Warn</span>
-            <v-icon dark> mdi-alert </v-icon></v-btn
-          >
-
-          <v-btn @click="show = CALENDAR">
-            <span>Calendar</span>
-            <v-icon>mdi-calendar</v-icon>
-          </v-btn>
-        </v-bottom-navigation>
-      </v-footer>
     </error-boundary>
+
+    <v-footer app color="primary" class="white--text">
+      <v-bottom-navigation
+        :value="value"
+        color="secondary"
+        background-color="primary"
+        dark
+        grow
+      >
+        <v-btn grow @click="resetSpaces">
+          <span>Spaces</span>
+          <v-icon>mdi-map-marker</v-icon>
+        </v-btn>
+
+        <v-btn fab color="red" dark @click="show = WARNING">
+          <span>Warn</span>
+          <v-icon dark> mdi-alert </v-icon></v-btn
+        >
+
+        <v-btn @click="show = CALENDAR">
+          <span>Calendar</span>
+          <v-icon>mdi-calendar</v-icon>
+        </v-btn>
+      </v-bottom-navigation>
+    </v-footer>
   </v-app>
 </template>
 
@@ -342,6 +317,7 @@ export default {
 
   data() {
     return {
+      errorState: '',
       fileMenuItems: [
         { isDivider: true },
         {
@@ -862,6 +838,7 @@ export default {
     },
 
     onError(e) {
+      this.errorState = { source: 'App.vue', message: e.message };
       console.log(`Sending error to server`, e);
       this.emitFromClient('client_error', e);
     },
