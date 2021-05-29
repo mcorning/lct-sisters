@@ -562,7 +562,6 @@ export default {
   methods: {
     // TODO get this method to work here as it does in the reference implementation for exception-handler
     errorCaptured(err, vm, info) {
-      alert(err);
       this.err = err;
       this.vm = vm;
       this.info = info;
@@ -954,7 +953,6 @@ export default {
 
     document.addEventListener('appinstalled', () => {
       console.log('PWA was installed');
-      alert('PWA was installed');
     });
     //#endregion PWA
 

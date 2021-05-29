@@ -389,9 +389,6 @@ export default {
       this.type = this.type === 'day' ? 'category' : 'day';
       this.status = this.type;
     },
-    onEditedEvent() {
-      alert('edited event');
-    },
 
     allowedStep: (m) => m % 15 === 0,
 
@@ -860,7 +857,9 @@ export default {
           //   : `in localStorage`;
           // this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
         })
-        .catch((err) => alert(err));
+        .catch((err) => {
+          this.$emit('error', { source: 'Calendar.saveVisit()', error: err });
+        });
     },
 
     changeType(type) {

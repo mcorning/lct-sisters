@@ -32,6 +32,13 @@ export default {
     };
   },
   errorCaptured(err, vm, info) {
+    if (
+      confirm(
+        'If you are using a previous version of LCT, we need to delete your data because it is missing the place_id property.'
+      ) === 'Ok'
+    ) {
+      alert('deleting data');
+    }
     this.err = err;
     this.vm = vm;
     this.info = info;
