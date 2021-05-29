@@ -9,9 +9,8 @@
     >
       <v-alert type="error" dismissible>
         <p>An unexpected error occurred at: {{ info }}</p>
-        <p>
-          {{ err }}
-        </p>
+        <p>Message: {{ err.message }}</p>
+        <p>Stack: {{ err.stack }}</p>
         <v-btn href="https://lct-sisters.herokuapp.com">Go Back</v-btn>
       </v-alert>
     </slot>

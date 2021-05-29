@@ -324,7 +324,7 @@ export default {
       console.log(`onGo() endTime:  ${endTime.toString()}`);
       console.log(`onGo() startTime/stay: ${startTime}`, printJson(stay));
       // we hare calling a click handler here, so set first arg to null since we don't have a nativeEvent to pass
-      this.addVisit(null, startTime, stay.milliseconds);
+      this.addVisit(null, startTime, endTime, stay.milliseconds);
     },
 
     getIcon() {
@@ -350,12 +350,13 @@ export default {
     },
 
     // called by onGo() with the shift start time
-    addVisit(nativeEvent, startTime = Date.now(), stay) {
+    addVisit(nativeEvent, startTime = Date.now(), endTime, stay) {
       console.log('Start Time:', startTime.toString());
       this.$emit('addedPlace', {
         ...this.place,
         plus_code: this.place.plus_code.global_code,
         startTime: startTime,
+        endtime: endTime,
         stay: stay,
       });
     },
@@ -367,7 +368,7 @@ export default {
           this.place = p;
         })
         .catch((error) => {
-          this.$emit('error', error);
+          this.$emit('error', { source: 'GoogleMap.updateName(name)', error });
         });
     },
 
@@ -404,7 +405,10 @@ export default {
         this.infoWindowPos = protoMarker.position;
         this.infoWinOpen = true;
       } catch (error) {
-        this.$emit('error', error);
+        this.$emit('error', {
+          source: 'GoogleMap.openInfoWindowWithSelectedPlace(place)',
+          error,
+        });
       }
     },
 
@@ -447,7 +451,10 @@ export default {
                   )
                   .catch((err) => {
                     console.log(error(err));
-                    this.$emit('error', err);
+                    this.$emit('error', {
+                      source: 'GoogleMap.addPlace(space)',
+                      error: err,
+                    });
                   });
               } else {
                 console.log('Error:', status);
@@ -487,7 +494,10 @@ export default {
                 )
                 .catch((err) => {
                   console.log(error(err));
-                  this.$emit('error', err);
+                  this.$emit('error', {
+                    source: 'GoogleMap.addPlace(space)',
+                    error: err,
+                  });
                 });
             } else {
               console.log('Error:', status);
@@ -496,7 +506,7 @@ export default {
         }
         this.center = latLng;
       } catch (error) {
-        this.$emit('error', error);
+        this.$emit('error', { source: 'GoogleMap.addPlace(space)', error });
       }
     },
 
@@ -585,6 +595,10 @@ export default {
         if (visits) {
           this.visitSet = new Set(visits);
           visits.forEach((visit, index) => {
+            if (!visit.place_id) {
+              // these are appointments not visits
+              return;
+            }
             const place = this.place_map.get(visit.place_id);
             console.log('using place:', printJson(place));
             let m = {
@@ -600,7 +614,10 @@ export default {
           console.groupEnd();
         }
       } catch (error) {
-        this.$emit('error', error);
+        this.$emit('error', {
+          source: 'GoogleMap.deserializeVisitAsMarker(visits)',
+          error,
+        });
       }
     },
     //#endregion Methods for mount()

@@ -112,261 +112,20 @@
             </template>
           </v-calendar>
 
-          <!-- Event Menu -->
-          <v-dialog
-            v-model="selectedOpen"
+          <eventDialog
             :activator="selectedElement"
-            max-width="400"
-          >
-            <v-card
-              v-if="parsedEvent"
-              color="grey lighten-4"
-              max-width="400px"
-              flat
-            >
-              <v-toolbar :color="getToolbarColor()" dark>
-                <v-toolbar-title
-                  v-html="parsedEvent.input.name"
-                ></v-toolbar-title>
-              </v-toolbar>
-              <v-row id="pickersRow" justify="space-around">
-                <v-spacer></v-spacer>
-                <!-- StartTime picker -->
-                <v-col cols="4">
-                  <v-dialog
-                    ref="dialogStart"
-                    v-model="modalStart"
-                    :return-value.sync="starttime"
-                    persistent
-                    width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-text-field
-                        v-model="starttime"
-                        :disabled="!parsedEvent"
-                        label="Start"
-                        prepend-icon="mdi-clock-time-four-outline"
-                        readonly
-                        hide-details
-                        v-bind="attrs"
-                        v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-time-picker
-                      v-if="modalStart"
-                      v-model="starttime"
-                      full-width
-                      :allowed-minutes="allowedStep"
-                    >
-                      <v-spacer></v-spacer>
-                      <v-btn text color="primary" @click="modalStart = false">
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="$refs.dialogStart.save(starttime)"
-                      >
-                        OK
-                      </v-btn>
-                    </v-time-picker>
-                  </v-dialog>
-                </v-col>
-
-                <v-spacer></v-spacer>
-                <!-- EndTime Picker -->
-                <v-col cols="4">
-                  <v-dialog
-                    ref="dialogEnd"
-                    v-model="modalEnd"
-                    :return-value.sync="endtime"
-                    persistent
-                    width="290px"
-                  >
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-text-field
-                        v-model="endtime"
-                        :disabled="!parsedEvent"
-                        label="End"
-                        prepend-icon="mdi-clock-time-four-outline"
-                        readonly
-                        hide-details
-                        v-bind="attrs"
-                        v-on="on"
-                      ></v-text-field>
-                    </template>
-                    <v-time-picker
-                      v-if="modalEnd"
-                      v-model="endtime"
-                      full-width
-                      :allowed-minutes="allowedStep"
-                    >
-                      <v-spacer></v-spacer>
-
-                      <v-btn text color="primary" @click="modalEnd = false">
-                        Cancel
-                      </v-btn>
-                      <v-btn
-                        text
-                        color="primary"
-                        @click="$refs.dialogEnd.save(endtime)"
-                      >
-                        OK
-                      </v-btn>
-                    </v-time-picker>
-                  </v-dialog>
-                </v-col>
-
-                <v-spacer></v-spacer>
-              </v-row>
-
-              <v-row dense id="modifyEventRow" justify="space-around">
-                <v-col cols="9">
-                  <v-row align="center" justify="space-around">
-                    <v-col class="text-center">Modify Event</v-col>
-                  </v-row>
-                  <v-row id="moveVisitRow" dense>
-                    <v-col>Move</v-col>
-                    <v-col>
-                      <v-btn outlined icon @click="modifyEvent('move', 'up')">
-                        <v-icon>mdi-arrow-up</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col>
-                      <v-btn outlined icon @click="modifyEvent('move', 'dn')">
-                        <v-icon>mdi-arrow-down</v-icon>
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-                  <v-row id="expandVisitRow" dense>
-                    <v-col>Collapse</v-col>
-                    <v-col>
-                      <v-btn
-                        outlined
-                        icon
-                        @click="modifyEvent('collapse', 'up')"
-                      >
-                        <v-icon>mdi-arrow-collapse-up</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col>
-                      <v-btn
-                        outlined
-                        icon
-                        @click="modifyEvent('collapse', 'both')"
-                      >
-                        <v-icon>mdi-arrow-collapse-vertical</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col>
-                      <v-btn
-                        outlined
-                        icon
-                        @click="modifyEvent('collapse', 'dn')"
-                      >
-                        <v-icon>mdi-arrow-collapse-down</v-icon>
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-                  <v-row id="expandVisitRow" dense>
-                    <v-col>Expand</v-col>
-                    <v-col>
-                      <v-btn outlined icon @click="modifyEvent('expand', 'up')">
-                        <v-icon>mdi-arrow-expand-up</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col>
-                      <v-btn
-                        outlined
-                        icon
-                        @click="modifyEvent('expand', 'both')"
-                      >
-                        <v-icon>mdi-arrow-expand-vertical</v-icon>
-                      </v-btn>
-                    </v-col>
-                    <v-col>
-                      <v-btn outlined icon @click="modifyEvent('expand', 'dn')">
-                        <v-icon>mdi-arrow-expand-down</v-icon>
-                      </v-btn>
-                    </v-col>
-                  </v-row>
-                </v-col>
-              </v-row>
-
-              <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
-              <v-card-actions>
-                <!-- Delete Visit -->
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
-                        :disabled="!parsedEvent"
-                        @click="goRight()"
-                        ><v-icon>mdi-delete</v-icon></v-btn
-                      ><br />
-                      <small>Delete</small>
-                    </div>
-                  </template>
-                  <span>Delete Visit</span></v-tooltip
-                >
-
-                <!-- Abandon changes with revert() -->
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
-                        :disabled="!parsedEvent"
-                        @click="revert()"
-                        ><v-icon>mdi-cancel</v-icon></v-btn
-                      ><br />
-                      <small>Cancel</small>
-                    </div>
-                  </template>
-                  <span>Abandon changes</span></v-tooltip
-                >
-                <!-- Save Visit -->
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
-                        :disabled="!parsedEvent"
-                        outlined
-                        color="secondary"
-                        @click="saveVisit()"
-                        ><v-icon>mdi-content-save</v-icon></v-btn
-                      ><br />
-                      <small>Save</small>
-                    </div>
-                  </template>
-                  <span>Save Visit locally</span></v-tooltip
-                >
-                <!-- Log Visit -->
-                <v-spacer></v-spacer>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <div class="text-center">
-                      <v-btn
-                        v-bind="attrs"
-                        v-on="on"
-                        :disabled="!userID"
-                        @click="goLeft()"
-                        ><v-icon>mdi-graphql</v-icon></v-btn
-                      ><br />
-                      <small>{{ userID ? 'Log' : 'Not online' }}</small>
-                    </div>
-                  </template>
-                  <span>Log Visit on Server</span></v-tooltip
-                >
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-          <!-- End Event Menu -->
+            :starttime="starttime"
+            :endtime="endtime"
+            :selectedOpen="selectedOpen"
+            :parsedEvent="parsedEvent"
+            :visitorIsOnline="visitorIsOnline"
+            :userID="userID"
+            @modifyEvent="modifyEvent"
+            @goRight="goRight"
+            @goLeft="goLeft"
+            @revert="revert"
+            @saveVisit="saveVisit"
+          ></eventDialog>
         </v-sheet>
       </v-col>
     </v-row>
@@ -407,6 +166,7 @@ export default {
 
   components: {
     ConfirmModernDialog: () => import('./cards/dialogCardModern'),
+    eventDialog: () => import('./cards/eventDialogCard'),
   },
 
   computed: {
@@ -435,19 +195,6 @@ export default {
 
     getGraphNameString() {
       return `the ${this.getGraphName()} exposure graph`;
-    },
-    getGraphNameFromVisit() {
-      const status = this.parsedEvent.input.loggedNodeId
-        ? `is logged on the <strong>${this.parsedEvent.input.graphName}</strong> graph`
-        : `is <strong>not logged</strong> to any graph yet. ${
-            !this.visitorIsOnline
-              ? '<br/>You are <strong>not</strong> online right now.'
-              : '<br/>During or after your visit, log the visit to the graph'
-          }`;
-      return `<small>Place ID: <strong>${this.parsedEvent.input.place_id}</strong>
-      <br/>
-      Visit ID: <strong>${this.parsedEvent.input.id}</strong>
-      <br/> ${status}</small>`;
     },
 
     updateFeedbackMessage() {
@@ -757,7 +504,7 @@ export default {
       // TODO When will this method addEvent()?
       // new event specified by this.place
       else if (this.place) {
-        this.addEvent(mouse);
+        this.addEvent(mouse, this.place_id, this.place.stay);
       } else {
         this.parsedEvent = null;
       }
@@ -931,7 +678,11 @@ export default {
         //   break;
         default:
           this.status = `Cannot handle ${action} action`;
-          this.$emit('error', this.status);
+
+          this.$emit('error', {
+            source: 'Calendar.act(action)',
+            error: this.status,
+          });
       }
 
       this.reset();
@@ -956,7 +707,7 @@ export default {
       return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
     },
 
-    addEvent(time, stay = this.avgStay) {
+    addEvent(time, place_id = this.place_id, stay = this.avgStay) {
       const graphname = this.getGraphName();
       this.createStart = this.roundTime(time);
       const endTime = this.createStart + stay;
@@ -970,6 +721,7 @@ export default {
       this.createEvent = {
         id: randomId(),
         name: name,
+        place_id: place_id,
         start: this.createStart,
         end: endTime,
         date: new Date(this.createStart).toDateString(),
@@ -1002,52 +754,14 @@ export default {
           console.log(error(e));
           this.status = `Oops. We had trouble adding a visit on your calendar. Notified devs. I'm sorry.`;
 
-          this.$emit('error', e);
+          this.$emit('error', {
+            source:
+              'Calendar.addEvent(time, place_id = this.place_id, stay = this.avgStay)',
+            error: e,
+          });
         });
 
       this.place = null;
-    },
-
-    addOpeningsForToday() {
-      const people = localStorage.getItem('people').split(',');
-      const openAt = localStorage.getItem('openAt').split(':');
-      const closeAt = localStorage.getItem('closeAt').split(':');
-      const slotInterval = localStorage.getItem('slotInterval');
-      const defaultName = 'Opening';
-
-      let hrs = closeAt[0] - openAt[0];
-      let hr = openAt[0] / 1;
-      let parsedDate;
-      // caveat emptor: assuming 30 minute intervals, so two openings per hour
-      while (hrs--) {
-        parsedDate = DateTime.fromObject({
-          hour: hr,
-          minute: 0,
-        });
-        people.forEach((person) => {
-          this.addOpening(
-            parsedDate,
-            person || defaultName,
-            slotInterval * 60000
-          );
-        });
-
-        parsedDate = DateTime.fromObject({
-          hour: hr,
-          minute: slotInterval,
-        });
-        people.forEach((person) => {
-          this.addOpening(
-            parsedDate,
-            person || defaultName,
-            slotInterval * 60000
-          );
-        });
-        hr += 1;
-      }
-      this.scrollToTime();
-
-      this.status = 'Use the calendar to adjust openings for the day';
     },
 
     addOpening(time, name, slotInterval) {
@@ -1082,7 +796,10 @@ export default {
           console.log(error(e));
           this.status = `Oops. We had trouble adding a visit on your calendar. Notified devs. I'm sorry.`;
 
-          this.$emit('error', e);
+          this.$emit('error', {
+            source: 'Calendar.Visit.updatePromise(newVisit)',
+            error: e,
+          });
         });
     },
 
@@ -1108,7 +825,7 @@ export default {
         .catch((e) => {
           this.status =
             'Oops. We had trouble logging to server. Notified devs. Sorry.';
-          this.$emit('error', e);
+          this.$emit('error', { source: 'Calendar.deleteVisit())', error: e });
         });
     },
 
@@ -1127,7 +844,7 @@ export default {
       } catch (error) {
         this.status =
           'Oops. We had trouble logging to server. Devs notified. Sorry.';
-        this.$emit('error', error);
+        this.$emit('error', { source: 'Calendar.logVisit()', error });
       }
     },
 
@@ -1160,11 +877,6 @@ export default {
       return event ? 'primary' : 'secondary';
     },
 
-    getToolbarColor() {
-      return this.parsedEvent.color === 'primary'
-        ? 'primary lighten-2'
-        : 'secondary darken-2';
-    },
     setToday() {
       this.focus = '';
       this.cal.scrollToTime();
@@ -1199,7 +911,11 @@ export default {
     newEvent() {
       const time = this.place.startTime || Date.now();
       const stay = this.place.stay;
-      this.addEvent(time, stay);
+      const place_id = this.place.place_id;
+      this.addEvent(time, place_id, stay);
+      if (this.type === 'category') {
+        this.addOpeningsForToday();
+      }
       this.endDrag();
     },
 
@@ -1256,18 +972,8 @@ export default {
       // this represents the start and end days on the calendar
       // we see it during mounting (where we call checkChange()) as one day
       // but change the calendar type, and you will see different start.date and end.date values
-      console.groupCollapsed('handleChange(event)');
+      console.log('handleChange(event)');
       console.log(highlight(this.type, printJson(event)));
-      console.groupEnd();
-      if (this.type === 'category') {
-        const openings = this.cal
-          .getVisibleEvents()
-          .some((v) => v.category === 'Them');
-        if (!openings) {
-          this.addOpeningsForToday();
-        }
-        this.scrollToTime();
-      }
     },
 
     padTime(number) {
@@ -1322,6 +1028,59 @@ export default {
           break;
       }
     },
+
+    addOpeningsForToday() {
+      const people = localStorage.getItem('people').split(',');
+      const openAt = localStorage.getItem('openAt').split(':');
+      const closeAt = localStorage.getItem('closeAt').split(':');
+      const slotInterval = localStorage.getItem('slotInterval');
+      const defaultName = 'Opening';
+
+      let hrs = closeAt[0] - openAt[0];
+      let hr = openAt[0] / 1;
+      let parsedDate;
+      // caveat emptor: assuming 30 minute intervals, so two openings per hour
+      while (hrs--) {
+        parsedDate = DateTime.fromObject({
+          hour: hr,
+          minute: 0,
+        });
+        people.forEach((person) => {
+          this.addOpening(
+            parsedDate,
+            person || defaultName,
+            slotInterval * 60000
+          );
+        });
+
+        parsedDate = DateTime.fromObject({
+          hour: hr,
+          minute: slotInterval,
+        });
+        people.forEach((person) => {
+          this.addOpening(
+            parsedDate,
+            person || defaultName,
+            slotInterval * 60000
+          );
+        });
+        hr += 1;
+      }
+      this.scrollToTime();
+
+      this.status = 'Use the calendar to adjust openings for the day';
+    },
+
+    // checkCategory() {
+    //   if (this.type === 'category') {
+    //     const openings = this.cal
+    //       .getVisibleEvents()
+    //       .some((v) => v.category === 'Them');
+    //     if (!openings) {
+    //       this.addOpeningsForToday();
+    //     }
+    //   }
+    // },
   },
 
   watch: {
@@ -1334,7 +1093,7 @@ export default {
     // },
     type() {
       if (this.type === 'category') {
-        this.status = 'Appointment handling is under development.';
+        this.status = 'Starttime: ' + this.starttime;
       }
     },
 
@@ -1449,6 +1208,11 @@ export default {
 
     // selectedSpace set in App.onAddedPlace()
     // TODO do we change place on the Calendar? i hope not. if not, use selectedSpace instead of place
+    self.type =
+      localStorage.getItem('usesPublicCalendar') !== 'true'
+        ? 'day'
+        : 'category';
+
     self.place = self.selectedSpace;
     if (self.place) {
       self.newEvent();
@@ -1457,11 +1221,6 @@ export default {
     document.addEventListener('keydown', this.handleKeydown);
     console.log('Using ' + self.getGraphNameString);
     self.status = 'Using ' + self.getGraphNameString;
-
-    self.type =
-      localStorage.getItem('usesPublicCalendar') !== 'true'
-        ? 'day'
-        : 'category';
 
     console.log('mounted calendarCard');
   },

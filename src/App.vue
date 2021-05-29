@@ -41,13 +41,14 @@ TODO Incorporate this header data into nestedMenu
 
       <!-- End Options Menu-->
     </v-app-bar>
-    <error-boundary @error="onError($event)">
-      <v-main>
+    <v-main>
+      <error-boundary @error="onError($event)">
         <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
           <div>
             We failed to handle a possible error that now has occurred at:
             {{ errorState.source }}
             <p>Exception: {{ errorState.message }}</p>
+            <p>Stack: {{ errorState.stack }}</p>
           </div>
         </v-alert>
         <v-container class="fill-height" fluid>
@@ -95,7 +96,6 @@ TODO Incorporate this header data into nestedMenu
             no-gutters
           >
             <v-col v-if="showSpaces" class="text-center">
-              <!-- <error-boundary> -->
               <GoogleMap
                 v-model="location"
                 :auditor="auditor"
@@ -103,14 +103,15 @@ TODO Incorporate this header data into nestedMenu
                 @log="onLog"
                 @error="onError($event)"
               />
-              <!-- </error-boundary> -->
             </v-col>
+
             <v-col v-if="showWarning" class="text-center">
               <Warning
                 @exposureWarning="onExposureWarning($event)"
                 @returnToSpaces="show = SPACES"
               />
             </v-col>
+
             <v-col v-if="showCalendar" class="text-center fill-height">
               <Calendar
                 :avgStay="avgStay"
@@ -219,8 +220,8 @@ TODO Incorporate this header data into nestedMenu
           </v-snackbar>
           <!-- End Individual Exposure Alert Snackbar -->
         </v-container>
-      </v-main>
-    </error-boundary>
+      </error-boundary>
+    </v-main>
 
     <v-footer app color="primary" class="white--text">
       <v-bottom-navigation
@@ -672,6 +673,7 @@ export default {
       if (!query.loggedNodeId) {
         this.onError(
           'error',
+          'onDeleteVisit(e)',
           'Contract violation: Trying to delete an unlogged visit.'
         );
         return;
@@ -838,7 +840,11 @@ export default {
     },
 
     onError(e) {
-      this.errorState = { source: 'App.vue', message: e.message };
+      this.errorState = {
+        source: e.source,
+        message: e.error.message,
+        stack: e.error.stack,
+      };
       console.log(`Sending error to server`, e);
       this.emitFromClient('client_error', e);
     },
