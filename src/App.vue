@@ -982,7 +982,7 @@ export default {
   async mounted() {
     console.groupCollapsed('Mounting App:');
 
-    Visit.$fetch().then((all=> {
+    Visit.$fetch().then((all) => {
       if (all.visits && confirm('Refresh data?')) {
         this.refreshData();
       }
