@@ -917,6 +917,17 @@ export default {
       // });
       // this.fileMenuItems[3].menu = y;
     },
+    refreshData() {
+      localStorage.removeItem('username');
+      localStorage.removeItem('sessionID');
+      localStorage.removeItem('usesPublicCalendar');
+      localStorage.removeItem('people');
+      localStorage.removeItem('slotInterval');
+      localStorage.removeItem('openAt');
+      localStorage.removeItem('closeAt');
+      Visit.deleteAll();
+      window.location.reload();
+    },
   },
 
   watch: {
@@ -971,7 +982,11 @@ export default {
   async mounted() {
     console.groupCollapsed('Mounting App:');
 
-    Visit.$fetch();
+    Visit.$fetch().then((all=> {
+      if (all.visits && confirm('Refresh data?')) {
+        this.refreshData();
+      }
+    });
 
     const self = this;
     const bp = self.$vuetify.breakpoint;
