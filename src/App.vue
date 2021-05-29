@@ -981,10 +981,11 @@ export default {
 
   async mounted() {
     console.groupCollapsed('Mounting App:');
-
+    const goodData = localStorage.getItem('goodData');
     Visit.$fetch().then((all) => {
-      if (all.visits && confirm('Refresh data?')) {
+      if (all.visits && !goodData && confirm('Refresh data?')) {
         this.refreshData();
+        localStorage.setItem('goodData', true);
       }
     });
 

@@ -112,7 +112,8 @@
             </template>
           </v-calendar>
 
-          <eventDialog
+          <!-- <eventDialog
+            v-if="selectedOpen"
             :activator="selectedElement"
             :starttime="starttime"
             :endtime="endtime"
@@ -125,7 +126,7 @@
             @goLeft="goLeft"
             @revert="revert"
             @saveVisit="saveVisit"
-          ></eventDialog>
+          ></eventDialog> -->
         </v-sheet>
       </v-col>
     </v-row>
@@ -141,6 +142,11 @@
       id="ConfirmModernDialogId"
       ref="ConfirmModernDialog"
       :customOptions="customOptions"
+    />
+    <EventModernDialog
+      id="EventModernDialog"
+      ref="EventModernDialog"
+      :customEventOptions="customEventOptions"
     />
   </v-sheet>
 </template>
@@ -166,7 +172,7 @@ export default {
 
   components: {
     ConfirmModernDialog: () => import('./cards/dialogCardModern'),
-    eventDialog: () => import('./cards/eventDialogCard'),
+    EventModernDialog: () => import('./cards/eventDialogCardModern'),
   },
 
   computed: {
@@ -180,6 +186,10 @@ export default {
 
     ConfirmModernDialog() {
       return this.$refs.ConfirmModernDialog;
+    },
+
+    EventModernDialog() {
+      return this.$refs.EventModernDialog;
     },
 
     cal() {
@@ -233,6 +243,21 @@ export default {
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
     categories: ['You', 'Them'],
+    customEventOptions: {
+      buttons: [
+        { label: 'Delete', act: 'DELETE' },
+        { label: 'Cancel', act: 'CANCEL' },
+        {
+          label: 'Save',
+          color: 'secondary',
+          outlined: true,
+          act: 'SAVE',
+        },
+        { spacer: true },
+        { label: 'Log', act: 'LOG' },
+      ],
+    },
+
     customOptions: {
       buttons: [
         { label: "Don't Save" },
@@ -243,13 +268,15 @@ export default {
           outlined: true,
           agree: 1,
         },
+
+        { label: 'log', agree: 0 },
       ],
     },
     action: '', // used by handlekeydown
     calendarEvent: null,
     parsedEvent: null,
     ready: false,
-    selectedOpen: false,
+    selectedOpen: true,
     selectedElement: null,
 
     sheetHeight: 0,
@@ -421,6 +448,40 @@ export default {
       console.log('showInterval:', printJson(interval));
     },
 
+    showDialog() {
+      const question = 'Ready?';
+      const consequences = 'Go';
+      const icon = 'mdi-alert-outline';
+
+      this.ConfirmModernDialog.open(question, consequences, {
+        icon: icon,
+      }).then((act) => {
+        if (!act) {
+          this.revert();
+          return;
+        }
+        // logVisit will save before logging
+        this.act('LOG');
+        this.reset();
+      });
+    },
+    showEventDialog() {
+      const question = `Edit Visit ${this.parsedEvent.input.name}?`;
+      const consequences = `You are editing place ID: ${this.parsedEvent.input.place_id}`;
+      const icon = 'mdi-alert-outline';
+
+      this.EventModernDialog.open(question, consequences, {
+        icon: icon,
+        parsedEvent: this.parsedEvent,
+        starttime: this.starttime,
+        endtime: this.endtime,
+        visitorIsOnline: this.visitorIsOnline,
+        userID: this.userID,
+      }).then((results) => {
+        console.log(printJson(results));
+      });
+    },
+
     // @click:event="showEvent"
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
@@ -449,7 +510,21 @@ export default {
       // we will adjust the start/end times in realtime
       // if user cancels, we refresh the visits from the cache by calling revert()
       // otherwise we update the cache with the new values by calling saveVisit()
-      this.selectedOpen = true;
+
+      // this.selectedOpen = true;
+
+      // const question = `Are you sure you want to EDIT this visit?`;
+      // const consequences = 'You can change your mind anytime.';
+      // const icon = 'mdi-alert-outline';
+
+      // this.EventModernDialog.open(question, consequences, {
+      //   icon: icon,
+      // }).then((act) => {
+      //   if (act) {
+      //     alert(act);
+      //   }
+      // });
+      this.showEventDialog();
       this.action = 'SAVE'; // Save is the default action
       // this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
     },
