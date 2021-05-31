@@ -75,6 +75,7 @@
           <v-card-text>
             <v-select :items="addresses" dense label="Coordinates"></v-select>
           </v-card-text>
+
           <v-card-actions v-if="place.name" class="pb-1">
             <businessCard :name="place.name" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
@@ -95,6 +96,9 @@
               <span>Mark your calendar with a Visit</span></v-tooltip
             >
           </v-card-actions>
+          <v-card-text>
+            <v-text-field v-html="getStatus" readonly dense hide-details />
+          </v-card-text>
         </v-card>
       </GmapInfoWindow>
       <GmapMarker
@@ -156,6 +160,16 @@ export default {
   },
 
   computed: {
+    getBounds() {
+      return this.map.getBounds();
+    },
+    getStatus() {
+      const msg = this.place
+        ? `<small>Ready to proceed</small>`
+        : '<small>No place reference available</small>';
+      return msg;
+    },
+
     places() {
       const p = Place.query()
         .where('name', (v) => v) // ignore places without names (if any)
@@ -170,20 +184,10 @@ export default {
       return m;
     },
 
-    translatedPosition() {
-      const lat = this.place.lat || this.place.geometry.location.lat() || 0;
-      const lng = this.place.lng || this.place.geometry.location.lng() || 0;
-      const plus_code =
-        this.place.plus_code?.global_code ||
-        this.place.plus_code ||
-        'not available';
-      return { lat, lng, plus_code };
-    },
-
     // these are the addresses for the currently selected space (used by the InfoWindow select)
     // access the currently selected Place using the place_id
     addresses() {
-      const { lat, lng, plus_code } = this.translatedPosition;
+      const { lat, lng, plus_code } = Place.getPosition(this.place.place_id);
       let x = [
         `Position:  ${lat.toFixed(6)} by ${lng.toFixed(6)}`,
         `Place ID:  ${this.place.place_id}`,
@@ -354,7 +358,7 @@ export default {
       console.log('Start Time:', startTime.toString());
       this.$emit('addedPlace', {
         ...this.place,
-        plus_code: this.place.plus_code.global_code,
+        plus_code: Place.getPosition(this.place.place_id).plus_code,
         startTime: startTime,
         endtime: endTime,
         stay: stay,
@@ -395,7 +399,7 @@ export default {
         this.drawer = false;
         this.place = place;
         console.log('Updated Place:', printJson(this.place));
-        const { lat, lng } = this.translatedPosition;
+        const { lat, lng } = Place.getPosition(this.place.place_id);
 
         const protoMarker = {
           position: { lat, lng },
@@ -510,6 +514,13 @@ export default {
       }
     },
 
+    throwError(err, source) {
+      console.log(error(err));
+      this.$emit('error', {
+        source: source,
+        error: err,
+      });
+    },
     //#region Methods for mount()
     setUpGeolocation(map) {
       const infoWindow = new window.google.maps.InfoWindow();
@@ -600,7 +611,15 @@ export default {
               return;
             }
             const place = this.place_map.get(visit.place_id);
-            console.log('using place:', printJson(place));
+            // if visit and place are not related, notify and skip further processing
+            if (!place) {
+              alert(
+                `Visit ${visit.id} does not have a Place corresponding to ${visit.place_id}`
+              );
+              return;
+            }
+
+            console.log('Using place:', printJson(place));
             let m = {
               title: visit.name,
               label: { text: 'V' + index, color: 'white' },
@@ -635,6 +654,7 @@ export default {
 
   mounted() {
     const self = this;
+
     console.groupCollapsed('Mounting GoogleMap');
     const bp = self.$vuetify.breakpoint;
     console.log(bp.name, bp.height);
@@ -644,8 +664,8 @@ export default {
     console.log('mapSize:', self.mapSize);
     console.groupEnd();
 
-    Promise.all([self.mapPromise, self.visitsPromise, self.placePromise]).then(
-      (results) => {
+    Promise.all([self.mapPromise, self.visitsPromise, self.placePromise])
+      .then((results) => {
         const map = results[0];
         const visits = results[1].visits;
         self.showMap(map);
@@ -661,8 +681,8 @@ export default {
         // not sure we need this...
         this.recent = true;
         console.log(success('GoogleMap loaded successfully'));
-      }
-    );
+      })
+      .catch((err) => this.throwError(err, 'GoogleMap.mounted()'));
   },
 };
 </script>

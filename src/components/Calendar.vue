@@ -478,7 +478,31 @@ export default {
         visitorIsOnline: this.visitorIsOnline,
         userID: this.userID,
       }).then((results) => {
-        console.log(printJson(results));
+        const { action, data } = results;
+        switch (action) {
+          case 'DELETE':
+            this.deleteVisit();
+            break;
+          case 'LOG':
+            this.logVisit();
+            break;
+          case 'REVERT':
+            this.revert();
+            break;
+          case 'SAVE':
+            this.saveVisitWithData(data);
+            break;
+
+          default:
+            this.status = `Cannot handle ${action} action`;
+
+            this.$emit('error', {
+              source: 'Calendar.act(action)',
+              error: this.status,
+            });
+        }
+
+        this.reset();
       });
     },
 
@@ -806,16 +830,11 @@ export default {
       };
 
       let newVisit = { ...this.createEvent };
-      const lat =
-        typeof this.place.lat === 'function'
-          ? this.place.lat()
-          : this.place.lat;
-      const lng =
-        typeof this.place.lng === 'function'
-          ? this.place.lng()
-          : this.place.lng;
-      newVisit.lat = lat;
-      newVisit.lng = lng;
+      // TODO is there any circumstance where Visit needs lat/lng
+      // that is, when place_id is not sufficient?
+      // const {lat, lng}= Place.getPosition(this.place.place_id)
+      //       newVisit.lat = lat;
+      //       newVisit.lng = lng;
       newVisit.place_id = this.place.place_id;
 
       Visit.updatePromise(newVisit)
@@ -924,6 +943,24 @@ export default {
     saveVisit() {
       this.selectedOpen = false;
       const visit = this.getCurrentVisit();
+      Visit.updatePromise(visit)
+        .then(() => {
+          console.log(success(`New/Saved Visit:`, printJson(visit)));
+          // const destination = this.visitorIsOnline
+          //   ? `on the ${this.getGraphName()} exposure graph`
+          //   : `in localStorage`;
+          // this.status = `SAVED: ${visit.name} ${visit.interval} id: ${visit.id} ${destination}`;
+        })
+        .catch((err) => {
+          this.$emit('error', { source: 'Calendar.saveVisit()', error: err });
+        });
+    },
+    // visit has new start/end values set by Event edit menu
+    saveVisitWithData(data) {
+      this.selectedOpen = false;
+      const visit = this.getCurrentVisit();
+      visit.start = data.starttime;
+      visit.end = data.endtime;
       Visit.updatePromise(visit)
         .then(() => {
           console.log(success(`New/Saved Visit:`, printJson(visit)));
@@ -1159,9 +1196,9 @@ export default {
 
   watch: {
     // example of a nested watcher:
-    // 'createEvent.start': function (newValue, oldValue) {
-    //   console.log('createEvent.start n/o:', newValue, oldValue);
-    // },
+    'options.starttime': function(newValue, oldValue) {
+      console.log('starttime n/o:', newValue, oldValue);
+    },
     // 'dragEvent.start': function (newValue, oldValue) {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },

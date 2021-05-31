@@ -29,7 +29,7 @@
           <v-dialog
             ref="dialogStart"
             v-model="modalStart"
-            :return-value.sync="options.starttime"
+            :return-value.sync="starttime"
             persistent
             width="290px"
           >
@@ -58,7 +58,7 @@
               <v-btn
                 text
                 color="primary"
-                @click="$refs.dialogStart.save(options.starttime)"
+                @click="$refs.dialogStart.save(starttime)"
               >
                 OK
               </v-btn>
@@ -403,6 +403,8 @@ export default {
       startTime: '',
       endTime: '',
       endtime: '',
+      starttime: null,
+      endtime: null,
 
       ready: false,
       dialog: false,
@@ -423,11 +425,23 @@ export default {
     answer(act) {
       console.log(act);
       this.dialog = false;
-      const results =
-        act === 'SAVE'
-          ? { startTime: this.startTime, endTime: this.endTime }
-          : act;
-      this.resolve(results);
+      if (act === 'SAVE') {
+        this.starttime = new Date();
+        this.starttime.setHours(this.startTime.slice(0, 2));
+        this.starttime.setMinutes(this.startTime.slice(3, 5));
+
+        this.endtime = new Date();
+        this.endtime.setHours(this.endTime.slice(0, 2));
+        this.endtime.setMinutes(this.endTime.slice(3, 5));
+      }
+      console.log('New start/end:', this.starttime, this.endtime);
+      this.resolve({
+        action: act,
+        data: {
+          starttime: this.starttime.getTime(),
+          endtime: this.endtime.getTime(),
+        },
+      });
     },
 
     // options is an object with name-value pairs (as opposed to props)

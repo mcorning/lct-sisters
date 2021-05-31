@@ -32,6 +32,19 @@ export default class Place extends Model {
     }, new Map());
   }
 
+  static getPosition(id) {
+    if (!id) {
+      throw 'Missing a place_id';
+    }
+    const p = Place.find(id);
+    const plus_code =
+      p.plus_code?.global_code || p.plus_code || 'not available';
+    const lat = p.lat || p.geometry.location.lat() || p.latLng.lat() || 0;
+    const lng = p.lng || p.geometry.location.lng() || p.latLng.lat() || 0;
+
+    return { lat, lng, plus_code };
+  }
+
   static updateFieldPromise(id, val) {
     return new Promise((resolve, reject) => {
       this.$update({
