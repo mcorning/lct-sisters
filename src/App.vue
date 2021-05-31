@@ -44,12 +44,20 @@ TODO Incorporate this header data into nestedMenu
     <v-main>
       <error-boundary @error="onError($event)">
         <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
-          <div>
-            We failed to handle a possible error that now has occurred at:
-            {{ errorState.source }}
-            <p>Exception: {{ errorState.message }}</p>
-            <p>Stack: {{ errorState.stack }}</p>
-          </div>
+          <v-card color="error lighten-2">
+            <h3 class="headling">
+              Oops. We messed up, and we are sorry.
+            </h3>
+            <v-card-subtitle>
+              Devs now know what to fix. You may have to restart
+              LCT</v-card-subtitle
+            >
+            <v-card-text v-html="errorState.source">
+              Exception: {{ errorState.message }}
+            </v-card-text>
+            <p>Stack (for the devs):</p>
+            <p>{{ errorState.stack }}</p>
+          </v-card>
         </v-alert>
         <v-container class="fill-height" fluid>
           <!-- QR Dialog -->

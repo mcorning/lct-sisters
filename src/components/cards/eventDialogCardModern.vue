@@ -113,10 +113,9 @@
       </v-row>
 
       <v-card-actions class="pt-3">
-        <v-spacer></v-spacer>
         <template v-for="(btn, index) in options.buttons">
           <v-btn
-            v-if="btn"
+            v-if="btn.label"
             :key="index"
             tile
             :color="btn.color"
@@ -126,6 +125,7 @@
           >
             {{ btn.label }}
           </v-btn>
+          <v-spacer v-else :key="index"></v-spacer>
         </template>
       </v-card-actions>
     </v-card>

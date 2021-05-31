@@ -486,7 +486,7 @@ export default {
           case 'LOG':
             this.logVisit();
             break;
-          case 'REVERT':
+          case 'CANCEL':
             this.revert();
             break;
           case 'SAVE':
@@ -497,7 +497,7 @@ export default {
             this.status = `Cannot handle ${action} action`;
 
             this.$emit('error', {
-              source: 'Calendar.act(action)',
+              source: 'Calendar.showEventDialog()',
               error: this.status,
             });
         }
