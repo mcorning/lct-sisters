@@ -35,7 +35,7 @@
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                v-model="startTime"
+                v-model="options.starttime"
                 :disabled="!parsedEvent"
                 label="Start"
                 prepend-icon="mdi-clock-time-four-outline"
@@ -47,7 +47,7 @@
             </template>
             <v-time-picker
               v-if="modalStart"
-              v-model="startTime"
+              v-model="options.starttime"
               full-width
               :allowed-minutes="allowedStep"
             >
@@ -58,7 +58,7 @@
               <v-btn
                 text
                 color="primary"
-                @click="$refs.dialogStart.save(starttime)"
+                @click="$refs.dialogStart.save(options.starttime)"
               >
                 OK
               </v-btn>
@@ -77,7 +77,7 @@
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                v-model="endTime"
+                v-model="options.endtime"
                 :disabled="!parsedEvent"
                 label="End"
                 prepend-icon="mdi-clock-time-four-outline"
@@ -89,7 +89,7 @@
             </template>
             <v-time-picker
               v-if="modalEnd"
-              v-model="endTime"
+              v-model="options.endtime"
               full-width
               :allowed-minutes="allowedStep"
             >
@@ -400,11 +400,6 @@ export default {
     return {
       modalStart: false,
       modalEnd: false,
-      startTime: '',
-      endTime: '',
-      endtime: '',
-      starttime: null,
-      endtime: null,
 
       ready: false,
       dialog: false,
@@ -425,22 +420,23 @@ export default {
     answer(act) {
       console.log(act);
       this.dialog = false;
+      let data = {};
       if (act === 'SAVE') {
-        this.starttime = new Date();
-        this.starttime.setHours(this.startTime.slice(0, 2));
-        this.starttime.setMinutes(this.startTime.slice(3, 5));
+        const starttime = new Date();
+        starttime.setHours(this.options.starttime.slice(0, 2));
+        starttime.setMinutes(this.options.starttime.slice(3, 5));
 
-        this.endtime = new Date();
-        this.endtime.setHours(this.endTime.slice(0, 2));
-        this.endtime.setMinutes(this.endTime.slice(3, 5));
+        const endtime = new Date();
+        endtime.setHours(this.options.endtime.slice(0, 2));
+        endtime.setMinutes(this.options.endtime.slice(3, 5));
+
+        data.starttime = starttime.getTime();
+        data.endtime = endtime.getTime();
       }
-      console.log('New start/end:', this.starttime, this.endtime);
+      console.log('New start/end:', data.starttime, data.endtime);
       this.resolve({
         action: act,
-        data: {
-          starttime: this.starttime.getTime(),
-          endtime: this.endtime.getTime(),
-        },
+        data,
       });
     },
 
@@ -452,6 +448,7 @@ export default {
       this.title = title;
       this.message = message;
       this.options = { ...this.options, ...options };
+      console.log('All Options', JSON.stringify(this.options, null, 3));
 
       return new Promise((resolve, reject) => {
         this.resolve = resolve;
@@ -493,7 +490,6 @@ export default {
 
   mounted() {
     this.options = { ...this.options, ...this.customEventOptions };
-    console.log('All Options', JSON.stringify(this.options, null, 3));
     this.ready = true;
   },
 };
