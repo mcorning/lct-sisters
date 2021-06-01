@@ -147,6 +147,8 @@
       id="EventModernDialog"
       ref="EventModernDialog"
       :customEventOptions="customEventOptions"
+      @modifyEvent="onModifyEvent"
+      @setTime="onSetTime"
     />
   </v-sheet>
 </template>
@@ -237,8 +239,8 @@ export default {
   },
 
   data: () => ({
-    memento: null,
-    mementoID: '',
+    // memento: null,
+    // mementoID: '',
     shift: 0,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
@@ -326,7 +328,15 @@ export default {
   }),
 
   methods: {
-    modifyEvent(type, direction) {
+    onSetTime(time, isStart) {
+      if (isStart) {
+        this.starttime = time;
+      } else {
+        this.endtime = time;
+      }
+    },
+
+    onModifyEvent(type, direction) {
       const event = this.parsedEvent;
       const visit = this.getCurrentVisit();
       console.log(warn('Editing event ID:', event.input.id));
@@ -395,7 +405,7 @@ export default {
       const dt2 = new Date(visit.end);
       const starttime = dt1.getHours() + ':' + dt1.getMinutes();
       const endtime = dt2.getHours() + ':' + dt2.getMinutes();
-      console.log('modifyEvent', starttime, endtime);
+      console.log('onModifyEvent', starttime, endtime);
 
       this.starttime = starttime;
 
@@ -469,41 +479,43 @@ export default {
       const question = `Edit Visit ${this.parsedEvent.input.name}?`;
       const consequences = `You are editing place ID: ${this.parsedEvent.input.place_id}`;
       const icon = 'mdi-alert-outline';
-
-      this.EventModernDialog.open(question, consequences, {
+      const options = {
         icon: icon,
         parsedEvent: this.parsedEvent,
         starttime: this.starttime,
         endtime: this.endtime,
         visitorIsOnline: this.visitorIsOnline,
         userID: this.userID,
-      }).then((results) => {
-        const { action, data } = results;
-        switch (action) {
-          case 'DELETE':
-            this.deleteVisit();
-            break;
-          case 'LOG':
-            this.logVisit();
-            break;
-          case 'CANCEL':
-            this.revert();
-            break;
-          case 'SAVE':
-            this.saveVisitWithData(data);
-            break;
+      };
+      this.EventModernDialog.open(question, consequences, options).then(
+        (results) => {
+          const { action, data } = results;
+          switch (action) {
+            case 'DELETE':
+              this.deleteVisit();
+              break;
+            case 'LOG':
+              this.logVisit();
+              break;
+            case 'CANCEL':
+              this.revert();
+              break;
+            case 'SAVE':
+              this.saveVisit();
+              break;
 
-          default:
-            this.status = `Cannot handle ${action} action`;
+            default:
+              this.status = `Cannot handle ${action} action`;
 
-            this.$emit('error', {
-              source: 'Calendar.showEventDialog()',
-              error: this.status,
-            });
+              this.$emit('error', {
+                source: 'Calendar.showEventDialog()',
+                error: this.status,
+              });
+          }
+
+          this.reset();
         }
-
-        this.reset();
-      });
+      );
     },
 
     // @click:event="showEvent"
@@ -528,26 +540,13 @@ export default {
       this.starttime = this.parsedEvent.start.time;
       this.endtime = this.parsedEvent.end.time;
 
-      //selectedElement is the activator for the Event Menu
+      //selectedElement is the activator was for the Event Menu.
+      // Dialog doesn't use activator
       this.selectedElement = nativeEvent.target;
-      // open the edit menu
+      // open the event edit dialog
       // we will adjust the start/end times in realtime
       // if user cancels, we refresh the visits from the cache by calling revert()
       // otherwise we update the cache with the new values by calling saveVisit()
-
-      // this.selectedOpen = true;
-
-      // const question = `Are you sure you want to EDIT this visit?`;
-      // const consequences = 'You can change your mind anytime.';
-      // const icon = 'mdi-alert-outline';
-
-      // this.EventModernDialog.open(question, consequences, {
-      //   icon: icon,
-      // }).then((act) => {
-      //   if (act) {
-      //     alert(act);
-      //   }
-      // });
       this.showEventDialog();
       this.action = 'SAVE'; // Save is the default action
       // this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
@@ -585,6 +584,22 @@ export default {
     // @touchstart:time="startTime"
     // recorded once with the first mouse click or touch
     // can have any arbitrary value (depending only on mouse/finger position)
+    // tms looks like this:
+    //  {
+    //     "date": "2021-06-01",
+    //     "time": "08:00",
+    //     "year": 2021,
+    //     "month": 6,
+    //     "day": 1,
+    //     "weekday": 2,
+    //     "hour": 8,
+    //     "minute": 0,
+    //     "hasDay": true,
+    //     "hasTime": true,
+    //     "past": false,
+    //     "present": true,
+    //     "future": false
+    //  },
     startTime(tms) {
       const mouse = this.toTime(tms);
 
@@ -955,7 +970,7 @@ export default {
           this.$emit('error', { source: 'Calendar.saveVisit()', error: err });
         });
     },
-    // visit has new start/end values set by Event edit menu
+    // visit has new start/end values set by Event edit dialog
     saveVisitWithData(data) {
       this.selectedOpen = false;
       const visit = this.getCurrentVisit();

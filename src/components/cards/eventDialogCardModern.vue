@@ -29,13 +29,13 @@
           <v-dialog
             ref="dialogStart"
             v-model="modalStart"
-            :return-value.sync="options.starttime"
+            :return-value.sync="starttime"
             persistent
             width="290px"
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                v-model="options.starttime"
+                v-model="starttime"
                 :disabled="!parsedEvent"
                 label="Start"
                 prepend-icon="mdi-clock-time-four-outline"
@@ -47,7 +47,7 @@
             </template>
             <v-time-picker
               v-if="modalStart"
-              v-model="options.starttime"
+              v-model="starttime"
               full-width
               :allowed-minutes="allowedStep"
             >
@@ -58,7 +58,7 @@
               <v-btn
                 text
                 color="primary"
-                @click="$refs.dialogStart.save(options.starttime)"
+                @click="$refs.dialogStart.save(starttime)"
               >
                 OK
               </v-btn>
@@ -71,13 +71,13 @@
           <v-dialog
             ref="dialogEnd"
             v-model="modalEnd"
-            :return-value.sync="options.endtime"
+            :return-value.sync="endtime"
             persistent
             width="290px"
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
-                v-model="options.endtime"
+                v-model="endtime"
                 :disabled="!parsedEvent"
                 label="End"
                 prepend-icon="mdi-clock-time-four-outline"
@@ -89,7 +89,7 @@
             </template>
             <v-time-picker
               v-if="modalEnd"
-              v-model="options.endtime"
+              v-model="endtime"
               full-width
               :allowed-minutes="allowedStep"
             >
@@ -101,7 +101,7 @@
               <v-btn
                 text
                 color="primary"
-                @click="$refs.dialogEnd.save(options.endtime)"
+                @click="$refs.dialogEnd.save(endtime)"
               >
                 OK
               </v-btn>
@@ -407,6 +407,8 @@ export default {
       reject: null,
       message: null,
       title: null,
+      starttime: null,
+      endtime: null,
 
       options: {
         color: 'grey',
@@ -447,6 +449,8 @@ export default {
       this.dialog = true;
       this.title = title;
       this.message = message;
+      this.starttime = options.starttime;
+      this.endtime = options.endtime;
       this.options = { ...this.options, ...options };
       console.log('All Options', JSON.stringify(this.options, null, 3));
 
@@ -486,6 +490,19 @@ export default {
     //   <br/> ${status}</small>`;
     //   }
     // },
+  },
+  watch: {
+    starttime(newVal, oldVal) {
+      if (oldVal) {
+        this.$emit('setTime', newVal, true);
+      }
+    },
+
+    endtime(newVal, oldVal) {
+      if (oldVal) {
+        this.$emit('setTime', newVal, false);
+      }
+    },
   },
 
   mounted() {

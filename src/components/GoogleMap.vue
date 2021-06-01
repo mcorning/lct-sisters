@@ -363,35 +363,48 @@ export default {
       );
     },
 
+    // geolocation uses lat and lng values
+    // map click uses latLng class with lat() and lng() functions
     addGathering(space) {
       try {
+        const latLng = space.latLng || { lat: space.lat, lng: space.lng };
         // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
         // geocode could take the space.latLng class instance, but for broad consistency,
         // we use the latLng literal because we can't conveniently serialize functions
-        this.geocoder.geocode({ location: space.latLng }, (results, status) => {
-          if (status === 'OK') {
-            // results array provides different levels of address details;
-            // we use the first element in the array.
-            // note: name will be empty because the spot is...well, nameless.
-            // Vistor provides the name using the InfoWindow.
-            // geocode results do include the place_id, even for a spot not otherwise noteworthy
-            space = results[0];
-            console.log('Non-POI (spot) results:', printJson(space));
+        this.geocoder.geocode(
+          {
+            location: latLng,
+          },
+          (results, status) => {
+            if (status === 'OK') {
+              // results array provides different levels of address details;
+              // we use the first element in the array.
+              // note: name will be empty because the spot is...well, nameless.
+              // Vistor provides the name using the InfoWindow.
+              // geocode results do include the place_id, even for a spot not otherwise noteworthy
+              space = results[0];
+              console.log('Non-POI (spot) results:', printJson(space));
 
-            // Place.updatePromise() returns all affected places
-            // (of which there is always only one)
-            Place.updatePromise(space)
-              .then((places) => this.openInfoWindowWithSelectedPlace(places[0]))
-              .catch((err) => {
-                this.throwError(
-                  'GoogleMap.addGathering(space).Place.updatePromise(space)',
-                  err
-                );
-              });
-          } else {
-            this.throwError('GoogleMap.addGathering(space).geocode()', status);
+              // Place.updatePromise() returns all affected places
+              // (of which there is always only one)
+              Place.updatePromise(space)
+                .then((places) =>
+                  this.openInfoWindowWithSelectedPlace(places[0])
+                )
+                .catch((err) => {
+                  this.throwError(
+                    'GoogleMap.addGathering(space).Place.updatePromise(space)',
+                    err
+                  );
+                });
+            } else {
+              this.throwError(
+                'GoogleMap.addGathering(space).geocode()',
+                status
+              );
+            }
           }
-        });
+        );
       } catch (err) {
         this.throwError('GoogleMap.addGathering(space)', err);
       }
