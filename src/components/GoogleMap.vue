@@ -113,7 +113,7 @@
 
     <GmapAutocomplete
       class="pl-3"
-      @place_changed="openInfoWindowWithSelectedPlace"
+      @place_changed="setPlace"
       auto-select-first
       :options="options"
       style="
@@ -187,14 +187,18 @@ export default {
     // these are the addresses for the currently selected space (used by the InfoWindow select)
     // access the currently selected Place using the place_id
     addresses() {
-      const { lat, lng, plus_code } = Place.getPosition(this.place.place_id);
-      let x = [
-        `Position:  ${lat.toFixed(6)} by ${lng.toFixed(6)}`,
-        `Place ID:  ${this.place.place_id}`,
-        `Plus_Code: ${plus_code}`,
-      ];
-      console.log('addresses:', x);
-      return x;
+      try {
+        const { lat, lng, plus_code } = Place.getPosition(this.place.place_id);
+        let x = [
+          `Position:  ${lat.toFixed(6)} by ${lng.toFixed(6)}`,
+          `Place ID:  ${this.place.place_id}`,
+          `Plus_Code: ${plus_code}`,
+        ];
+        console.log('addresses:', x);
+        return x;
+      } catch (error) {
+        return error;
+      }
     },
 
     ConfirmModernDialog() {
@@ -303,11 +307,180 @@ export default {
   },
 
   methods: {
+    //#region Place mutators
+    /*
+    There are seven ways to set a Place before marking a calendar with the Place.place_id:
+      * Click a POI
+      * Click on a blank space on the map (creates a Gathering)
+      * Click on a marked place (a place visited previously)
+      * Recent Visits list
+      * Autocomplete input field
+      * Geolocate button
+      * From businessCard
+    */
+
+    // click the map (different than using Autocomplete (see setPlace()))
+    // space is this.$event and includes the placeId (not place_id) string
+    // (place_id is returned in the getDetails() result) and the latLng object
+    addPlace(space) {
+      /* From googlemaps docs:
+          A place ID is a unique reference to a place on a Google Map.
+          Place IDs are available for most locations, including
+            businesses,
+            landmarks,
+            parks, and
+            intersections.
+      */
+      if (space.placeId) {
+        this.addPlaceWithID(space);
+      } else {
+        this.addGathering(space);
+      }
+    },
+
+    addPlaceWithID(space) {
+      console.log(highlight('Selected space:'), printJson(space));
+      this.placesService.getDetails(
+        {
+          placeId: space.placeId,
+          fields: this.options.fields,
+        },
+        (place, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            // getDetails() returns the place
+            Place.updatePromise(place)
+              .then((result) => this.openInfoWindowWithSelectedPlace(result[0]))
+              .catch((err) => {
+                this.throwError(
+                  'GoogleMap.addPlaceWithID(space).Place.updatePromise(place)',
+                  err
+                );
+              });
+          } else {
+            this.throwError('GoogleMap.addPlaceWithID(space)', status);
+          }
+        }
+      );
+    },
+
+    addGathering(space) {
+      try {
+        // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
+        // geocode could take the space.latLng class instance, but for broad consistency,
+        // we use the latLng literal because we can't conveniently serialize functions
+        this.geocoder.geocode({ location: space.latLng }, (results, status) => {
+          if (status === 'OK') {
+            // results array provides different levels of address details;
+            // we use the first element in the array.
+            // note: name will be empty because the spot is...well, nameless.
+            // Vistor provides the name using the InfoWindow.
+            // geocode results do include the place_id, even for a spot not otherwise noteworthy
+            space = results[0];
+            console.log('Non-POI (spot) results:', printJson(space));
+
+            // Place.updatePromise() returns all affected places
+            // (of which there is always only one)
+            Place.updatePromise(space)
+              .then((places) => this.openInfoWindowWithSelectedPlace(places[0]))
+              .catch((err) => {
+                this.throwError(
+                  'GoogleMap.addGathering(space).Place.updatePromise(space)',
+                  err
+                );
+              });
+          } else {
+            this.throwError('GoogleMap.addGathering(space).geocode()', status);
+          }
+        });
+      } catch (err) {
+        this.throwError('GoogleMap.addGathering(space)', err);
+      }
+    },
+
+    // click on a marker
+    getMarker(marker) {
+      if (marker != this.marker) {
+        this.infoWinOpen = false;
+      }
+      this.marker = marker;
+      this.place = Place.find(marker.place_id);
+      this.infoWindowPos = marker.position;
+      this.infoWinOpen = true;
+    },
+
+    // called when adding a Gathering
+    updateName(name) {
+      Place.updateFieldPromise(this.place.place_id, { name: name })
+        .then((p) => {
+          console.log(highlight('Updated place'), printJson(p));
+          this.place = p;
+        })
+        .catch((err) => {
+          this.throwError('GoogleMap.updateName(name)', err);
+        });
+    },
+
+    openInfoWindowWithSelectedPlace(place) {
+      try {
+        this.drawer = false;
+        this.place = place;
+        console.log('Selected Place:', printJson(this.place));
+        const { lat, lng } = Place.getPosition(this.place.place_id);
+
+        this.center = { lat, lng };
+
+        this.placeMap.set(this.place.place_id, this.place);
+        this.infoWindowPos = this.center;
+        this.infoWinOpen = true;
+      } catch (err) {
+        this.throwError(
+          'GoogleMap.openInfoWindowWithSelectedPlace(place)',
+          err
+        );
+      }
+    },
+
+    // handled when component calls $autocomplete.getPlace()
+    setPlace(place) {
+      if (!place.geometry || !place.geometry.location) {
+        // User entered the name of a Place that was not suggested and
+        // pressed the Enter key, or the Place Details request failed.
+        this.needInput = true;
+        return;
+      }
+      Place.updatePromise(place)
+        .then((places) => this.openInfoWindowWithSelectedPlace(places[0]))
+        .catch((err) => {
+          this.throwError('GoogleMap.setPlace(place)', err);
+        });
+      // If the place has a geometry, then present it on a map.
+      // if (place.geometry.viewport) {
+      //   this.map.fitBounds(place.geometry.viewport);
+      // } else {
+      //   this.map.setCenter(place.geometry.location);
+      // }
+    },
+
+    //#endregion Place mutators
+
+    // called by
+    //  * onGo() with the shift startTime
+    //  * mark your calendar button
+    addVisit(nativeEvent, startTime = Date.now(), endTime, stay) {
+      console.log('Start Time:', startTime.toString());
+      this.$emit('addedPlace', {
+        ...this.place,
+        plus_code: Place.getPosition(this.place.place_id).plus_code,
+        startTime: startTime,
+        endtime: endTime,
+        stay: stay,
+      });
+    },
+
     // businessCard go event handler
     onGo(data) {
       console.log(data);
       this.dialog = false;
-      this.$emit('connectMe');
       const openAt = (data.time1 || localStorage.getItem('openAt')).split(':');
       const closeAt = (data.time2 || localStorage.getItem('closeAt')).split(
         ':'
@@ -327,7 +500,8 @@ export default {
 
       console.log(`onGo() endTime:  ${endTime.toString()}`);
       console.log(`onGo() startTime/stay: ${startTime}`, printJson(stay));
-      // we hare calling a click handler here, so set first arg to null since we don't have a nativeEvent to pass
+      // we are calling a click handler here,
+      // so set first arg to null since we don't have a nativeEvent to pass
       this.addVisit(null, startTime, endTime, stay.milliseconds);
     },
 
@@ -342,185 +516,6 @@ export default {
       return avatar;
     },
 
-    // click on a marker
-    getMarker(marker) {
-      if (marker != this.marker) {
-        this.infoWinOpen = false;
-      }
-      this.marker = marker;
-      this.place = Place.find(marker.place_id);
-      this.infoWindowPos = marker.position;
-      this.infoWinOpen = true;
-    },
-
-    // called by onGo() with the shift start time
-    addVisit(nativeEvent, startTime = Date.now(), endTime, stay) {
-      console.log('Start Time:', startTime.toString());
-      this.$emit('addedPlace', {
-        ...this.place,
-        plus_code: Place.getPosition(this.place.place_id).plus_code,
-        startTime: startTime,
-        endtime: endTime,
-        stay: stay,
-      });
-    },
-
-    updateName(name) {
-      Place.updateFieldPromise(this.place.place_id, { name: name })
-        .then((p) => {
-          console.log(highlight('Updated place'), printJson(p));
-          this.place = p;
-        })
-        .catch((error) => {
-          this.$emit('error', { source: 'GoogleMap.updateName(name)', error });
-        });
-    },
-
-    // handled when component calls $autocomplete.getPlace()
-    setPlace(place) {
-      if (!place.geometry || !place.geometry.location) {
-        // User entered the name of a Place that was not suggested and
-        // pressed the Enter key, or the Place Details request failed.
-
-        this.needInput = true;
-        return;
-      }
-
-      // If the place has a geometry, then present it on a map.
-      if (place.geometry.viewport) {
-        this.map.fitBounds(place.geometry.viewport);
-      } else {
-        this.map.setCenter(place.geometry.location);
-      }
-    },
-
-    openInfoWindowWithSelectedPlace(place) {
-      try {
-        this.drawer = false;
-        this.place = place;
-        console.log('Updated Place:', printJson(this.place));
-        const { lat, lng } = Place.getPosition(this.place.place_id);
-
-        const protoMarker = {
-          position: { lat, lng },
-        };
-        console.log(printJson(protoMarker.position));
-        this.placeMap.set(this.place.place_id, this.place);
-        this.infoWindowPos = protoMarker.position;
-        this.infoWinOpen = true;
-      } catch (error) {
-        this.$emit('error', {
-          source: 'GoogleMap.openInfoWindowWithSelectedPlace(place)',
-          error,
-        });
-      }
-    },
-
-    // click the map (different than using Autocomplete (see setPlace()))
-    // space is this.$event and includes the placeId (not place_id) string (place_id is returned in the getDetails() result)
-    // and the latLng object
-    addPlace(space) {
-      try {
-        // since we serialize strings, we convert the latLng class into the latLng literal
-        const latLng = {
-          lat: space.lat || space.latLng.lat(),
-          lng: space.lng || space.latLng.lng(),
-        };
-        console.log(highlight('Selected space:'), printJson(space));
-        /* From googlemaps docs:
-          A place ID is a unique reference to a place on a Google Map.
-          Place IDs are available for most locations, including
-            businesses,
-            landmarks,
-            parks, and
-            intersections.
-      */
-        if (space.placeId) {
-          this.placesService.getDetails(
-            {
-              placeId: space.placeId,
-              fields: [
-                'name',
-                'formatted_address',
-                'place_id',
-                'geometry',
-                'plus_code',
-              ],
-            },
-            (place, status) => {
-              if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-                Place.updatePromise(place)
-                  .then((result) =>
-                    this.openInfoWindowWithSelectedPlace(result[0])
-                  )
-                  .catch((err) => {
-                    console.log(error(err));
-                    this.$emit('error', {
-                      source: 'GoogleMap.addPlace(space)',
-                      error: err,
-                    });
-                  });
-              } else {
-                console.log('Error:', status);
-              }
-            }
-          );
-        } else {
-          // But if you don't click on one of those listed points of interest above, you don't have a placeId...yet.
-          // geocode could take the space.latLng class instance, but for broad consistency,
-          // we use the latLng literal because we can't conveniently serialize functions
-          this.geocoder.geocode({ location: latLng }, (results, status) => {
-            if (status === 'OK') {
-              // results array provides different levels of address details. we use the first element in the array
-              const {
-                name,
-                formatted_address,
-                place_id,
-                geometry,
-                plus_code,
-              } = results[0];
-
-              // note name will be empty because the spot is...well, nameless. Vistor provides the name using the InfoWindow.
-              const spot = {
-                name,
-                formatted_address,
-                place_id,
-                geometry,
-                plus_code,
-              };
-              // geocode results do include the place_id, even for a spot not otherwise noteworthy
-              console.log('Non-POI (spot) results:', printJson(spot));
-
-              // Place.updatePromise() returns all affected places (of which there is always only one)
-              Place.updatePromise(spot)
-                .then((result) =>
-                  this.openInfoWindowWithSelectedPlace(result[0])
-                )
-                .catch((err) => {
-                  console.log(error(err));
-                  this.$emit('error', {
-                    source: 'GoogleMap.addPlace(space)',
-                    error: err,
-                  });
-                });
-            } else {
-              console.log('Error:', status);
-            }
-          });
-        }
-        this.center = latLng;
-      } catch (error) {
-        this.$emit('error', { source: 'GoogleMap.addPlace(space)', error });
-      }
-    },
-
-    throwError(err, source) {
-      console.log(error(err));
-      this.$emit('error', {
-        source: source,
-        error: err,
-      });
-    },
     //#region Methods for mount()
     setUpGeolocation(map) {
       const infoWindow = new window.google.maps.InfoWindow();
@@ -594,6 +589,7 @@ export default {
       });
     },
 
+    //#region functions that depend on Place
     deserializeVisitAsMarker(visits) {
       try {
         this.place_map = Place.getPlaceMap();
@@ -632,14 +628,19 @@ export default {
           });
           console.groupEnd();
         }
-      } catch (error) {
-        this.$emit('error', {
-          source: 'GoogleMap.deserializeVisitAsMarker(visits)',
-          error,
-        });
+      } catch (err) {
+        this.throwError('GoogleMap.deserializeVisitAsMarker(visits)', err);
       }
     },
     //#endregion Methods for mount()
+
+    throwError(source, err) {
+      console.log(error(printJson(err)));
+      this.$emit('error', {
+        source: source,
+        error: err,
+      });
+    },
   },
 
   watch: {},
@@ -682,7 +683,7 @@ export default {
         this.recent = true;
         console.log(success('GoogleMap loaded successfully'));
       })
-      .catch((err) => this.throwError(err, 'GoogleMap.mounted()'));
+      .catch((err) => this.throwError('GoogleMap.mounted()', err));
   },
 };
 </script>

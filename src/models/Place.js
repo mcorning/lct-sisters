@@ -34,9 +34,16 @@ export default class Place extends Model {
 
   static getPosition(id) {
     if (!id) {
-      throw 'Missing a place_id';
+      throw { code: -1, message: 'Missing a place_id' };
     }
     const p = Place.find(id);
+    if (!p) {
+      throw {
+        code: 0,
+        message: `place_id ${id} not found in Place collection`,
+      };
+    }
+
     const plus_code =
       p.plus_code?.global_code || p.plus_code || 'not available';
     const lat = p.lat || p.geometry.location.lat() || p.latLng.lat() || 0;

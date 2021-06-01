@@ -29,7 +29,7 @@
           <v-dialog
             ref="dialogStart"
             v-model="modalStart"
-            :return-value.sync="starttime"
+            :return-value.sync="options.starttime"
             persistent
             width="290px"
           >

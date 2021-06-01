@@ -44,19 +44,24 @@ TODO Incorporate this header data into nestedMenu
     <v-main>
       <error-boundary @error="onError($event)">
         <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
-          <v-card color="error lighten-2">
-            <h3 class="headling">
-              Oops. We messed up, and we are sorry.
-            </h3>
+          <v-card dark>
+            <v-card-title class="headling ">
+              Oops. Sorry, we messed up.
+            </v-card-title>
             <v-card-subtitle>
               Devs now know what to fix. You may have to restart
-              LCT</v-card-subtitle
+              LCT.</v-card-subtitle
             >
-            <v-card-text v-html="errorState.source">
+            <v-card-text>
+              Source: {{ errorState.source }}
+              <br />
               Exception: {{ errorState.message }}
             </v-card-text>
-            <p>Stack (for the devs):</p>
-            <p>{{ errorState.stack }}</p>
+            <v-card-text v-if="errorState.stack">
+              Stack (for the devs):
+              <br />
+              {{ errorState.stack }}
+            </v-card-text>
           </v-card>
         </v-alert>
         <v-container class="fill-height" fluid>
