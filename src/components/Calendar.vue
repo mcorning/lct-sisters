@@ -65,7 +65,7 @@
             :event-ripple="false"
             :event-color="getEventColor"
             event-overlap-mode="column"
-            event-overlap-threshold="15"
+            event-overlap-threshold="1"
             @touchstart:event="showEvent"
             @mousedown:time="startTime"
             @mousemove:time="mouseMove"
@@ -549,7 +549,7 @@ export default {
       // otherwise we update the cache with the new values by calling saveVisit()
       this.showEventDialog();
       this.action = 'SAVE'; // Save is the default action
-      // this.status = `Select Save (to ${this.getGraphNameString}) or Cancel from dialog`;
+      this.status = ` ${this.cal.eventOverlapMode} overlap mode`;
     },
 
     //#region  Drag and Drop

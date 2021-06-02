@@ -383,6 +383,7 @@ export default {
               // Vistor provides the name using the InfoWindow.
               // geocode results do include the place_id, even for a spot not otherwise noteworthy
               space = results[0];
+              alert(JSON.stringify(space.plus_code, null, 3));
               console.log('Non-POI (spot) results:', printJson(space));
 
               // Place.updatePromise() returns all affected places
@@ -649,6 +650,7 @@ export default {
 
     throwError(source, err) {
       console.log(error(printJson(err)));
+      alert(source, err);
       this.$emit('error', {
         source: source,
         error: err,
