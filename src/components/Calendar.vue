@@ -24,19 +24,19 @@
                 </v-btn>
               </template>
               <v-list>
-                <v-list-item @click="changeType('category')">
+                <v-list-item @click="type = 'category'">
                   <v-list-item-title>Appointments</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="changeType('day')">
+                <v-list-item @click="type = 'day'">
                   <v-list-item-title>Day</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="changeType('4day')">
+                <v-list-item @click="type = '4day'">
                   <v-list-item-title>4 days</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="changeType('week')">
+                <v-list-item @click="type = 'week'">
                   <v-list-item-title>Week</v-list-item-title>
                 </v-list-item>
-                <v-list-item @click="changeType('month')">
+                <v-list-item @click="type = 'month'">
                   <v-list-item-title>Month</v-list-item-title>
                 </v-list-item>
               </v-list>
@@ -76,7 +76,7 @@
             @mouseup:time="endDrag"
             @click:date="viewDay"
             @change="handleChange"
-            @click:time-category="manageAppointments"
+            @click:time-category="showEvent"
             v-touch="{
               left: goLeft,
               right: goRight,
@@ -249,6 +249,7 @@ export default {
   data: () => ({
     // memento: null,
     // mementoID: '',
+    possibleAppointment: null,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
     categories: ['You', 'Them'],
@@ -310,7 +311,6 @@ export default {
     visits: [],
     place: null,
     type: 'day',
-    categtories: ['You', 'Them'],
     snackBar: false,
     snackBarNew: false,
     feedbackMessage: '',
@@ -497,8 +497,6 @@ export default {
       });
     },
     showEventDialog() {
-      const slotInterval = 30;
-
       const question = `Edit Visit ${this.parsedEvent.input.name}?`;
       const consequences = `${
         this.parsedEvent.input.name
@@ -523,11 +521,7 @@ export default {
               break;
 
             case 'BOOK':
-              this.addOpening(
-                new Date().getTime(),
-                this.username,
-                slotInterval
-              );
+              this.bookAppointment();
               break;
 
             case 'SAVE':
@@ -551,12 +545,39 @@ export default {
       );
     },
 
-    bookAppointment() {},
-
     // @click:event="showEvent"
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
     showEvent({ nativeEvent, event }) {
+      // we defer the test for a null event below (see comments)
+      if (this.type === 'category' && this.possibleAppointment) {
+        const question = `Book a new appointment for ${this.possibleAppointment.time}?`;
+        const consequences = 'This will update your public calendar.';
+
+        const icon = 'mdi-help';
+        this.customOptions.buttons[0] = null;
+        this.customOptions.buttons[2].label = 'Yes';
+
+        this.action = 'BOOK'; // in case keydown is Enter
+
+        this.ConfirmModernDialog.open(question, consequences, {
+          icon: icon,
+        }).then((act) => {
+          if (act) {
+            this.act('BOOK');
+            this.reset();
+          }
+        });
+        return;
+      }
+
+      // odd. when we edit in category view, showEvent gets called twice, and
+      // the second time event is undefined but we still get here in spite of the
+      // logical guard above.
+      // TODO consider splitting up category edits into their own file and activation path
+      if (event === undefined) {
+        return;
+      }
       const { id } = event;
 
       // get access to the event's index and CalendarTimestamp data
@@ -689,7 +710,7 @@ export default {
       }
       // change the (start and) end time on the lower edge of the event
       else if (this.createEvent && this.createStart !== null) {
-        console.log(highlight(`changing the slot's end time`));
+        // console.log(highlight(`changing the slot's end time`));
 
         const mouseRounded = this.roundTime(mouse, false);
         const min = Math.min(mouseRounded, this.createStart);
@@ -710,6 +731,11 @@ export default {
     // this.original stores visit's original interval
     // called by drag or extendBottom
     endDrag(calendarTimestamp) {
+      this.possibleAppointment =
+        this.type === 'category' && !this.parsedEvent
+          ? calendarTimestamp
+          : null;
+
       console.log('endDrag produced:');
       console.log(printJson(calendarTimestamp));
       this.reset();
@@ -811,18 +837,20 @@ export default {
         case 'DELETE':
           this.deleteVisit();
           break;
-        case 'LOG':
-          this.logVisit();
-          break;
+
         case 'REVERT':
           this.revert();
           break;
         case 'SAVE':
           this.saveVisit();
           break;
-        // case 'UPDATE':
-        //   this.updateLoggedVisit();
-        //   break;
+        case 'BOOK':
+          this.bookAppointment();
+          break;
+        case 'LOG':
+          this.logVisit();
+          break;
+
         default:
           this.throwError(
             'Calendar.act(action)',
@@ -909,11 +937,12 @@ export default {
     openOpenClose(start, end) {
       this.addAppointment(start, 'Open Doors', 0);
       this.addAppointment(end, 'Close Doors', 0);
-      this.changeType('category', end);
+
+      this.type = 'category';
     },
-    manageAppointments(event) {
-      console.log(printJson(event));
-      const time = this.calendarTimestampToDate(event);
+    bookAppointment() {
+      console.log(printJson(this.possibleAppointment));
+      const time = this.calendarTimestampToDate(this.possibleAppointment);
       this.addAppointment(time, `Booked by: ${this.username}`, 1000 * 60 * 30);
     },
     addAppointment(time, name, slotInterval) {
@@ -937,20 +966,21 @@ export default {
         logged: '', // this will contain the internal id of the relationship in redisGraph
         category: 'Them',
       };
-
+      // if (slotInterval === 0) {
       let newVisit = { ...this.createEvent };
 
       Visit.updatePromise(newVisit)
-        .then((p) => {
-          console.log('Added visit to cache', printJson(p));
+        .then((v) => {
+          console.log('Added Open/Close to cache', printJson(v));
         })
         .catch((err) => {
           this.throwError(
             'Calendar.Visit.updatePromise(newVisit)',
             err,
-            `Oops. Sorry, we had trouble adding Your appointment. Notified devs.`
+            `Oops. Sorry, we had trouble managing your public calendar. Notified devs.`
           );
         });
+      // }
     },
 
     deleteVisit() {
@@ -1021,16 +1051,6 @@ export default {
             `Oops. Sorry, we had trouble saving the visit on your calendar. Notified devs.`
           );
         });
-    },
-
-    changeType(type, time) {
-      this.type = type;
-      const d = new Date(time);
-      const min = d.getMinutes() < 10 ? '0' + d.getMinutes() : d.getMinutes();
-      const hhmn = `${d.getHours()}:${min}`;
-      console.log('Scrolling to', hhmn);
-      const timeToY = this.cal.timeToY(time);
-      console.log(this.cal.scrollToTime(hhmn));
     },
 
     viewDay({ date }) {
@@ -1118,8 +1138,8 @@ export default {
     },
 
     calendarTimestampToDate(cts) {
-      console.log('calendarTimestampToDate(cts):');
-      console.log(printJson(cts));
+      // console.log('calendarTimestampToDate(cts):');
+      // console.log(printJson(cts));
 
       try {
         const parsedDate = DateTime.fromObject({
@@ -1378,7 +1398,7 @@ export default {
       localStorage.getItem('usesPublicCalendar') !== 'true'
         ? 'day'
         : 'category';
-
+    self.categories = [self.username, localStorage.getItem('people')];
     self.place = self.selectedSpace;
     if (self.place) {
       self.newEvent();
