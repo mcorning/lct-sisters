@@ -203,14 +203,6 @@ export default {
       }
       console.log(val);
     },
-
-    onpenAt(val) {
-      alert(val);
-    },
-
-    closeAt(val) {
-      alert(val);
-    },
   },
   mounted() {
     Place.$fetch();
