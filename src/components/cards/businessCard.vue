@@ -32,7 +32,7 @@
               v-model="menu1"
               :close-on-content-click="false"
               :nudge-right="40"
-              :return-value.sync="time1"
+              :return-value.sync="openAt"
               transition="scale-transition"
               offset-y
               max-width="290px"
@@ -40,7 +40,7 @@
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="time1"
+                  v-model="openAt"
                   label="Shift starts at hr:min"
                   prepend-icon="access_time"
                   readonly
@@ -50,9 +50,9 @@
               </template>
               <v-time-picker
                 v-if="menu1"
-                v-model="time1"
+                v-model="openAt"
                 full-width
-                @click:minute="$refs.menu1.save(time1)"
+                @click:minute="$refs.menu1.save(openAt)"
               ></v-time-picker>
             </v-menu>
           </v-col>
@@ -62,7 +62,7 @@
               v-model="menu2"
               :close-on-content-click="false"
               :nudge-right="40"
-              :return-value.sync="time2"
+              :return-value.sync="closeAt"
               transition="scale-transition"
               offset-y
               max-width="290px"
@@ -70,7 +70,7 @@
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="time2"
+                  v-model="closeAt"
                   label="Shift ends at hr:min"
                   prepend-icon="access_time"
                   readonly
@@ -80,9 +80,9 @@
               </template>
               <v-time-picker
                 v-if="menu2"
-                v-model="time2"
+                v-model="closeAt"
                 full-width
-                @click:minute="$refs.menu2.save(time2)"
+                @click:minute="$refs.menu2.save(closeAt)"
               ></v-time-picker>
             </v-menu>
           </v-col>
@@ -131,11 +131,23 @@
 </template>
 
 <script>
+import Place from '@/models/Place';
+
 export default {
   props: {
-    name: String,
+    id: String,
   },
-  computed: {},
+
+  computed: {
+    place() {
+      return Place.find(this.id);
+    },
+
+    name() {
+      return this.place.name;
+    },
+  },
+
   data() {
     return {
       attachToBtn: null,
@@ -148,12 +160,12 @@ export default {
       people: '',
       slotInterval: 30,
 
-      time1: '08:00',
-      time2: '17:00',
+      openAt: '08:00',
+      closeAt: '17:00',
       menu1: false,
       menu2: false,
 
-      rules: [(v) => v?.length > 2 || 'Between 3 and 10 characters'],
+      rules: [(v) => v?.length > 2 || 'Recommend 3 to 10 characters'],
     };
   },
 
@@ -161,17 +173,18 @@ export default {
     onGo() {
       this.dialog = false;
       // localStorage accessed later when usesPublicCalendar is true
+      localStorage.setItem('business', this.name);
       localStorage.setItem('usesPublicCalendar', this.usesPublicCalendar);
       localStorage.setItem('people', this.people);
       localStorage.setItem('slotInterval', this.slotInterval);
-      localStorage.setItem('openAt', this.time1);
-      localStorage.setItem('closeAt', this.time2);
+      localStorage.setItem('openAt', this.openAt);
+      localStorage.setItem('closeAt', this.closeAt);
       const data = {
         usesPublicCalendar: this.usesPublicCalendar,
         people: this.people,
         slotInterval: this.slotInterval,
-        time1: this.time1,
-        time2: this.time2,
+        openAt: this.openAt,
+        closeAt: this.closeAt,
       };
       this.$emit('go', data);
     },
@@ -199,7 +212,14 @@ export default {
       alert(val);
     },
   },
-  mounted() {},
+  mounted() {
+    Place.$fetch();
+    this.usesPublicCalendar = localStorage.getItem('usesPublicCalendar');
+    this.people = localStorage.getItem('people');
+    this.slotInterval = localStorage.getItem('slotInterval');
+    this.openAt = localStorage.getItem('openAt');
+    this.closeAt = localStorage.getItem('closeAt');
+  },
 };
 </script>
 

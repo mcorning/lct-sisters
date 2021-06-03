@@ -436,10 +436,7 @@ export default {
         data.endtime = endtime.getTime();
       }
       console.log('New start/end:', data.starttime, data.endtime);
-      this.resolve({
-        action: act,
-        data,
-      });
+      this.resolve(act);
     },
 
     // options is an object with name-value pairs (as opposed to props)
@@ -469,27 +466,6 @@ export default {
     },
 
     allowedStep: (m) => m % 15 === 0,
-
-    // getToolbarColor() {
-    //   const color = this.ready ? this.options.parsedEvent.color : 'primary';
-    //   return color === 'primary' ? 'primary lighten-2' : 'secondary darken-2';
-    // },
-
-    // getGraphNameFromVisit() {
-    //   if (this.ready) {
-    //     const status = this.options.parsedEvent.input.loggedNodeId
-    //       ? `is logged on the <strong>${this.options.parsedEvent.input.graphName}</strong> graph`
-    //       : `is <strong>not logged</strong> to any graph yet. ${
-    //           !this.options.visitorIsOnline
-    //             ? '<br/>You are <strong>not</strong> online right now.'
-    //             : '<br/>During or after your visit, log the visit to the graph'
-    //         }`;
-    //     return `<small>Place ID: <strong>${this.options.parsedEvent.input.place_id}</strong>
-    //   <br/>
-    //   Visit ID: <strong>${this.options.parsedEvent.input.id}</strong>
-    //   <br/> ${status}</small>`;
-    //   }
-    // },
   },
   watch: {
     starttime(newVal, oldVal) {

@@ -77,7 +77,7 @@
           </v-card-text>
 
           <v-card-actions v-if="place.name" class="pb-1">
-            <businessCard :name="place.name" @go="onGo"></businessCard>
+            <businessCard :id="place.place_id" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
             <v-tooltip bottom>
@@ -482,14 +482,14 @@ export default {
     // called by
     //  * onGo() with the shift startTime
     //  * mark your calendar button
-    addVisit(nativeEvent, startTime = Date.now(), endTime, stay) {
+    addVisit(nativeEvent, startTime = Date.now(), endTime, shift) {
       console.log('Start Time:', startTime.toString());
       this.$emit('addedPlace', {
         ...this.place,
         plus_code: Place.getPosition(this.place.place_id).plus_code,
         startTime: startTime,
         endtime: endTime,
-        stay: stay,
+        shift: shift,
       });
     },
 
@@ -510,15 +510,24 @@ export default {
         hour: closeAt[0] / 1,
         minute: closeAt[1] / 1,
       });
-      const stay = endTime.diff(startTime);
+      const shift = endTime.diff(startTime);
 
       console.log(`onGo() startTime: ${startTime.toString()} `);
 
       console.log(`onGo() endTime:  ${endTime.toString()}`);
-      console.log(`onGo() startTime/stay: ${startTime}`, printJson(stay));
+      console.log(`onGo() startTime/shift: ${startTime}`, printJson(shift));
+
+      // Place.updateFieldPromise(this.place.place_id, {
+      //   usesPublicCalendar: data.usesPublicCalendar,
+      // }).then((p) => {
+      //   // send message to server updating appointmentCache
+      //   this.$emit('manageAppointment', p[0]);
+      // });
+
       // we are calling a click handler here,
       // so set first arg to null since we don't have a nativeEvent to pass
-      this.addVisit(null, startTime, endTime, stay.milliseconds);
+
+      this.addVisit(null, startTime, endTime, shift.milliseconds);
     },
 
     getIcon() {
@@ -680,26 +689,30 @@ export default {
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
     console.groupEnd();
+    self.mapPromise.then((map) => {
+      self.map = map;
+      self.showMap(map);
+      self.getAssets(map);
+      Promise.all([self.visitsPromise, self.placePromise])
+        .then((results) => {
+          // const map = results[0];
+          const visits = results[0].visits;
+          // self.showMap(map);
+          // self.getAssets(map);
 
-    Promise.all([self.mapPromise, self.visitsPromise, self.placePromise])
-      .then((results) => {
-        const map = results[0];
-        const visits = results[1].visits;
-        self.showMap(map);
-        self.getAssets(map);
+          // we don't use results[2] here,
+          // but the promise resolved with fetched Place records used next
+          if (visits) {
+            self.deserializeVisitAsMarker(visits, self.map);
+          }
+          // this.map = map;
 
-        // we don't use results[2] here,
-        // but the promise resolved with fetched Place records used next
-        if (visits) {
-          self.deserializeVisitAsMarker(visits, map);
-        }
-        this.map = map;
-
-        // not sure we need this...
-        this.recent = true;
-        console.log(success('GoogleMap loaded successfully'));
-      })
-      .catch((err) => this.throwError('GoogleMap.mounted()', err));
+          // not sure we need this...
+          this.recent = true;
+          console.log(success('GoogleMap loaded successfully'));
+        })
+        .catch((err) => this.throwError('GoogleMap.mounted()', err));
+    });
   },
 };
 </script>

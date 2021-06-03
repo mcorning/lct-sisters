@@ -115,6 +115,7 @@ TODO Incorporate this header data into nestedMenu
                 @addedPlace="onAddedPlace"
                 @log="onLog"
                 @error="onError($event)"
+                @manageAppointment="onManageAppointment"
               />
             </v-col>
 
@@ -131,10 +132,12 @@ TODO Incorporate this header data into nestedMenu
                 :selectedSpace="selectedSpace"
                 :graphName="graphName"
                 :userID="userID"
+                :username="username"
                 @logVisit="onLogVisit"
                 @updateLoggedVisit="onLogVisit"
                 @deleteVisit="onDeleteVisit"
                 @error="onError($event)"
+                @manageAppointment="onManageAppointment"
               />
             </v-col>
           </v-row>
@@ -847,15 +850,15 @@ export default {
       }
     },
 
-    emitFromClient(event, data, ack) {
-      this.$socket.client.emit(event, data, ack);
+    emitFromClient(eventName, data, ack) {
+      this.$socket.client.emit(eventName, data, ack);
     },
 
     onError(e) {
       this.errorState = {
         source: e.source,
-        message: e.error.message,
-        stack: e.error.stack,
+        message: e.error,
+        stack: e.stack,
       };
       console.log(`Sending error to server`, e);
       this.emitFromClient('client_error', e);
@@ -864,6 +867,10 @@ export default {
     onUserFeedback(e) {
       console.log('userFeedback:', e);
       this.emitFromClient('userFeedback', e);
+    },
+    onManageAppointment(e) {
+      console.log('Appointment:', e);
+      this.emitFromClient('manageAppointment', e);
     },
 
     resetSpaces() {

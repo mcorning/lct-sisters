@@ -22,6 +22,7 @@ const sessionCache = new Cache(path.resolve(__dirname, 'sessions.json'));
 const alertsCache = new Cache(path.resolve(__dirname, 'alerts.json'));
 const errorCache = new Cache(path.resolve(__dirname, 'errors.json'));
 const feedbackCache = new Cache(path.resolve(__dirname, 'feedback.json'));
+const appointmentCache = new Cache(path.resolve(__dirname, 'appointment.json'));
 
 const {
   graphName, // mapped to client nsp (aka namespace or community name)
@@ -199,6 +200,10 @@ io.on('connection', (socket) => {
         });
       })
       .catch((error) => console.log(error(error)));
+  });
+
+  socket.on('manageAppointment', (data) => {
+    console.log(highlight(getNow(), printJson(data)));
   });
 
   socket.on('logVisit', (data, ack) => {
