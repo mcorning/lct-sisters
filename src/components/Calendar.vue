@@ -25,7 +25,7 @@
               </template>
               <v-list>
                 <v-list-item @click="type = 'category'">
-                  <v-list-item-title>Appointments</v-list-item-title>
+                  <v-list-item-title>Appointment</v-list-item-title>
                 </v-list-item>
                 <v-list-item @click="type = 'day'">
                   <v-list-item-title>Day</v-list-item-title>
@@ -52,6 +52,8 @@
              
              taken from extendBottom event:
              @touchstart.stop="extendBottom(event)"
+            @click:time-category="manageAppointments"
+
  -->
         <v-sheet :height="calendarHeight">
           <v-calendar
@@ -76,7 +78,6 @@
             @mouseup:time="endDrag"
             @click:date="viewDay"
             @change="handleChange"
-            @click:time-category="showEvent"
             v-touch="{
               left: goLeft,
               right: goRight,
@@ -147,8 +148,9 @@
     <EventModernDialog
       id="EventModernDialog"
       ref="EventModernDialog"
-      :customEventOptions="customEventOptions"
+      :customEventOptions="selectedOptions"
       @modifyEvent="onModifyEvent"
+      @setDate="onSetDate"
       @setTime="onSetTime"
     />
   </v-sheet>
@@ -160,6 +162,7 @@ const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
+import Appointment from '@/models/Appointment';
 
 import { getNow, DateTime, formatSmallTime } from '../utils/luxonHelpers';
 import { error, success, warn, highlight, printJson } from '../utils/colors';
@@ -181,6 +184,15 @@ export default {
   },
 
   computed: {
+    atWorkAt() {
+      return localStorage.getItem('business');
+    },
+
+    appointments() {
+      const a = Appointment.all();
+      return a;
+    },
+
     selectedPlace() {
       return Place.find(this.getCurrentVisit().place_id);
     },
@@ -226,10 +238,24 @@ export default {
 
     visitCache() {
       const activeVisits = Visit.getVisits(true, this.expiredTimestamp);
-      console.groupCollapsed('Active visits:');
-      console.log(printJson(activeVisits));
-      console.log('Your visits', this.getYourEvents(activeVisits));
-      console.groupEnd();
+      const activeAppointments = Appointment.getAppointments(
+        true,
+        this.expiredTimestamp
+      );
+      if (this.type === 'day') {
+        console.groupCollapsed('Active visits:');
+        console.log(printJson(activeVisits));
+        console.log('Your visits', this.getYourEvents(activeVisits));
+        console.groupEnd();
+      } else if (this.type === 'category') {
+        console.groupCollapsed('Active Appointments:');
+        console.log(printJson(activeAppointments));
+        console.log(
+          'Your Appointments',
+          this.getYourAppointments(activeAppointments)
+        );
+        console.groupEnd();
+      }
       return this.type === 'day'
         ? this.getYourEvents(activeVisits)
         : activeVisits;
@@ -249,10 +275,11 @@ export default {
   data: () => ({
     // memento: null,
     // mementoID: '',
-    possibleAppointment: null,
+    appointment: null,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
     categories: ['You', 'Them'],
+    selectedOptions: null,
     customEventOptions: {
       buttons: [
         { label: 'Delete', act: 'DELETE' },
@@ -268,6 +295,19 @@ export default {
         { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
         { spacer: true },
         { label: 'Log', act: 'LOG' },
+      ],
+    },
+    customBookEventOptions: {
+      buttons: [
+        { label: 'Delete', act: 'DELETE' },
+        { label: 'Cancel', act: 'CANCEL' },
+        { spacer: true },
+        {
+          label: 'Save',
+          color: 'secondary',
+          outlined: true,
+          act: 'SAVE',
+        },
       ],
     },
 
@@ -347,6 +387,10 @@ export default {
         ? `is logged on the <strong>${this.parsedEvent.input.graphName}</strong> graph`
         : `is <strong>not logged</strong> to any graph yet. `;
       return status;
+    },
+
+    onSetDate(date) {
+      this.date = date;
     },
 
     onSetTime(time, isStart) {
@@ -438,6 +482,11 @@ export default {
       let x = activeVisits.filter(filter);
       return x;
     },
+    getYourAppointments(activeAppointments) {
+      const filter = (a) => a.provider === this.username;
+      let x = activeAppointments.filter(filter);
+      return x;
+    },
 
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
@@ -479,29 +528,70 @@ export default {
       console.log('showInterval:', printJson(interval));
     },
 
-    showDialog() {
-      const question = 'Do you want to make an appointment?';
-      const consequences = 'Go';
-      const icon = 'mdi-help';
-
-      this.ConfirmModernDialog.open(question, consequences, {
-        icon: icon,
-      }).then((act) => {
-        if (!act) {
-          this.revert();
-          return;
-        }
-        // logVisit will save before logging
-        this.act('LOG');
-        this.reset();
-      });
+    manageAppointments() {
+      // create an appointment so we have a parsedEvent
+      this.addAppointment();
+      this.showAppointmentDialog();
     },
+
+    showAppointmentDialog() {
+      const time = this.appointment
+        ? this.cal.parseTimestamp(this.appointment)
+        : DateTime.now();
+
+      const question = `Book a new appointment for ${DateTime.fromMillis(
+        this.roundTime(time)
+      ).toFormat('T')}?`;
+      const consequences = 'This will update your public calendar.';
+
+      const icon = 'mdi-update';
+      const options = {
+        icon: icon,
+        parsedEvent: {},
+        starttime: DateTime.fromMillis(this.roundTime(time)).toFormat('T'),
+        endtime: DateTime.fromMillis(
+          this.roundTime(time + this.avgStay)
+        ).toFormat('T'),
+        appointment: true,
+      };
+
+      this.EventModernDialog.setCustomOptions(this.customBookEventOptions);
+
+      this.EventModernDialog.open(question, consequences, options).then(
+        (action) => {
+          switch (action) {
+            case 'DELETE':
+              this.deleteEvent();
+              break;
+            case 'CANCEL':
+              this.revert();
+              break;
+
+            case 'SAVE':
+              this.saveAppointment();
+              break;
+          }
+        }
+      );
+    },
+
+    showDialog() {
+      if (this.parsedEvent.input.category === 'You') {
+        this.showEventDialog();
+      } else {
+        this.showAppointmentDialog();
+      }
+    },
+
     showEventDialog() {
-      const question = `Edit Visit ${this.parsedEvent.input.name}?`;
+      const question = `Edit ${this.atWorkAt ? 'Shift at' : 'Visit to'} ${
+        this.parsedEvent.input.name
+      }?`;
       const consequences = `${
         this.parsedEvent.input.name
       } ${this.getGraphStatus()}`; //`You are editing place ID: ${this.parsedEvent.input.place_id}`;
-      const icon = 'mdi-help';
+      const icon = this.atWorkAt ? 'mdi-facebook-workplace' : 'mdi-calendar';
+
       const options = {
         icon: icon,
         parsedEvent: this.parsedEvent,
@@ -509,27 +599,27 @@ export default {
         endtime: this.endtime,
         visitorIsOnline: this.visitorIsOnline,
         userID: this.userID,
+        isAppointment: false,
       };
+      this.EventModernDialog.setCustomOptions(this.customEventOptions);
       this.EventModernDialog.open(question, consequences, options).then(
         (action) => {
           switch (action) {
             case 'DELETE':
-              this.deleteVisit();
+              this.deleteEvent(this.parsedEvent.input.id);
               break;
             case 'CANCEL':
               this.revert();
               break;
-
-            case 'BOOK':
-              this.bookAppointment();
-              break;
-
             case 'SAVE':
-              this.saveVisit();
+              this.saveVisit(this.parsedEvent.input);
+              break;
+            case 'BOOK':
+              this.manageAppointments();
               break;
 
             case 'LOG':
-              this.logVisit();
+              this.logVisit(this.parsedEvent.input);
               break;
 
             default:
@@ -549,33 +639,7 @@ export default {
     // showEvent will open the Event menu so phone users can reliably change start/end times.
     // value is an instance of the Visit object which is an event that constitutes the calendar's events array
     showEvent({ nativeEvent, event }) {
-      // we defer the test for a null event below (see comments)
-      if (this.type === 'category' && this.possibleAppointment) {
-        const question = `Book a new appointment for ${this.possibleAppointment.time}?`;
-        const consequences = 'This will update your public calendar.';
-
-        const icon = 'mdi-help';
-        this.customOptions.buttons[0] = null;
-        this.customOptions.buttons[2].label = 'Yes';
-
-        this.action = 'BOOK'; // in case keydown is Enter
-
-        this.ConfirmModernDialog.open(question, consequences, {
-          icon: icon,
-        }).then((act) => {
-          if (act) {
-            this.act('BOOK');
-            this.reset();
-          }
-        });
-        return;
-      }
-
-      // odd. when we edit in category view, showEvent gets called twice, and
-      // the second time event is undefined but we still get here in spite of the
-      // logical guard above.
-      // TODO consider splitting up category edits into their own file and activation path
-      if (event === undefined) {
+      if (!event) {
         return;
       }
       const { id } = event;
@@ -604,7 +668,7 @@ export default {
       // we will adjust the start/end times in realtime
       // if user cancels, we refresh the visits from the cache by calling revert()
       // otherwise we update the cache with the new values by calling saveVisit()
-      this.showEventDialog();
+      this.showDialog();
       this.action = 'SAVE'; // Save is the default action
       this.status = ` ${this.cal.eventOverlapMode} overlap mode with ${this.cal.eventOverlapThreshold} minute threshold`;
     },
@@ -731,10 +795,24 @@ export default {
     // this.original stores visit's original interval
     // called by drag or extendBottom
     endDrag(calendarTimestamp) {
-      this.possibleAppointment =
-        this.type === 'category' && !this.parsedEvent
-          ? calendarTimestamp
-          : null;
+      // if (this.type === 'category') {
+      //   const d = DateTime.now();
+      //   const business = 'use biz name',
+      //     customer = 'me',
+      //     provider = 'tony',
+      //     date = d.toFormat('D'),
+      //     start = d.toMillis(),
+      //     end = d.plus({ minutes: 30 }).toMillis();
+      //   Appointment.updatePromise({
+      //     id: randomId(),
+      //     business,
+      //     customer,
+      //     provider,
+      //     date,
+      //     start,
+      //     end,
+      //   }).then((result) => console.log(result));
+      // }
 
       console.log('endDrag produced:');
       console.log(printJson(calendarTimestamp));
@@ -832,10 +910,11 @@ export default {
       });
     },
 
+    // global action switch
     act(action) {
       switch (action) {
         case 'DELETE':
-          this.deleteVisit();
+          this.deleteEvent();
           break;
 
         case 'REVERT':
@@ -926,52 +1005,42 @@ export default {
             `Oops. Sorry, we had trouble adding a visit on your calendar. Notified devs.`
           );
         });
-      if (this.place.shift) {
-        this.openOpenClose(this.createStart, endTime);
-      }
+
       this.place = null;
     },
-    addOpening() {
-      alert('Deprecated');
-    },
-    openOpenClose(start, end) {
-      this.addAppointment(start, 'Open Doors', 0);
-      this.addAppointment(end, 'Close Doors', 0);
 
-      this.type = 'category';
-    },
+    // called by the EventDialog BOOK option
+    // creates an appointment using current time as default
+    // shows the Customer and Appointment controls in the dialog
     bookAppointment() {
-      console.log(printJson(this.possibleAppointment));
-      const time = this.calendarTimestampToDate(this.possibleAppointment);
+      console.log(printJson(this.appointment));
+      const time = this.calendarTimestampToDate(this.appointment);
       this.addAppointment(time, `Booked by: ${this.username}`, 1000 * 60 * 30);
     },
-    addAppointment(time, name, slotInterval) {
-      const graphname = this.getGraphName();
 
+    // can be called by ShowEventDialog() at the start of the business day
+    // or can be called by clicking a public calendar time
+    addAppointment(
+      time = DateTime.now().ts,
+      name = 'customer',
+      slotInterval = 30
+    ) {
       this.createStart = this.roundTime(time);
       this.createEvent = {
         id: randomId(),
         name: name,
+        provider: this.username,
+        date: new Date(this.createStart).toDateString(),
         start: this.createStart,
         end: this.createStart + slotInterval,
-        date: new Date(this.createStart).toDateString(),
-        interval: this.getInterval(
-          this.createStart,
-          this.createStart + slotInterval
-        ),
         timed: true,
-        marked: getNow(),
-        graphName: graphname,
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-        logged: '', // this will contain the internal id of the relationship in redisGraph
         category: 'Them',
       };
-      // if (slotInterval === 0) {
-      let newVisit = { ...this.createEvent };
+      // let newVisit = { ...this.createEvent };
 
-      Visit.updatePromise(newVisit)
+      Appointment.updatePromise(this.createEvent)
         .then((v) => {
-          console.log('Added Open/Close to cache', printJson(v));
+          console.log('Added Appointment to cache', printJson(v));
         })
         .catch((err) => {
           this.throwError(
@@ -983,9 +1052,26 @@ export default {
       // }
     },
 
-    deleteVisit() {
-      const visit = this.getCurrentVisit();
-      const id = visit.id;
+    deleteEvent() {
+      if (this.parsedEvent.input.category === 'Them') {
+        Appointment.deletePromise(this.parsedEvent.input.id)
+          .then(() => {
+            console.log(`Deleted ${this.parsedEvent.input.name}'s appointment`);
+            this.parsedEvent = null;
+          })
+          .catch((err) => {
+            this.throwError(
+              'Calendar.deleteEvent()',
+              err,
+              `Oops. Sorry, we had trouble deleting the visit from your calendar. Notified devs.`
+            );
+          });
+      } else {
+        this.deleteVisit(this.parsedEvent.input.id);
+      }
+    },
+
+    deleteVisit(id = this.getCurrentVisit().id) {
       const self = this;
 
       Visit.deletePromise(id)
@@ -1032,6 +1118,22 @@ export default {
       }
     },
 
+    // visit has new start/end values set by Event edit menu
+    saveAppointment() {
+      this.selectedOpen = false;
+      const visit = this.parsedEvent.input;
+      Appointment.updatePromise(visit)
+        .then(() => {
+          console.log(success(`New/Saved Appointment:`, printJson(visit)));
+        })
+        .catch((err) => {
+          this.throwError(
+            'Calendar.saveAppointment()',
+            err,
+            `Oops. Sorry, we had trouble saving the appointment on your calendar. Notified devs.`
+          );
+        });
+    },
     // visit has new start/end values set by Event edit menu
     saveVisit() {
       this.selectedOpen = false;
@@ -1215,48 +1317,6 @@ export default {
       }
     },
 
-    addOpeningsForToday() {
-      const people = localStorage.getItem('people').split(',');
-      const openAt = localStorage.getItem('openAt').split(':');
-      const closeAt = localStorage.getItem('closeAt').split(':');
-      const slotInterval = localStorage.getItem('slotInterval');
-      const defaultName = 'Opening';
-
-      let hrs = closeAt[0] - openAt[0];
-      let hr = openAt[0] / 1;
-      let parsedDate;
-      // caveat emptor: assuming 30 minute intervals, so two openings per hour
-      while (hrs--) {
-        parsedDate = DateTime.fromObject({
-          hour: hr,
-          minute: 0,
-        });
-        people.forEach((person) => {
-          this.addOpening(
-            parsedDate,
-            person || defaultName,
-            slotInterval * 60000
-          );
-        });
-
-        parsedDate = DateTime.fromObject({
-          hour: hr,
-          minute: slotInterval,
-        });
-        people.forEach((person) => {
-          this.addOpening(
-            parsedDate,
-            person || defaultName,
-            slotInterval * 60000
-          );
-        });
-        hr += 1;
-      }
-      this.scrollToTime();
-
-      this.status = 'Use the calendar to adjust openings for the day';
-    },
-
     throwError(source, err, message) {
       console.log(error(printJson(err)));
       this.status = message;
@@ -1264,6 +1324,18 @@ export default {
         source: source,
         error: err,
       });
+    },
+
+    changeTimeStamp(data) {
+      const { isStart, val } = data;
+      const event = this.parsedEvent;
+      console.log(
+        warn(
+          `Editing event id ${event.input.id} ${
+            isStart ? 'starttime' : 'endtime'
+          } to ${val}`
+        )
+      );
     },
   },
 
@@ -1291,31 +1363,23 @@ export default {
     },
 
     visitCache(newVal) {
-      this.visits = newVal;
+      const x = [...newVal, ...this.appointments];
+      this.visits = x;
     },
 
     starttime(newVal, oldVal) {
       if (!oldVal) {
         return;
       }
-      const event = this.parsedEvent;
-      const visit = this.getCurrentVisit();
-      console.log(warn('editing id', event.input.id));
-      console.log(warn('Last start/interval', visit.start, visit.interval));
+      this.changeTimeStamp({ isStart: true, val: newVal });
 
-      // requires padded hour and minute
-      // event.start.hour = newVal.slice(0, 2) / 1;
-      // event.start.minute = newVal.slice(3, 5) / 1;
-      const times = newVal.split(':');
-      event.start.hour = times[0] / 1;
-      event.start.minute = times[1] / 1;
-      console.log('New event start:', event.start);
-      const startDate = this.calendarTimestampToDate(event.start);
-      visit.start = startDate.ts;
-      visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
-        event.start.minute
-      )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
-      console.log(warn('New start:', visit.start, visit.interval));
+      // const times = newVal.split(':');
+      // event.start.hour = times[0] / 1;
+      // event.start.minute = times[1] / 1;
+      // console.log('New event start:', event.start);
+      // const startDate = this.calendarTimestampToDate(event.start);
+      // event.input.start = startDate.ts;
+      // console.log(warn('New start:', event.input.start, event.input.interval));
     },
 
     endtime(newVal, oldVal) {
@@ -1323,9 +1387,11 @@ export default {
         return;
       }
       const event = this.parsedEvent;
-      const visit = this.getCurrentVisit();
+      // const visit = this.getCurrentVisit();
       console.log(warn('editing id', event.input.id));
-      console.log(warn('Last end/interval', visit.end, visit.interval));
+      console.log(
+        warn('Last end/interval', event.input.end, event.input.interval)
+      );
 
       // requires padded hour and minute
       // event.end.hour = newVal.slice(0, 2) / 1;
@@ -1335,12 +1401,12 @@ export default {
       event.end.minute = times[1] / 1;
       const endDate = this.calendarTimestampToDate(event.end);
 
-      visit.end = endDate.ts;
-      visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
-        event.start.minute
-      )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
+      event.input.end = endDate.ts;
+      // visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
+      //   event.start.minute
+      // )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
 
-      console.log(warn('New end', visit.end, visit.interval));
+      console.log(warn('New end', event.input.end, event.input.interval));
     },
   },
 
@@ -1374,6 +1440,7 @@ export default {
       day: this.ageOfExpiredEvents,
     }).ts;
 
+    Appointment.$fetch().then(() => (self.type = 'category'));
     Place.$fetch();
     Visit.$fetch().then(() => {
       const expiredVisits = Visit.getVisits(false, self.expiredTimestamp);

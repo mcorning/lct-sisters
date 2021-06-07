@@ -14,6 +14,7 @@ export default new Vuetify({
         error: colors.red.accent3,
         sandboxlogged: colors.brown.darken2,
         sandboxmarked: colors.brown.lighten3,
+        appointment: colors.lightGreen,
       },
       dark: {
         primary: colors.blue.lighten3,

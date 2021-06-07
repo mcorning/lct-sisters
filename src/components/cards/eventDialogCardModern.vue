@@ -23,6 +23,45 @@
           ></v-card-subtitle>
         </v-col>
       </v-row>
+
+      <v-row v-if="options.isAppointment" id="apptRow" justify="space-around">
+        <v-col>
+          <v-card-text>
+            <v-text-field
+              label="Customer"
+              v-model="customer"
+              dense
+              placeholder="Customer name"
+            ></v-text-field>
+          </v-card-text>
+        </v-col>
+        <v-col cols="12" sm="6" md="4">
+          <v-menu
+            v-model="datemenu"
+            :close-on-content-click="false"
+            :nudge-right="40"
+            transition="scale-transition"
+            offset-y
+            min-width="290px"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                v-model="date"
+                label="Appointment"
+                prepend-icon="event"
+                readonly
+                v-bind="attrs"
+                v-on="on"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="date"
+              @input="datemenu = false"
+            ></v-date-picker>
+          </v-menu>
+        </v-col>
+      </v-row>
+
       <v-row id="pickersRow" justify="space-around">
         <v-spacer></v-spacer>
         <v-col cols="4">
@@ -129,253 +168,6 @@
         </template>
       </v-card-actions>
     </v-card>
-    <!-- <v-card
-      v-if="options.parsedEvent"
-      color="grey lighten-4"
-      max-width="400px"
-      flat
-    >
-      <v-toolbar :color="getToolbarColor()" dark>
-        <v-toolbar-title v-html="parsedEvent.input.name"></v-toolbar-title>
-      </v-toolbar>
-      <v-row id="pickersRow" justify="space-around">
-        <v-spacer></v-spacer>
-        <v-col cols="4">
-          <v-dialog
-            ref="dialogStart"
-            v-model="modalStart"
-            :return-value.sync="starttime"
-            persistent
-            width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="startTime"
-                :disabled="!parsedEvent"
-                label="Start"
-                prepend-icon="mdi-clock-time-four-outline"
-                readonly
-                hide-details
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-time-picker
-              v-if="modalStart"
-              v-model="startTime"
-              full-width
-              :allowed-minutes="allowedStep"
-            >
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="modalStart = false">
-                Cancel
-              </v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.dialogStart.save(starttime)"
-              >
-                OK
-              </v-btn>
-            </v-time-picker>
-          </v-dialog>
-        </v-col>
-
-        <v-spacer></v-spacer>
-        <v-col cols="4">
-          <v-dialog
-            ref="dialogEnd"
-            v-model="modalEnd"
-            :return-value.sync="endtime"
-            persistent
-            width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                v-model="endTime"
-                :disabled="!parsedEvent"
-                label="End"
-                prepend-icon="mdi-clock-time-four-outline"
-                readonly
-                hide-details
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-time-picker
-              v-if="modalEnd"
-              v-model="endTime"
-              full-width
-              :allowed-minutes="allowedStep"
-            >
-              <v-spacer></v-spacer>
-
-              <v-btn text color="primary" @click="modalEnd = false">
-                Cancel
-              </v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.dialogEnd.save(endtime)"
-              >
-                OK
-              </v-btn>
-            </v-time-picker>
-          </v-dialog>
-        </v-col>
-
-        <v-spacer></v-spacer>
-      </v-row>
-
-      <v-row dense id="modifyEventRow" justify="space-around">
-        <v-col cols="9">
-          <v-row align="center" justify="space-around">
-            <v-col class="text-center">Modify Event</v-col>
-          </v-row>
-          <v-row id="moveVisitRow" dense>
-            <v-col>Move</v-col>
-            <v-col>
-              <v-btn outlined icon @click="$emit('modifyEvent', 'move', 'up')">
-                <v-icon>mdi-arrow-up</v-icon>
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn outlined icon @click="$emit('modifyEvent', 'move', 'dn')">
-                <v-icon>mdi-arrow-down</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-row id="expandVisitRow" dense>
-            <v-col>Collapse</v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'collapse', 'up')"
-              >
-                <v-icon>mdi-arrow-collapse-up</v-icon>
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'collapse', 'both')"
-              >
-                <v-icon>mdi-arrow-collapse-vertical</v-icon>
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'collapse', 'dn')"
-              >
-                <v-icon>mdi-arrow-collapse-down</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <v-row id="expandVisitRow" dense>
-            <v-col>Expand</v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'expand', 'up')"
-              >
-                <v-icon>mdi-arrow-expand-up</v-icon>
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'expand', 'both')"
-              >
-                <v-icon>mdi-arrow-expand-vertical</v-icon>
-              </v-btn>
-            </v-col>
-            <v-col>
-              <v-btn
-                outlined
-                icon
-                @click="$emit('modifyEvent', 'expand', 'dn')"
-              >
-                <v-icon>mdi-arrow-expand-down</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-col>
-      </v-row>
-
-      <v-card-text v-html="getGraphNameFromVisit"> </v-card-text>
-      <v-card-actions>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
-            <div class="text-center">
-              <v-btn
-                v-bind="attrs"
-                v-on="on"
-                :disabled="!parsedEvent"
-                @click="$emit('goRight')"
-                ><v-icon>mdi-delete</v-icon></v-btn
-              ><br />
-              <small>Delete</small>
-            </div>
-          </template>
-          <span>Delete Visit</span></v-tooltip
-        >
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
-            <div class="text-center">
-              <v-btn
-                v-bind="attrs"
-                v-on="on"
-                :disabled="!parsedEvent"
-                @click="$emit('revert')"
-                ><v-icon>mdi-cancel</v-icon></v-btn
-              ><br />
-              <small>Cancel</small>
-            </div>
-          </template>
-          <span>Abandon changes</span></v-tooltip
-        >
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
-            <div class="text-center">
-              <v-btn
-                v-bind="attrs"
-                v-on="on"
-                :disabled="!parsedEvent"
-                outlined
-                color="secondary"
-                @click="$emit('saveVisit')"
-                ><v-icon>mdi-content-save</v-icon></v-btn
-              ><br />
-              <small>Save</small>
-            </div>
-          </template>
-          <span>Save Visit locally</span></v-tooltip
-        >
-        <v-spacer></v-spacer>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on, attrs }">
-            <div class="text-center">
-              <v-btn
-                v-bind="attrs"
-                v-on="on"
-                :disabled="!userID"
-                @click="$emit('goLeft')"
-                ><v-icon>mdi-graphql</v-icon></v-btn
-              ><br />
-              <small>{{ userID ? 'Log' : 'Not online' }}</small>
-            </div>
-          </template>
-          <span>Log Visit on Server</span></v-tooltip
-        >
-      </v-card-actions> 
-    </v-card>-->
   </v-dialog>
   <!-- End Event Menu -->
 </template>
@@ -398,6 +190,10 @@ export default {
 
   data() {
     return {
+      datemenu: false,
+      date: null,
+      customer: '',
+
       modalStart: false,
       modalEnd: false,
 
@@ -434,9 +230,14 @@ export default {
 
         data.starttime = starttime.getTime();
         data.endtime = endtime.getTime();
+
+        console.log('New start/end:', data.starttime, data.endtime);
       }
-      console.log('New start/end:', data.starttime, data.endtime);
       this.resolve(act);
+    },
+
+    setCustomOptions(options) {
+      this.options = { ...this.options, ...options };
     },
 
     // options is an object with name-value pairs (as opposed to props)
@@ -468,6 +269,11 @@ export default {
     allowedStep: (m) => m % 15 === 0,
   },
   watch: {
+    date(newVal, oldVal) {
+      if (oldVal) {
+        this.$emit('setDate', newVal);
+      }
+    },
     starttime(newVal, oldVal) {
       if (oldVal) {
         this.$emit('setTime', newVal, true);
