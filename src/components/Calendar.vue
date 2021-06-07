@@ -63,7 +63,7 @@
             color="primary"
             :type="type"
             :categories="categories"
-            :events="visits"
+            :events="relevantEvents"
             :event-ripple="false"
             :event-color="getEventColor"
             event-overlap-mode="column"
@@ -188,6 +188,7 @@ export default {
       return localStorage.getItem('business');
     },
 
+    // TODO clean up old this.visits code and cite a visits computed property for relevantEvents
     appointments() {
       const a = Appointment.all();
       return a;
@@ -270,11 +271,23 @@ export default {
     yourVisits() {
       return this.type === 'day' ? this.yourEvents : this.visits;
     },
+
+    relevantEvents() {
+      if (!this.ready) {
+        return [];
+      }
+      const x = this.appointments
+        ? [...Visit.all(), ...this.appointments]
+        : Visit.all();
+      return x;
+    },
   },
 
   data: () => ({
-    // memento: null,
-    // mementoID: '',
+    currentAppointmentID: null,
+    ready: false,
+    v: null,
+    a: null,
     appointment: null,
     ageOfExpiredEvents: 14,
     expiredTimestamp: null,
@@ -328,7 +341,6 @@ export default {
     action: '', // used by handlekeydown
     calendarEvent: null,
     parsedEvent: null,
-    ready: false,
     selectedOpen: true,
     selectedElement: null,
 
@@ -1023,11 +1035,12 @@ export default {
     addAppointment(
       time = DateTime.now().ts,
       name = 'customer',
-      slotInterval = 30
+      slotInterval = 30 * 1000 * 60
     ) {
+      this.currentAppointmentID = randomId();
       this.createStart = this.roundTime(time);
       this.createEvent = {
-        id: randomId(),
+        id: this.currentAppointmentID,
         name: name,
         provider: this.username,
         date: new Date(this.createStart).toDateString(),
@@ -1036,11 +1049,11 @@ export default {
         timed: true,
         category: 'Them',
       };
-      // let newVisit = { ...this.createEvent };
 
       Appointment.updatePromise(this.createEvent)
-        .then((v) => {
-          console.log('Added Appointment to cache', printJson(v));
+        .then((a) => {
+          this.a = a;
+          console.log('Added Appointment to cache', printJson(a));
         })
         .catch((err) => {
           this.throwError(
@@ -1067,26 +1080,26 @@ export default {
             );
           });
       } else {
-        this.deleteVisit(this.parsedEvent.input.id);
+        this.deleteVisit();
       }
     },
 
-    deleteVisit(id = this.getCurrentVisit().id) {
+    deleteVisit() {
       const self = this;
-
+      const { id, loggedNodeId, graphname } = this.parsedEvent.input;
       Visit.deletePromise(id)
         .then(() => {
           self.confirm = false;
-          let visits = self.visits;
-          self.visits = self.arrayRemove(visits, id);
+          // let visits = self.visits;
+          // self.visits = self.arrayRemove(visits, id);
 
           console.log(success(`Visit ${id} deleted.`));
-          self.status = `DELETED local data: ${visit.name} ${visit.interval} id: ${visit.id}`;
-          console.log(`New Visit ct: ${self.visits.length} `);
-          if (!visit.loggedNodeId) {
+          // self.status = `DELETED local data: ${visit.name} ${visit.interval} id: ${visit.id}`;
+          // console.log(`New Visit ct: ${self.visits.length} `);
+          if (!loggedNodeId) {
             return;
           }
-          self.$emit('deleteVisit', visit);
+          self.$emit('deleteVisit', { loggedNodeId, graphname });
         })
         .catch((err) => {
           this.throwError(
@@ -1121,8 +1134,8 @@ export default {
     // visit has new start/end values set by Event edit menu
     saveAppointment() {
       this.selectedOpen = false;
-      const visit = this.parsedEvent.input;
-      Appointment.updatePromise(visit)
+      const visit = this.getCurrentEvent(this.currentAppointmentID);
+      Appointment.updatePromise(visit.input)
         .then(() => {
           console.log(success(`New/Saved Appointment:`, printJson(visit)));
         })
@@ -1347,6 +1360,15 @@ export default {
     // 'dragEvent.start': function (newValue, oldValue) {
     //   console.log('dragEvent.start n/o:', newValue, oldValue);
     // },
+
+    cal(newVal) {
+      // TODO do you really need this.ready? why not just check for null this.cal?
+      this.ready = newVal;
+      this.cal.checkChange();
+      this.scrollToTime();
+      this.updateTime();
+    },
+
     type() {
       if (this.type === 'category') {
         this.status = 'Booked Appointments are events: ';
@@ -1386,34 +1408,35 @@ export default {
       if (!oldVal) {
         return;
       }
-      const event = this.parsedEvent;
+      this.changeTimeStamp({ isStart: false, val: newVal });
+
+      // const event = this.parsedEvent;
       // const visit = this.getCurrentVisit();
-      console.log(warn('editing id', event.input.id));
-      console.log(
-        warn('Last end/interval', event.input.end, event.input.interval)
-      );
+      // console.log(warn('editing id', event.input.id));
+      // console.log(
+      //   warn('Last end/interval', event.input.end, event.input.interval)
+      // );
 
       // requires padded hour and minute
       // event.end.hour = newVal.slice(0, 2) / 1;
       // event.end.minute = newVal.slice(3, 5) / 1;
-      const times = newVal.split(':');
-      event.end.hour = times[0] / 1;
-      event.end.minute = times[1] / 1;
-      const endDate = this.calendarTimestampToDate(event.end);
+      // const times = newVal.split(':');
+      // event.end.hour = times[0] / 1;
+      // event.end.minute = times[1] / 1;
+      // const endDate = this.calendarTimestampToDate(event.end);
 
-      event.input.end = endDate.ts;
-      // visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
-      //   event.start.minute
-      // )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
+      // event.input.end = endDate.ts;
+      // // visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
+      // //   event.start.minute
+      // // )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
 
-      console.log(warn('New end', event.input.end, event.input.interval));
+      // console.log(warn('New end', event.input.end, event.input.interval));
     },
   },
 
   created() {},
 
   mounted() {
-    this.ready = true;
     const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
@@ -1440,42 +1463,44 @@ export default {
       day: this.ageOfExpiredEvents,
     }).ts;
 
-    Appointment.$fetch().then(() => (self.type = 'category'));
-    Place.$fetch();
-    Visit.$fetch().then(() => {
-      const expiredVisits = Visit.getVisits(false, self.expiredTimestamp);
-      console.log('Expired visits:', printJson(expiredVisits));
-      expiredVisits.forEach((visit) => {
-        if (visit.loggedNodeId) {
-          self.$emit('deleteVisit', visit);
+    Promise.all([Place.$fetch(), Visit.$fetch(), Appointment.$fetch()])
+      .then((results) => {
+        console.log(results[0].length, 'Places');
+        console.log(results[1].length, 'Visits');
+        console.log(results[2].length, 'Appointments');
+
+        const expiredVisits = Visit.getVisits(false, self.expiredTimestamp);
+        console.log('Expired visits:', printJson(expiredVisits));
+        expiredVisits.forEach((visit) => {
+          if (visit.loggedNodeId) {
+            self.$emit('deleteVisit', visit);
+          }
+          Visit.delete(visit.id);
+        });
+
+        self.v = results[1].visits;
+        self.a = results[2].appointments;
+
+        // selectedSpace set in App.onAddedPlace()
+        // TODO do we change place on the Calendar? i hope not. if not, use selectedSpace instead of place
+        self.type =
+          localStorage.getItem('usesPublicCalendar') !== 'true'
+            ? 'day'
+            : 'category';
+        self.categories = [self.username, localStorage.getItem('people')];
+        self.place = self.selectedSpace;
+        if (self.place) {
+          self.newEvent();
         }
-        Visit.delete(visit.id);
-      });
 
-      self.visits = self.visitCache;
-    });
+        document.addEventListener('keydown', this.handleKeydown);
+        console.log('Using ' + self.getGraphNameString);
+        self.status = 'Using ' + self.getGraphNameString;
 
-    self.cal.checkChange();
-    self.scrollToTime();
-    self.updateTime();
-
-    // selectedSpace set in App.onAddedPlace()
-    // TODO do we change place on the Calendar? i hope not. if not, use selectedSpace instead of place
-    self.type =
-      localStorage.getItem('usesPublicCalendar') !== 'true'
-        ? 'day'
-        : 'category';
-    self.categories = [self.username, localStorage.getItem('people')];
-    self.place = self.selectedSpace;
-    if (self.place) {
-      self.newEvent();
-    }
-
-    document.addEventListener('keydown', this.handleKeydown);
-    console.log('Using ' + self.getGraphNameString);
-    self.status = 'Using ' + self.getGraphNameString;
-
-    console.log('mounted calendarCard');
+        console.log('mounted calendarCard');
+        this.ready = true;
+      })
+      .catch((err) => this.throwError('Calendar.mounted()', err));
   },
 
   destroyed() {

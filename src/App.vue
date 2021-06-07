@@ -680,11 +680,15 @@ export default {
 
     //#region Calendar methods
     onDeleteVisit(e) {
-      this.selectedSpace = e;
       const query = {
-        loggedNodeId: this.selectedSpace.loggedNodeId,
-        useGraphName: this.selectedSpace.graphName,
+        loggedNodeId: e.loggedNodeId,
+        useGraphName: e.graphName,
       };
+      // this.selectedSpace = e;
+      // const query = {
+      //   loggedNodeId: this.selectedSpace.loggedNodeId,
+      //   useGraphName: this.selectedSpace.graphName,
+      // };
       if (!query.loggedNodeId) {
         this.onError(
           'error',
