@@ -546,25 +546,27 @@ export default {
       this.showAppointmentDialog();
     },
 
-    showAppointmentDialog() {
-      const time = this.appointment
-        ? this.cal.parseTimestamp(this.appointment)
-        : DateTime.now();
+    showDialog() {
+      if (this.parsedEvent.input.category === 'You') {
+        this.showEventDialog();
+      } else {
+        this.showAppointmentDialog();
+      }
+    },
 
-      const question = `Book a new appointment for ${DateTime.fromMillis(
-        this.roundTime(time)
+    showAppointmentDialog() {
+      const question = `Manage appointment for ${DateTime.fromMillis(
+        this.roundTime(this.starttime)
       ).toFormat('T')}?`;
       const consequences = 'This will update your public calendar.';
 
       const icon = 'mdi-update';
       const options = {
         icon: icon,
-        parsedEvent: {},
-        starttime: DateTime.fromMillis(this.roundTime(time)).toFormat('T'),
-        endtime: DateTime.fromMillis(
-          this.roundTime(time + this.avgStay)
-        ).toFormat('T'),
-        appointment: true,
+        parsedEvent: this.parsedEvent,
+        starttime: this.starttime,
+        endtime: this.endtime,
+        isAppointment: true,
       };
 
       this.EventModernDialog.setCustomOptions(this.customBookEventOptions);
@@ -580,19 +582,11 @@ export default {
               break;
 
             case 'SAVE':
-              this.saveAppointment();
+              this.saveAppointment(this.parsedEvent.input);
               break;
           }
         }
       );
-    },
-
-    showDialog() {
-      if (this.parsedEvent.input.category === 'You') {
-        this.showEventDialog();
-      } else {
-        this.showAppointmentDialog();
-      }
     },
 
     showEventDialog() {
@@ -778,10 +772,10 @@ export default {
         if (delta > 890000) {
           this.dragEvent.start = newStart;
           this.dragEvent.end = newEnd;
-          this.dragEvent.interval = this.getInterval(
-            this.dragEvent.start,
-            this.dragEvent.end
-          );
+          // this.dragEvent.interval = this.getInterval(
+          //   this.dragEvent.start,
+          //   this.dragEvent.end
+          // );
         }
       }
       // change the (start and) end time on the lower edge of the event
@@ -794,10 +788,10 @@ export default {
 
         this.createEvent.start = min;
         this.createEvent.end = max;
-        this.createEvent.interval = this.getInterval(
-          this.createEvent.start,
-          this.createEvent.end
-        );
+        // this.createEvent.interval = this.getInterval(
+        //   this.createEvent.start,
+        //   this.createEvent.end
+        // );
       }
     },
 
@@ -969,7 +963,7 @@ export default {
 
     // TODO use parsedEvent instead and make this a filter
     getInterval(start, end) {
-      return `${formatSmallTime(start)} - ${formatSmallTime(end)}`;
+      return `${start.toFormat('T')}-${end.toFormat('T')}`;
     },
 
     addEvent(time, place_id = this.place_id, stay = this.avgStay) {
@@ -990,7 +984,7 @@ export default {
         start: this.createStart,
         end: endTime,
         date: new Date(this.createStart).toDateString(),
-        interval: this.getInterval(this.createStart, endTime),
+        // interval: this.getInterval(this.createStart, endTime),
         timed: true,
         marked: getNow(),
         graphName: graphname,
@@ -1006,6 +1000,10 @@ export default {
       //       newVisit.lng = lng;
       newVisit.place_id = this.place.place_id;
 
+      const t1 = DateTime.fromMillis(this.createStart);
+      const t2 = DateTime.fromMillis(endTime);
+
+      newVisit.interval = `${t1.toFormat('T')}-${t2.toFormat('T')}`;
       Visit.updatePromise(newVisit)
         .then((p) => {
           console.log('Added visit to cache', printJson(p));
@@ -1131,13 +1129,18 @@ export default {
       }
     },
 
+    getCurrentAppointment() {
+      return Appointment.find();
+    },
+
     // visit has new start/end values set by Event edit menu
     saveAppointment() {
       this.selectedOpen = false;
-      const visit = this.getCurrentEvent(this.currentAppointmentID);
-      Appointment.updatePromise(visit.input)
+      Appointment.updatePromise(this.parsedEvent.input)
         .then(() => {
-          console.log(success(`New/Saved Appointment:`, printJson(visit)));
+          console.log(
+            success(`New/Saved Appointment:`, printJson(this.parsedEvent.input))
+          );
         })
         .catch((err) => {
           this.throwError(
@@ -1150,10 +1153,18 @@ export default {
     // visit has new start/end values set by Event edit menu
     saveVisit() {
       this.selectedOpen = false;
-      const visit = this.getCurrentVisit();
-      Visit.updatePromise(visit)
+      const t1 = DateTime.fromMillis(this.parsedEvent.input.start);
+      const t2 = DateTime.fromMillis(this.parsedEvent.input.end);
+
+      this.parsedEvent.input.interval = `${t1.toFormat('T')}-${t2.toFormat(
+        'T'
+      )}`;
+      // TODO we are updating Visit in two places. why?
+      Visit.updatePromise(this.parsedEvent.input)
         .then(() => {
-          console.log(success(`New/Saved Visit:`, printJson(visit)));
+          console.log(
+            success(`New/Saved Visit:`, printJson(this.parsedEvent.input))
+          );
           // const destination = this.visitorIsOnline
           //   ? `on the ${this.getGraphName()} exposure graph`
           //   : `in localStorage`;
@@ -1349,6 +1360,20 @@ export default {
           } to ${val}`
         )
       );
+      const hour = Number(val.slice(0, 2));
+      const minute = Number(val.slice(3, 5));
+
+      if (isStart) {
+        event.start.hour = hour;
+        event.start.minute = minute;
+        event.input.start = this.calendarTimestampToDate(event.start).ts;
+      } else {
+        event.end.hour = hour;
+        event.end.minute = minute;
+        event.input.end = this.calendarTimestampToDate(event.end).ts;
+      }
+      console.log(warn('New start:', event.input.start));
+      console.log(warn('New end:', event.input.end));
     },
   },
 
@@ -1477,9 +1502,6 @@ export default {
           }
           Visit.delete(visit.id);
         });
-
-        self.v = results[1].visits;
-        self.a = results[2].appointments;
 
         // selectedSpace set in App.onAddedPlace()
         // TODO do we change place on the Calendar? i hope not. if not, use selectedSpace instead of place
