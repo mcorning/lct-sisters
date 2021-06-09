@@ -5,6 +5,9 @@ import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import vuetify from './plugins/vuetify';
 import './plugins';
 
+import VueCompositionAPI from '@vue/composition-api';
+Vue.use(VueCompositionAPI);
+
 import './registerServiceWorker';
 import App from './App.vue';
 

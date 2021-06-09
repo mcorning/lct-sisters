@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.6.0913",
+  "version": "0.6.0918",
   "scripts": {
     "start": "node index.js",
     "serve": "vue-cli-service serve",
@@ -25,6 +25,7 @@
     "vue": "^2.6.14",
     "vue-socket.io-extended": "^4.2.0",
     "vue-use-gesture": "^1.0.1",
+    "vue-use-spring": "0.0.2",
     "vue2-google-maps": "^0.10.7",
     "vuetify": "2.5.3",
     "vuex": "^3.6.2",
