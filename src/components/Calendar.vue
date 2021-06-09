@@ -293,6 +293,7 @@ export default {
     expiredTimestamp: null,
     categories: ['You', 'Them'],
     selectedOptions: null,
+
     customEventOptions: {
       buttons: [
         { label: 'Delete', act: 'DELETE' },
@@ -522,18 +523,6 @@ export default {
       return c;
     },
 
-    // called by event slot in calendar
-    // @mousedown.stop=
-    // @touchstart.stop
-    extendBottom(event) {
-      this.createEvent = event;
-      this.createStart = event.start;
-      this.extendOriginal = event.end;
-      this.cachedCalendarEvent = this.createEvent;
-      this.original.start = event.start;
-      this.original.end = event.end;
-    },
-
     // called when you click the interval on the left side of the calendar
     // not sure what to do with this, but it's cool.
     showInterval(interval) {
@@ -544,6 +533,7 @@ export default {
       // create an appointment so we have a parsedEvent
       this.addAppointment();
       this.showAppointmentDialog();
+      console.log(success(printJson(this.parsedEvent)));
     },
 
     showDialog() {
@@ -680,6 +670,17 @@ export default {
     },
 
     //#region  Drag and Drop
+    // called by event slot in calendar
+    // @mousedown.stop=
+    // @touchstart.stop
+    extendBottom(event) {
+      this.createEvent = event;
+      this.createStart = event.start;
+      this.extendOriginal = event.end;
+      this.cachedCalendarEvent = this.createEvent;
+      this.original.start = event.start;
+      this.original.end = event.end;
+    },
 
     // @mousedown:event="startDrag"
     // @touchstart:event="startDrag"
@@ -801,25 +802,6 @@ export default {
     // this.original stores visit's original interval
     // called by drag or extendBottom
     endDrag(calendarTimestamp) {
-      // if (this.type === 'category') {
-      //   const d = DateTime.now();
-      //   const business = 'use biz name',
-      //     customer = 'me',
-      //     provider = 'tony',
-      //     date = d.toFormat('D'),
-      //     start = d.toMillis(),
-      //     end = d.plus({ minutes: 30 }).toMillis();
-      //   Appointment.updatePromise({
-      //     id: randomId(),
-      //     business,
-      //     customer,
-      //     provider,
-      //     date,
-      //     start,
-      //     end,
-      //   }).then((result) => console.log(result));
-      // }
-
       console.log('endDrag produced:');
       console.log(printJson(calendarTimestamp));
       this.reset();
@@ -835,7 +817,6 @@ export default {
       this.extendOriginal = null;
       this.place = null;
       this.selectedOpen = false;
-      this.mementoID = '';
     },
 
     //#endregion Drag and Drop
@@ -1019,6 +1000,18 @@ export default {
       this.place = null;
     },
 
+    // only called by mount. shift will be taken from localStorage for employee
+    // customer has null shift
+    // TODO  avgStay should be computed based on visitor's history
+    newEvent() {
+      const time = this.place.startTime || Date.now();
+      const shift = this.place.shift;
+      const place_id = this.place.place_id;
+      this.addEvent(time, place_id, shift);
+
+      this.endDrag();
+    },
+
     // called by the EventDialog BOOK option
     // creates an appointment using current time as default
     // shows the Customer and Appointment controls in the dialog
@@ -1035,27 +1028,32 @@ export default {
       name = 'customer',
       slotInterval = 30 * 1000 * 60
     ) {
+      this.starttime = this.roundTime(time);
+      this.endtime = time + slotInterval;
+
       this.currentAppointmentID = randomId();
-      this.createStart = this.roundTime(time);
+      this.createStart = this.starttime;
       this.createEvent = {
         id: this.currentAppointmentID,
         name: name,
         provider: this.username,
         date: new Date(this.createStart).toDateString(),
-        start: this.createStart,
-        end: this.createStart + slotInterval,
+        start: this.starttime,
+        end: this.endtime,
         timed: true,
         category: 'Them',
       };
-
       Appointment.updatePromise(this.createEvent)
-        .then((a) => {
-          this.a = a;
-          console.log('Added Appointment to cache', printJson(a));
+        .then(() => {
+          this.parsedEvent = this.getCurrentEvent(this.currentAppointmentID);
+          console.log(
+            'Added Appointment to cache',
+            printJson(this.parsedEvent)
+          );
         })
         .catch((err) => {
           this.throwError(
-            'Calendar.Visit.updatePromise(newVisit)',
+            'Calendar.Appointment.updatePromise(this.createEvent)',
             err,
             `Oops. Sorry, we had trouble managing your public calendar. Notified devs.`
           );
@@ -1219,18 +1217,6 @@ export default {
       ).getTime();
     },
 
-    // only called by mount. shift will be taken from localStorage for employee
-    // customer has null shift
-    // TODO  avgStay should be computed based on visitor's history
-    newEvent() {
-      const time = this.place.startTime || Date.now();
-      const shift = this.place.shift;
-      const place_id = this.place.place_id;
-      this.addEvent(time, place_id, shift);
-
-      this.endDrag();
-    },
-
     getCurrentTime() {
       return this.cal
         ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
@@ -1238,8 +1224,7 @@ export default {
     },
 
     // id is passed in with showEvent.
-    // otherwise we refer to the current parsedEvent.input.id value
-    getCurrentEvent(id = this.parsedEvent.input.id) {
+    getCurrentEvent(id) {
       return this.cal.getVisibleEvents().find(({ input }) => input.id === id);
     },
 
@@ -1286,10 +1271,6 @@ export default {
       // but change the calendar type, and you will see different start.date and end.date values
       console.log('handleChange(event)');
       console.log(highlight(this.type, printJson(event)));
-    },
-
-    padTime(number) {
-      return number < 10 ? '0' + number : number + '';
     },
 
     handleKeydown(ev) {
@@ -1419,14 +1400,6 @@ export default {
         return;
       }
       this.changeTimeStamp({ isStart: true, val: newVal });
-
-      // const times = newVal.split(':');
-      // event.start.hour = times[0] / 1;
-      // event.start.minute = times[1] / 1;
-      // console.log('New event start:', event.start);
-      // const startDate = this.calendarTimestampToDate(event.start);
-      // event.input.start = startDate.ts;
-      // console.log(warn('New start:', event.input.start, event.input.interval));
     },
 
     endtime(newVal, oldVal) {
@@ -1434,28 +1407,6 @@ export default {
         return;
       }
       this.changeTimeStamp({ isStart: false, val: newVal });
-
-      // const event = this.parsedEvent;
-      // const visit = this.getCurrentVisit();
-      // console.log(warn('editing id', event.input.id));
-      // console.log(
-      //   warn('Last end/interval', event.input.end, event.input.interval)
-      // );
-
-      // requires padded hour and minute
-      // event.end.hour = newVal.slice(0, 2) / 1;
-      // event.end.minute = newVal.slice(3, 5) / 1;
-      // const times = newVal.split(':');
-      // event.end.hour = times[0] / 1;
-      // event.end.minute = times[1] / 1;
-      // const endDate = this.calendarTimestampToDate(event.end);
-
-      // event.input.end = endDate.ts;
-      // // visit.interval = `${this.padTime(event.start.hour)}:${this.padTime(
-      // //   event.start.minute
-      // // )}-${this.padTime(event.end.hour)}:${this.padTime(event.end.minute)} `;
-
-      // console.log(warn('New end', event.input.end, event.input.interval));
     },
   },
 

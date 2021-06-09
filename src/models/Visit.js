@@ -46,7 +46,18 @@ export default class Visit extends Model {
       .where((visit) => visit.category === 'You')
       .get();
   }
-
+  static updateFieldPromise(id, val) {
+    return new Promise((resolve, reject) => {
+      this.$update({
+        where: id,
+        data: val,
+      })
+        .then((p) => {
+          resolve(p[0]);
+        })
+        .catch((e) => reject(e));
+    });
+  }
   // val must be an object
   static async update(val) {
     // const { id, name, logged, start, end, interval, timed } = val;

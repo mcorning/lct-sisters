@@ -54,6 +54,12 @@ export default class Appointment extends Model {
   // Calendar addEvent() creates the appointment (without reference to the exposure graph (see below))
   static updatePromise(val) {
     return new Promise((resolve, reject) => {
+      if (val.category !== 'Them') {
+        throw {
+          violation: 'contract',
+          message: 'Object was not an Appointment',
+        };
+      }
       console.log(
         'Promise to update Appointment with',
         JSON.stringify(val, null, 3)

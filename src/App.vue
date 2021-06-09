@@ -272,7 +272,7 @@ import { ErrorBoundary } from './components';
 import Welcome from '@/components/Welcome';
 import GoogleMap from '@/components/GoogleMap';
 import Warning from '@/components/Warning';
-import Calendar from '@/components/Calendar';
+import Calendar from '@/components/CalendarX';
 
 import {
   highlight,
