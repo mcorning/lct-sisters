@@ -28,6 +28,12 @@ export default class Appointment extends Model {
     };
   }
 
+  // can't give this static method (called by indirection in Calendar)
+  // the same name as the shipping static method, Visit.find()
+  static get(id) {
+    return this.find(id);
+  }
+
   static getAppointments(active, expiredTimestamp) {
     return this.query()
       .where((appointment) =>

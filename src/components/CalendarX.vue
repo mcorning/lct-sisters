@@ -47,11 +47,11 @@ import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
-import { DateTime } from '../utils/luxonHelpers';
-import { success, warn, highlight, printJson } from '../utils/colors';
+import { DateTime, getNow } from '../utils/luxonHelpers';
+import { error, success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
-  name: 'Calendar',
+  name: 'CalendarX',
 
   props: {
     selectedSpace: Object,
@@ -64,6 +64,10 @@ export default {
   computed: {
     cal() {
       return this.ready ? this.$refs.calendar : null;
+    },
+
+    isDefaultGraph() {
+      return this.graphName === this.$defaultGraphName;
     },
 
     visibleEvents() {
@@ -88,6 +92,8 @@ export default {
     type: 'day',
     focus: '',
     model: null,
+    lastCategory: '',
+    place: null,
     status: 'Select a calendar event to edit',
     ready: false,
     selectedElement: null,
@@ -95,31 +101,37 @@ export default {
   }),
 
   methods: {
-    setModel(category) {
-      this.model = category === 'You' ? Visit : Appointment;
-    },
+    addVisit(time, place_id = this.place.place_id, stay = this.avgStay) {
+      console.log(time, place_id, stay);
+      const starttime = this.roundTime(time);
+      const endtime = starttime + stay;
 
-    showEvent({ nativeEvent, event }) {
-      if (!event) {
-        return;
-      }
-      const { id } = event;
-      this.status = `Selected calendar event ${id}`;
-      this.selectedElement = nativeEvent.target;
-      this.model = this.getModle(event.category);
-      this.selectedEventId = id;
-    },
+      const newVisit = {
+        id: randomId(),
+        name: this.place.name,
+        place_id: place_id,
+        start: starttime,
+        end: endtime,
+        date: new Date(starttime).toDateString(),
+        timed: true,
+        marked: getNow(),
+        graphName: this.graphname,
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+      };
 
-    // won't work until you add back dragAndDrop
-    extendBottom(event) {
-      if (!this.selectedEvent) {
-        return;
-      }
       this.model
-        .updateFieldPromise(this.selectedEventId, {
-          end: event.end,
+        .updatePromise(newVisit)
+        .then((p) => {
+          console.log('Added visit to cache', printJson(p));
         })
-        .then((v) => console.log(printJson(v)));
+        .catch((err) => {
+          this.throwError(
+            'Calendar.addVisit(time, place_id = this.place_id, stay = this.avgStay)',
+            err,
+            `Oops. Sorry, we had trouble adding a visit on your calendar. Notified devs.`
+          );
+        });
     },
 
     changeTime(event) {
@@ -131,9 +143,11 @@ export default {
         this.setModel(latestEvent.input.category);
       }
 
+      const model = this.getModel();
+
       // can't give this static method (called by indirection in Calendar)
       // the same name as the shipping static method, Visit.find()
-      const v = this.model.get(this.selectedEventId);
+      const v = model.get(this.selectedEventId);
       const date = DateTime.fromFormat(v.date, 'EEE MMM dd yyyy');
       const hour = event.time.slice(0, 2);
       const minute = event.time.slice(3, 5);
@@ -161,10 +175,47 @@ export default {
         startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
       const data = startIsCloser ? { start: newTime } : { end: newTime };
-      this.model.updateFieldPromise(this.selectedEventId, data).then((v) => {
+      model.updateFieldPromise(this.selectedEventId, data).then((v) => {
         console.log(success('Updated event:', printJson(v)));
         console.groupEnd();
       });
+    },
+
+    // won't work until you add back dragAndDrop
+    extendBottom(event) {
+      if (!this.selectedEvent) {
+        return;
+      }
+      this.model
+        .updateFieldPromise(this.selectedEventId, {
+          end: event.end,
+        })
+        .then((v) => console.log(printJson(v)));
+    },
+
+    // this setter isn't reliable
+    setModel(category) {
+      console.log('setModel()', category);
+      const x = category === 'You' ? Visit : Appointment;
+      this.model = x;
+    },
+
+    getModel() {
+      console.log('getModel()', this.lastCategory);
+      const x = this.lastCategory === 'You' ? Visit : Appointment;
+      return x;
+    },
+
+    showEvent({ nativeEvent, event }) {
+      if (!event) {
+        return;
+      }
+      const { id } = event;
+      this.status = `Selected calendar event ${id}`;
+      this.selectedElement = nativeEvent.target;
+      this.lastCategory = event.category;
+      this.model = this.setModel(this.lastCategory);
+      this.selectedEventId = id;
     },
 
     roundTime(time, down = true) {
@@ -240,23 +291,66 @@ export default {
       console.log(warn('New start:', event.input.start));
       console.log(warn('New end:', event.input.end));
     },
+
+    // only called by mount. shift will be taken from localStorage for employee
+    // customer has null shift
+    // TODO  avgStay should be computed based on visitor's history
+    newVisit() {
+      this.model = Visit;
+      const time = this.place.startTime || Date.now();
+      const shift = this.place.shift;
+      const place_id = this.place.place_id;
+      this.addVisit(time, place_id, shift);
+
+      // this.endDrag();
+    },
+
+    throwError(source, err, message) {
+      console.log(error(printJson(err)));
+      this.status = message;
+      this.$emit('error', {
+        source: source,
+        error: err,
+      });
+    },
   },
 
-  watch: {},
+  watch: {
+    model(newVal, oldVal) {
+      console.log('model', newVal, oldVal);
+    },
+    graphName(newVal, oldVal) {
+      console.log('Graph name is', newVal, 'and was', oldVal);
+      this.status = `You are ${
+        this.graphName === this.$defaultGraphName
+          ? 'using'
+          : 'experimenting with'
+      }  ${this.getGraphNameString}`;
+    },
+  },
 
   created() {},
 
   mounted() {
+    const self = this;
+
     Promise.all([Place.$fetch(), Visit.$fetch(), Appointment.$fetch()])
       .then((entities) => {
+        const visits = entities[1].visits || [];
         console.log(entities[0].places?.length, 'Places');
-        console.log(entities[1].visits?.length, 'Visits');
+        console.log(visits.length, 'Visits');
         console.log(entities[2].appointments?.length, 'Appointments');
 
+        console.log(printJson(visits));
         console.log(success('mounted calendarCard'));
 
         this.ready = true;
         this.cal.scrollToTime();
+
+        self.place = self.selectedSpace;
+        if (self.place) {
+          self.newVisit();
+        }
       })
       .catch((err) => this.throwError('Calendar.mounted()', err));
   },
