@@ -32,6 +32,11 @@ export default class Visit extends Model {
     };
   }
 
+  // can't give this static method (called by indirection in Calendar)
+  // the same name as the shipping static method, Visit.find()
+  static get(id) {
+    return this.find(id);
+  }
   static getVisits(active, expiredTimestamp) {
     return this.query()
       .where((visit) =>

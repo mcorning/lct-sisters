@@ -87,6 +87,7 @@ export default {
   data: () => ({
     type: 'day',
     focus: '',
+    model: null,
     status: 'Select a calendar event to edit',
     ready: false,
     selectedElement: null,
@@ -94,6 +95,10 @@ export default {
   }),
 
   methods: {
+    setModel(category) {
+      this.model = category === 'You' ? Visit : Appointment;
+    },
+
     showEvent({ nativeEvent, event }) {
       if (!event) {
         return;
@@ -101,7 +106,7 @@ export default {
       const { id } = event;
       this.status = `Selected calendar event ${id}`;
       this.selectedElement = nativeEvent.target;
-
+      this.model = this.getModle(event.category);
       this.selectedEventId = id;
     },
 
@@ -110,16 +115,25 @@ export default {
       if (!this.selectedEvent) {
         return;
       }
-      Visit.updateFieldPromise(this.selectedEventId, {
-        end: event.end,
-      }).then((v) => console.log(printJson(v)));
+      this.model
+        .updateFieldPromise(this.selectedEventId, {
+          end: event.end,
+        })
+        .then((v) => console.log(printJson(v)));
     },
 
     changeTime(event) {
+      console.groupCollapsed('Changing Time:>');
       if (!this.selectedEventId) {
-        this.selectedEventId = this.visibleEvents[0].input.id;
+        this.status = 'Chose your latest event';
+        const latestEvent = this.visibleEvents[this.visibleEvents.length - 1];
+        this.selectedEventId = latestEvent.input.id;
+        this.setModel(latestEvent.input.category);
       }
-      const v = Visit.find(this.selectedEventId);
+
+      // can't give this static method (called by indirection in Calendar)
+      // the same name as the shipping static method, Visit.find()
+      const v = this.model.get(this.selectedEventId);
       const date = DateTime.fromFormat(v.date, 'EEE MMM dd yyyy');
       const hour = event.time.slice(0, 2);
       const minute = event.time.slice(3, 5);
@@ -147,9 +161,10 @@ export default {
         startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
       const data = startIsCloser ? { start: newTime } : { end: newTime };
-      Visit.updateFieldPromise(this.selectedEventId, data).then((v) =>
-        console.log(printJson(v))
-      );
+      this.model.updateFieldPromise(this.selectedEventId, data).then((v) => {
+        console.log(success('Updated event:', printJson(v)));
+        console.groupEnd();
+      });
     },
 
     roundTime(time, down = true) {
@@ -233,10 +248,10 @@ export default {
 
   mounted() {
     Promise.all([Place.$fetch(), Visit.$fetch(), Appointment.$fetch()])
-      .then((results) => {
-        console.log(results[0].places?.length, 'Places');
-        console.log(results[1].visits?.length, 'Visits');
-        console.log(results[2].appointments?.length, 'Appointments');
+      .then((entities) => {
+        console.log(entities[0].places?.length, 'Places');
+        console.log(entities[1].visits?.length, 'Visits');
+        console.log(entities[2].appointments?.length, 'Appointments');
 
         console.log(success('mounted calendarCard'));
 
