@@ -1177,13 +1177,13 @@ export default {
         });
     },
 
+    getEventPrimaryColor(event) {
+      return event ? 'primary' : 'secondary';
+    },
+
     viewDay({ date }) {
       this.focus = date;
       this.type = 'day';
-    },
-
-    getEventPrimaryColor(event) {
-      return event ? 'primary' : 'secondary';
     },
 
     setToday() {

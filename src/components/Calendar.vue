@@ -3,6 +3,46 @@
     <v-row id="calendarRow" align="start" class="overflow-hidden ">
       <v-col>
         <!-- calendar controls -->
+        <v-sheet height="48">
+          <v-toolbar flat>
+            <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
+            <v-btn fab text small color="grey darken-2" @click="prev">
+              <v-icon> mdi-chevron-left </v-icon>
+            </v-btn>
+            <v-btn fab text small color="grey darken-2" @click="next">
+              <v-icon> mdi-chevron-right </v-icon>
+            </v-btn>
+            <v-toolbar-title v-if="cal">
+              {{ cal.title }}
+            </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-menu bottom right>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
+                  <span>{{ typeToLabel[type] }}</span>
+                  <v-icon right> mdi-menu-down </v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item @click="type = 'category'">
+                  <v-list-item-title>Appointment</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="type = 'day'">
+                  <v-list-item-title>Day</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="type = '4day'">
+                  <v-list-item-title>4 days</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="type = 'week'">
+                  <v-list-item-title>Week</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="type = 'month'">
+                  <v-list-item-title>Month</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </v-toolbar>
+        </v-sheet>
 
         <!-- calendar sheet-->
         <v-sheet height="1000">
@@ -13,6 +53,8 @@
             color="primary"
             :type="type"
             :events="relevantEvents"
+            :categories="categories"
+            :event-color="getEventColor"
             @click:interval="changeTime"
             @click:event="showEvent"
           >
@@ -89,6 +131,8 @@ export default {
   },
 
   data: () => ({
+    categories: ['You', 'Them'],
+
     type: 'day',
     focus: '',
     model: null,
@@ -98,6 +142,13 @@ export default {
     ready: false,
     selectedElement: null,
     selectedEventId: '',
+    typeToLabel: {
+      category: 'Appointment',
+      month: 'Month',
+      week: 'Week',
+      day: 'Day',
+      '4day': '4 Days',
+    },
   }),
 
   methods: {
@@ -313,6 +364,34 @@ export default {
         error: err,
       });
     },
+
+    //#region Calendar methods
+
+    viewDay({ date }) {
+      this.focus = date;
+      this.type = 'day';
+    },
+
+    setToday() {
+      this.focus = '';
+      this.cal.scrollToTime();
+    },
+    prev() {
+      this.cal.prev();
+    },
+    next() {
+      this.cal.next();
+    },
+
+    // called by event-color calendar event
+    getEventColor(event) {
+      const c =
+        this.parsedEvent?.input.id === event.id
+          ? `${event.color} darken-1`
+          : event.color;
+      return c;
+    },
+    //#endregion
   },
 
   watch: {
