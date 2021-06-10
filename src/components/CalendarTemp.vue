@@ -1368,7 +1368,6 @@ export default {
     // },
 
     cal(newVal) {
-      // TODO do you really need this.ready? why not just check for null this.cal?
       this.ready = newVal;
       this.cal.checkChange();
       this.scrollToTime();

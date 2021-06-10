@@ -57,14 +57,36 @@ export default class Appointment extends Model {
     });
     return a;
   }
+
+  static updateFieldPromise(id, val) {
+    return new Promise((resolve, reject) => {
+      // ensure the incoming data is for Visits (not Appointments)
+      if (val.category !== 'Them') {
+        reject({
+          violation: 'contract',
+          message: 'Object was not an Appointment',
+        });
+      }
+      this.$update({
+        where: id,
+        data: val,
+      })
+        .then((p) => {
+          resolve(p[0]);
+        })
+        .catch((e) => reject(e));
+    });
+  }
+
   // Calendar addEvent() creates the appointment (without reference to the exposure graph (see below))
   static updatePromise(val) {
     return new Promise((resolve, reject) => {
+      // ensure the incoming data is for Visits (not Appointments)
       if (val.category !== 'Them') {
-        throw {
+        reject({
           violation: 'contract',
           message: 'Object was not an Appointment',
-        };
+        });
       }
       console.log(
         'Promise to update Appointment with',

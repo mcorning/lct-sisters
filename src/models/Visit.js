@@ -24,7 +24,7 @@ export default class Visit extends Model {
       date: this.string(''), // Date string of start to event values
       interval: this.string(''), // String composed of start and end timestamps
       timed: this.boolean(true), // True means Visit isn't all day
-      category: this.string('You'), // used for COVID-safe appointments
+      category: this.string(), // used for COVID-safe appointments
 
       // From the graph component
       loggedNodeId: this.string(''), // ID of the graph node for this Visit
@@ -53,6 +53,13 @@ export default class Visit extends Model {
   }
   static updateFieldPromise(id, val) {
     return new Promise((resolve, reject) => {
+      // ensure the incoming data is for Visits (not Appointments)
+      if (val.category !== 'You') {
+        reject({
+          violation: 'contract',
+          message: 'Object was not a Visit or Shift',
+        });
+      }
       this.$update({
         where: id,
         data: val,
@@ -63,6 +70,7 @@ export default class Visit extends Model {
         .catch((e) => reject(e));
     });
   }
+
   // val must be an object
   static async update(val) {
     // const { id, name, logged, start, end, interval, timed } = val;
@@ -71,9 +79,17 @@ export default class Visit extends Model {
     });
     return p;
   }
+
   // Calendar addEvent() creates the visit (without reference to the exposure graph (see below))
   static updatePromise(val) {
     return new Promise((resolve, reject) => {
+      // ensure the incoming data is for Visits (not Appointments)
+      if (val.category !== 'You') {
+        reject({
+          violation: 'contract',
+          message: 'Object was not a Visit or Shift',
+        });
+      }
       console.log('update Visit with', JSON.stringify(val, null, 3));
       this.$create({
         data: val,
@@ -82,6 +98,7 @@ export default class Visit extends Model {
         .catch((e) => reject(e));
     });
   }
+
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
   static updateLoggedPromise(data) {
     const { visitId, loggedNodeId, useGraphName } = data;
@@ -107,6 +124,13 @@ export default class Visit extends Model {
 
   static deletePromise(val) {
     return new Promise((resolve, reject) => {
+      // ensure the incoming data is for Visits (not Appointments)
+      if (val.category !== 'You') {
+        reject({
+          violation: 'contract',
+          message: 'Object was not a Visit or Shift',
+        });
+      }
       console.log(`Deleting Visit id ${val}`);
       this.$delete(val)
         .then((p) => {

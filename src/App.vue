@@ -864,7 +864,7 @@ export default {
         message: e.error,
         stack: e.stack,
       };
-      console.log(`Sending error to server`, e);
+      console.log(error(`Sending error to server`, e));
       this.emitFromClient('client_error', e);
     },
 

@@ -47,7 +47,7 @@
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
                 v-model="date"
-                label="Appointment"
+                label="Appointment Date"
                 prepend-icon="event"
                 readonly
                 v-bind="attrs"
@@ -75,7 +75,6 @@
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
                 v-model="starttime"
-                :disabled="!parsedEvent"
                 label="Start"
                 prepend-icon="mdi-clock-time-four-outline"
                 readonly
@@ -117,7 +116,6 @@
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
                 v-model="endtime"
-                :disabled="!parsedEvent"
                 label="End"
                 prepend-icon="mdi-clock-time-four-outline"
                 readonly
@@ -180,17 +178,11 @@ export default {
     },
   },
 
-  computed: {
-    parsedEvent() {
-      // parsedEvent is readonly
-      const x = this.options.parsedEvent;
-      return x;
-    },
-  },
+  computed: {},
 
   data() {
     return {
-      datemenu: false,
+      datemenu: true,
       date: null,
       customer: '',
 
@@ -256,8 +248,9 @@ export default {
       this.dialog = true;
       this.title = title;
       this.message = message;
-      (this.date = options.date), (this.starttime = options.starttimeString);
-      this.endtime = options.endtimeString;
+      this.date = options.parsedEvent.input.date;
+      this.starttime = options.parsedEvent.start.time;
+      this.endtime = options.parsedEvent.end.time;
       this.options = { ...this.options, ...options };
       console.log('All Options', JSON.stringify(this.options, null, 3));
 
@@ -285,14 +278,13 @@ export default {
     },
     starttime(newVal, oldVal) {
       if (oldVal) {
-        this.$emit('setTime', newVal, true);
+        this.$emit('setTime', this.convertTimeStringToMs(newVal), true);
       }
     },
 
     endtime(newVal, oldVal) {
       if (oldVal) {
         this.$emit('setTime', this.convertTimeStringToMs(newVal), false);
-        // this.$emit('setTime', newVal, false);
       }
     },
   },
