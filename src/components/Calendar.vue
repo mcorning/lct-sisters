@@ -78,6 +78,14 @@
         </div>
       </v-col>
     </v-row>
+
+    <EventModernDialog
+      id="EventModernDialog"
+      ref="EventModernDialog"
+      :customEventOptions="selectedOptions"
+      @setDate="onSetDate"
+      @setTime="onSetTime"
+    />
   </v-sheet>
 </template>
 
@@ -89,11 +97,16 @@ import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
+// TODO Come back to fix this complex mixin strategy later
+// import { eventDialog } from '../mixins/eventDialog';
+
 import { DateTime, getNow } from '../utils/luxonHelpers';
 import { error, success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
   name: 'Calendar',
+
+  // mixins: [eventDialog],
 
   props: {
     selectedSpace: Object,
@@ -103,17 +116,62 @@ export default {
     graphName: String, // changes to graph come from App.js
   },
 
+  components: {
+    // ConfirmModernDialog: () => import('./cards/dialogCardModern'),
+    EventModernDialog: () => import('./cards/eventDialogCardModern'),
+  },
+
   computed: {
+    atWorkAt() {
+      return localStorage.getItem('business');
+    },
+
     cal() {
       return this.ready ? this.$refs.calendar : null;
+    },
+
+    currentEventParsed() {
+      return this.visibleEvents?.find(
+        ({ input }) => input.id === this.selectedEventId
+      );
+    },
+
+    currentEvent() {
+      return this.currentEventParsed?.input;
+    },
+
+    currentEventIsYours() {
+      return this.currentEvent?.category === 'You';
+    },
+
+    currentEventIsLogged() {
+      return this.currentEvent?.loggedNodeId;
+    },
+
+    EventModernDialog() {
+      return this.$refs.EventModernDialog;
+    },
+
+    graphStatus() {
+      if (!this.ready) {
+        return;
+      }
+      const status = this.currentEventIsLogged
+        ? `is logged on the <strong>${this.currentEvent.graphname}</strong> graph`
+        : `is <strong>not logged</strong> to any graph yet. `;
+      return status;
     },
 
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
     },
 
+    model() {
+      return this.currentEventIsYours ? Visit : Appointment;
+    },
+
     visibleEvents() {
-      return this.cal.getVisibleEvents();
+      return this.cal?.getVisibleEvents();
     },
 
     appointments() {
@@ -128,20 +186,33 @@ export default {
       const x = [...Visit.all(), ...this.appointments];
       return x;
     },
+    visitorIsOnline() {
+      return this.userID;
+    },
   },
 
   data: () => ({
     categories: ['You', 'Them'],
+    customEventOptions: {
+      buttons: [
+        { label: 'Cancel', act: 'CANCEL' },
 
+        { label: 'Delete', act: 'DELETE' },
+
+        { spacer: true },
+        { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
+        { label: 'Log', act: 'LOG', color: 'secondary', outlined: true },
+      ],
+    },
     type: 'day',
     focus: '',
-    model: null,
-    lastCategory: '',
     place: null,
     status: 'Select a calendar event to edit',
     ready: false,
     selectedElement: null,
     selectedEventId: '',
+    selectedOptions: null,
+
     typeToLabel: {
       category: 'Appointment',
       month: 'Month',
@@ -152,6 +223,100 @@ export default {
   }),
 
   methods: {
+    //#region Dialogs
+    showDialog() {
+      if (this.currentEventIsYours) {
+        this.showEventDialog();
+      } else {
+        // this.showAppointmentDialog();
+      }
+    },
+    showEventDialog() {
+      const question = `Edit ${this.atWorkAt ? 'Shift at' : 'Visit to'} ${
+        this.currentEvent.name
+      }?`;
+      const consequences = `${this.currentEvent.name} ${this.graphStatus}`; //`You are editing place ID: ${this.parsedEvent.input.place_id}`;
+      const icon = this.atWorkAt ? 'mdi-facebook-workplace' : 'mdi-calendar';
+      const revertData = {
+        start: this.currentEvent.start,
+        end: this.currentEvent.end,
+      };
+
+      const options = {
+        icon: icon,
+        parsedEvent: {}, // not sure we need this anymore
+        date: this.currentEventParsed.input.date,
+        starttimeString: this.currentEventParsed.start.time,
+        endtimeString: this.currentEventParsed.end.time,
+        visitorIsOnline: this.visitorIsOnline, // redundant if userID passed as well
+        userID: this.userID,
+        isAppointment: false,
+      };
+      this.EventModernDialog.setCustomOptions(this.customEventOptions);
+      this.EventModernDialog.open(question, consequences, options).then(
+        (action) => {
+          switch (action) {
+            case 'DELETE':
+              this.deleteEvent(this.parsedEvent.input.id);
+              break;
+            case 'CANCEL':
+              this.revert(revertData);
+              break;
+            case 'BOOK':
+              this.manageAppointments();
+              break;
+
+            case 'LOG':
+              this.logVisit(this.parsedEvent.input);
+              break;
+
+            default:
+              this.throwError(
+                'Calendar.showEventDialog()',
+                `Cannot handle ${action} action`,
+                'This error does not effect you. Sorry for the interruption'
+              );
+          }
+        }
+      );
+    },
+    // showAppointmentDialog() {
+    //   const question = `Manage appointment for ${DateTime.fromMillis(
+    //     this.roundTime(this.starttime)
+    //   ).toFormat('T')}?`;
+    //   const consequences = 'This will update your public calendar.';
+
+    //   const icon = 'mdi-update';
+    //   const options = {
+    //     icon: icon,
+    //     parsedEvent: this.parsedEvent,
+    //     starttime: this.starttime,
+    //     endtime: this.endtime,
+    //     isAppointment: true,
+    //   };
+
+    //   this.EventDialog.setCustomOptions(this.customBookEventOptions);
+
+    //   this.EventModernDialog.open(question, consequences, options).then(
+    //     (action) => {
+    //       switch (action) {
+    //         case 'DELETE':
+    //           this.deleteEvent();
+    //           break;
+    //         case 'CANCEL':
+    //           this.revert();
+    //           break;
+
+    //         case 'SAVE':
+    //           this.saveAppointment(this.parsedEvent.input);
+    //           break;
+    //       }
+    //     }
+    //   );
+    // },
+
+    //#endregion
+
     addVisit(time, place_id = this.place.place_id, stay = this.avgStay) {
       console.log(time, place_id, stay);
       const starttime = this.roundTime(time);
@@ -191,14 +356,11 @@ export default {
         this.status = 'We assume you wanted to change your latest event';
         const latestEvent = this.visibleEvents[this.visibleEvents.length - 1];
         this.selectedEventId = latestEvent.input.id;
-        this.lastCategory = latestEvent.input.category;
       }
-
-      const model = this.getModel();
 
       // can't give this static method (called by indirection in Calendar)
       // the same name as the shipping static method, Visit.find()
-      const v = model.get(this.selectedEventId);
+      const v = this.model.get(this.selectedEventId);
       const date = DateTime.fromFormat(v.date, 'EEE MMM dd yyyy');
       const hour = event.time.slice(0, 2);
       const minute = event.time.slice(3, 5);
@@ -226,7 +388,29 @@ export default {
         startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
       const data = startIsCloser ? { start: newTime } : { end: newTime };
-      model.updateFieldPromise(this.selectedEventId, data).then((v) => {
+      this.model.updateFieldPromise(this.selectedEventId, data).then((v) => {
+        console.log(success('Updated event:', printJson(v)));
+        console.groupEnd();
+      });
+    },
+
+    deleteEvent() {
+      this.model
+        .deletePromise(this.selectedEventId)
+        .then(() => {
+          console.log(`Deleted ${this.currentEvent.name}'s appointment`);
+        })
+        .catch((err) => {
+          this.throwError(
+            'Calendar.deleteEvent()',
+            err,
+            `Oops. Sorry, we had trouble deleting the visit from your calendar. Notified devs.`
+          );
+        });
+    },
+
+    revert(data) {
+      this.model.updateFieldPromise(this.selectedEventId, data).then((v) => {
         console.log(success('Updated event:', printJson(v)));
         console.groupEnd();
       });
@@ -251,12 +435,6 @@ export default {
       this.model = x;
     },
 
-    getModel() {
-      console.log('getModel()', this.lastCategory);
-      const x = this.lastCategory === 'You' ? Visit : Appointment;
-      return x;
-    },
-
     showEvent({ nativeEvent, event }) {
       if (!event) {
         return;
@@ -264,9 +442,9 @@ export default {
       const { id } = event;
       this.status = `Selected calendar event ${id}`;
       this.selectedElement = nativeEvent.target;
-      this.lastCategory = event.category;
-      this.model = this.setModel(this.lastCategory);
       this.selectedEventId = id;
+
+      this.showDialog();
     },
 
     roundTime(time, down = true) {
@@ -319,7 +497,7 @@ export default {
 
     changeTimeStamp(data) {
       const { isStart, val } = data;
-      const event = this.parsedEvent;
+      const event = this.currentEventParsed;
       console.log(
         warn(
           `Editing event id ${event.input.id} ${
@@ -357,7 +535,7 @@ export default {
     },
 
     throwError(source, err, message) {
-      console.log(error(printJson(err)));
+      console.log(error('ERROR:', printJson(err)));
       this.status = message;
       this.$emit('error', {
         source: source,
@@ -370,6 +548,19 @@ export default {
     viewDay({ date }) {
       this.focus = date;
       this.type = 'day';
+    },
+
+    onSetDate(date) {
+      this.date = date;
+    },
+
+    onSetTime(ms, isStart) {
+      if (isStart) {
+        this.currentEvent.start = ms;
+      } else {
+        this.currentEvent.end = ms;
+      }
+      this.model.updatePromise(this.currentEvent);
     },
 
     setToday() {
@@ -415,12 +606,14 @@ export default {
 
     Promise.all([Place.$fetch(), Visit.$fetch(), Appointment.$fetch()])
       .then((entities) => {
+        const places = entities[0].places || [];
         const visits = entities[1].visits || [];
-        console.log(entities[0].places?.length, 'Places');
-        console.log(visits.length, 'Visits');
-        console.log(entities[2].appointments?.length, 'Appointments');
+        const appointments = entities[2].appointments || [];
 
-        console.log(printJson(visits));
+        console.log(places.length, 'Places');
+        console.log(visits.length, 'Visits');
+        console.log(appointments.length, 'Appointments');
+
         console.log(success('mounted calendarCard'));
 
         this.ready = true;

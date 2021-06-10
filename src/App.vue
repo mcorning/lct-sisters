@@ -42,7 +42,6 @@ TODO Incorporate this header data into nestedMenu
       <!-- End Options Menu-->
     </v-app-bar>
     <v-main>
-      <gesture />
       <error-boundary @error="onError($event)">
         <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
           <v-card dark>

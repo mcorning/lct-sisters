@@ -218,22 +218,31 @@ export default {
     answer(act) {
       console.log(act);
       this.dialog = false;
-      let data = {};
-      if (act === 'SAVE') {
-        const starttime = new Date();
-        starttime.setHours(this.options.starttime.slice(0, 2));
-        starttime.setMinutes(this.options.starttime.slice(3, 5));
+      // let data = {};
+      // if (act === 'SAVE') {
+      //   const starttime = new Date();
+      //   starttime.setHours(this.options.starttimeString.slice(0, 2));
+      //   starttime.setMinutes(this.options.starttimeString.slice(3, 5));
 
-        const endtime = new Date();
-        endtime.setHours(this.options.endtime.slice(0, 2));
-        endtime.setMinutes(this.options.endtime.slice(3, 5));
+      //   const endtime = new Date();
+      //   endtime.setHours(this.options.endtimeString.slice(0, 2));
+      //   endtime.setMinutes(this.options.endtimeString.slice(3, 5));
 
-        data.starttime = starttime.getTime();
-        data.endtime = endtime.getTime();
+      //   data.starttime = starttime.getTime();
+      //   data.endtime = endtime.getTime();
 
-        console.log('New start/end:', data.starttime, data.endtime);
-      }
+      //   console.log('New start/end:', data.starttime, data.endtime);
+      // }
       this.resolve(act);
+    },
+
+    convertTimeStringToMs(timeString) {
+      const d = new Date(this.date);
+      d.setHours(timeString.slice(0, 2));
+      d.setMinutes(timeString.slice(3, 5));
+      console.log(d.toString());
+      const time = d.getTime();
+      return time;
     },
 
     setCustomOptions(options) {
@@ -247,8 +256,8 @@ export default {
       this.dialog = true;
       this.title = title;
       this.message = message;
-      this.starttime = options.starttime;
-      this.endtime = options.endtime;
+      (this.date = options.date), (this.starttime = options.starttimeString);
+      this.endtime = options.endtimeString;
       this.options = { ...this.options, ...options };
       console.log('All Options', JSON.stringify(this.options, null, 3));
 
@@ -282,12 +291,16 @@ export default {
 
     endtime(newVal, oldVal) {
       if (oldVal) {
-        this.$emit('setTime', newVal, false);
+        this.$emit('setTime', this.convertTimeStringToMs(newVal), false);
+        // this.$emit('setTime', newVal, false);
       }
     },
   },
 
   mounted() {
+    // TODO
+    // this dialog is mounted before it's used, so customeEventOptions will be null
+    // so do we need this merge?
     this.options = { ...this.options, ...this.customEventOptions };
     this.ready = true;
   },
