@@ -237,6 +237,11 @@ TODO Incorporate this header data into nestedMenu
           <!-- End Individual Exposure Alert Snackbar -->
         </v-container>
       </error-boundary>
+      <ConfirmModernDialog
+        id="ConfirmModernDialogId"
+        ref="ConfirmModernDialog"
+        :customOptions="customOptions"
+      />
     </v-main>
 
     <v-footer app color="primary" class="white--text">
@@ -298,16 +303,21 @@ export default {
     Warning,
     Calendar,
     FeedbackCard,
+    ConfirmModernDialog: () => import('./components/cards/dialogCardModern'),
     // AuditorCard: () => import('./components/cards/AuditorCard.vue'),
     // MenuCard: () => import('./components/cards/menuCard.vue'),
     nestedMenu: () => import('./components/cards/nestedMenuCard'),
   },
 
   computed: {
+    ConfirmModernDialog() {
+      return this.$refs.ConfirmModernDialog;
+    },
+
     bpWidth() {
       return this.bp
-        ? 'screen width: ' + this.bp.width
-        : 'unknown screen width';
+        ? `screen height/width:  ${this.bp.height}/${this.bp.width}`
+        : 'unknown screen size';
     },
 
     // Navigation properties
@@ -335,6 +345,17 @@ export default {
 
   data() {
     return {
+      customOptions: {
+        buttons: [
+          { label: 'No', agree: 0 },
+          {
+            label: 'OK',
+            color: 'secondary',
+            outlined: true,
+            agree: 1,
+          },
+        ],
+      },
       errorState: '',
       fileMenuItems: [
         { isDivider: true },
@@ -861,12 +882,11 @@ export default {
 
     onError(e) {
       this.errorState = {
-        source: e.source,
-        message: e.error,
-        stack: e.stack,
+        message: e.err.message,
+        stack: e.err.stack,
       };
-      console.log(error(`Sending error to server`, e));
-      this.emitFromClient('client_error', e);
+      console.log(error(`Sending error to server`, this.errorState.message));
+      this.emitFromClient('client_error', this.errorState);
     },
 
     onUserFeedback(e) {
@@ -943,8 +963,6 @@ export default {
       // this.fileMenuItems[3].menu = y;
     },
     refreshData() {
-      localStorage.removeItem('username');
-      localStorage.removeItem('sessionID');
       localStorage.removeItem('usesPublicCalendar');
       localStorage.removeItem('people');
       localStorage.removeItem('slotInterval');
@@ -1008,9 +1026,18 @@ export default {
     console.groupCollapsed('Mounting App:');
     const goodData = localStorage.getItem('goodData');
     Visit.$fetch().then((all) => {
-      if (all.visits && !goodData && confirm('Refresh data?')) {
-        this.refreshData();
-        localStorage.setItem('goodData', true);
+      if (all.visits && !goodData) {
+        const question = `May we discard old data?`;
+        const consequences =
+          'Some data structures in this version of LCT are new. Old data can cause LCT to fail. We leave your server data alone, so you will still recieve alerts, if necessary.';
+        this.ConfirmModernDialog.open(question, consequences, {
+          icon: 'mdi-alert-outline',
+        }).then((act) => {
+          if (act) {
+            this.refreshData();
+            localStorage.setItem('goodData', true);
+          }
+        });
       }
     });
 

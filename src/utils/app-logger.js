@@ -41,7 +41,7 @@ class AppLogger {
 
       this.logToServer = (err) => {
         /** temp added to print in the console during production */
-        alert(JSON.stringify(err, null, 3)); //
+        console.log(err);
 
         /** TODO: API integration for logging to server or any custom logic in case of Production environment */
       };
