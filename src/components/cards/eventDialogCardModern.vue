@@ -252,7 +252,9 @@ export default {
       this.starttime = options.parsedEvent.start.time;
       this.endtime = options.parsedEvent.end.time;
       this.options = { ...this.options, ...options };
-      console.log('All Options', JSON.stringify(this.options, null, 3));
+      console.groupCollapsed('All Options:>');
+      console.log(JSON.stringify(this.options, null, 3));
+      console.groupEnd();
 
       return new Promise((resolve, reject) => {
         this.resolve = resolve;

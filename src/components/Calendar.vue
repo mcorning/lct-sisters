@@ -1,5 +1,5 @@
 <template>
-  <v-sheet class="overflow-hidden ">
+  <v-sheet class="overflow-hidden" :height="sheetHeight">
     <v-row id="calendarRow" align="start" class="overflow-hidden ">
       <v-col>
         <!-- calendar controls -->
@@ -45,7 +45,7 @@
         </v-sheet>
 
         <!-- calendar sheet-->
-        <v-sheet height="1000">
+        <v-sheet ref="calendarSheet" :height="calendarHeight">
           <v-calendar
             id="calendar-target"
             ref="calendar"
@@ -72,8 +72,8 @@
     </v-row>
 
     <v-row id="statusRow" no-gutters class="mt-0 ml-0 overflow-hidden">
-      <v-col class="fill-height"
-        ><div class="fill-height">
+      <v-col
+        ><div>
           <small>{{ status }}</small>
         </div>
       </v-col>
@@ -122,8 +122,14 @@ export default {
   },
 
   computed: {
-    atWorkAt() {
-      return localStorage.getItem('business');
+    isAtWorkAt() {
+      return localStorage.getItem('business') === this.currentEvent.name;
+    },
+    atWorkOrVisiting() {
+      if (this.isAtWorkAt) {
+        return 'shift';
+      }
+      return this.currentEventIsYours ? 'visit' : 'appointment';
     },
 
     cal() {
@@ -151,8 +157,7 @@ export default {
 
     dialogOptions() {
       return {
-        parsedEvent: this.currentEventParsed, // not sure we need this anymore
-        visitorIsOnline: this.visitorIsOnline, // redundant if userID passed as well
+        parsedEvent: this.currentEventParsed,
         userID: this.userID,
         isAppointment: false,
       };
@@ -174,14 +179,6 @@ export default {
 
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
-    },
-
-    model() {
-      return this.currentEventIsYours ? Visit : Appointment;
-    },
-
-    modelType() {
-      return this.currentEventIsYours ? 'Visit' : 'Appointment';
     },
 
     visibleEvents() {
@@ -241,7 +238,8 @@ export default {
     selectedElement: null,
     selectedEventId: '',
     selectedOptions: null,
-
+    sheetHeight: 0,
+    calendarHeight: 0,
     typeToLabel: {
       category: 'Appointment',
       month: 'Month',
@@ -253,16 +251,6 @@ export default {
 
   methods: {
     //#region Dialogs
-
-    manageAppointments() {
-      // create an appointment so we have a parsedEvent
-      this.addAppointment();
-      this.showAppointmentDialog();
-      console.groupCollapsed('New Appointment:>');
-      console.log(success(printJson(this.currentEventParsed)));
-      console.groupEnd();
-    },
-
     showDialog() {
       if (this.currentEventIsYours) {
         this.showEventDialog();
@@ -271,7 +259,7 @@ export default {
       }
     },
     showEventDialog() {
-      const question = `Edit ${this.atWorkAt ? 'Shift at' : 'Visit to'} ${
+      const question = `Edit ${this.isAtWorkAt ? 'Shift at' : 'Visit to'} ${
         this.currentEvent.name
       }?`;
       const consequences = `${this.currentEvent.name} ${this.graphStatus}`; //`You are editing place ID: ${this.parsedEvent.input.place_id}`;
@@ -280,7 +268,7 @@ export default {
         end: this.currentEvent.end,
       };
 
-      const icon = this.atWorkAt ? 'mdi-facebook-workplace' : 'mdi-calendar';
+      const icon = this.isAtWorkAt ? 'mdi-facebook-workplace' : 'mdi-calendar';
       const options = { ...this.dialogOptions, icon: icon };
       this.EventModernDialog.setCustomOptions(this.customEventOptions);
       this.EventModernDialog.open(question, consequences, options).then(
@@ -298,7 +286,7 @@ export default {
               break;
 
             case 'BOOK':
-              this.manageAppointments();
+              this.addAppointment();
               break;
 
             case 'LOG':
@@ -315,14 +303,21 @@ export default {
         }
       );
     },
-    showAppointmentDialog() {
-      const question = `Manage appointment for ${this.currentEventParsed.time}?`;
+    showAppointmentDialog(newAppointment = null) {
+      /**
+       * newAppointment means:
+       *    no sense in reverting
+       *    (unless that means deleting the new appointment)
+       */
+      const question = `Manage appointment for ${this.currentEventParsed?.start
+        .time || this.selectedEventId}?`;
       const consequences = 'This will update your public calendar.';
 
       const options = { ...this.dialogOptions, icon: 'mdi-update' };
       const revertData = {
-        start: this.currentEvent.start,
-        end: this.currentEvent.end,
+        start: this.currentEvent?.start,
+        end: this.currentEvent?.end,
+        category: 'Them',
       };
       this.EventModernDialog.setCustomOptions(this.customBookEventOptions);
 
@@ -333,14 +328,34 @@ export default {
               this.deleteEvent();
               break;
             case 'CANCEL':
-              this.revert(revertData);
+              if (newAppointment) {
+                this.deleteEvent(this.selectedEventId);
+              } else {
+                this.revert(revertData);
+              }
               break;
           }
         })
-        .catch((err) => console.log(error(err)));
+        .catch((err) => {
+          console.log(error(err));
+          this.status = err;
+        });
     },
 
     //#endregion
+
+    //#region Visit and Appointment management functions
+    /**
+     *  callback from addAppointment so we can rely on the
+     *  new appointment to appear in visibleElements.
+     *  this way we can treat new and extant appointments the same way.
+     */
+    handleNewAppointment(p) {
+      this.showAppointmentDialog(p);
+      console.groupCollapsed('New Appointment:>');
+      console.log(success(printJson(this.currentEventParsed)));
+      console.groupEnd();
+    },
 
     // can be called by ShowEventDialog() at the start of the business day
     // or can be called by clicking a public calendar time
@@ -351,9 +366,9 @@ export default {
     ) {
       const starttime = this.roundTime(time);
       const endtime = time + slotInterval;
-
+      this.selectedEventId = randomId();
       const val = {
-        id: randomId(),
+        id: this.selectedEventId,
         name: name,
         provider: this.username,
         date: new Date(starttime).toDateString(),
@@ -362,7 +377,7 @@ export default {
         timed: true,
         category: 'Them',
       };
-      this.updateCache({ val });
+      this.updateCache({ val }, this.handleNewAppointment);
     },
 
     addVisit(time, place_id = this.place.place_id, stay = this.avgStay) {
@@ -389,20 +404,62 @@ export default {
       this.updateCache({ val });
     },
 
-    updateCache(data) {
-      const { val, id } = data;
-      if (id) {
-        this.model.updateFieldPromise(id, val).then((v) => {
-          console.log(success('Updated event:', printJson(v)));
-          console.groupEnd().catch((err) => {
+    // only called by mount. shift will be taken from localStorage for employee
+    // customer has null shift
+    // TODO  avgStay should be computed based on visitor's history
+    newVisit() {
+      const time = this.place.startTime || Date.now();
+      const shift = this.place.shift;
+      const place_id = this.place.place_id;
+      this.addVisit(time, place_id, shift);
+    },
+
+    updateCache(data, f) {
+      const { val, id, deleteMe } = data;
+      const model = val.category === 'You' ? Visit : Appointment;
+      if (deleteMe) {
+        model
+          .deletePromise(id)
+          .then(() => {
+            const msg = `Deleted ${val.name}'s ${model.name} ${id}`;
+            console.log(success(msg));
+            this.status = msg;
+            return;
+          })
+          .catch((err) => {
             this.status = err;
           });
-        });
+      }
+      if (id) {
+        model
+          .updateFieldPromise(id, val)
+          .then((p) => {
+            console.log(
+              `Updated ${
+                model.name === 'Visit' ? 'visit' : 'appointment'
+              } with`,
+              printJson(p)
+            );
+            if (f) {
+              f(p);
+            }
+          })
+          .catch((err) => {
+            this.status = err;
+          });
       } else {
-        this.model
+        model
           .updatePromise(val)
           .then((p) => {
-            console.log('Added visit to cache', printJson(p));
+            console.log(
+              `Added ${
+                model.name === 'Visit' ? 'visit' : 'appointment'
+              } to cache`,
+              printJson(p)
+            );
+            if (f) {
+              f(p);
+            }
           })
           .catch((err) => {
             this.status = err;
@@ -411,23 +468,23 @@ export default {
     },
 
     changeInterval(event) {
+      if (this.visibleEvents.length === 0) {
+        this.status = "Can't change an event if there is no event to change";
+        return;
+      }
       console.groupCollapsed('Changing Time:>');
       if (!this.selectedEventId) {
         this.status = 'We assume you wanted to change your latest event';
         const latestEvent = this.visibleEvents[this.visibleEvents.length - 1];
         this.selectedEventId = latestEvent.input.id;
       }
-
-      // can't give this static method (called by indirection in Calendar)
-      // the same name as the shipping static method, Visit.find()
-      const v = this.model.get(this.selectedEventId);
-      // v.date is in a non-ISO format, but JS can parse it
-      const jsDate = new Date(v.date);
+      // this.currentEvent.date is in a non-ISO format, but JS can parse it
+      const jsDate = new Date(this.currentEvent.date);
       // now we can safely extend the date with Luxon
       const date = DateTime.fromJSDate(jsDate);
       const hour = event.time.slice(0, 2);
       const minute = event.time.slice(3, 5);
-      console.log('old end', v.end);
+
       // we are returning ms
       const newTime = this.roundTime(
         DateTime.fromObject({
@@ -440,8 +497,8 @@ export default {
       );
       console.log('new end', newTime);
 
-      const s = DateTime.fromMillis(v.start);
-      const e = DateTime.fromMillis(v.end);
+      const s = DateTime.fromMillis(this.currentEvent.start);
+      const e = DateTime.fromMillis(this.currentEvent.end);
       const d = DateTime.fromMillis(newTime);
       const startDelta = d.diff(s, 'minutes').minutes;
       const endDelta = d.diff(e, 'minutes').minutes;
@@ -450,31 +507,61 @@ export default {
       const startIsCloser =
         startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
-      const val = startIsCloser ? { start: newTime } : { end: newTime };
+      const val = startIsCloser
+        ? { start: newTime, category: this.currentEvent.category }
+        : { end: newTime, category: this.currentEvent.category };
       this.updateCache({ id: this.selectedEventId, val });
+      console.groupEnd();
     },
 
-    deleteEvent() {
-      const name = this.currentEvent.name;
-      const id = this.currentEvent.id;
-      const modelName = this.model.name;
+    // TODO do we need this?
+    changeTimeStamp(data) {
+      const { isStart, val } = data;
+      const event = this.currentEventParsed;
+      console.log(
+        warn(
+          `Editing event id ${event.input.id} ${
+            isStart ? 'starttime' : 'endtime'
+          } to ${val}`
+        )
+      );
+      const hour = Number(val.slice(0, 2));
+      const minute = Number(val.slice(3, 5));
 
-      this.model
-        .deletePromise(this.selectedEventId)
-        .then(() => {
-          const msg = `Deleted ${name}'s ${modelName} ${id}`;
-          console.log(success(msg));
-          this.status = msg;
-        })
-        .catch((err) => {
-          this.status = err;
-        });
+      if (isStart) {
+        event.start.hour = hour;
+        event.start.minute = minute;
+        event.input.start = this.calendarTimestampToDate(event.start).ts;
+      } else {
+        event.end.hour = hour;
+        event.end.minute = minute;
+        event.input.end = this.calendarTimestampToDate(event.end).ts;
+      }
+      console.log(warn('New start:', event.input.start));
+      console.log(warn('New end:', event.input.end));
+    },
+
+    deleteEvent(id = this.currentEvent.id) {
+      const name = this.currentEvent?.name || 'new appointment';
+
+      this.updateCache({ val: { name }, id, deleteMe: true });
     },
 
     revert(val) {
       this.updateCache({ id: this.selectedEventId, val });
     },
 
+    throwError(source, err, message) {
+      console.log(error('ERROR:', err.message));
+      this.status = `${message} ${err.message}`;
+      this.$emit('error', {
+        source: source,
+        error: err,
+      });
+    },
+    //#endregion Visit and Appointment management functions
+
+    //#region Calendar methods
     // won't work until you add back dragAndDrop
     extendBottom(event) {
       if (!this.selectedEvent) {
@@ -500,9 +587,7 @@ export default {
       this.selectedEventId = id;
 
       console.log(this.currentEvent);
-      this.status = `Selected calendar event ${
-        this.currentEventIsYours ? 'Visit' : 'Appointment'
-      } ${id}`;
+      this.status = `Selected calendar event ${this.atWorkOrVisiting} ${this.currentEvent.name} [${id}]`;
 
       // determine which dialog to render
       this.showDialog();
@@ -532,9 +617,6 @@ export default {
     },
 
     calendarTimestampToDate(cts) {
-      // console.log('calendarTimestampToDate(cts):');
-      // console.log(printJson(cts));
-
       try {
         const parsedDate = DateTime.fromObject({
           month: cts.month,
@@ -556,54 +638,17 @@ export default {
       console.log(highlight(this.type, printJson(event)));
     },
 
-    changeTimeStamp(data) {
-      const { isStart, val } = data;
-      const event = this.currentEventParsed;
-      console.log(
-        warn(
-          `Editing event id ${event.input.id} ${
-            isStart ? 'starttime' : 'endtime'
-          } to ${val}`
-        )
-      );
-      const hour = Number(val.slice(0, 2));
-      const minute = Number(val.slice(3, 5));
-
-      if (isStart) {
-        event.start.hour = hour;
-        event.start.minute = minute;
-        event.input.start = this.calendarTimestampToDate(event.start).ts;
-      } else {
-        event.end.hour = hour;
-        event.end.minute = minute;
-        event.input.end = this.calendarTimestampToDate(event.end).ts;
-      }
-      console.log(warn('New start:', event.input.start));
-      console.log(warn('New end:', event.input.end));
+    getCurrentTime() {
+      return this.cal
+        ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
+        : 0;
     },
 
-    // only called by mount. shift will be taken from localStorage for employee
-    // customer has null shift
-    // TODO  avgStay should be computed based on visitor's history
-    newVisit() {
-      const time = this.place.startTime || Date.now();
-      const shift = this.place.shift;
-      const place_id = this.place.place_id;
-      this.addVisit(time, place_id, shift);
-
-      // this.endDrag();
+    scrollToTime(time = this.getCurrentTime()) {
+      const first = Math.max(0, time - (time % 30) - 100);
+      this.cal.scrollToTime(first);
+      console.log(`scrolled to time at ${first}`);
     },
-
-    throwError(source, err, message) {
-      console.log(error('ERROR:', err.message));
-      this.status = `${message} ${err.message}`;
-      this.$emit('error', {
-        source: source,
-        error: err,
-      });
-    },
-
-    //#region Calendar methods
 
     viewDay({ date }) {
       this.focus = date;
@@ -642,13 +687,32 @@ export default {
           : event.color;
       return c;
     },
-    //#endregion
+    //#endregion Calendar methods
+
+    setHeight() {
+      const bp = this.$vuetify.breakpoint;
+      console.log(
+        highlight('Breakpoint'),
+        bp.name,
+        'width',
+        bp.width,
+        'height',
+        bp.height,
+
+        'mobile?',
+        bp.mobile
+      );
+
+      const x = bp.height;
+      const y = 112; // height of appbar header and footer
+      this.sheetHeight = x - y;
+      this.calendarHeight = this.sheetHeight - 100;
+      console.log('sheetHeight:', this.sheetHeight);
+      console.log('calendarHeight:', this.calendarHeight);
+    },
   },
 
   watch: {
-    model(newVal, oldVal) {
-      console.log('model', newVal, oldVal);
-    },
     graphName(newVal, oldVal) {
       console.log('Graph name is', newVal, 'and was', oldVal);
       this.status = `You are ${
@@ -674,15 +738,17 @@ export default {
         console.log(visits.length, 'Visits');
         console.log(appointments.length, 'Appointments');
 
-        console.log(success('mounted calendarCard'));
-        this.type = visits.length > 0 ? 'category' : 'day';
+        this.type = appointments.length > 0 ? 'category' : 'day';
+
+        this.setHeight();
         this.ready = true;
-        this.cal.scrollToTime();
+        this.scrollToTime();
 
         self.place = self.selectedSpace;
         if (self.place) {
           self.newVisit();
         }
+        console.log(success('mounted calendarCard'));
       })
       .catch((err) => this.throwError('Calendar.mounted()', err));
   },

@@ -275,6 +275,7 @@ import Warning from '@/components/Warning';
 import Calendar from '@/components/Calendar';
 
 import {
+  error,
   highlight,
   success,
   warn,
