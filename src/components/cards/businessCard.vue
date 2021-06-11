@@ -89,9 +89,7 @@
         </v-row>
         <v-switch
           v-model="usesPublicCalendar"
-          :label="
-            `By appointment only. Currently: ${usesPublicCalendar.toString()}`
-          "
+          :label="usesPublicCalendarLabel"
         ></v-switch>
         <!-- Optional settings -->
         <v-row v-if="usesPublicCalendar">
@@ -139,6 +137,10 @@ export default {
   },
 
   computed: {
+    usesPublicCalendarLabel() {
+      return `By appointment only. Currently: ${this.usesPublicCalendar.toString()}`;
+    },
+
     place() {
       return Place.find(this.id);
     },
@@ -206,7 +208,8 @@ export default {
   },
   mounted() {
     Place.$fetch();
-    this.usesPublicCalendar = localStorage.getItem('usesPublicCalendar');
+    this.usesPublicCalendar =
+      localStorage.getItem('usesPublicCalendar') || false;
     this.people = localStorage.getItem('people');
     this.slotInterval = localStorage.getItem('slotInterval');
     this.openAt = localStorage.getItem('openAt');

@@ -137,9 +137,10 @@ export default {
     },
 
     currentEventParsed() {
-      return this.visibleEvents?.find(
+      const x = this.visibleEvents?.find(
         ({ input }) => input.id === this.selectedEventId
       );
+      return x;
     },
 
     currentEvent() {
@@ -546,6 +547,10 @@ export default {
 
       this.updateCache({ val: { name }, id, deleteMe: true });
     },
+    logVisit(visit) {
+      this.$emit('logVisit', visit);
+      this.status = 'Logged to server. Stay safe out there.';
+    },
 
     revert(val) {
       this.updateCache({ id: this.selectedEventId, val });
@@ -741,13 +746,32 @@ export default {
         this.type = appointments.length > 0 ? 'category' : 'day';
 
         this.setHeight();
-        this.ready = true;
-        this.scrollToTime();
 
         self.place = self.selectedSpace;
         if (self.place) {
           self.newVisit();
         }
+        function isNaN(visit) {
+          return Number.isNaN(visit.end) || Number.isNaN(visit.start);
+        }
+        // const bad = visits[0];
+        // bad.end = NaN;
+        // Visit.update(bad);
+        const x = Visit.query()
+          .where('end', 'NaN')
+          .get();
+        console.log(x);
+        const y = visits.find(isNaN);
+        console.log(y);
+
+        // ensure start and end are valid dates
+        Visit.validateVisits().then((invalidVisits) => {
+          console.groupCollapsed(warn('Invalid visits:'));
+          console.log(printJson(invalidVisits));
+          console.groupEnd();
+          this.ready = true;
+          this.scrollToTime();
+        });
         console.log(success('mounted calendarCard'));
       })
       .catch((err) => this.throwError('Calendar.mounted()', err));

@@ -349,7 +349,9 @@ export default {
           if (status === window.google.maps.places.PlacesServiceStatus.OK) {
             // getDetails() returns the place
             Place.updatePromise(place)
-              .then((result) => this.openInfoWindowWithSelectedPlace(result[0]))
+              .then((result) => {
+                this.openInfoWindowWithSelectedPlace(result[0]);
+              })
               .catch((err) => {
                 this.throwError(
                   'GoogleMap.addPlaceWithID(space).Place.updatePromise(place)',
@@ -384,7 +386,7 @@ export default {
               // geocode results do include the place_id, even for a spot not otherwise noteworthy
               space = results[0];
               if (!space.plus_code) {
-                alert('Selected space lacks the expected plus_code.');
+                space.plus_code = { global_code: 'NA' };
               }
               console.log('Non-POI (spot) results:', printJson(space));
 
@@ -486,7 +488,7 @@ export default {
       console.log('Start Time:', startTime.toString());
       this.$emit('addedPlace', {
         ...this.place,
-        plus_code: Place.getPosition(this.place.place_id).plus_code,
+        plus_code: Place.getPosition(this.place.place_id).plus_code || 'NA',
         startTime: startTime,
         endtime: endTime,
         shift: shift,
