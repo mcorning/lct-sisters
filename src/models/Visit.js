@@ -32,6 +32,16 @@ export default class Visit extends Model {
     };
   }
 
+  static validateVisits() {
+    return new Promise((resolve, reject) => {
+      this.$delete(
+        (visit) => Number.isNaN(visit.end) || Number.isNaN(visit.start)
+      )
+        .then((p) => resolve(p))
+        .catch((e) => reject(e));
+    });
+  }
+
   // can't give this static method (called by indirection in Calendar)
   // the same name as the shipping static method, Visit.find()
   static get(id) {
