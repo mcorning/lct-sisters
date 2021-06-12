@@ -55,6 +55,8 @@
             :events="relevantEvents"
             :categories="categories"
             :event-color="getEventColor"
+            @click:more="viewDay"
+            @click:date="viewDay"
             @click:interval="changeInterval"
             @click:event="showEvent"
           >
@@ -474,6 +476,12 @@ export default {
     },
 
     changeInterval(event) {
+      // TODO start here
+      /**
+       * if we change interval on a prior day, the date wraps into the next day.
+       * this is the start of figuring out how to edit other days than today
+       */
+
       if (this.visibleEvents.length === 0) {
         this.status = "Can't change an event if there is no event to change";
         return;
@@ -697,6 +705,11 @@ export default {
         this.currentEvent.end = ms;
       }
       this.updateCache({ val: this.currentEvent });
+    },
+
+    viewDay({ date }) {
+      this.focus = date;
+      this.type = 'day';
     },
 
     setToday() {

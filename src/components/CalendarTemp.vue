@@ -73,9 +73,9 @@
             @mousemove:time="mouseMove"
             @click:event="showEvent"
             @click:interval="showInterval"
-            @click:more="viewDay"
             @mousedown:event="startDrag"
             @mouseup:time="endDrag"
+            @click:more="viewDay"
             @click:date="viewDay"
             @change="handleChange"
             v-touch="{
