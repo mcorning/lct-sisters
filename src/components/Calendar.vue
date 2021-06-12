@@ -295,11 +295,16 @@ export default {
               break;
 
             default:
-              this.throwError(
-                'Calendar.showEventDialog()',
-                `Cannot handle ${action} action`,
-                'This error does not effect you. Sorry for the interruption'
-              );
+              // if action is a date, use it to setDate()
+              try {
+                this.onSetDate(action);
+              } catch (error) {
+                this.throwError(
+                  'Calendar.showEventDialog()',
+                  `Cannot handle ${action} action`,
+                  'This error does not effect you. Sorry for the interruption'
+                );
+              }
           }
         }
       );
@@ -660,8 +665,29 @@ export default {
       this.type = 'day';
     },
 
+    updateTimestampsFromDateChange(ts) {
+      // TODO it's always risky to make a date from a fixed format
+      // but this was more reliable than using .fromJSDate()
+      // because JS left-shifts the day as a zero-based index
+      const d = DateTime.fromFormat(this.date, 'yyyy-LL-dd');
+
+      const { year, month, day } = d;
+      const { hour, minute } = ts;
+      return DateTime.local(year, month, day, hour, minute).ts;
+    },
+
     onSetDate(date) {
       this.date = date;
+      this.currentEvent.date = this.date;
+      let newTs = this.updateTimestampsFromDateChange(
+        this.currentEventParsed.start
+      );
+      this.currentEvent.start = newTs;
+
+      newTs = this.updateTimestampsFromDateChange(this.currentEventParsed.end);
+      this.currentEvent.end = newTs;
+
+      this.updateCache({ val: this.currentEvent });
     },
 
     onSetTime(ms, isStart) {
@@ -751,18 +777,6 @@ export default {
         if (self.place) {
           self.newVisit();
         }
-        function isNaN(visit) {
-          return Number.isNaN(visit.end) || Number.isNaN(visit.start);
-        }
-        // const bad = visits[0];
-        // bad.end = NaN;
-        // Visit.update(bad);
-        const x = Visit.query()
-          .where('end', 'NaN')
-          .get();
-        console.log(x);
-        const y = visits.find(isNaN);
-        console.log(y);
 
         // ensure start and end are valid dates
         Visit.validateVisits().then((invalidVisits) => {
@@ -771,6 +785,7 @@ export default {
           console.groupEnd();
           this.ready = true;
           this.scrollToTime();
+          printJson(this.currentEventParsed);
         });
         console.log(success('mounted calendarCard'));
       })

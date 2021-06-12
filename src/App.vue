@@ -1039,6 +1039,14 @@ export default {
           }
         });
       }
+
+      const onTheJob =
+        localStorage.getItem('usesPublicCalendar') === 'true' &&
+        all.visits.length > 0 &&
+        all.visits.filter((v) => v.date === new Date().toDateString()).length >
+          0;
+
+      self.show = onTheJob ? this.CALENDAR : this.SPACES;
     });
 
     const self = this;
@@ -1060,10 +1068,6 @@ export default {
     self.graphName = self.$defaultGraphName;
     console.log(self.graphName);
     self.usernameAlreadySelected = localStorage.getItem('username');
-    self.show =
-      localStorage.getItem('usesPublicCalendar') === 'true'
-        ? this.CALENDAR
-        : this.SPACES;
 
     console.log('App.vue mounted');
     console.groupEnd();

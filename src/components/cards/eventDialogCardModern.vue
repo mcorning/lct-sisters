@@ -24,8 +24,8 @@
         </v-col>
       </v-row>
 
-      <v-row v-if="options.isAppointment" id="apptRow" justify="space-around">
-        <v-col>
+      <v-row id="apptRow" justify="space-around">
+        <v-col v-if="isAppointment">
           <v-card-text>
             <v-text-field
               label="Customer"
@@ -37,17 +37,19 @@
         </v-col>
         <v-col cols="12" sm="6" md="4">
           <v-menu
+            ref="menu"
             v-model="datemenu"
             :close-on-content-click="false"
             :nudge-right="40"
             transition="scale-transition"
             offset-y
             min-width="290px"
+            :return-value.sync="date"
           >
             <template v-slot:activator="{ on, attrs }">
               <v-text-field
                 v-model="date"
-                label="Appointment Date"
+                :label="dateLabel"
                 prepend-icon="event"
                 readonly
                 v-bind="attrs"
@@ -56,7 +58,7 @@
             </template>
             <v-date-picker
               v-model="date"
-              @input="datemenu = false"
+              @input="setDateAndClose"
             ></v-date-picker>
           </v-menu>
         </v-col>
@@ -178,12 +180,24 @@ export default {
     },
   },
 
-  computed: {},
+  computed: {
+    isAppointment() {
+      if (!this.options.parsedEvent) {
+        return false;
+      }
+      const x = !!this.options.parsedEvent.input.provider;
+      return x;
+    },
+    dateLabel() {
+      const x = `${this.isAppointment ? 'Appointment' : 'Visit'} Date`;
+      return x;
+    },
+  },
 
   data() {
     return {
-      datemenu: true,
-      date: null,
+      datemenu: false,
+      date: false,
       customer: '',
 
       modalStart: false,
@@ -207,24 +221,15 @@ export default {
     };
   },
   methods: {
+    setDateAndClose() {
+      this.datemenu = false;
+      console.info('New Visit Date', this.date);
+      this.$emit('setDate', this.date);
+    },
+
     answer(act) {
       console.log(act);
       this.dialog = false;
-      // let data = {};
-      // if (act === 'SAVE') {
-      //   const starttime = new Date();
-      //   starttime.setHours(this.options.starttimeString.slice(0, 2));
-      //   starttime.setMinutes(this.options.starttimeString.slice(3, 5));
-
-      //   const endtime = new Date();
-      //   endtime.setHours(this.options.endtimeString.slice(0, 2));
-      //   endtime.setMinutes(this.options.endtimeString.slice(3, 5));
-
-      //   data.starttime = starttime.getTime();
-      //   data.endtime = endtime.getTime();
-
-      //   console.log('New start/end:', data.starttime, data.endtime);
-      // }
       this.resolve(act);
     },
 
@@ -248,7 +253,9 @@ export default {
       this.dialog = true;
       this.title = title;
       this.message = message;
-      this.date = options.parsedEvent.input.date;
+      this.date = new Date(options.parsedEvent.input.date)
+        .toISOString()
+        .substr(0, 10);
       this.starttime = options.parsedEvent.start.time;
       this.endtime = options.parsedEvent.end.time;
       this.options = { ...this.options, ...options };
@@ -273,11 +280,6 @@ export default {
     allowedStep: (m) => m % 15 === 0,
   },
   watch: {
-    date(newVal, oldVal) {
-      if (oldVal) {
-        this.$emit('setDate', newVal);
-      }
-    },
     starttime(newVal, oldVal) {
       if (oldVal) {
         this.$emit('setTime', this.convertTimeStringToMs(newVal), true);
