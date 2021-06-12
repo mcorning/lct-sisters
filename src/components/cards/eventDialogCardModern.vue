@@ -224,6 +224,7 @@ export default {
     setDateAndClose() {
       this.datemenu = false;
       console.info('New Visit Date', this.date);
+      this.dialog = false;
       this.$emit('setDate', this.date);
     },
 

@@ -55,6 +55,7 @@
             :events="relevantEvents"
             :categories="categories"
             :event-color="getEventColor"
+            :now="currentDate"
             @click:more="viewDay"
             @click:date="viewDay"
             @click:interval="changeInterval"
@@ -210,6 +211,7 @@ export default {
 
   data: () => ({
     categories: ['You', 'Them'],
+    currentDate: null,
     customEventOptions: {
       buttons: [
         { label: 'Cancel', act: 'CANCEL' },
@@ -300,6 +302,7 @@ export default {
               // if action is a date, use it to setDate()
               try {
                 this.onSetDate(action);
+                this.viewDay(action);
               } catch (error) {
                 this.throwError(
                   'Calendar.showEventDialog()',
@@ -604,8 +607,7 @@ export default {
       // this enables us to get the currentEventParsed (and all it's dependencies)
       this.selectedEventId = id;
 
-      console.log(this.currentEvent);
-      this.status = `Selected calendar event ${this.atWorkOrVisiting} ${this.currentEvent.name} [${id}]`;
+      this.status = `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`;
 
       // determine which dialog to render
       this.showDialog();
@@ -668,11 +670,6 @@ export default {
       console.log(`scrolled to time at ${first}`);
     },
 
-    viewDay({ date }) {
-      this.focus = date;
-      this.type = 'day';
-    },
-
     updateTimestampsFromDateChange(ts) {
       // TODO it's always risky to make a date from a fixed format
       // but this was more reliable than using .fromJSDate()
@@ -685,17 +682,28 @@ export default {
     },
 
     onSetDate(date) {
-      this.date = date;
-      this.currentEvent.date = this.date;
-      let newTs = this.updateTimestampsFromDateChange(
-        this.currentEventParsed.start
-      );
-      this.currentEvent.start = newTs;
+      if (!date) {
+        alert('Date is null. Try again, please.');
+      }
+      try {
+        this.date = date;
+        this.currentEvent.date = this.date;
+        let newTs = this.updateTimestampsFromDateChange(
+          this.currentEventParsed.start
+        );
+        this.currentEvent.start = newTs;
 
-      newTs = this.updateTimestampsFromDateChange(this.currentEventParsed.end);
-      this.currentEvent.end = newTs;
+        newTs = this.updateTimestampsFromDateChange(
+          this.currentEventParsed.end
+        );
+        this.currentEvent.end = newTs;
 
-      this.updateCache({ val: this.currentEvent });
+        this.updateCache({ val: this.currentEvent });
+      } catch (err) {
+        this.status = error(
+          `This is unexpected: ${err.message}. Let's try that again...`
+        );
+      }
     },
 
     onSetTime(ms, isStart) {
@@ -709,11 +717,14 @@ export default {
 
     viewDay({ date }) {
       this.focus = date;
+      console.log(`Going to ${date}`);
+      this.status = `Going to ${date}`;
       this.type = 'day';
+      this.currentDate = date;
     },
-
     setToday() {
       this.focus = '';
+      this.status = `Going back to today`;
       this.cal.scrollToTime();
     },
     prev() {
@@ -798,7 +809,6 @@ export default {
           console.groupEnd();
           this.ready = true;
           this.scrollToTime();
-          printJson(this.currentEventParsed);
         });
         console.log(success('mounted calendarCard'));
       })
