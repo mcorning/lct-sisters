@@ -173,6 +173,8 @@
 </template>
 
 <script>
+import { DateTime } from '../../utils/luxonHelpers';
+
 export default {
   props: {
     customEventOptions: {
@@ -196,8 +198,11 @@ export default {
 
   data() {
     return {
+      // Vuetify Calendar uses this format
+      DATE_FORMAT: 'yyyy-LL-dd',
+
       datemenu: false,
-      date: false,
+      date: '',
       customer: '',
 
       modalStart: false,
@@ -235,11 +240,9 @@ export default {
     },
 
     convertTimeStringToMs(timeString) {
-      const d = new Date(this.date);
-      d.setHours(timeString.slice(0, 2));
-      d.setMinutes(timeString.slice(3, 5));
+      const d = DateTime.fromSQL(`${this.date} ${timeString}`);
       console.log(d.toString());
-      const time = d.getTime();
+      const time = d.ts;
       return time;
     },
 
@@ -254,9 +257,7 @@ export default {
       this.dialog = true;
       this.title = title;
       this.message = message;
-      this.date = new Date(options.parsedEvent.input.date)
-        .toISOString()
-        .substr(0, 10);
+      this.date = options.parsedEvent.input.date;
       this.starttime = options.parsedEvent.start.time;
       this.endtime = options.parsedEvent.end.time;
       this.options = { ...this.options, ...options };

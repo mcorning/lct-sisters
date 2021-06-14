@@ -211,6 +211,8 @@ export default {
   },
 
   data: () => ({
+    // Calendar uses this format
+    DATE_FORMAT: 'yyyy-LL-dd',
     categories: ['You', 'Them'],
     currentDate: null,
     customEventOptions: {
@@ -384,7 +386,7 @@ export default {
         id: this.selectedEventId,
         name: name,
         provider: this.username,
-        date: new Date(starttime).toDateString(),
+        date: DateTime(starttime).toISODate(),
         start: starttime,
         end: endtime,
         timed: true,
@@ -404,7 +406,7 @@ export default {
         place_id: place_id,
         start: starttime,
         end: endtime,
-        date: new Date(starttime).toDateString(),
+        date: DateTime(starttime).toISODate(),
         category: 'You',
 
         timed: true,
@@ -488,32 +490,15 @@ export default {
        * this is the start of figuring out how to edit other days than today
        */
 
-      if (this.visibleEvents.length === 0) {
-        this.status = "Can't change an event if there is no event to change";
-        return;
-      }
       console.groupCollapsed('Changing Time:>');
       if (!this.selectedEventId) {
-        this.status = 'We assume you wanted to change your latest event';
-        const latestEvent = this.visibleEvents[this.visibleEvents.length - 1];
-        this.selectedEventId = latestEvent.input.id;
+        this.status = 'Pick an event';
+        return;
       }
-      // this.currentEvent.date is in a non-ISO format, but JS can parse it
-      const jsDate = new Date(this.currentEvent.date);
-      // now we can safely extend the date with Luxon
-      const date = DateTime.fromJSDate(jsDate);
-      const hour = event.time.slice(0, 2);
-      const minute = event.time.slice(3, 5);
 
       // we are returning ms
       const newTime = this.roundTime(
-        DateTime.fromObject({
-          year: date.year,
-          month: date.month,
-          day: date.day,
-          hour: hour,
-          minute: minute,
-        }).ts
+        DateTime.fromSQL(`${this.currentEvent.date} ${event.time}`).ts
       );
       console.log('new end', newTime);
 
@@ -629,13 +614,13 @@ export default {
     },
 
     toTime(tms) {
-      return new Date(
+      return DateTime.fromObject(
         tms.year,
-        tms.month - 1,
+        tms.month,
         tms.day,
         tms.hour,
         tms.minute
-      ).getTime();
+      ).toMillis();
     },
 
     updateTime() {
@@ -680,7 +665,7 @@ export default {
       // TODO it's always risky to make a date from a fixed format
       // but this was more reliable than using .fromJSDate()
       // because JS left-shifts the day as a zero-based index
-      const d = DateTime.fromFormat(this.date, 'yyyy-LL-dd');
+      const d = DateTime.fromFormat(this.date, this.DATE_FORMAT);
 
       const { year, month, day } = d;
       const { hour, minute } = ts;
