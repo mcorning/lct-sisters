@@ -147,7 +147,7 @@ export default class Visit extends Model {
           if (p) {
             resolve(p);
           } else {
-            throw 'Nothing to delete';
+            throw 'No VISIT to DELETE';
           }
         })
         .catch((e) => reject(e));

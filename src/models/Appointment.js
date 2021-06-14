@@ -113,7 +113,7 @@ export default class Appointment extends Model {
           if (a) {
             resolve(a);
           } else {
-            throw 'Nothing to delete';
+            throw 'No APPOINTMENT to DELETE';
           }
         })
         .catch((e) => reject(e));

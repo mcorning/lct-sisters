@@ -143,11 +143,12 @@ export default {
       const x = this.visibleEvents?.find(
         ({ input }) => input.id === this.selectedEventId
       );
-      return x;
+      return x || this.selectedEventParsed;
     },
 
     currentEvent() {
-      return this.currentEventParsed?.input;
+      // selectedEventParsed has value for past/future events
+      return this.currentEventParsed?.input || this.selectedEventParsed.input;
     },
 
     currentEventIsYours() {
@@ -241,6 +242,7 @@ export default {
     status: 'Select a calendar event to edit',
     ready: false,
     selectedElement: null,
+    selectedEventParsed: null,
     selectedEventId: '',
     selectedOptions: null,
     sheetHeight: 0,
@@ -426,6 +428,7 @@ export default {
     },
 
     updateCache(data, f) {
+      // TODO 'val' is a very bad arg name
       const { val, id, deleteMe } = data;
       const model = val.category === 'You' ? Visit : Appointment;
       if (deleteMe) {
@@ -559,9 +562,10 @@ export default {
     },
 
     deleteEvent(id = this.currentEvent.id) {
-      const name = this.currentEvent?.name || 'new appointment';
+      const category = this.currentEvent.category;
+      const name = this.currentEvent?.name || 'appointment';
 
-      this.updateCache({ val: { name }, id, deleteMe: true });
+      this.updateCache({ val: { name, category }, id, deleteMe: true });
     },
     logVisit(visit) {
       this.$emit('logVisit', visit);
@@ -585,7 +589,7 @@ export default {
     //#region Calendar methods
     // won't work until you add back dragAndDrop
     extendBottom(event) {
-      if (!this.selectedEvent) {
+      if (!this.selectedEventParsed.input) {
         return;
       }
       this.updateCache({
@@ -606,6 +610,8 @@ export default {
 
       // this enables us to get the currentEventParsed (and all it's dependencies)
       this.selectedEventId = id;
+      // selectedEventParsed used for past/future events (not included in cal.getVisibleEvents())
+      this.selectedEventParsed = this.cal.parseEvent(event);
 
       this.status = `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`;
 
