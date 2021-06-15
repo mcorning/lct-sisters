@@ -141,7 +141,6 @@ import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 
 import {
-  error,
   highlight,
   success,
   warn,
@@ -662,7 +661,7 @@ export default {
     //#endregion Methods for mount()
 
     throwError(source, err) {
-      console.log(error(printJson(err)));
+      console.error(printJson(err));
       this.$emit('error', {
         source: source,
         error: err,

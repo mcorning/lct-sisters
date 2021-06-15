@@ -69,7 +69,7 @@
 
 <script>
 import Visit from '@/models/Visit';
-import { success, error, printJson } from '../utils/colors';
+import { success, printJson } from '../utils/colors';
 import { formatTime } from '../utils/luxonHelpers';
 
 export default {
@@ -135,7 +135,7 @@ export default {
         this.overlay = false;
         console.log(success('Visits'), printJson(this.visits));
       })
-      .catch((e) => console.log(error(`Error in roomCard: ${e}`)));
+      .catch((e) => console.error(`Error in roomCard: ${e}`));
   },
 };
 </script>

@@ -1,6 +1,6 @@
 const clc = require('cli-color');
 const success = clc.green.bold;
-const error = clc.red.bold;
+const err = clc.red.bold;
 const warn = clc.yellow;
 const info = clc.cyan;
 const notice = clc.blue;
@@ -24,7 +24,7 @@ module.exports = {
   getRandomIntInclusive,
   printJson,
   success,
-  error,
+  err,
   warn,
   info,
   notice,

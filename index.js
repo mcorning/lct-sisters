@@ -6,7 +6,6 @@ const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
 const {
   printJson,
-  error,
   warn,
   highlight,
   info,
@@ -199,7 +198,7 @@ io.on('connection', (socket) => {
           );
         });
       })
-      .catch((error) => console.log(error(error)));
+      .catch((error) => console.error(error));
   });
 
   socket.on('manageAppointment', (data) => {
@@ -242,9 +241,9 @@ io.on('connection', (socket) => {
   socket.on('client_error', (data) => {
     errorCache.set(Date.now(), data);
     errorCache.save();
-    console.log(error('Incoming client_error!'));
+    console.error('Incoming client_error!');
     errorCache.print(null, 'Errors:');
-    console.log(error('See the errors.json later for details.'));
+    console.error('See the errors.json later for details.');
   });
 
   //#endregion

@@ -280,7 +280,6 @@ import Warning from '@/components/Warning';
 import Calendar from '@/components/Calendar';
 
 import {
-  error,
   highlight,
   success,
   warn,
@@ -880,13 +879,9 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    onError(e) {
-      this.errorState = {
-        message: e.err.message,
-        stack: e.err.stack,
-      };
-      console.log(error(`Sending error to server`, this.errorState.message));
-      this.emitFromClient('client_error', this.errorState);
+    onError(error) {
+      console.error(`Sending error to server`, error);
+      this.emitFromClient('client_error', error);
     },
 
     onUserFeedback(e) {

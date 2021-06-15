@@ -104,7 +104,7 @@ import Appointment from '@/models/Appointment';
 // import { eventDialog } from '../mixins/eventDialog';
 
 import { DateTime, getNow } from '../utils/luxonHelpers';
-import { error, success, warn, highlight, printJson } from '../utils/colors';
+import { success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
   name: 'Calendar',
@@ -308,11 +308,15 @@ export default {
                 this.onSetDate(action);
                 this.viewDay(action);
               } catch (error) {
-                this.throwError(
-                  'Calendar.showEventDialog()',
-                  `Cannot handle ${action} action`,
-                  'This error does not effect you. Sorry for the interruption'
-                );
+                this.throwError({
+                  source: 'Calendar.showEventDialog()',
+                  error: {
+                    message: `Cannot handle ${action} action`,
+                    stack: 'this.EventModernDialog.open()',
+                  },
+                  comment:
+                    'This error does not effect you. Sorry for the interruption',
+                });
               }
           }
         }
@@ -352,7 +356,7 @@ export default {
           }
         })
         .catch((err) => {
-          console.log(error(err));
+          console.log(err(err));
           this.status = err;
         });
     },
@@ -375,7 +379,7 @@ export default {
     // can be called by ShowEventDialog() at the start of the business day
     // or can be called by clicking a public calendar time
     addAppointment(
-      time = DateTime.now().ts,
+      time = DateTime.now().toMillis(),
       name = 'customer',
       slotInterval = 30 * 1000 * 60
     ) {
@@ -386,7 +390,7 @@ export default {
         id: this.selectedEventId,
         name: name,
         provider: this.username,
-        date: DateTime(starttime).toISODate(),
+        date: DateTime.fromMillis(starttime).toISODate(),
         start: starttime,
         end: endtime,
         timed: true,
@@ -399,14 +403,13 @@ export default {
       console.log(time, place_id, stay);
       const starttime = this.roundTime(time);
       const endtime = starttime + stay;
-
       const val = {
         id: randomId(),
         name: this.place.name,
         place_id: place_id,
         start: starttime,
         end: endtime,
-        date: DateTime(starttime).toISODate(),
+        date: DateTime.fromMillis(starttime).toISODate(),
         category: 'You',
 
         timed: true,
@@ -561,12 +564,14 @@ export default {
       this.updateCache({ id: this.selectedEventId, val });
     },
 
-    throwError(source, err, message) {
-      console.log(error('ERROR:', err.message));
-      this.status = `${message} ${err.message}`;
+    throwError(payload) {
+      const { source, error, comment } = payload;
+      const msg = `ERROR: ${error.message} at ${source} (${comment})`;
+      console.log(msg);
+
+      this.status = msg;
       this.$emit('error', {
-        source: source,
-        error: err,
+        payload,
       });
     },
     //#endregion Visit and Appointment management functions
@@ -691,9 +696,7 @@ export default {
 
         this.updateCache({ val: this.currentEvent });
       } catch (err) {
-        this.status = error(
-          `This is unexpected: ${err.message}. Let's try that again...`
-        );
+        this.status = `This is unexpected: ${err.message}. Let's try that again...`;
       }
     },
 
@@ -803,7 +806,13 @@ export default {
         });
         console.log(success('mounted calendarCard'));
       })
-      .catch((err) => this.throwError('Calendar.mounted()', err));
+      .catch((err) =>
+        this.throwError({
+          source: 'Calendar.mounted()',
+          error: err,
+          comment: 'This is bad.',
+        })
+      );
   },
 
   destroyed() {
