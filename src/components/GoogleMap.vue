@@ -154,7 +154,7 @@ export default {
   name: 'GoogleMap',
 
   components: {
-    ConfirmModernDialog: () => import('./cards/dialogCardModern'),
+    ConfirmModernDialog: () => import('./cards/dialogCard'),
     businessCard: () => import('./cards/businessCard'),
   },
 

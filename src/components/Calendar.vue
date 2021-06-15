@@ -1,93 +1,7 @@
 <template>
-  <v-sheet class="overflow-hidden" :height="sheetHeight">
-    <v-row id="calendarRow" align="start" class="overflow-hidden ">
-      <v-col>
-        <!-- calendar controls -->
-        <v-sheet height="48">
-          <v-toolbar flat>
-            <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
-            <v-btn fab text small color="grey darken-2" @click="prev">
-              <v-icon> mdi-chevron-left </v-icon>
-            </v-btn>
-            <v-btn fab text small color="grey darken-2" @click="next">
-              <v-icon> mdi-chevron-right </v-icon>
-            </v-btn>
-            <v-toolbar-title v-if="cal">
-              {{ cal.title }}
-            </v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-menu bottom right>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
-                  <span>{{ typeToLabel[type] }}</span>
-                  <v-icon right> mdi-menu-down </v-icon>
-                </v-btn>
-              </template>
-              <v-list>
-                <v-list-item @click="type = 'category'">
-                  <v-list-item-title>Work</v-list-item-title>
-                </v-list-item>
-                <v-list-item @click="type = 'day'">
-                  <v-list-item-title>Day</v-list-item-title>
-                </v-list-item>
-                <v-list-item @click="type = '4day'">
-                  <v-list-item-title>4 days</v-list-item-title>
-                </v-list-item>
-                <v-list-item @click="type = 'week'">
-                  <v-list-item-title>Week</v-list-item-title>
-                </v-list-item>
-                <v-list-item @click="type = 'month'">
-                  <v-list-item-title>Month</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-menu>
-          </v-toolbar>
-        </v-sheet>
-
-        <!-- calendar sheet-->
-        <v-sheet ref="calendarSheet" :height="calendarHeight">
-          <v-calendar
-            id="calendar-target"
-            ref="calendar"
-            v-model="focus"
-            color="primary"
-            :type="type"
-            :events="relevantEvents"
-            :categories="categories"
-            :event-color="getEventColor"
-            :now="currentDate"
-            :show-interval-label="onShowIntervalLabel"
-            :interval-count="intervalCount"
-            :first-time="firstTime"
-            :interval-minutes="intervalMinutes"
-            @click:more="viewDay"
-            @click:date="viewDay"
-            @click:interval="changeInterval"
-            @click:event="showEvent"
-            @change="handleChange"
-          >
-            <template v-slot:event="{ event, timed, eventSummary }">
-              <div class="v-event-draggable" v-html="eventSummary()"></div>
-              <div
-                v-if="timed"
-                class="v-event-drag-bottom"
-                @mousedown.stop="extendBottom(event)"
-              ></div>
-            </template>
-          </v-calendar>
-        </v-sheet>
-      </v-col>
-    </v-row>
-
-    <v-row id="statusRow" no-gutters class="mt-0 ml-0 overflow-hidden">
-      <v-col
-        ><div>
-          <small>{{ status }}</small>
-        </div>
-      </v-col>
-    </v-row>
-
+  <div id="calendarDiv" class="fill-height">
     <v-snackbar
+      id="calendarSnackbar"
       :timeout="-1"
       :value="showSnackbar"
       absolute
@@ -117,7 +31,105 @@
       @setDate="onSetDate"
       @setTime="onSetTime"
     />
-  </v-sheet>
+    <v-sheet id="calendarSheet" class="overflow-hidden" :height="sheetHeight">
+      <v-row id="calendarRow" align="start" class="overflow-hidden ">
+        <v-col>
+          <!-- calendar controls -->
+          <v-sheet height="48">
+            <v-toolbar flat>
+              <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
+              <v-btn fab text small color="grey darken-2" @click="prev">
+                <v-icon> mdi-chevron-left </v-icon>
+              </v-btn>
+              <v-btn fab text small color="grey darken-2" @click="next">
+                <v-icon> mdi-chevron-right </v-icon>
+              </v-btn>
+              <v-toolbar-title v-if="cal">
+                {{ cal.title }}
+              </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-menu bottom right>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    outlined
+                    color="grey darken-2"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <span>{{ typeToLabel[type] }}</span>
+                    <v-icon right> mdi-menu-down </v-icon>
+                  </v-btn>
+                </template>
+                <v-list>
+                  <v-list-item @click="type = 'category'">
+                    <v-list-item-title>Work</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'day'">
+                    <v-list-item-title>Day</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = '4day'">
+                    <v-list-item-title>4 days</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'week'">
+                    <v-list-item-title>Week</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'month'">
+                    <v-list-item-title>Month</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-toolbar>
+          </v-sheet>
+
+          <!-- calendar sheet-->
+          <v-sheet ref="calendarSheet" :height="calendarHeight">
+            <v-calendar
+              id="calendar-target"
+              ref="calendar"
+              v-model="focus"
+              color="primary"
+              :type="type"
+              :events="relevantEvents"
+              :categories="categories"
+              :event-color="getEventColor"
+              :now="currentDate"
+              :show-interval-label="onShowIntervalLabel"
+              :interval-count="intervalCount"
+              :first-time="firstTime"
+              :interval-minutes="intervalMinutes"
+              @click:more="viewDay"
+              @click:date="viewDay"
+              @click:interval="changeInterval"
+              @click:event="showEvent"
+              @change="handleChange"
+            >
+              <template v-slot:event="{ event, timed, eventSummary }">
+                <div class="v-event-draggable" v-html="eventSummary()"></div>
+                <div
+                  v-if="timed"
+                  class="v-event-drag-bottom"
+                  @mousedown.stop="extendBottom(event)"
+                ></div>
+              </template>
+            </v-calendar>
+          </v-sheet>
+        </v-col>
+      </v-row>
+
+      <v-row
+        id="statusRow"
+        no-gutters
+        align="end"
+        class="mt-0 ml-0 overflow-hidden"
+      >
+        <v-col
+          ><div>
+            <small>{{ status }}</small>
+          </div>
+        </v-col>
+      </v-row>
+    </v-sheet>
+  </div>
 </template>
 
 <script>
@@ -148,8 +160,8 @@ export default {
   },
 
   components: {
-    // ConfirmModernDialog: () => import('./cards/dialogCardModern'),
-    EventModernDialog: () => import('./cards/eventDialogCardModern'),
+    // ConfirmModernDialog: () => import('./cards/dialogCard'),
+    EventModernDialog: () => import('./cards/eventDialogCard'),
   },
 
   computed: {
@@ -211,8 +223,13 @@ export default {
         : `is <strong>not logged</strong> to any graph yet. `;
       return status;
     },
+
     isAtWorkAt() {
       return localStorage.getItem('business') === this.currentEvent.name;
+    },
+
+    isCategoryCalendar() {
+      return this.type === 'category';
     },
 
     isDefaultGraph() {
@@ -244,6 +261,8 @@ export default {
   },
 
   data: () => ({
+    openAt: '',
+    closeAt: '',
     // Calendar uses this format
     DATE_FORMAT: 'yyyy-LL-dd',
     categories: ['You', 'Them'],
@@ -308,6 +327,7 @@ export default {
     },
 
     //#region Appointment functions
+
     showAppointmentDialog(newAppointment = null) {
       /**
        * newAppointment means:
@@ -318,7 +338,11 @@ export default {
         .time || this.selectedEventId}?`;
       const consequences = 'This will update your public calendar.';
 
-      const options = { ...this.dialogOptions, icon: 'mdi-update' };
+      const options = {
+        ...this.dialogOptions,
+        icon: 'mdi-update',
+        intervalMinutes: this.intervalMinutes,
+      };
       const revertData = {
         start: this.currentEvent?.start,
         end: this.currentEvent?.end,
@@ -353,7 +377,7 @@ export default {
      *  this way we can treat new and extant appointments the same way.
      */
     handleNewAppointment(p) {
-      this.showAppointmentDialog(p);
+      // this.showAppointmentDialog(p);
       console.groupCollapsed('New Appointment:>');
       // TODO if we set appointment in future, do we still see the correct currentEventParsed?
       console.log(success(printJson(this.currentEventParsed)));
@@ -362,21 +386,17 @@ export default {
 
     // can be called by ShowEventDialog() at the start of the business day
     // or can be called by clicking a public calendar time
-    addAppointment(
-      // TODO This time should be "next available"
-      time = DateTime.now().toMillis(),
-      // TODO Take name from dialog answer
-      name = 'customer',
-      slotInterval = 30 * 1000 * 60
-    ) {
-      const starttime = this.roundTime(time);
-      const endtime = starttime + slotInterval;
+    addAppointment(event) {
+      const starttime = this.roundTime(event.toMillis());
+      const endtime = this.roundTime(
+        event.plus({ minutes: this.intervalMinutes }).toMillis()
+      );
       this.selectedEventId = randomId();
       const val = {
         id: this.selectedEventId,
-        name: name,
+        name: 'customer',
         provider: this.username,
-        date: DateTime.fromMillis(starttime).toISODate(),
+        date: event.toISODate(),
         start: starttime,
         end: endtime,
         timed: true,
@@ -415,7 +435,7 @@ export default {
               break;
 
             case 'BOOK':
-              this.addAppointment();
+              this.showAppointmentDialog();
               break;
 
             case 'LOG':
@@ -538,8 +558,16 @@ export default {
        */
 
       console.groupCollapsed('Changing Time:>');
-      if (!this.selectedEventId) {
-        this.status = 'Pick an event';
+      if (this.isCategoryCalendar) {
+        const start = DateTime.local(
+          event.year,
+          event.month,
+          event.day,
+          event.hour,
+          event.minute
+        );
+        this.addAppointment(start);
+        console.groupEnd();
         return;
       }
 
@@ -694,10 +722,11 @@ export default {
       // this represents the start and end days on the calendar
       // we see it during mounting (where we call checkChange()) as one day
       // but change the calendar type, and you will see different start.date and end.date values
+      this.configureCalendar();
+
       console.groupCollapsed('handleChange(event): >');
       console.log(highlight(this.type, printJson(event)));
       console.groupEnd();
-      this.configureCalendar();
     },
 
     getCurrentTime() {
@@ -748,7 +777,7 @@ export default {
     setToday() {
       this.focus = '';
       this.status = `Going back to today`;
-      this.cal.scrollToTime();
+      this.scrollToTime();
     },
     prev() {
       this.cal.prev();
@@ -807,11 +836,11 @@ export default {
         'mobile?',
         bp.mobile
       );
-
+      const statusBarHeight = 50;
       const x = bp.height;
-      const y = 112; // height of appbar header and footer
+      const y = 125; // height of appbar header and footer
       this.sheetHeight = x - y;
-      this.calendarHeight = this.sheetHeight - 100;
+      this.calendarHeight = this.sheetHeight - 100 - statusBarHeight;
       console.log('sheetHeight:', this.sheetHeight);
       console.log('calendarHeight:', this.calendarHeight);
       this.$refs.calendar.checkChange();
@@ -822,14 +851,15 @@ export default {
     },
 
     configureCalendar() {
-      if (this.type === 'category' && this.isTakingAppointments) {
-        const opensAt = localStorage.getItem('openAt');
-        const open = Number(opensAt.slice(0, 2));
-        const close = Number(localStorage.getItem('closeAt').slice(0, 2));
+      if (this.isCategoryCalendar && this.isTakingAppointments) {
+        this.openAt = localStorage.getItem('openAt');
+        this.closeAt = localStorage.getItem('closeAt');
+        const open = Number(this.openAt.slice(0, 2));
+        const close = Number(this.closeAt.slice(0, 2));
         const range = close - open;
 
         this.intervalMinutes = localStorage.getItem('slotInterval');
-        this.firstTime = opensAt;
+        this.firstTime = this.openAt;
         this.intervalCount = range * (60 / this.intervalMinutes);
         this.status = `intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
       } else {

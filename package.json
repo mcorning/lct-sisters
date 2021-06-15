@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.6.1420",
+  "version": "0.6.1516",
   "scripts": {
     "start": "node index.js",
     "serve": "vue-cli-service serve",

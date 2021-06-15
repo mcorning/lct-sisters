@@ -1,6 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
+import { DateTime } from '../utils/luxonHelpers';
 
 console.log('Loading Appointment entity');
 
@@ -28,12 +29,29 @@ export default class Appointment extends Model {
     };
   }
 
+  static getFirstAvailable() {
+    const today = DateTime.now();
+    // first delete all past appointments
+    this.$delete((appt) => !DateTime.fromISO(appt.date).hasSame(today, 'day'));
+    // get today's appointments
+    return this.query()
+      .where((appt) => DateTime.fromISO(appt.date).hasSame(today, 'day'))
+      .orderBy('date')
+      .get();
+  }
+
   // can't give this static method (called by indirection in Calendar)
   // the same name as the shipping static method, Visit.find()
   static get(id) {
     return this.find(id);
   }
 
+  static getOpening(ask) {
+    console.log('getOpening(ask):', ask);
+    return this.query()
+      .where((appointment) => ask > appointment.end)
+      .get();
+  }
   static getAppointments(active, expiredTimestamp) {
     return this.query()
       .where((appointment) =>

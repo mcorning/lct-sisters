@@ -42,8 +42,14 @@ TODO Incorporate this header data into nestedMenu
       <!-- End Options Menu-->
     </v-app-bar>
     <v-main>
-      <error-boundary @error="onError($event)">
-        <v-alert v-if="errorState" class="mt-10" type="error" dismissible>
+      <error-boundary id="errorBoundary" @error="onError($event)">
+        <v-alert
+          id="unhandledExceptionAlert"
+          v-if="errorState"
+          class="mt-10"
+          type="error"
+          dismissible
+        >
           <v-card dark>
             <v-card-title class="headling ">
               Oops. Sorry, we messed up.
@@ -64,184 +70,183 @@ TODO Incorporate this header data into nestedMenu
             </v-card-text>
           </v-card>
         </v-alert>
-        <v-container class="fill-height" fluid>
-          <!-- QR Dialog -->
-          <v-dialog
-            id="qrCodeDialog"
-            v-model="qrDialog"
-            max-width="400"
-            max-height="400"
-            transition="dialog-bottom-transition"
-          >
-            <v-card>
-              <v-tooltip top>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-img
-                    class="mt-5"
-                    src="../public/img/LCT-Sisters-QR.png"
-                    v-bind="attrs"
-                    v-on="on"
-                    contain
-                    @click="qrDialog = false"
-                  ></v-img>
-                </template>
-                <span>Click to dismiss</span></v-tooltip
-              >
-            </v-card>
-          </v-dialog>
+        <!-- QR Dialog -->
+        <v-dialog
+          id="qrCodeDialog"
+          v-model="qrDialog"
+          max-width="400"
+          max-height="400"
+          transition="dialog-bottom-transition"
+        >
+          <v-card>
+            <v-tooltip top>
+              <template v-slot:activator="{ on, attrs }">
+                <v-img
+                  class="mt-5"
+                  src="../public/img/LCT-Sisters-QR.png"
+                  v-bind="attrs"
+                  v-on="on"
+                  contain
+                  @click="qrDialog = false"
+                ></v-img>
+              </template>
+              <span>Click to dismiss</span></v-tooltip
+            >
+          </v-card>
+        </v-dialog>
 
-          <FeedbackCard
-            v-if="feedbackDialog"
-            @endFeedback="feedbackDialog = false"
-          ></FeedbackCard>
+        <FeedbackCard
+          v-if="feedbackDialog"
+          @endFeedback="feedbackDialog = false"
+        ></FeedbackCard>
 
-          <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
-            <Welcome @connectMe="onConnectMe($event)" />
-          </v-row>
+        <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
+          <Welcome @connectMe="onConnectMe($event)" />
+        </v-row>
 
-          <!-- GoogleMap, Warning, and Calendar components -->
-          <v-row
-            id="controlsContainer"
-            v-if="usernameAlreadySelected"
-            class="fill-height"
-            align="start"
-            justify="center"
-            no-gutters
-          >
-            <v-col v-if="showSpaces" class="text-center">
-              <GoogleMap
-                v-model="location"
-                :auditor="auditor"
-                @addedPlace="onAddedPlace"
-                @log="onLog"
-                @error="onError($event)"
-                @manageAppointment="onManageAppointment"
-              />
-            </v-col>
+        <!-- GoogleMap, Warning, and Calendar components -->
+        <v-row
+          id="controlsContainer"
+          v-if="usernameAlreadySelected"
+          align="start"
+          justify="center"
+          no-gutters
+        >
+          <v-col v-if="showSpaces" class="text-center">
+            <GoogleMap
+              v-model="location"
+              :auditor="auditor"
+              @addedPlace="onAddedPlace"
+              @log="onLog"
+              @error="onError($event)"
+              @manageAppointment="onManageAppointment"
+            />
+          </v-col>
 
-            <v-col v-if="showWarning" class="text-center">
-              <Warning
-                @exposureWarning="onExposureWarning($event)"
-                @returnToSpaces="show = SPACES"
-              />
-            </v-col>
+          <v-col v-if="showWarning" class="text-center">
+            <Warning
+              @exposureWarning="onExposureWarning($event)"
+              @returnToSpaces="show = SPACES"
+            />
+          </v-col>
 
-            <v-col v-if="showCalendar" class="text-center fill-height">
-              <Calendar
-                :avgStay="avgStay"
-                :selectedSpace="selectedSpace"
-                :graphName="graphName"
-                :userID="userID"
-                :username="username"
-                @logVisit="onLogVisit"
-                @updateLoggedVisit="onLogVisit"
-                @deleteVisit="onDeleteVisit"
-                @error="onError($event)"
-                @manageAppointment="onManageAppointment"
-              />
-            </v-col>
-          </v-row>
+          <v-col v-if="showCalendar" class="text-center fill-height">
+            <Calendar
+              :avgStay="avgStay"
+              :selectedSpace="selectedSpace"
+              :graphName="graphName"
+              :userID="userID"
+              :username="username"
+              @logVisit="onLogVisit"
+              @updateLoggedVisit="onLogVisit"
+              @deleteVisit="onDeleteVisit"
+              @error="onError($event)"
+              @manageAppointment="onManageAppointment"
+            />
+          </v-col>
+        </v-row>
 
-          <!-- PWA snackbar -->
-          <v-snackbar
-            v-model="snackWithButtons"
-            bottom
-            left
-            timeout="-1"
-            height="100px"
-          >
-            {{ snackWithBtnText }}
-            <template v-slot:action="{ attrs }">
-              <v-btn
-                v-if="snackBtnText"
-                text
-                color="#00f500"
-                v-bind="attrs"
-                @click.stop="act"
-              >
-                {{ snackBtnText }}
-              </v-btn>
-              <v-btn icon class="ml-4" @click="snackWithButtons = false">
-                <v-icon>close</v-icon>
-              </v-btn>
-            </template>
-          </v-snackbar>
-          <!-- End PWA snackbar -->
+        <!-- PWA snackbar -->
+        <v-snackbar
+          v-model="snackWithButtons"
+          bottom
+          left
+          timeout="-1"
+          height="100px"
+        >
+          {{ snackWithBtnText }}
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              v-if="snackBtnText"
+              text
+              color="#00f500"
+              v-bind="attrs"
+              @click.stop="act"
+            >
+              {{ snackBtnText }}
+            </v-btn>
+            <v-btn icon class="ml-4" @click="snackWithButtons = false">
+              <v-icon>close</v-icon>
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <!-- End PWA snackbar -->
 
-          <!-- Community Alert Snackbar -->
-          <v-snackbar
-            top
-            :value="alertPending"
-            :timeout="-1"
-            color="orange darken-3"
-            vertical
-            dark
-            max-width="400"
-          >
-            <v-card dark color="orange darken-1" v-if="alertPending">
-              <v-card-title>COVID-19 Detected</v-card-title>
-              <v-card-subtitle>
-                Someone in your community has tested positive for COVID-19.
-              </v-card-subtitle>
-              <v-card-text class="white--text">
-                You will see an exposure alert next only if you shared the same
-                space with that person.</v-card-text
-              >
-            </v-card>
+        <!-- Community Exposure Snackbar -->
+        <v-snackbar
+          id="communityExposureSnackbar"
+          top
+          :value="alertPending"
+          :timeout="-1"
+          color="orange darken-3"
+          vertical
+          dark
+          max-width="400"
+        >
+          <v-card dark color="orange darken-1" v-if="alertPending">
+            <v-card-title>COVID-19 Detected</v-card-title>
+            <v-card-subtitle>
+              Someone in your community has tested positive for COVID-19.
+            </v-card-subtitle>
+            <v-card-text class="white--text">
+              You will see an exposure alert next only if you shared the same
+              space with that person.</v-card-text
+            >
+          </v-card>
 
-            <template v-slot:action="{ attrs }">
-              <v-btn
-                color="white"
-                text
-                v-bind="attrs"
-                @click="alertPending = false"
-              >
-                OK
-              </v-btn>
-            </template>
-          </v-snackbar>
-          <!-- End Community Alert Snackbar -->
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="white"
+              text
+              v-bind="attrs"
+              @click="alertPending = false"
+            >
+              OK
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <!-- End Community Alert Snackbar -->
 
-          <!-- Individual Exposure Alert Snackbar -->
-          <v-snackbar
-            :value="exposureAlert"
-            :timeout="-1"
-            color="red darken-3"
-            vertical
-            centered
-            dark
-            max-width="400"
-          >
-            <v-card dark color="red darken-1" v-if="exposureAlert">
-              <v-card-title>COVID-19 Exposure Alert</v-card-title>
-              <v-card-subtitle>
-                You shared space recently with someone who tested positive
-              </v-card-subtitle>
-              <v-card-text>
-                Please get tested. If you are positive you can spread the virus
-                - even if you are immune.</v-card-text
-              >
-            </v-card>
+        <!-- Individual Exposure Alert Snackbar -->
+        <v-snackbar
+          id="alertSnackbar"
+          :value="exposureAlert"
+          :timeout="-1"
+          color="red darken-3"
+          vertical
+          centered
+          dark
+          max-width="400"
+        >
+          <v-card dark color="red darken-1" v-if="exposureAlert">
+            <v-card-title>COVID-19 Exposure Alert</v-card-title>
+            <v-card-subtitle>
+              You shared space recently with someone who tested positive
+            </v-card-subtitle>
+            <v-card-text>
+              Please get tested. If you are positive you can spread the virus -
+              even if you are immune.</v-card-text
+            >
+          </v-card>
 
-            <template v-slot:action="{ attrs }">
-              <v-btn
-                color="white"
-                text
-                v-bind="attrs"
-                @click="exposureAlert = false"
-              >
-                OK
-              </v-btn>
-            </template>
-          </v-snackbar>
-          <!-- End Individual Exposure Alert Snackbar -->
-        </v-container>
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="white"
+              text
+              v-bind="attrs"
+              @click="exposureAlert = false"
+            >
+              OK
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <!-- End Individual Exposure Alert Snackbar -->
+        <ConfirmModernDialog
+          id="ConfirmModernDialogId"
+          ref="ConfirmModernDialog"
+          :customOptions="customOptions"
+        />
       </error-boundary>
-      <ConfirmModernDialog
-        id="ConfirmModernDialogId"
-        ref="ConfirmModernDialog"
-        :customOptions="customOptions"
-      />
     </v-main>
 
     <v-footer app color="primary" class="white--text">
@@ -302,7 +307,7 @@ export default {
     Warning,
     Calendar,
     FeedbackCard,
-    ConfirmModernDialog: () => import('./components/cards/dialogCardModern'),
+    ConfirmModernDialog: () => import('./components/cards/dialogCard'),
     // AuditorCard: () => import('./components/cards/AuditorCard.vue'),
     // MenuCard: () => import('./components/cards/menuCard.vue'),
     nestedMenu: () => import('./components/cards/nestedMenuCard'),

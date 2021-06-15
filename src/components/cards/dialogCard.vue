@@ -3,36 +3,41 @@
     v-model="dialog"
     :max-width="options.width"
     :style="{ zIndex: options.zIndex }"
+    @keydown.enter="agree"
     @keydown.esc="cancel"
   >
-    <v-card dark>
-      <v-toolbar dark :color="options.color" dense flat>
-        <v-toolbar-title class="text-body-2 font-weight-bold grey--text">
-          {{ title }}
-        </v-toolbar-title>
-      </v-toolbar>
-      <v-card-text
-        v-show="!!message"
-        class="pa-4 white--text"
-        v-html="message"
-      ></v-card-text>
+    <v-card dark class="overflow-hidden">
+      <v-row align="center" justify="space-around">
+        <v-col class="text-center" cols="2">
+          <span class="group pa-10 ">
+            <v-icon color="yellow" x-large>{{ options.icon }}</v-icon>
+          </span></v-col
+        >
+        <v-col cols="8 text-left pt-8">
+          <h4 class="pt-2">{{ title }}</h4>
+          <v-card-subtitle
+            v-show="!!message"
+            class="pa-4 "
+            v-html="message"
+          ></v-card-subtitle>
+        </v-col>
+      </v-row>
+
       <v-card-actions class="pt-3">
         <v-spacer></v-spacer>
-        <v-btn
-          v-if="!options.noconfirm"
-          color="grey"
-          text
-          class="body-2 font-weight-bold"
-          @click.native="cancel"
-          >Cancel</v-btn
-        >
-        <v-btn
-          color="primary"
-          class="body-2 font-weight-bold"
-          outlined
-          @click.native="agree"
-          >OK</v-btn
-        >
+        <template v-for="(btn, index) in options.buttons">
+          <v-btn
+            v-if="btn"
+            :key="index"
+            tile
+            :color="btn.color"
+            class="body-2 "
+            :outlined="btn.outlined"
+            @click.native="answer(btn.agree)"
+          >
+            {{ btn.label }}
+          </v-btn>
+        </template>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -40,7 +45,9 @@
 
 <script>
 export default {
-  name: 'ConfirmDlg',
+  name: 'modernDialog',
+
+  computed: {},
   data() {
     return {
       dialog: false,
@@ -49,34 +56,61 @@ export default {
       message: null,
       title: null,
       options: {
-        color: 'grey lighten-3',
-        width: 400,
+        color: 'grey',
+        width: 450,
         zIndex: 200,
         noconfirm: false,
       },
     };
   },
-
+  props: {
+    customOptions: {
+      type: Object,
+    },
+  },
   methods: {
+    answer(agree) {
+      console.log(agree);
+      this.dialog = false;
+      this.resolve(agree);
+    },
+
+    // options is an object with name-value pairs (as opposed to props)
+    // NOTE: if the caller set a buttons array element to null
+    // that element will not appear withe the remaining buttons
     open(title, message, options) {
       this.dialog = true;
       this.title = title;
       this.message = message;
-      this.options = Object.assign(this.options, options);
+      this.options = { ...this.options, ...options };
+
       return new Promise((resolve, reject) => {
         this.resolve = resolve;
         this.reject = reject;
       });
     },
-    agree() {
-      this.resolve(true);
+    cancel() {
+      this.resolve(0);
       this.dialog = false;
     },
-    cancel() {
-      this.resolve(false);
+    agree() {
+      this.resolve(1);
       this.dialog = false;
     },
   },
-  mounted() {},
+
+  watch: {},
+
+  mounted() {
+    // window.addEventListener('keydown', this.handleKeydown);
+    this.options = { ...this.options, ...this.customOptions };
+  },
 };
 </script>
+<style>
+.group {
+  display: flex;
+  flex: 1;
+  justify-content: space-around;
+}
+</style>
