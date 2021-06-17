@@ -1035,14 +1035,14 @@ export default {
         }).then((act) => {
           if (act) {
             this.refreshData();
-            localStorage.setItem('goodData', true);
           }
+          localStorage.setItem('goodData', true);
         });
       }
 
       const onTheJob =
+        all.visits &&
         localStorage.getItem('usesPublicCalendar') === 'true' &&
-        all.visits.length > 0 &&
         all.visits.filter((v) => v.date === new Date().toDateString()).length >
           0;
 

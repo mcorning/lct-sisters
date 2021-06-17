@@ -61,18 +61,20 @@ export default class Visit extends Model {
       .where((visit) => visit.category === 'You')
       .get();
   }
-  static updateFieldPromise(id, val) {
+  static updateFieldPromise(data) {
     return new Promise((resolve, reject) => {
+      const { entity } = data;
+
       // ensure the incoming data is for Visits (not Appointments)
-      if (val.category !== 'You') {
+      if (entity.category !== 'You') {
         reject({
           violation: 'contract',
           message: 'Object was not a Visit or Shift',
         });
       }
       this.$update({
-        where: id,
-        data: val,
+        where: entity.id,
+        data: entity,
       })
         .then((p) => {
           resolve(p[0]);
@@ -81,28 +83,20 @@ export default class Visit extends Model {
     });
   }
 
-  // val must be an object
-  static async update(val) {
-    // const { id, name, logged, start, end, interval, timed } = val;
-    let p = await this.$create({
-      data: val,
-    });
-    return p;
-  }
-
   // Calendar addEvent() creates the visit (without reference to the exposure graph (see below))
-  static updatePromise(val) {
+  static updatePromise(data) {
     return new Promise((resolve, reject) => {
+      const { entity } = data;
       // ensure the incoming data is for Visits (not Appointments)
-      if (val.category !== 'You') {
+      if (entity.category !== 'You') {
         reject({
           violation: 'contract',
           message: 'Object was not a Visit or Shift',
         });
       }
-      console.log('update Visit with', JSON.stringify(val, null, 3));
+      console.log('update Visit with', JSON.stringify(entity, null, 3));
       this.$create({
-        data: val,
+        data: entity,
       })
         .then((p) => resolve(p))
         .catch((e) => reject(e));
@@ -127,22 +121,18 @@ export default class Visit extends Model {
     });
   }
 
-  static async delete(val) {
-    let p = await this.$delete(val);
-    return p;
-  }
-
-  static deletePromise(val) {
+  static deletePromise(data) {
     return new Promise((resolve, reject) => {
+      const { id, category } = data.entity;
       // ensure the incoming data is for Visits (not Appointments)
-      if (val.category !== 'You') {
+      if (category !== 'You') {
         reject({
           violation: 'contract',
           message: 'Object was not a Visit or Shift',
         });
       }
-      console.log(`Deleting Visit id ${val}`);
-      this.$delete(val)
+      console.log(`Deleting Visit id ${id}`);
+      this.$delete(id)
         .then((p) => {
           if (p) {
             resolve(p);

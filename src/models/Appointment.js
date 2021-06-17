@@ -67,27 +67,20 @@ export default class Appointment extends Model {
       .get();
   }
 
-  // val must be an object
-  static async update(val) {
-    // const {business, customer, provider, date, start, end, } = val;
-    let a = await this.$create({
-      data: val,
-    });
-    return a;
-  }
-
-  static updateFieldPromise(id, val) {
+  static updateFieldPromise(data) {
     return new Promise((resolve, reject) => {
+      const { entity } = data;
+
       // ensure the incoming data is for Visits (not Appointments)
-      if (val.category !== 'Them') {
+      if (entity.category !== 'Them') {
         reject({
           violation: 'contract',
           message: 'Object was not an Appointment',
         });
       }
       this.$update({
-        where: id,
-        data: val,
+        where: entity.id,
+        data: entity,
       })
         .then((p) => {
           resolve(p[0]);
@@ -97,10 +90,11 @@ export default class Appointment extends Model {
   }
 
   // Calendar addEvent() creates the appointment (without reference to the exposure graph (see below))
-  static updatePromise(val) {
+  static updatePromise(data) {
     return new Promise((resolve, reject) => {
+      const { entity } = data;
       // ensure the incoming data is for Visits (not Appointments)
-      if (val.category !== 'Them') {
+      if (entity.category !== 'Them') {
         reject({
           violation: 'contract',
           message: 'Object was not an Appointment',
@@ -108,29 +102,28 @@ export default class Appointment extends Model {
       }
       console.log(
         'Promise to update Appointment with',
-        JSON.stringify(val, null, 3)
+        JSON.stringify(entity, null, 3)
       );
       this.$create({
-        data: val,
+        data: entity,
       })
         .then((a) => resolve(a))
         .catch((e) => reject(e));
     });
   }
 
-  static async delete(val) {
-    let a = await this.$delete(val);
-    return a;
-  }
-
-  static deletePromise(val) {
+  static deletePromise(data) {
     return new Promise((resolve, reject) => {
-      console.log(`Deleting Appointment id ${val}`);
-      this.$delete(val)
+      // instead of explicit test for Appointment here (as we check for visits in Visit)...
+      const { id } = data.entity;
+
+      console.log(`Deleting Appointment id ${id}`);
+      this.$delete(id)
         .then((a) => {
           if (a) {
             resolve(a);
           } else {
+            //... we throw here, instead. Same difference.
             throw 'No APPOINTMENT to DELETE';
           }
         })
