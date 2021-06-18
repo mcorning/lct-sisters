@@ -997,14 +997,30 @@ export default {
           self.newVisit();
         }
 
-        // ensure start and end are valid dates
+        // ensure we have identifiable entities that have valid start and end dates
         Visit.validateVisits().then((invalidVisits) => {
-          console.groupCollapsed(warn('Invalid visits:'));
-          console.log(printJson(invalidVisits));
+          if (invalidVisits.length > 0) {
+            this.tip = `We found and deleted ${invalidVisits.length} visits without IDs.`;
+
+            console.groupCollapsed(warn('Invalid visit(s):'));
+            console.log(printJson(invalidVisits));
+          }
           console.groupEnd();
           this.ready = true;
           this.scrollToTime();
         });
+        Appointment.validateAppointments().then((invalidAppointments) => {
+          if (invalidAppointments.length > 0) {
+            this.tip = `We found and deleted ${invalidAppointments.length} appointment(s) without IDs.`;
+
+            console.groupCollapsed(warn('Invalid appointments:'));
+            console.log(printJson(invalidAppointments));
+          }
+          console.groupEnd();
+          this.ready = true;
+          this.scrollToTime();
+        });
+
         console.log(success('mounted calendarCard'));
       })
       .catch((err) =>

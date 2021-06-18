@@ -28,6 +28,19 @@ export default class Appointment extends Model {
       color: this.string('appointment'), // special kind of event
     };
   }
+  static validateAppointments() {
+    return new Promise((resolve, reject) => {
+      this.$delete(
+        (appt) =>
+          Number.isNaN(appt.end) ||
+          Number.isNaN(appt.start) ||
+          !appt.id ||
+          appt.id.startsWith('$')
+      )
+        .then((p) => resolve(p))
+        .catch((e) => reject(e));
+    });
+  }
 
   static getFirstAvailable() {
     const today = DateTime.now();

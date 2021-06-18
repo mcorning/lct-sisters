@@ -35,7 +35,11 @@ export default class Visit extends Model {
   static validateVisits() {
     return new Promise((resolve, reject) => {
       this.$delete(
-        (visit) => Number.isNaN(visit.end) || Number.isNaN(visit.start)
+        (visit) =>
+          Number.isNaN(visit.end) ||
+          Number.isNaN(visit.start) ||
+          !visit.id ||
+          visit.id.startsWith('$')
       )
         .then((p) => resolve(p))
         .catch((e) => reject(e));
@@ -88,7 +92,7 @@ export default class Visit extends Model {
     return new Promise((resolve, reject) => {
       const { entity } = data;
       // ensure the incoming data is for Visits (not Appointments)
-      if (entity.category !== 'You') {
+      if (!entity.category || entity.category !== 'You') {
         reject({
           violation: 'contract',
           message: 'Object was not a Visit or Shift',
