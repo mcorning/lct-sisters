@@ -123,8 +123,20 @@
         class="mt-0 ml-0 overflow-hidden"
       >
         <v-col
-          ><div>
+          ><div class="mt-5">
             <small>{{ status }}</small>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row
+        id="tipRow"
+        no-gutters
+        align="end"
+        class="mt-0 ml-0 overflow-hidden"
+      >
+        <v-col
+          ><div class="text-left pl-7 mt-5">
+            <small>Tip: {{ tip }}</small>
           </div>
         </v-col>
       </v-row>
@@ -261,6 +273,7 @@ export default {
   },
 
   data: () => ({
+    tip: '',
     dragAndDrop: false,
     openAt: '',
     closeAt: '',
@@ -453,7 +466,7 @@ export default {
       );
       const statusBarHeight = 50;
       const x = bp.height;
-      const y = 125; // height of appbar header and footer
+      const y = 133; // height of appbar header and footer
       this.sheetHeight = x - y;
       this.calendarHeight = this.sheetHeight - 100 - statusBarHeight;
       console.log('sheetHeight:', this.sheetHeight);
@@ -467,6 +480,8 @@ export default {
 
     configureCalendar() {
       if (this.isCategoryCalendar && this.isTakingAppointments) {
+        this.tip = 'You can add appointments by clicking a time interval';
+
         this.openAt = localStorage.getItem('openAt');
         this.closeAt = localStorage.getItem('closeAt');
         const open = Number(this.openAt.slice(0, 2));
@@ -483,6 +498,7 @@ export default {
         this.intervalCount = 24;
         this.firstTime = '00:00';
         this.intervalMinutes = 60;
+        this.tip = 'Stay safe out there...';
       }
     },
     //#endregion Helper functions
@@ -969,6 +985,10 @@ export default {
         console.log(appointments.length, 'Appointments');
 
         this.type = appointments.length > 0 ? 'category' : 'day';
+        this.tip =
+          appointments.length > 0
+            ? 'You can add appointments by clicking a time interval'
+            : '';
 
         this.setHeight();
 
