@@ -273,7 +273,8 @@ export default {
   },
 
   data: () => ({
-    tip: '',
+    tip:
+      'You can add appointments by clicking a time interval for any selected day.',
     dragAndDrop: false,
     openAt: '',
     closeAt: '',
@@ -353,6 +354,34 @@ export default {
 
   methods: {
     //#region Helper functions
+    validateEntities() {
+      // ensure we have identifiable entities that have valid start and end dates
+      Visit.validateVisits().then((invalidVisits) => {
+        if (invalidVisits.length > 0) {
+          this.tip = `We found and deleted ${invalidVisits.length} visits without IDs.`;
+
+          console.groupCollapsed(warn('Invalid visit(s):'));
+          console.log(printJson(invalidVisits));
+        }
+        console.groupEnd();
+        this.ready = true;
+        this.scrollToTime();
+      });
+      Appointment.validateAppointments().then((invalidAppointments) => {
+        if (invalidAppointments.length > 0) {
+          this.tip = `We found and deleted ${invalidAppointments.length} appointment(s) without IDs.`;
+
+          console.groupCollapsed(warn('Invalid appointments:'));
+          console.log(printJson(invalidAppointments));
+        }
+        console.groupEnd();
+        if (this.isCategoryCalendar) {
+          this.tip = 'Select an appointment to edit customer, date, and times.';
+        }
+        this.ready = true;
+        this.scrollToTime();
+      });
+    },
 
     throwError(payload) {
       const { source, error, comment } = payload;
@@ -479,9 +508,10 @@ export default {
     },
 
     configureCalendar() {
+      this.status = 'changing calendars';
       if (this.isCategoryCalendar && this.isTakingAppointments) {
-        this.tip = 'You can add appointments by clicking a time interval';
-
+        this.tip =
+          'You can add appointments by clicking a time interval for any selected day.';
         this.openAt = localStorage.getItem('openAt');
         this.closeAt = localStorage.getItem('closeAt');
         const open = Number(this.openAt.slice(0, 2));
@@ -493,7 +523,7 @@ export default {
           Number(this.openAt.split(':')[0]) - 1
         ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
         this.intervalCount = range * (60 / this.intervalMinutes) + 2;
-        this.status = `intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
+        this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
       } else {
         this.intervalCount = 24;
         this.firstTime = '00:00';
@@ -985,10 +1015,6 @@ export default {
         console.log(appointments.length, 'Appointments');
 
         this.type = appointments.length > 0 ? 'category' : 'day';
-        this.tip =
-          appointments.length > 0
-            ? 'You can add appointments by clicking a time interval'
-            : '';
 
         this.setHeight();
 
@@ -997,29 +1023,7 @@ export default {
           self.newVisit();
         }
 
-        // ensure we have identifiable entities that have valid start and end dates
-        Visit.validateVisits().then((invalidVisits) => {
-          if (invalidVisits.length > 0) {
-            this.tip = `We found and deleted ${invalidVisits.length} visits without IDs.`;
-
-            console.groupCollapsed(warn('Invalid visit(s):'));
-            console.log(printJson(invalidVisits));
-          }
-          console.groupEnd();
-          this.ready = true;
-          this.scrollToTime();
-        });
-        Appointment.validateAppointments().then((invalidAppointments) => {
-          if (invalidAppointments.length > 0) {
-            this.tip = `We found and deleted ${invalidAppointments.length} appointment(s) without IDs.`;
-
-            console.groupCollapsed(warn('Invalid appointments:'));
-            console.log(printJson(invalidAppointments));
-          }
-          console.groupEnd();
-          this.ready = true;
-          this.scrollToTime();
-        });
+        self.validateEntities();
 
         console.log(success('mounted calendarCard'));
       })
