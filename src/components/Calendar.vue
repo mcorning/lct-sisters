@@ -143,7 +143,7 @@ import Appointment from '@/models/Appointment';
 // TODO Come back to fix this complex mixin strategy later
 // import { eventDialog } from '../mixins/eventDialog';
 
-import { DateTime, getNow } from '../utils/luxonHelpers';
+import { DateTime, getNow, formatSmallTime } from '../utils/luxonHelpers';
 import { success, warn, highlight, printJson } from '../utils/colors';
 
 export default {
@@ -278,7 +278,7 @@ export default {
         { label: 'Done', act: 'DONE', color: 'secondary', outlined: true },
         { spacer: true },
 
-        { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
+        // { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
         { label: 'Log', act: 'LOG' },
       ],
     },
@@ -341,8 +341,35 @@ export default {
   methods: {
     //#region Helper functions
 
+    throwError(payload) {
+      const { source, error, comment } = payload;
+      const msg = `ERROR: ${error.message} at ${source} (${comment})`;
+      console.log(msg);
+      this.snackBarText = msg;
+      this.showSnackbar = true;
+      this.$emit('error', {
+        payload,
+      });
+    },
+
+    ok(check) {
+      if (!check) {
+        this.throwError({
+          source: 'Calendar.updateCache()',
+          error: { message: 'Missing action value for update' },
+          comment: 'You should be able to keep working.',
+        });
+        return false;
+      }
+      return true;
+    },
+
     updateCache(payload, f) {
       const { action, entity } = payload;
+      if (!this.ok(action) || !this.ok(entity)) {
+        return;
+      }
+
       const first = entity.category === 'You' ? 'isDay' : 'isCategory';
       const second = action;
       const fun = this.actions[first][second];
@@ -447,8 +474,10 @@ export default {
         const range = close - open;
 
         this.intervalMinutes = localStorage.getItem('slotInterval');
-        this.firstTime = this.openAt;
-        this.intervalCount = range * (60 / this.intervalMinutes);
+        this.firstTime = `${String(
+          Number(this.openAt.split(':')[0]) - 1
+        ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
+        this.intervalCount = range * (60 / this.intervalMinutes) + 2;
         this.status = `intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
       } else {
         this.intervalCount = 24;
@@ -546,6 +575,8 @@ export default {
       }?`;
       const consequences = `${this.currentEvent.name} ${this.graphStatus}`; //`You are editing place ID: ${this.currentEventParsed.input.place_id}`;
       const revertData = {
+        id: this.currentEvent.id,
+        category: this.currentEvent.category,
         start: this.currentEvent.start,
         end: this.currentEvent.end,
       };
@@ -567,9 +598,9 @@ export default {
               // NOOP
               break;
 
-            case 'BOOK':
-              this.showAppointmentDialog();
-              break;
+            // case 'BOOK':
+            //   this.showAppointmentDialog();
+            //   break;
 
             case 'LOG':
               this.logVisit(this.currentEvent);
@@ -661,7 +692,7 @@ export default {
       const startIsCloser =
         startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
-      const val = startIsCloser
+      const entity = startIsCloser
         ? {
             id: this.selectedEventId,
             start: newTime,
@@ -672,7 +703,7 @@ export default {
             end: newTime,
             category: this.currentEvent.category,
           };
-      this.updateCache({ action: 'update', val });
+      this.updateCache({ action: 'update', entity });
       console.groupEnd();
     },
 
@@ -716,19 +747,21 @@ export default {
     },
 
     revert(entity) {
+      if (
+        this.currentEvent.start === entity.start &&
+        this.currentEvent.end === entity.end
+      ) {
+        this.status = 'Detected no changes';
+        return;
+      }
+      this.status = `Reverting ${
+        entity.category === 'You' ? 'visit' : 'appointment'
+      } back to original times ${formatSmallTime(
+        entity.start
+      )} to ${formatSmallTime(entity.end)}`;
       this.updateCache({ action: 'update', entity });
     },
 
-    throwError(payload) {
-      const { source, error, comment } = payload;
-      const msg = `ERROR: ${error.message} at ${source} (${comment})`;
-      console.log(msg);
-      this.snackBarText = msg;
-      this.showSnackbar = true;
-      this.$emit('error', {
-        payload,
-      });
-    },
     //#endregion Visit management functions
 
     //#region Calendar functions
