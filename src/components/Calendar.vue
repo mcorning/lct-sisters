@@ -707,50 +707,53 @@ export default {
     },
 
     changeInterval(event) {
-      console.groupCollapsed('Changing Time: >');
-      if (this.isTakingAppointments) {
-        const start = DateTime.local(
-          event.year,
-          event.month,
-          event.day,
-          event.hour,
-          event.minute
-        );
-        this.addAppointment(start);
-        console.groupEnd();
-        this.type = 'category';
-        return;
-      }
-
-      // we are returning ms
-      const newTime = this.roundTime(
-        DateTime.fromSQL(`${this.currentEvent.date} ${event.time}`).ts
+      // this.tip = `You are ${
+      //   this.isTakingAppointments ? 'taking' : 'not taking'
+      // } appointments`;
+      // console.groupCollapsed('Changing Time: >');
+      // if (this.isTakingAppointments) {
+      const start = DateTime.local(
+        event.year,
+        event.month,
+        event.day,
+        event.hour,
+        event.minute
       );
-      console.log('new end', newTime);
+      this.addAppointment(start);
+      // console.groupEnd();
+      this.type = 'category';
+      // return;
+      // }
 
-      const s = DateTime.fromMillis(this.currentEvent.start);
-      const e = DateTime.fromMillis(this.currentEvent.end);
-      const d = DateTime.fromMillis(newTime);
-      const startDelta = d.diff(s, 'minutes').minutes;
-      const endDelta = d.diff(e, 'minutes').minutes;
-      console.log('startDelta:', startDelta);
-      console.log('endDelta:', endDelta);
-      const startIsCloser =
-        startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
+      // // we are returning ms
+      // const newTime = this.roundTime(
+      //   DateTime.fromSQL(`${this.currentEvent.date} ${event.time}`).ts
+      // );
+      // console.log('new end', newTime);
 
-      const entity = startIsCloser
-        ? {
-            id: this.selectedEventId,
-            start: newTime,
-            category: this.currentEvent.category,
-          }
-        : {
-            id: this.selectedEventId,
-            end: newTime,
-            category: this.currentEvent.category,
-          };
-      this.updateCache({ action: 'update', entity });
-      console.groupEnd();
+      // const s = DateTime.fromMillis(this.currentEvent.start);
+      // const e = DateTime.fromMillis(this.currentEvent.end);
+      // const d = DateTime.fromMillis(newTime);
+      // const startDelta = d.diff(s, 'minutes').minutes;
+      // const endDelta = d.diff(e, 'minutes').minutes;
+      // console.log('startDelta:', startDelta);
+      // console.log('endDelta:', endDelta);
+      // const startIsCloser =
+      //   startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
+
+      // const entity = startIsCloser
+      //   ? {
+      //       id: this.selectedEventId,
+      //       start: newTime,
+      //       category: this.currentEvent.category,
+      //     }
+      //   : {
+      //       id: this.selectedEventId,
+      //       end: newTime,
+      //       category: this.currentEvent.category,
+      //     };
+      // this.updateCache({ action: 'update', entity });
+      // console.groupEnd();
     },
 
     // TODO do we need this?
