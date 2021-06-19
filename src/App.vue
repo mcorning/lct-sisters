@@ -584,7 +584,7 @@ export default {
     session({ sessionID, userID, username, graphName }) {
       // attach the session ID to the next reconnection attempts
       this.$socket.client.auth = { sessionID };
-      // store it in the localStorage
+      State.updatePromise({ sessionID });
       localStorage.setItem('sessionID', sessionID);
       // save the ID of the user
       // TODO isn't userID already assigned in middleware?
@@ -662,6 +662,7 @@ export default {
           localStorage.removeItem('openAt');
           localStorage.removeItem('closeAt');
           Visit.deleteAll();
+          State.deleteAll();
           window.location.reload();
           break;
       }
@@ -687,10 +688,10 @@ export default {
 
     //#region Welcome method
     // username passed in from Welcome
-    onConnectMe(username = this.username) {
-      // create() takes username from localStorage
+    onConnectMe(data) {
+      const { username } = data;
       this.username = username;
-      State.updatePromise({ username }).then((s) => console.info(s));
+      State.updatePromise(data).then((s) => console.info(s));
 
       this.usernameAlreadySelected = true;
 
@@ -1037,17 +1038,6 @@ export default {
       console.log('PWA was installed');
     });
     //#endregion PWA
-
-    //#region Socket.io
-    this.sessionID = localStorage.getItem('sessionID');
-    this.username = localStorage.getItem('username');
-    console.log('created()', this.username);
-    if (this.sessionID) {
-      this.usernameAlreadySelected = true;
-      this.onConnectMe();
-    }
-    console.groupEnd();
-    //#endregion
   },
 
   async mounted() {
@@ -1072,6 +1062,17 @@ export default {
           localStorage.setItem('goodData', true);
         });
       }
+
+      //#region Socket.io
+      this.sessionID = this.state.sessionID;
+      this.username = this.state.username;
+      console.log('created()', this.username);
+      if (this.sessionID) {
+        this.usernameAlreadySelected = true;
+        this.onConnectMe(this.username);
+      }
+      console.groupEnd();
+      //#endregion
       self.showMe();
     });
 
@@ -1092,7 +1093,7 @@ export default {
     self.selectedSpace = null;
     self.graphName = self.$defaultGraphName;
     console.log(self.graphName);
-    self.usernameAlreadySelected = localStorage.getItem('username');
+    self.usernameAlreadySelected = this.state.username;
 
     console.log('App.vue mounted');
     console.groupEnd();

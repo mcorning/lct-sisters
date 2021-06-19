@@ -18,7 +18,7 @@
     </template>
 
     <v-card dark>
-      <v-card-title class="headline">{{ name }}</v-card-title>
+      <v-card-title class="headline">{{ business }}</v-card-title>
       <v-card-subtitle>
         Let's open the doors (safely)
       </v-card-subtitle>
@@ -40,7 +40,7 @@
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="openAt"
+                  v-model="openAtX"
                   label="Shift starts at hr:min"
                   prepend-icon="access_time"
                   readonly
@@ -50,7 +50,7 @@
               </template>
               <v-time-picker
                 v-if="menu1"
-                v-model="openAt"
+                v-model="openAtX"
                 full-width
                 @click:minute="$refs.menu1.save(openAt)"
               ></v-time-picker>
@@ -70,7 +70,7 @@
             >
               <template v-slot:activator="{ on, attrs }">
                 <v-text-field
-                  v-model="closeAt"
+                  v-model="closeAtX"
                   label="Shift ends at hr:min"
                   prepend-icon="access_time"
                   readonly
@@ -80,7 +80,7 @@
               </template>
               <v-time-picker
                 v-if="menu2"
-                v-model="closeAt"
+                v-model="closeAtX"
                 full-width
                 @click:minute="$refs.menu2.save(closeAt)"
               ></v-time-picker>
@@ -88,14 +88,14 @@
           </v-col>
         </v-row>
         <v-switch
-          v-model="usesPublicCalendar"
+          v-model="usesPublicCalendarX"
           :label="usesPublicCalendarLabel"
         ></v-switch>
         <!-- Optional settings -->
         <v-row v-if="usesPublicCalendar">
           <v-col>
             <v-text-field
-              v-model="slotInterval"
+              v-model="slotIntervalX"
               label="Appointment length?"
               hint="in minutes"
               clearable
@@ -103,7 +103,7 @@
           </v-col>
           <v-col>
             <v-text-field
-              v-model="people"
+              v-model="peopleX"
               label="List service providers"
               hint="Separate names with commas"
               clearable
@@ -133,20 +133,43 @@ import Place from '@/models/Place';
 
 export default {
   props: {
-    id: String,
+    id: {
+      type: String,
+      default: '',
+    },
+    usesPublicCalendar: {
+      type: Boolean,
+      default: false,
+    },
+    username: {
+      type: String,
+      default: '',
+    },
+    business: {
+      type: String,
+      default: '',
+    },
+    people: {
+      type: String,
+      default: '',
+    },
+    slotInterval: {
+      type: Number,
+      default: 30,
+    },
+    openAt: {
+      type: String,
+      default: '08:00',
+    },
+    closeAt: {
+      type: String,
+      default: '17:00',
+    },
   },
 
   computed: {
     usesPublicCalendarLabel() {
       return `By appointment only. Currently: ${this.usesPublicCalendar.toString()}`;
-    },
-
-    place() {
-      return Place.find(this.id);
-    },
-
-    name() {
-      return this.place.name;
     },
   },
 
@@ -156,25 +179,23 @@ export default {
       buttonHovering: false,
       showToolTip: false,
       dialog: false,
-      usesPublicCalendar: false,
-
-      username: '',
-      people: '',
-      slotInterval: 30,
-
-      openAt: '08:00',
-      closeAt: '17:00',
       menu1: false,
       menu2: false,
 
       rules: [(v) => v?.length > 2 || 'Recommend 3 to 10 characters'],
+
+      usesPublicCalendarX: this.usesPublicCalendar,
+      peopleX: this.people,
+      slotIntervalX: this.slotInterval,
+      openAtX: this.openAt,
+      closeAtX: this.closeAt,
     };
   },
 
   methods: {
     onGo() {
       this.dialog = false;
-      localStorage.setItem('business', this.name);
+      localStorage.setItem('business', this.business);
       localStorage.setItem('usesPublicCalendar', this.usesPublicCalendar);
       localStorage.setItem('people', this.people);
       localStorage.setItem('slotInterval', this.slotInterval);
@@ -183,13 +204,13 @@ export default {
 
       // State accessed later when usesPublicCalendar is true
       const data = {
-        usesPublicCalendar: this.usesPublicCalendar,
-        people: this.people,
-        slotInterval: this.slotInterval,
-        openAt: this.openAt,
-        closeAt: this.closeAt,
-        business: this.name,
+        usesPublicCalendar: this.usesPublicCalendarX,
+        people: this.peopleX,
+        slotInterval: this.slotIntervalX,
+        openAt: this.openAtX,
+        closeAt: this.closeAtX,
       };
+      // pass back to Welcome.vue
       this.$emit('go', data);
     },
   },
@@ -200,22 +221,9 @@ export default {
 
       this.showToolTip = newVal;
     },
-
-    userName(val, oldVal) {
-      if (!oldVal) {
-        this.username = 'Anon';
-      }
-      console.log(val);
-    },
   },
   mounted() {
     Place.$fetch();
-    this.usesPublicCalendar =
-      localStorage.getItem('usesPublicCalendar') || false;
-    this.people = localStorage.getItem('people');
-    this.slotInterval = localStorage.getItem('slotInterval');
-    this.openAt = localStorage.getItem('openAt');
-    this.closeAt = localStorage.getItem('closeAt');
   },
 };
 </script>

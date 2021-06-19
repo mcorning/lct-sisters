@@ -64,12 +64,14 @@ export default {
   },
 
   methods: {
-    onGo(username, usesPublicCalendar) {
-      console.log('username', username);
-      localStorage.setItem('username', username);
+    onGo(data) {
+      console.info(
+        'passing data back to App.vue',
+        JSON.stringify(data, null, 3)
+      );
 
       this.dialog = false;
-      this.$emit('connectMe', username, usesPublicCalendar);
+      this.$emit('connectMe', data);
     },
   },
 

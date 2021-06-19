@@ -74,7 +74,7 @@ export default {
   methods: {
     onGo() {
       this.dialog = false;
-      this.$emit('go', this.username, false);
+      this.$emit('go', { username: this.username, whatIsThis: false });
     },
   },
 };
