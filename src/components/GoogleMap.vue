@@ -262,7 +262,6 @@ export default {
       recent: false,
       loading: true,
 
-      markersData: [],
       edit: true,
       infoWindowLatLang: null,
       currLoc: '',

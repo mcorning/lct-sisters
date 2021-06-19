@@ -292,6 +292,7 @@ import {
   printJson,
 } from './utils/colors';
 
+import State from '@/models/State';
 import Visit from '@/models/Visit';
 import Auditor from './utils/Auditor';
 import FeedbackCard from './components/cards/feedbackCard.vue';
@@ -344,6 +345,15 @@ export default {
     },
     version() {
       return this.$version;
+    },
+    visits() {
+      return Visit.all() || [];
+    },
+    state() {
+      return State.all()[0] || [];
+    },
+    usesPublicCalendar() {
+      return this.state.usesPublicCalendar;
     },
   },
 
@@ -971,6 +981,36 @@ export default {
       Visit.deleteAll();
       window.location.reload();
     },
+
+    createState() {
+      const state = {
+        username: 'Enter your nickname',
+        people: 'List your people',
+        business: 'Name your business',
+        openAt: '00:00',
+        closeAt: '23:59',
+        usesPublicCalendar: false,
+        avgStay: 20,
+        slotInterval: 30,
+      };
+      State.updatePromise(state).then((s) => {
+        console.groupCollapsed('Default State entity: >');
+        console.info(s);
+        console.groupEnd();
+      });
+    },
+    showMe() {
+      const usesPublicCalendar =
+        this.usesPublicCalendar ||
+        localStorage.getItem('usesPublicCalendar') === 'true';
+      const onTheJob =
+        usesPublicCalendar &&
+        this.visits &&
+        this.visits.filter((v) => v.date === new Date().toDateString()).length >
+          0;
+
+      this.show = onTheJob ? this.CALENDAR : this.SPACES;
+    },
   },
 
   watch: {
@@ -1023,10 +1063,18 @@ export default {
   },
 
   async mounted() {
+    const self = this;
     console.groupCollapsed('Mounting App:');
     const goodData = localStorage.getItem('goodData');
-    Visit.$fetch().then((all) => {
-      if (all.visits && !goodData) {
+
+    Promise.all([State.$fetch(), Visit.$fetch()]).then((entities) => {
+      const states = entities[0].states || [];
+      const visits = entities[1].visits || [];
+      if (states.length === 0) {
+        self.createState();
+      }
+
+      if (visits && !goodData) {
         const question = `May we discard old data?`;
         const consequences =
           'Some data structures in this version of LCT are new. Old data can cause LCT to fail. We leave your server data alone, so you will still recieve alerts, if necessary.';
@@ -1039,17 +1087,9 @@ export default {
           localStorage.setItem('goodData', true);
         });
       }
-
-      const onTheJob =
-        all.visits &&
-        localStorage.getItem('usesPublicCalendar') === 'true' &&
-        all.visits.filter((v) => v.date === new Date().toDateString()).length >
-          0;
-
-      self.show = onTheJob ? this.CALENDAR : this.SPACES;
+      self.showMe();
     });
 
-    const self = this;
     const bp = self.$vuetify.breakpoint;
     console.log(
       'Breakpoint',

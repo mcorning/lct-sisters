@@ -99,7 +99,7 @@
               :interval-minutes="intervalMinutes"
               @click:more="viewDay"
               @click:date="viewDay"
-              @click:interval="changeInterval"
+              @click:interval="onIntervalClick"
               @click:event="showEvent"
               @change="handleChange"
             >
@@ -148,6 +148,7 @@
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
+import State from '@/models/State';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
@@ -177,6 +178,14 @@ export default {
   },
 
   computed: {
+    state() {
+      const states = State.all();
+      return states[0] || [];
+    },
+    usesPublicCalendar() {
+      return this.state.usesPublicCalendar;
+    },
+
     appointments() {
       const a = Appointment.all();
       return a;
@@ -249,7 +258,10 @@ export default {
     },
 
     isTakingAppointments() {
-      return localStorage.getItem('usesPublicCalendar') === 'true';
+      return (
+        this.usesPublicCalendar ||
+        localStorage.getItem('usesPublicCalendar') === 'true'
+      );
     },
 
     relevantEvents() {
@@ -284,16 +296,14 @@ export default {
     currentDate: null,
     customEventOptions: {
       buttons: [
-        { label: 'Cancel', act: 'CANCEL' },
-
         { label: 'Delete', act: 'DELETE' },
+        { label: 'Cancel', act: 'CANCEL' },
+        { label: 'Close', act: 'DONE' },
 
         { spacer: true },
-        { label: 'Done', act: 'DONE', color: 'secondary', outlined: true },
-        { spacer: true },
+        { label: 'Log', act: 'LOG', color: 'secondary', outlined: true },
 
         // { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
-        { label: 'Log', act: 'LOG' },
       ],
     },
     customBookEventOptions: {
@@ -309,7 +319,7 @@ export default {
     firstTime: '00:00',
     focus: '',
     intervalCount: 24,
-    intervalMinutes: 60,
+    intervalMinutes: 20,
     place: null,
     status: 'Select a calendar event to edit',
     ready: false,
@@ -518,16 +528,19 @@ export default {
         const close = Number(this.closeAt.slice(0, 2));
         const range = close - open;
 
-        this.intervalMinutes = localStorage.getItem('slotInterval');
+        this.intervalMinutes =
+          this.state.slotInterval || localStorage.getItem('slotInterval');
         this.firstTime = `${String(
           Number(this.openAt.split(':')[0]) - 1
         ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
         this.intervalCount = range * (60 / this.intervalMinutes) + 2;
         this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
       } else {
-        this.intervalCount = 24;
         this.firstTime = '00:00';
-        this.intervalMinutes = 60;
+        this.intervalMinutes =
+          this.state.avgStay || localStorage.getItem('avgStay');
+        this.intervalCount = 24 * (60 / this.intervalMinutes);
+
         this.tip = 'Stay safe out there...';
       }
     },
@@ -706,7 +719,7 @@ export default {
       this.addVisit(time, place_id, shift);
     },
 
-    changeInterval(event) {
+    onIntervalClick(event) {
       // this.tip = `You are ${
       //   this.isTakingAppointments ? 'taking' : 'not taking'
       // } appointments`;
@@ -724,36 +737,38 @@ export default {
       this.type = 'category';
       // return;
       // }
+    },
 
-      // // we are returning ms
-      // const newTime = this.roundTime(
-      //   DateTime.fromSQL(`${this.currentEvent.date} ${event.time}`).ts
-      // );
-      // console.log('new end', newTime);
+    changeInterval(event) {
+      // we are returning ms
+      const newTime = this.roundTime(
+        DateTime.fromSQL(`${this.currentEvent.date} ${event.time}`).ts
+      );
+      console.log('new end', newTime);
 
-      // const s = DateTime.fromMillis(this.currentEvent.start);
-      // const e = DateTime.fromMillis(this.currentEvent.end);
-      // const d = DateTime.fromMillis(newTime);
-      // const startDelta = d.diff(s, 'minutes').minutes;
-      // const endDelta = d.diff(e, 'minutes').minutes;
-      // console.log('startDelta:', startDelta);
-      // console.log('endDelta:', endDelta);
-      // const startIsCloser =
-      //   startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
+      const s = DateTime.fromMillis(this.currentEvent.start);
+      const e = DateTime.fromMillis(this.currentEvent.end);
+      const d = DateTime.fromMillis(newTime);
+      const startDelta = d.diff(s, 'minutes').minutes;
+      const endDelta = d.diff(e, 'minutes').minutes;
+      console.log('startDelta:', startDelta);
+      console.log('endDelta:', endDelta);
+      const startIsCloser =
+        startDelta < 0 || Math.abs(startDelta) < Math.abs(endDelta);
 
-      // const entity = startIsCloser
-      //   ? {
-      //       id: this.selectedEventId,
-      //       start: newTime,
-      //       category: this.currentEvent.category,
-      //     }
-      //   : {
-      //       id: this.selectedEventId,
-      //       end: newTime,
-      //       category: this.currentEvent.category,
-      //     };
-      // this.updateCache({ action: 'update', entity });
-      // console.groupEnd();
+      const entity = startIsCloser
+        ? {
+            id: this.selectedEventId,
+            start: newTime,
+            category: this.currentEvent.category,
+          }
+        : {
+            id: this.selectedEventId,
+            end: newTime,
+            category: this.currentEvent.category,
+          };
+      this.updateCache({ action: 'update', entity });
+      console.groupEnd();
     },
 
     // TODO do we need this?
@@ -1005,14 +1020,21 @@ export default {
   mounted() {
     const self = this;
 
-    Promise.all([Place.$fetch(), Visit.$fetch(), Appointment.$fetch()])
+    Promise.all([
+      Place.$fetch(),
+      Visit.$fetch(),
+      Appointment.$fetch(),
+      State.$fetch(),
+    ])
       .then((entities) => {
         this.configureCalendar();
 
         const places = entities[0].places || [];
         const visits = entities[1].visits || [];
         const appointments = entities[2].appointments || [];
+        const states = entities[3].states || [];
 
+        console.log(states.length, 'States');
         console.log(places.length, 'Places');
         console.log(visits.length, 'Visits');
         console.log(appointments.length, 'Appointments');
