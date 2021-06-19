@@ -101,7 +101,11 @@ TODO Incorporate this header data into nestedMenu
         ></FeedbackCard>
 
         <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
-          <Welcome @connectMe="onConnectMe($event)" />
+          <Welcome
+            :username="username"
+            :usesPublicCalendar="usesPublicCalendar"
+            @connectMe="onConnectMe($event)"
+          />
         </v-row>
 
         <!-- GoogleMap, Warning, and Calendar components -->
@@ -686,6 +690,7 @@ export default {
     onConnectMe(username = this.username) {
       // create() takes username from localStorage
       this.username = username;
+      State.updatePromise({ username }).then((s) => console.info(s));
 
       this.usernameAlreadySelected = true;
 
@@ -982,23 +987,6 @@ export default {
       window.location.reload();
     },
 
-    createState() {
-      const state = {
-        username: 'Enter your nickname',
-        people: 'List your people',
-        business: 'Name your business',
-        openAt: '00:00',
-        closeAt: '23:59',
-        usesPublicCalendar: false,
-        avgStay: 20,
-        slotInterval: 30,
-      };
-      State.updatePromise(state).then((s) => {
-        console.groupCollapsed('Default State entity: >');
-        console.info(s);
-        console.groupEnd();
-      });
-    },
     showMe() {
       const usesPublicCalendar =
         this.usesPublicCalendar ||
@@ -1070,10 +1058,7 @@ export default {
     Promise.all([State.$fetch(), Visit.$fetch()]).then((entities) => {
       const states = entities[0].states || [];
       const visits = entities[1].visits || [];
-      if (states.length === 0) {
-        self.createState();
-      }
-
+      console.log(states.length, 'states');
       if (visits && !goodData) {
         const question = `May we discard old data?`;
         const consequences =

@@ -246,7 +246,9 @@ export default {
     },
 
     isAtWorkAt() {
-      return localStorage.getItem('business') === this.currentEvent.name;
+      const x = this.state.business === this.currentEvent.name;
+      const y = localStorage.getItem('business') === this.currentEvent.name;
+      return x || y;
     },
 
     isCategoryCalendar() {
@@ -522,8 +524,8 @@ export default {
       if (this.isCategoryCalendar && this.isTakingAppointments) {
         this.tip =
           'You can add appointments by clicking a time interval for any selected day.';
-        this.openAt = localStorage.getItem('openAt');
-        this.closeAt = localStorage.getItem('closeAt');
+        this.openAt = this.state.openAt || localStorage.getItem('openAt');
+        this.closeAt = this.state.closeAt || localStorage.getItem('closeAt');
         const open = Number(this.openAt.slice(0, 2));
         const close = Number(this.closeAt.slice(0, 2));
         const range = close - open;

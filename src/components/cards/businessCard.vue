@@ -174,19 +174,21 @@ export default {
   methods: {
     onGo() {
       this.dialog = false;
-      // localStorage accessed later when usesPublicCalendar is true
       localStorage.setItem('business', this.name);
       localStorage.setItem('usesPublicCalendar', this.usesPublicCalendar);
       localStorage.setItem('people', this.people);
       localStorage.setItem('slotInterval', this.slotInterval);
       localStorage.setItem('openAt', this.openAt);
       localStorage.setItem('closeAt', this.closeAt);
+
+      // State accessed later when usesPublicCalendar is true
       const data = {
         usesPublicCalendar: this.usesPublicCalendar,
         people: this.people,
         slotInterval: this.slotInterval,
         openAt: this.openAt,
         closeAt: this.closeAt,
+        business: this.name,
       };
       this.$emit('go', data);
     },

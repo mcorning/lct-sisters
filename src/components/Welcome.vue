@@ -30,6 +30,16 @@
 export default {
   name: 'Welcome',
 
+  props: {
+    username: {
+      type: String,
+      default: '',
+    },
+    usesPublicCalendar: {
+      type: Boolean,
+      default: false,
+    },
+  },
   components: {
     myCard: () => import('./cards/myCard'),
   },
@@ -57,7 +67,6 @@ export default {
     onGo(username, usesPublicCalendar) {
       console.log('username', username);
       localStorage.setItem('username', username);
-      localStorage.setItem('usesPublicCalendar', usesPublicCalendar);
 
       this.dialog = false;
       this.$emit('connectMe', username, usesPublicCalendar);
@@ -67,13 +76,13 @@ export default {
   watch: {
     userName(val, oldVal) {
       if (!oldVal) {
-        this.username = 'Anon';
+        //this.username = 'Anon';
       }
       console.log(val);
     },
   },
   created() {
-    this.username = localStorage.getItem('username');
+    //this.username = localStorage.getItem('username');
   },
 
   beforeUnmount() {},

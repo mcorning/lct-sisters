@@ -6,8 +6,11 @@ console.log('Loading State entity');
 
 export default class State extends Model {
   static entity = 'states';
+
   static fields() {
     return {
+      id: this.string(''),
+      sessionID: this.string(''),
       username: this.string('enter your name'),
       people: this.string('list your people'),
       business: this.string('enter your business'),
@@ -21,48 +24,14 @@ export default class State extends Model {
     };
   }
 
-  static getState() {
-    return this;
-  }
-  static getUsername() {
-    return this.username;
-  }
-  static getPeople() {
-    return this.people;
-  }
-  static getBusiness() {
-    return this.business;
-  }
-  static getOpenAt() {
-    return this.openAt;
-  }
-  static getCloseAt() {
-    return this.closeAt;
-  }
-  static getUsesPublicCalendar() {
-    return this.usesPublicCalendar;
-  }
-
-  //  static updateFieldPromise(val) {
-  //    return new Promise((resolve, reject) => {
-  //      this.$update({
-  //        data: val,
-  //      })
-  //        .then((p) => {
-  //          // since we pass in an ID, we can only have a single possible resulting element
-  //          resolve(p[0]);
-  //        })
-  //        .catch((e) => reject(e));
-  //    });
-  //  }
-
   static updatePromise(state) {
     return new Promise((resolve, reject) => {
       console.log(
         'Update State collection with',
         JSON.stringify(state, null, 3)
       );
-      this.$create({
+      this.$update({
+        where: this.id,
         data: state,
       })
         .then((p) => resolve(p))
@@ -70,15 +39,10 @@ export default class State extends Model {
     });
   }
 
-  static async delete(val) {
-    let p = await this.$delete(val);
-    return p;
-  }
-
-  static deletePromise(val) {
+  static deletePromise() {
     return new Promise((resolve, reject) => {
-      console.log(`Deleting State ID = ${val}`);
-      this.$delete(val)
+      console.log(`Deleting State ID = ${this.id}`);
+      this.$delete(this.id)
         .then((p) => {
           if (p) {
             resolve(p);
