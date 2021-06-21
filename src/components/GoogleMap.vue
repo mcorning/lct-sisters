@@ -77,7 +77,7 @@
           </v-card-text>
 
           <v-card-actions v-if="place.name" class="pb-1">
-            <businessCard :id="place.place_id" @go="onGo"></businessCard>
+            <businessCard :settings="settings" @go="onGo"></businessCard>
             <v-spacer></v-spacer>
 
             <v-tooltip bottom>
@@ -205,10 +205,6 @@ export default {
       return this.$refs.ConfirmModernDialog;
     },
 
-    username() {
-      return localStorage.getItem('username');
-    },
-
     options() {
       return {
         fields: [
@@ -223,7 +219,7 @@ export default {
     },
 
     settings() {
-      return Setting.all() || [];
+      return Setting.all()[0] || [];
     },
 
     // promises
@@ -244,6 +240,8 @@ export default {
   data() {
     return {
       drawer: false,
+      username: '',
+      ready: false,
 
       place: null,
       customOptions: {
@@ -678,7 +676,14 @@ export default {
     },
   },
 
-  watch: {},
+  watch: {
+    ready(newVal, oldVal) {
+      console.log('Ready:', newVal, '/', oldVal);
+      if (this.ready) {
+        this.username = this.settings.username;
+      }
+    },
+  },
 
   created() {
     // do this before GoogleMap component is finished instantiating
@@ -709,6 +714,7 @@ export default {
           const visits = results[0].visits;
           const settings = results[2].settings;
           console.info('settings:', printJson(settings));
+
           // self.showMap(map);
           // self.getAssets(map);
 
@@ -721,6 +727,7 @@ export default {
 
           // not sure we need this...
           this.recent = true;
+          this.ready = true;
           console.log(success('GoogleMap loaded successfully'));
         })
         .catch((err) => this.throwError('GoogleMap.mounted()', err));

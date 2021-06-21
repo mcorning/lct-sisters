@@ -427,7 +427,6 @@ export default {
       const first = entity.category === 'You' ? 'isDay' : 'isCategory';
       const second = action;
       const fun = this.actions[first][second];
-      console.log(fun);
       fun(payload, f);
     },
 
@@ -604,6 +603,7 @@ export default {
       console.groupCollapsed('New Appointment:>');
       // TODO if we set appointment in future, do we still see the correct currentEventParsed?
       console.log(success(printJson(this.currentEventParsed)));
+      this.scrollToTime(this.currentEventParsed.start.time);
       console.groupEnd();
     },
 

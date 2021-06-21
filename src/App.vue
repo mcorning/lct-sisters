@@ -100,19 +100,10 @@ TODO Incorporate this header data into nestedMenu
           @endFeedback="feedbackDialog = false"
         ></FeedbackCard>
 
-        <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
-          <Welcome
-            :sessionID="sessionID"
-            :username="username"
-            :usesPublicCalendar="usesPublicCalendar"
-            @connectMe="onConnectMe($event)"
-          />
-        </v-row>
-
         <!-- GoogleMap, Warning, and Calendar components -->
         <v-row
           id="controlsContainer"
-          v-if="usernameAlreadySelected"
+          v-if="!showWelcome"
           align="start"
           justify="center"
           no-gutters
@@ -149,6 +140,15 @@ TODO Incorporate this header data into nestedMenu
               @manageAppointment="onManageAppointment"
             />
           </v-col>
+        </v-row>
+
+        <v-row v-else justify="center" no-gutters>
+          <Welcome
+            :sessionID="sessionID"
+            :username="username"
+            :usesPublicCalendar="usesPublicCalendar"
+            @connectMe="onConnectMe($event)"
+          />
         </v-row>
 
         <!-- PWA snackbar -->
@@ -397,36 +397,6 @@ export default {
           ],
         },
         { isDivider: true },
-        // {
-        //   name: 'Audit Log Tail:',
-        //   subtitle: 'Captures key runtime data for review',
-        //   icon: 'mdi-information-outline',
-        //   color: 'yellow',
-        //   menu: [],
-        //   // menu: [
-        //   //   { name: '1.1' },
-        //   //   { name: '1.2' },
-        //   //   {
-        //   //     name: 'Sub-menu 2',
-        //   //     menu: [
-        //   //       { name: '2.1' },
-        //   //       { name: '2.2' },
-        //   //       {
-        //   //         name: 'Sub-menu 3',
-        //   //         menu: [
-        //   //           { name: '3.1' },
-        //   //           { name: '3.2' },
-        //   //           {
-        //   //             name: 'Sub-menu 4',
-        //   //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
-        //   //           },
-        //   //         ],
-        //   //       },
-        //   //     ],
-        //   //   },
-        //   // ],
-        // },
-
         {
           name: 'Support',
           menu: [
@@ -469,8 +439,12 @@ export default {
       alertText: '',
 
       // for Welcome component
+      // to minimize screen flutter:
+      //    set false and then
+      //    set true after mounted if there is no settings.username
+      showWelcome: false,
+
       isConnected: false,
-      usernameAlreadySelected: false,
       sessionID: '',
       username: '',
       avgStay: 3600000,
@@ -593,7 +567,7 @@ export default {
       // attach the session ID to the next reconnection attempts
       this.$socket.client.auth = { sessionID };
       this.sessionID = sessionID;
-      console.log('Session ID', this.sessionID);
+      console.log(success('Session ID', this.sessionID));
 
       // save the ID of the user
       // TODO isn't userID already assigned in middleware? and why assign to client instead of .auth?
@@ -703,13 +677,17 @@ export default {
     onConnectMe(data) {
       const { username } = data;
       this.username = username;
+      if (this.settings.sessionID === '') {
+        data = { ...data, sessionID: 'toBeReplacedByServer' };
+      }
       const payload = { ...data, id: 1 };
-      console.info('payload:', payload);
+
+      console.info(warn('payload:', payload));
       Setting.updatePromise(payload)
         .then((s) => console.info(s))
         .catch((e) => console.error(e));
 
-      this.usernameAlreadySelected = true;
+      this.showWelcome = false;
 
       console.log('Connecting', this.username);
       this.$socket.client.auth = {
@@ -1012,9 +990,9 @@ export default {
           console.groupCollapsed('Getting data: >');
 
           const settings = entities[0].settings || [];
-          if (settings.length === 0) {
-            Setting.updatePromise({ id: 1, username: 'enter name' });
-          }
+          // if (settings.length === 0) {
+          //   Setting.updatePromise({ id: 1, username: 'enter name' });
+          // }
           console.log(settings.length, 'settings');
 
           const visits = entities[1].visits || [];
@@ -1038,10 +1016,9 @@ export default {
           this.username = this.settings.username;
           console.log('created()', this.username);
           if (this.sessionID) {
-            this.usernameAlreadySelected = true;
             this.onConnectMe(this.username);
           }
-          self.usernameAlreadySelected = this.settings.username;
+          this.showWelcome = !this.settings.username;
           this.finishMounting();
           console.groupEnd();
           //#endregion
@@ -1134,6 +1111,7 @@ export default {
     const self = this;
     console.groupCollapsed('Mounting App:');
     self.getData().then(() => (self.ready = true));
+    console.groupEnd();
     console.log('App.vue mounted');
   },
 

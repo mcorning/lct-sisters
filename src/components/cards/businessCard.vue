@@ -18,7 +18,7 @@
     </template>
 
     <v-card dark>
-      <v-card-title class="headline">{{ business }}</v-card-title>
+      <v-card-title class="headline">{{ settings.business }}</v-card-title>
       <v-card-subtitle>
         Let's open the doors (safely)
       </v-card-subtitle>
@@ -32,7 +32,7 @@
               v-model="menu1"
               :close-on-content-click="false"
               :nudge-right="40"
-              :return-value.sync="openAt"
+              :return-value.sync="openAtX"
               transition="scale-transition"
               offset-y
               max-width="290px"
@@ -52,7 +52,7 @@
                 v-if="menu1"
                 v-model="openAtX"
                 full-width
-                @click:minute="$refs.menu1.save(openAt)"
+                @click:minute="$refs.menu1.save(openAtX)"
               ></v-time-picker>
             </v-menu>
           </v-col>
@@ -62,7 +62,7 @@
               v-model="menu2"
               :close-on-content-click="false"
               :nudge-right="40"
-              :return-value.sync="closeAt"
+              :return-value.sync="closeAtX"
               transition="scale-transition"
               offset-y
               max-width="290px"
@@ -82,7 +82,7 @@
                 v-if="menu2"
                 v-model="closeAtX"
                 full-width
-                @click:minute="$refs.menu2.save(closeAt)"
+                @click:minute="$refs.menu2.save(closeAtX)"
               ></v-time-picker>
             </v-menu>
           </v-col>
@@ -92,7 +92,7 @@
           :label="usesPublicCalendarLabel"
         ></v-switch>
         <!-- Optional settings -->
-        <v-row v-if="usesPublicCalendar">
+        <v-row v-if="usesPublicCalendarX">
           <v-col>
             <v-text-field
               v-model="slotIntervalX"
@@ -133,43 +133,12 @@ import Place from '@/models/Place';
 
 export default {
   props: {
-    id: {
-      type: String,
-      default: '',
-    },
-    usesPublicCalendar: {
-      type: Boolean,
-      default: false,
-    },
-    username: {
-      type: String,
-      default: '',
-    },
-    business: {
-      type: String,
-      default: '',
-    },
-    people: {
-      type: String,
-      default: '',
-    },
-    slotInterval: {
-      type: Number,
-      default: 30,
-    },
-    openAt: {
-      type: String,
-      default: '08:00',
-    },
-    closeAt: {
-      type: String,
-      default: '17:00',
-    },
+    settings: Object,
   },
 
   computed: {
     usesPublicCalendarLabel() {
-      return `By appointment only. Currently: ${this.usesPublicCalendar.toString()}`;
+      return `By appointment only. Currently: ${this.usesPublicCalendarX.toString()}`;
     },
   },
 
@@ -184,26 +153,22 @@ export default {
 
       rules: [(v) => v?.length > 2 || 'Recommend 3 to 10 characters'],
 
-      usesPublicCalendarX: this.usesPublicCalendar,
-      peopleX: this.people,
-      slotIntervalX: this.slotInterval,
-      openAtX: this.openAt,
-      closeAtX: this.closeAt,
+      usesPublicCalendarX: this.settings.usesPublicCalendar,
+      peopleX: this.settings.people,
+      slotIntervalX: this.settings.slotInterval,
+      openAtX: this.settings.openAt,
+      closeAtX: this.settings.closeAt,
     };
   },
 
   methods: {
     onGo() {
       this.dialog = false;
-      localStorage.setItem('business', this.business);
-      localStorage.setItem('usesPublicCalendar', this.usesPublicCalendar);
-      localStorage.setItem('people', this.people);
-      localStorage.setItem('slotInterval', this.slotInterval);
-      localStorage.setItem('openAt', this.openAt);
-      localStorage.setItem('closeAt', this.closeAt);
-
-      // Setting accessed later when usesPublicCalendar is true
+      // NOTE: we only have one element in Setting,
+      // so we hardwire ID to 1 everywhere we use Setting.
       const data = {
+        id: 1,
+        business: this.settings.business,
         usesPublicCalendar: this.usesPublicCalendarX,
         people: this.peopleX,
         slotInterval: this.slotIntervalX,
@@ -224,6 +189,7 @@ export default {
   },
   mounted() {
     Place.$fetch();
+    console.log(JSON.stringify(this.$props, null, 3));
   },
 };
 </script>

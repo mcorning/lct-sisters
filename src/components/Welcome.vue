@@ -39,6 +39,7 @@ export default {
       type: String,
       default: '',
     },
+
     usesPublicCalendar: {
       type: Boolean,
       default: false,
