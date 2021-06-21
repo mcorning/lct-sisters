@@ -102,6 +102,7 @@ TODO Incorporate this header data into nestedMenu
 
         <v-row v-if="!usernameAlreadySelected" justify="center" no-gutters>
           <Welcome
+            :sessionID="sessionID"
             :username="username"
             :usesPublicCalendar="usesPublicCalendar"
             @connectMe="onConnectMe($event)"
@@ -296,7 +297,7 @@ import {
   printJson,
 } from './utils/colors';
 
-import State from '@/models/State';
+import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Auditor from './utils/Auditor';
 import FeedbackCard from './components/cards/feedbackCard.vue';
@@ -353,16 +354,17 @@ export default {
     visits() {
       return Visit.all() || [];
     },
-    state() {
-      return State.all()[0] || [];
+    settings() {
+      return Setting.all()[0] || [];
     },
     usesPublicCalendar() {
-      return this.state.usesPublicCalendar;
+      return this.settings.usesPublicCalendar;
     },
   },
 
   data() {
     return {
+      ready: false,
       customOptions: {
         buttons: [
           { label: 'No', agree: 0 },
@@ -581,23 +583,33 @@ export default {
       this.isConnected = true;
     },
 
+    // sent from Server after Server has all the data it needs to register the Visitor
+    // TODO better style uses a single object as arg. function deconstructs vars.
     session({ sessionID, userID, username, graphName }) {
+      console.group('Handling Session event from Server');
+
+      Setting.updatePromise({ id: 1, sessionID });
+      localStorage.setItem('sessionID', sessionID);
       // attach the session ID to the next reconnection attempts
       this.$socket.client.auth = { sessionID };
-      State.updatePromise({ sessionID });
-      localStorage.setItem('sessionID', sessionID);
+      this.sessionID = sessionID;
+      console.log('Session ID', this.sessionID);
+
       // save the ID of the user
-      // TODO isn't userID already assigned in middleware?
+      // TODO isn't userID already assigned in middleware? and why assign to client instead of .auth?
       this.$socket.client.userID = userID;
-      // this.sid = sessionID;
+      this.userID = userID;
+      console.log('User ID:', this.userID);
+
       this.username = username;
-      console.log('on Session', this.username);
+      console.log('User Name:', this.username);
+
       // sessions always load with the configured exposure graph
       // setting the current graph to Sandbox only happens after connecting to the server
+      this.graphName = graphName;
       console.log('graphName used by redis', this.graphName);
 
-      this.userID = userID;
-      this.graphName = graphName;
+      console.groupEnd();
     },
 
     // Exposure dialogs
@@ -662,7 +674,7 @@ export default {
           localStorage.removeItem('openAt');
           localStorage.removeItem('closeAt');
           Visit.deleteAll();
-          State.deleteAll();
+          Setting.deleteAll();
           window.location.reload();
           break;
       }
@@ -691,7 +703,11 @@ export default {
     onConnectMe(data) {
       const { username } = data;
       this.username = username;
-      State.updatePromise(data).then((s) => console.info(s));
+      const payload = { ...data, id: 1 };
+      console.info('payload:', payload);
+      Setting.updatePromise(payload)
+        .then((s) => console.info(s))
+        .catch((e) => console.error(e));
 
       this.usernameAlreadySelected = true;
 
@@ -756,7 +772,7 @@ export default {
       });
     },
 
-    // TODO Whey does Calendar send two events that land at the same place here?
+    // TODO Why does Calendar send two events that land at the same place here?
     onLogVisit(visit) {
       if (!this.$socket.client.userID) {
         this.confirmationColor = 'orange';
@@ -984,8 +1000,75 @@ export default {
       localStorage.removeItem('slotInterval');
       localStorage.removeItem('openAt');
       localStorage.removeItem('closeAt');
-      Visit.deleteAll();
+      Setting.reset();
       window.location.reload();
+    },
+
+    getData() {
+      return Promise.all([Setting.$fetch(), Visit.$fetch()])
+        .then((entities) => {
+          const goodData = localStorage.getItem('goodData');
+
+          console.groupCollapsed('Getting data: >');
+
+          const settings = entities[0].settings || [];
+          if (settings.length === 0) {
+            Setting.updatePromise({ id: 1, username: 'enter name' });
+          }
+          console.log(settings.length, 'settings');
+
+          const visits = entities[1].visits || [];
+          if (visits && !goodData) {
+            const question = `May we discard old data?`;
+            const consequences =
+              'Some data structures in this version of LCT are new. Old data can cause LCT to fail. We leave your server data alone, so you will still recieve alerts, if necessary.';
+            this.ConfirmModernDialog.open(question, consequences, {
+              icon: 'mdi-alert-outline',
+            }).then((act) => {
+              if (act) {
+                this.refreshData();
+              }
+              localStorage.setItem('goodData', true);
+            });
+          }
+
+          //#region Socket.io
+          // sessionID saved to Setting entity in session event handler (after Server provides the ID)
+          this.sessionID = this.settings.sessionID;
+          this.username = this.settings.username;
+          console.log('created()', this.username);
+          if (this.sessionID) {
+            this.usernameAlreadySelected = true;
+            this.onConnectMe(this.username);
+          }
+          self.usernameAlreadySelected = this.settings.username;
+          this.finishMounting();
+          console.groupEnd();
+          //#endregion
+        })
+        .catch((error) => this.onError(error));
+    },
+
+    finishMounting() {
+      const bp = this.$vuetify.breakpoint;
+      console.log(
+        'Breakpoint',
+        bp.name,
+        'width',
+        bp.width,
+        'height',
+        bp.height,
+
+        'mobile?',
+        bp.mobile
+      );
+      this.bp = bp;
+      this.namespace = process.env.VUE_APP_NAMESPACE;
+      this.selectedSpace = null;
+      this.graphName = this.$defaultGraphName;
+      console.log(this.graphName);
+
+      this.showMe();
     },
 
     showMe() {
@@ -1003,6 +1086,12 @@ export default {
   },
 
   watch: {
+    ready() {
+      console.log('Ready');
+    },
+    sessionID(newVal, oldVal) {
+      console.log(`SessionID: ${newVal}/${oldVal}`);
+    },
     // this only works once (when newValue happens to be null)
     // 'auditor.log': {
     //   immediate: true,
@@ -1038,65 +1127,14 @@ export default {
       console.log('PWA was installed');
     });
     //#endregion PWA
+    console.groupEnd();
   },
 
   async mounted() {
     const self = this;
     console.groupCollapsed('Mounting App:');
-    const goodData = localStorage.getItem('goodData');
-
-    Promise.all([State.$fetch(), Visit.$fetch()]).then((entities) => {
-      const states = entities[0].states || [];
-      const visits = entities[1].visits || [];
-      console.log(states.length, 'states');
-      if (visits && !goodData) {
-        const question = `May we discard old data?`;
-        const consequences =
-          'Some data structures in this version of LCT are new. Old data can cause LCT to fail. We leave your server data alone, so you will still recieve alerts, if necessary.';
-        this.ConfirmModernDialog.open(question, consequences, {
-          icon: 'mdi-alert-outline',
-        }).then((act) => {
-          if (act) {
-            this.refreshData();
-          }
-          localStorage.setItem('goodData', true);
-        });
-      }
-
-      //#region Socket.io
-      this.sessionID = this.state.sessionID;
-      this.username = this.state.username;
-      console.log('created()', this.username);
-      if (this.sessionID) {
-        this.usernameAlreadySelected = true;
-        this.onConnectMe(this.username);
-      }
-      console.groupEnd();
-      //#endregion
-      self.showMe();
-    });
-
-    const bp = self.$vuetify.breakpoint;
-    console.log(
-      'Breakpoint',
-      bp.name,
-      'width',
-      bp.width,
-      'height',
-      bp.height,
-
-      'mobile?',
-      bp.mobile
-    );
-    self.bp = bp;
-    self.namespace = process.env.VUE_APP_NAMESPACE;
-    self.selectedSpace = null;
-    self.graphName = self.$defaultGraphName;
-    console.log(self.graphName);
-    self.usernameAlreadySelected = this.state.username;
-
+    self.getData().then(() => (self.ready = true));
     console.log('App.vue mounted');
-    console.groupEnd();
   },
 
   // TODO Figure out how to unsub events

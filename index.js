@@ -1,3 +1,13 @@
+/**
+ * This server connects Visitors with the Virus Exposure Graph hosted on RedisGraph.
+ * The handshake protocol follows:
+ *    1) App.vue sends a message to Server with
+ *    2)
+ *    3)
+ *    4)
+ *    5)
+ *
+ */
 const path = require('path');
 const express = require('express');
 const socketIO = require('socket.io');
@@ -21,7 +31,6 @@ const sessionCache = new Cache(path.resolve(__dirname, 'sessions.json'));
 const alertsCache = new Cache(path.resolve(__dirname, 'alerts.json'));
 const errorCache = new Cache(path.resolve(__dirname, 'errors.json'));
 const feedbackCache = new Cache(path.resolve(__dirname, 'feedback.json'));
-const appointmentCache = new Cache(path.resolve(__dirname, 'appointment.json'));
 
 const {
   graphName, // mapped to client nsp (aka namespace or community name)

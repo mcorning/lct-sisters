@@ -31,6 +31,10 @@ export default {
   name: 'Welcome',
 
   props: {
+    sessionID: {
+      type: String,
+      default: '',
+    },
     username: {
       type: String,
       default: '',
@@ -45,14 +49,10 @@ export default {
   },
 
   computed: {
-    sessionID() {
-      return localStorage.getItem('sessionID');
-    },
-
     welcomeMessage() {
       let msg = this.sessionID
         ? `Welcome back to your old session, ${this.sessionID}`
-        : "We can beat this thing. Let's get started, shall we? There's no time to lose...";
+        : "We can beat this thing. Let's get started, shall we? There's no time to lose. So let's get you connected to the server...";
       return msg;
     },
   },

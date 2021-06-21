@@ -202,7 +202,7 @@ export default {
       localStorage.setItem('openAt', this.openAt);
       localStorage.setItem('closeAt', this.closeAt);
 
-      // State accessed later when usesPublicCalendar is true
+      // Setting accessed later when usesPublicCalendar is true
       const data = {
         usesPublicCalendar: this.usesPublicCalendarX,
         people: this.peopleX,

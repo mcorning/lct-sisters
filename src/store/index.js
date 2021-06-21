@@ -12,12 +12,12 @@ VuexORM.use(VuexORMLocalForage, { database });
 const store = new Vuex.Store({
   plugins: [VuexORM.install(database)],
   // using package.json for version number
-  state: {
+  settings: {
     packageVersion: version || '0',
   },
   getters: {
-    appVersion: (state) => {
-      return state.packageVersion;
+    appVersion: (settings) => {
+      return settings.packageVersion;
     },
   },
 });

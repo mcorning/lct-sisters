@@ -148,7 +148,7 @@
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
-import State from '@/models/State';
+import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
@@ -178,12 +178,12 @@ export default {
   },
 
   computed: {
-    state() {
-      const states = State.all();
-      return states[0] || [];
+    settings() {
+      const settings = Setting.all();
+      return settings[0] || [];
     },
     usesPublicCalendar() {
-      return this.state.usesPublicCalendar;
+      return this.settings.usesPublicCalendar;
     },
 
     appointments() {
@@ -246,7 +246,7 @@ export default {
     },
 
     isAtWorkAt() {
-      const x = this.state.business === this.currentEvent.name;
+      const x = this.settings.business === this.currentEvent.name;
       const y = localStorage.getItem('business') === this.currentEvent.name;
       return x || y;
     },
@@ -398,7 +398,7 @@ export default {
     throwError(payload) {
       const { source, error, comment } = payload;
       const msg = `ERROR: ${error.message} at ${source} (${comment})`;
-      console.log(msg);
+      console.error(msg);
       this.snackBarText = msg;
       this.showSnackbar = true;
       this.$emit('error', {
@@ -524,14 +524,14 @@ export default {
       if (this.isCategoryCalendar && this.isTakingAppointments) {
         this.tip =
           'You can add appointments by clicking a time interval for any selected day.';
-        this.openAt = this.state.openAt || localStorage.getItem('openAt');
-        this.closeAt = this.state.closeAt || localStorage.getItem('closeAt');
+        this.openAt = this.settings.openAt || localStorage.getItem('openAt');
+        this.closeAt = this.settings.closeAt || localStorage.getItem('closeAt');
         const open = Number(this.openAt.slice(0, 2));
         const close = Number(this.closeAt.slice(0, 2));
         const range = close - open;
 
         this.intervalMinutes =
-          this.state.slotInterval || localStorage.getItem('slotInterval');
+          this.settings.slotInterval || localStorage.getItem('slotInterval');
         this.firstTime = `${String(
           Number(this.openAt.split(':')[0]) - 1
         ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
@@ -540,7 +540,7 @@ export default {
       } else {
         this.firstTime = '00:00';
         this.intervalMinutes =
-          this.state.avgStay || localStorage.getItem('avgStay');
+          this.settings.avgStay || localStorage.getItem('avgStay');
         this.intervalCount = 24 * (60 / this.intervalMinutes);
 
         this.tip = 'Stay safe out there...';
@@ -1026,7 +1026,7 @@ export default {
       Place.$fetch(),
       Visit.$fetch(),
       Appointment.$fetch(),
-      State.$fetch(),
+      Setting.$fetch(),
     ])
       .then((entities) => {
         this.configureCalendar();
@@ -1034,9 +1034,9 @@ export default {
         const places = entities[0].places || [];
         const visits = entities[1].visits || [];
         const appointments = entities[2].appointments || [];
-        const states = entities[3].states || [];
+        const settings = entities[3].settings || [];
 
-        console.log(states.length, 'States');
+        console.log(settings.length, 'States');
         console.log(places.length, 'Places');
         console.log(visits.length, 'Visits');
         console.log(appointments.length, 'Appointments');

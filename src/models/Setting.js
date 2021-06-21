@@ -2,14 +2,14 @@
 
 import { Model } from '@vuex-orm/core';
 
-console.log('Loading State entity');
+console.log('Loading Setting entity');
 
-export default class State extends Model {
-  static entity = 'states';
+export default class Setting extends Model {
+  static entity = 'settings';
 
   static fields() {
     return {
-      id: this.string(''),
+      id: this.number(1),
       sessionID: this.string(''),
       username: this.string('enter your name'),
       people: this.string('list your people'),
@@ -24,15 +24,14 @@ export default class State extends Model {
     };
   }
 
-  static updatePromise(state) {
+  static updatePromise(settings) {
     return new Promise((resolve, reject) => {
       console.log(
-        'Update State collection with',
-        JSON.stringify(state, null, 3)
+        'Update Setting collection with',
+        JSON.stringify(settings, null, 3)
       );
-      this.$update({
-        where: this.id,
-        data: state,
+      this.$create({
+        data: settings,
       })
         .then((p) => resolve(p))
         .catch((e) => reject(e));
@@ -41,8 +40,8 @@ export default class State extends Model {
 
   static deletePromise() {
     return new Promise((resolve, reject) => {
-      console.log(`Deleting State ID = ${this.id}`);
-      this.$delete(this.id)
+      console.log(`Deleting Setting`);
+      this.$delete(1)
         .then((p) => {
           if (p) {
             resolve(p);

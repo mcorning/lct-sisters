@@ -6,7 +6,7 @@
       </v-btn>
     </template>
     <v-card>
-      <h3 class="headline pt-5 pl-5">Your Personal Preferences</h3>
+      <h3 class="headline pt-5 pl-5">Connecting the Server</h3>
       <v-card-text>
         <v-text-field
           v-model="username"

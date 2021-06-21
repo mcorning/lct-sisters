@@ -1,13 +1,13 @@
 import { Database } from '@vuex-orm/core';
 
-import State from '@/models/State';
+import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
 const database = new Database();
 
-database.register(State);
+database.register(Setting);
 database.register(Visit);
 database.register(Place);
 database.register(Appointment);

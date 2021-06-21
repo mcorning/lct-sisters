@@ -137,7 +137,7 @@
 <script>
 // See https://github.com/xkjyeah/vue-google-maps
 
-import State from '@/models/State';
+import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 
@@ -222,8 +222,8 @@ export default {
       };
     },
 
-    state() {
-      return State.all() || [];
+    settings() {
+      return Setting.all() || [];
     },
 
     // promises
@@ -231,7 +231,7 @@ export default {
       return this.$refs.mapRef.$mapPromise;
     },
     statePromise() {
-      return State.$fetch();
+      return Setting.$fetch();
     },
     visitsPromise() {
       return Visit.$fetch();
@@ -505,7 +505,7 @@ export default {
     onGo(data) {
       console.log(data);
       this.dialog = false;
-      State.updatePromise(data);
+      Setting.updatePromise(data);
 
       const openAt = (data.openAt || localStorage.getItem('openAt')).split(':');
       const closeAt = (data.closeAt || localStorage.getItem('closeAt')).split(
@@ -707,8 +707,8 @@ export default {
         .then((results) => {
           // const map = results[0];
           const visits = results[0].visits;
-          const states = results[2].states;
-          console.info('states:', printJson(states));
+          const settings = results[2].settings;
+          console.info('settings:', printJson(settings));
           // self.showMap(map);
           // self.getAssets(map);
 
