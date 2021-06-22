@@ -269,9 +269,12 @@
 <script>
 /**
  * The first duty of App.vue is to connect to the Server:
- *    A connection requires a sessionID, userID, and username.
- *
- *
+ *    A connection requires first a username, then a sessionID and userID.
+ *    After mounted(), the watcher for this.ready calls connectMe() with
+ *    a username and perhaps a sessionID.
+ *    First time access has now sessionID, but when the Welcome page
+ *    calls connectMe() with just a username, the server will return a sessionID.
+ *    So, the next run will have username and sessionID taken from the Setting entity.
  */
 import { ErrorBoundary } from './components';
 
@@ -982,12 +985,11 @@ export default {
           console.groupCollapsed('Getting data: >');
 
           const settings = entities[0].settings || [];
-          // if (settings.length === 0) {
-          //   Setting.updatePromise({ id: 1, username: 'enter name' });
-          // }
           console.log(settings.length, 'settings');
 
           const visits = entities[1].visits || [];
+          console.log(visits.length, 'visits');
+
           if (visits && !goodData) {
             const question = `May we discard old data?`;
             const consequences =
@@ -1047,6 +1049,8 @@ export default {
   },
 
   watch: {
+    // NOTE: it is MUCH easier to handle data after mounted() is done
+    // mounted() sets this.ready to true if we get to the last line of that function
     ready() {
       // sessionID saved to Setting entity in session event handler (after Server provides the ID)
       const sessionID = this.settings.sessionID;

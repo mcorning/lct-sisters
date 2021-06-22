@@ -43,7 +43,13 @@ const {
   changeGraph,
   logVisit,
   onExposureWarning,
+  options,
 } = require('./redis');
+
+const Redis = require('ioredis');
+const redis = new Redis(options);
+const JSONCache = require('redis-json');
+const jsonCache = new JSONCache(redis);
 
 console.log(special(new Date().toLocaleString()));
 console.log(special('redis host:', host));
@@ -66,6 +72,17 @@ const io = socketIO(server);
 
 function getNow() {
   return new Date().toJSON();
+}
+
+async function setJson(id, json) {
+  await jsonCache.set(id, json);
+  let x = await jsonCache.get(id);
+  console.log(success('setJson() saved:', printJson(x)));
+}
+async function getJson(id, field) {
+  let x = await jsonCache.get(id, field);
+  console.log(success('getJson() retrieved:', printJson(x)));
+  return x;
 }
 
 io.use((socket, next) => {
@@ -92,6 +109,14 @@ io.use((socket, next) => {
   // see if we have a session for the username
   if (sessionID) {
     const session = sessionCache.get(sessionID);
+    // console.log(success(getJson(sessionID)));
+    getJson(sessionID).then((json) =>
+      console.log('Using this session:', success(json))
+    );
+    getJson(sessionID, 'username').then((json) =>
+      console.log('for:', success(printJson(json)))
+    );
+
     sessionCache.print(session, 'Rehydrated session:');
 
     // if we have seen this session before, ensure the client uses the same
@@ -134,6 +159,16 @@ io.on('connection', (socket) => {
     lastInteraction: new Date().toLocaleString(),
     connected: true,
   });
+  setJson(
+    sessionID,
+
+    {
+      userID: userID,
+      username: username,
+      lastInteraction: new Date().toLocaleString(),
+      connected: true,
+    }
+  );
 
   sessionCache.print(
     sessionID,

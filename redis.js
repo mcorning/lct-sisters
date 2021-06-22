@@ -47,6 +47,7 @@ module.exports = {
   changeGraph,
   logVisit,
   onExposureWarning,
+  options,
 };
 
 function changeGraph(graphName) {
