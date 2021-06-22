@@ -11,9 +11,9 @@ export default class Setting extends Model {
     return {
       id: this.number(1),
       sessionID: this.string(''),
-      username: this.string('enter your name'),
-      people: this.string('list your people'),
-      business: this.string('enter your business'),
+      username: this.string(''),
+      people: this.string(''),
+      business: this.string(''),
       openAt: this.string('00:00'),
       closeAt: this.string('11:59'),
 

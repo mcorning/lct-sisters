@@ -124,6 +124,18 @@
       "
     >
     </GmapAutocomplete>
+    <v-row
+      id="statusRow"
+      no-gutters
+      align="end"
+      class="mt-0 ml-0 overflow-hidden"
+    >
+      <v-col
+        ><div class="mt-0">
+          <small>{{ status }}</small>
+        </div>
+      </v-col>
+    </v-row>
     <v-banner v-if="needInput" single-line transition="slide-y-transition">
       No details available for input value. Be sure you select the location from
       the dropdown.
@@ -242,6 +254,7 @@ export default {
       drawer: false,
       username: '',
       ready: false,
+      status: 'Waiting for Gogot',
 
       place: null,
       customOptions: {
@@ -700,7 +713,7 @@ export default {
     const bp = self.$vuetify.breakpoint;
     console.log(bp.name, bp.height);
     const x = bp.height;
-    const y = 175;
+    const y = 177;
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
     console.groupEnd();

@@ -1,12 +1,15 @@
 /**
  * This server connects Visitors with the Virus Exposure Graph hosted on RedisGraph.
- * The handshake protocol follows:
- *    1) App.vue sends a message to Server with
- *    2)
- *    3)
- *    4)
- *    5)
+ * Firsttime handshake protocol follows:
+ *    1) App.vue sends a message to Server with username
+ *    2) Server middleware creates new sessionID and userID
+ *    3) Handsoff to connect()
+ *    4) Server returns sessionID, userID, and username to Visitor
  *
+ *  Subsequent visits:
+ *    1) App.vue sends a message to Server with username and sessionID
+ *    2) If middleware has a record of past connection, hand off to connect()
+ *    2) Otherwise follow initial handshake at step 2 above.
  */
 const path = require('path');
 const express = require('express');

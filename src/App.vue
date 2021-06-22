@@ -24,21 +24,6 @@
         :menu-items="fileMenuItems"
         @nestedMenu-click="onMenuItemClick"
       />
-      <!-- <v-menu bottom left>
-TODO Incorporate this header data into nestedMenu
-        <v-list two-line subheader dense>
-          <v-list-item>
-            <v-list-item-avatar>
-              <v-img :src="getAvatar()"></v-img>
-            </v-list-item-avatar>
-
-            <v-list-item-content>
-              <v-list-item-title>Visitor</v-list-item-title>
-              <v-list-item-subtitle v-html="username"></v-list-item-subtitle>
-              <v-list-item-subtitle>{{ bpWidth }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>-->
-
       <!-- End Options Menu-->
     </v-app-bar>
     <v-main>
@@ -282,6 +267,12 @@ TODO Incorporate this header data into nestedMenu
 </template>
 
 <script>
+/**
+ * The first duty of App.vue is to connect to the Server:
+ *    A connection requires a sessionID, userID, and username.
+ *
+ *
+ */
 import { ErrorBoundary } from './components';
 
 import Welcome from '@/components/Welcome';
@@ -675,21 +666,22 @@ export default {
     //#region Welcome method
     // username passed in from Welcome
     onConnectMe(data) {
-      const { username } = data;
+      const { username, sessionID } = data;
       this.username = username;
-      if (this.settings.sessionID === '') {
-        data = { ...data, sessionID: 'toBeReplacedByServer' };
-      }
+      this.sessionID = sessionID;
+      // if (!this.settings.sessionID) {
+      //   data = { ...data, sessionID: 'toBeReplacedByServer' };
+      // }
       const payload = { ...data, id: 1 };
 
-      console.info(warn('payload:', payload));
+      console.info(warn('payload:', JSON.stringify(payload, null, 3)));
       Setting.updatePromise(payload)
         .then((s) => console.info(s))
         .catch((e) => console.error(e));
 
       this.showWelcome = false;
 
-      console.log('Connecting', this.username);
+      console.log(`${this.username} connecting session ${this.sessionID}...`);
       this.$socket.client.auth = {
         username: this.username,
         sessionID: this.sessionID,
@@ -1010,17 +1002,9 @@ export default {
             });
           }
 
-          //#region Socket.io
-          // sessionID saved to Setting entity in session event handler (after Server provides the ID)
-          this.sessionID = this.settings.sessionID;
-          this.username = this.settings.username;
-          console.log('created()', this.username);
-          if (this.sessionID) {
-            this.onConnectMe(this.username);
-          }
-          this.showWelcome = !this.settings.username;
           this.finishMounting();
           console.groupEnd();
+
           //#endregion
         })
         .catch((error) => this.onError(error));
@@ -1064,10 +1048,16 @@ export default {
 
   watch: {
     ready() {
-      console.log('Ready');
+      // sessionID saved to Setting entity in session event handler (after Server provides the ID)
+      const sessionID = this.settings.sessionID;
+      const username = this.settings.username;
+      this.onConnectMe({ username, sessionID });
+      this.showWelcome = !this.settings.username;
+
+      console.log('Waiting...');
     },
     sessionID(newVal, oldVal) {
-      console.log(`SessionID: ${newVal}/${oldVal}`);
+      console.log(`SessionID old/new: ${newVal}/${oldVal}`);
     },
     // this only works once (when newValue happens to be null)
     // 'auditor.log': {
@@ -1110,9 +1100,11 @@ export default {
   async mounted() {
     const self = this;
     console.groupCollapsed('Mounting App:');
-    self.getData().then(() => (self.ready = true));
-    console.groupEnd();
-    console.log('App.vue mounted');
+    self.getData().then(() => {
+      self.ready = true;
+      console.groupEnd();
+      console.log('App.vue mounted');
+    });
   },
 
   // TODO Figure out how to unsub events
