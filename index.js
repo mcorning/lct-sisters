@@ -31,10 +31,10 @@ const dirPath = path.join(__dirname, './dist');
 
 const { Cache } = require('./CacheClass');
 
-const sessionCache = new Cache('sessions');
-const alertsCache = new Cache('alerts');
-const errorCache = new Cache('errors');
-const feedbackCache = new Cache('feedback');
+const sessionCache = new Cache('./sessions.json');
+const alertsCache = new Cache('alerts.json');
+const errorCache = new Cache('errors.json');
+const feedbackCache = new Cache('feedback.json');
 
 const {
   graphName, // mapped to client nsp (aka namespace or community name)
@@ -46,6 +46,14 @@ const {
   onExposureWarning,
 } = require('./redis');
 
+const {
+  append,
+  del,
+  get,
+  isEmpty,
+  printCache,
+  set,
+} = require('./redisJsonCache');
 console.log(special(new Date().toLocaleString()));
 console.log(special('redis host:', host));
 console.log(highlight('pwd:', dirPath));
@@ -59,9 +67,9 @@ const server = express()
     console.log(highlight('Listening on:'));
     console.log(`http://localhost:${PORT}`, '\n');
     console.groupCollapsed('Past Sessions:');
-    // console.log('In development...');
     sessionCache.print(null);
     console.groupEnd();
+
     console.log('');
   });
 const io = socketIO(server);
@@ -80,7 +88,11 @@ function getNow() {
 //   console.log(success('getJson() retrieved:', printJson(x)));
 //   return x;
 // }
-
+get('sessions', '.').then((node) => {
+  console.log(highlight('sessions:'));
+  console.log(JSON.stringify(node, null, 3));
+  console.log(highlight('end sessions:'));
+});
 io.use((socket, next) => {
   const { sessionID, userID, username } = socket.handshake.auth;
   console.log('Middleware handling socket:');
@@ -103,68 +115,66 @@ io.use((socket, next) => {
   }
 
   // see if we have a session for the username
-  if (sessionID) {
-    const session = sessionCache.get(sessionID);
-    // console.log(success(getJson(sessionID)));
-    // getJson(sessionID).then((json) =>
-    //   console.log('Using this session:', success(json))
-    // );
-    // getJson(sessionID, 'username').then((json) =>
-    //   console.log('for:', success(printJson(json)))
-    // );
+  get('sessions', '._' + sessionID).then((node) => {
+    console.log(node);
+    if (sessionID) {
+      const session = sessionCache.get(sessionID);
 
-    sessionCache.print(session, 'Rehydrated session:');
+      // console.log(success(getJson(sessionID)));
+      // getJson(sessionID).then((json) =>
+      //   console.log('Using this session:', success(json))
+      // );
+      // getJson(sessionID, 'username').then((json) =>
+      //   console.log('for:', success(printJson(json)))
+      // );
 
-    // if we have seen this session before, ensure the client uses the same
-    // userID and username used in the last session
-    if (session) {
-      socket.sessionID = sessionID;
-      socket.userID = session.userID;
-      socket.username = session.username;
-      console.group('Handshake: Known party');
-      console.log(
-        highlight(`LEAVING io.use() with  ${sessionID}'s session data.`)
-      );
-      return next();
+      sessionCache.print(session, 'Rehydrated session:');
+
+      // if we have seen this session before, ensure the client uses the same
+      // userID and username used in the last session
+      if (session) {
+        socket.sessionID = sessionID;
+        socket.userID = session.userID;
+        socket.username = session.username;
+        console.group('Handshake: Known party');
+        console.log(
+          highlight(`LEAVING io.use() with  ${sessionID}'s session data.`)
+        );
+        return next();
+      }
     }
-  }
 
-  // otherwise, setup the new user...
-  console.log('\n', info(new Date().toLocaleString()));
-  console.group('Handshake: Unknown party');
-  console.log(warn(`Assigning new sessionID and userID for ${username}`));
+    // otherwise, setup the new user...
+    console.log('\n', info(new Date().toLocaleString()));
+    console.group('Handshake: Unknown party');
+    console.log(warn(`Assigning new sessionID and userID for ${username}`));
 
-  //...with a userID, and a sessionID
-  socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
-  socket.userID = randomId();
+    //...with a userID, and a sessionID
+    socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
+    socket.userID = randomId();
 
-  socket.username = username; // username is fixed by client
+    socket.username = username; // username is fixed by client
 
-  console.log(success('Leaving io.use()'));
-  // handle the connection, storing and returning the session data to client for storage.
-  next();
+    console.log(success('Leaving io.use()'));
+    // handle the connection, storing and returning the session data to client for storage.
+    next();
+  });
 });
 
 io.on('connection', (socket) => {
   const { id: socketID, sessionID, userID, username } = socket;
   //#region Handling socket connection
   console.log('Client connected on socket ', socketID);
-  sessionCache.set(sessionID, {
+  const session = {
     userID: userID,
     username: username,
     lastInteraction: new Date().toLocaleString(),
     connected: true,
+  };
+  sessionCache.set(sessionID, session);
+  set('sessions', '._' + sessionID, session).then((x) => {
+    console.log(x);
   });
-  // setJson(
-  //   sessionID,
-
-  //   {
-  //     userID: userID,
-  //     username: username,
-  //     lastInteraction: new Date().toLocaleString(),
-  //     connected: true,
-  //   }
-  // );
 
   sessionCache.print(
     sessionID,
@@ -384,3 +394,4 @@ const alertOthers = (socket, alerts, reason, ack) => {
   //   return results;
   // };
 };
+//

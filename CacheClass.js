@@ -8,7 +8,8 @@ function tryParse(filepath) {
     const data = JSON.parse(readFileSync(filepath));
     return data;
   } catch (error) {
-    console.log(`${new Date().toLocaleString} error`);
+    console.error();
+    `${new Date().toLocaleString} error`, error;
     return;
   }
 }
