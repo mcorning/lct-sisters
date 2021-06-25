@@ -1,3 +1,4 @@
+const path = require('path');
 const { readFileSync } = require('fs');
 const { writeFile } = require('fs').promises;
 const { printJson, warn } = require('./src/utils/colors.js');
@@ -14,7 +15,7 @@ function tryParse(filepath) {
 
 class Cache {
   constructor(filepath) {
-    this.filepath = filepath;
+    this.filepath = path.resolve(__dirname, filepath, '.json');
     this.cache = new Map(tryParse(filepath));
   }
 

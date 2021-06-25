@@ -23,13 +23,14 @@ if (process.env.NODE_ENV === 'production') {
   graphName = process.env.VUE_APP_NAMESPACE;
 } else {
   console.log('Dereferencing redisConfig.js');
-  const appConfig = require('./redisConfig.js');
+
+  const graphOptions = require('./redisGraph.options.js');
   options = {
-    host: appConfig.redisHost,
-    port: appConfig.redisPort,
-    password: appConfig.redisPassword,
+    host: graphOptions.redisHost,
+    port: graphOptions.redisPort,
+    password: graphOptions.redisPassword,
   };
-  graphName = appConfig.graphName;
+  graphName = graphOptions.graphName;
 }
 
 const host = options.host;

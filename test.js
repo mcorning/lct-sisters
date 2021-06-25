@@ -1,5 +1,7 @@
-const cache = require('./cache2');
+const cache = require('./redisJsonCache');
 const { printJson, success, warn, highlight } = require('./src/utils/colors');
+
+// NOTE: redisJson requires us to prepend _ to ID strings
 const s1 = {
   _7f4903dd3e71eb28: {
     userID: '075b3b4935e8ea72',

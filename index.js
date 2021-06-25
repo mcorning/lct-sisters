@@ -29,11 +29,12 @@ const {
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, './dist');
 
-const { Cache } = require('./Cache.js');
-const sessionCache = new Cache(path.resolve(__dirname, 'sessions.json'));
-const alertsCache = new Cache(path.resolve(__dirname, 'alerts.json'));
-const errorCache = new Cache(path.resolve(__dirname, 'errors.json'));
-const feedbackCache = new Cache(path.resolve(__dirname, 'feedback.json'));
+const { Cache } = require('./CacheClass');
+
+const sessionCache = new Cache('sessions');
+const alertsCache = new Cache('alerts');
+const errorCache = new Cache('errors');
+const feedbackCache = new Cache('feedback');
 
 const {
   graphName, // mapped to client nsp (aka namespace or community name)
@@ -43,13 +44,7 @@ const {
   changeGraph,
   logVisit,
   onExposureWarning,
-  options,
 } = require('./redis');
-
-const Redis = require('ioredis');
-const redis = new Redis(options);
-const JSONCache = require('redis-json');
-const jsonCache = new JSONCache(redis);
 
 console.log(special(new Date().toLocaleString()));
 console.log(special('redis host:', host));
@@ -64,6 +59,7 @@ const server = express()
     console.log(highlight('Listening on:'));
     console.log(`http://localhost:${PORT}`, '\n');
     console.groupCollapsed('Past Sessions:');
+    // console.log('In development...');
     sessionCache.print(null);
     console.groupEnd();
     console.log('');
@@ -74,16 +70,16 @@ function getNow() {
   return new Date().toJSON();
 }
 
-async function setJson(id, json) {
-  await jsonCache.set(id, json);
-  let x = await jsonCache.get(id);
-  console.log(success('setJson() saved:', printJson(x)));
-}
-async function getJson(id, field) {
-  let x = await jsonCache.get(id, field);
-  console.log(success('getJson() retrieved:', printJson(x)));
-  return x;
-}
+// async function setJson(id, json) {
+//   await jsonCache.set(id, json);
+//   let x = await jsonCache.get(id);
+//   console.log(success('setJson() saved:', printJson(x)));
+// }
+// async function getJson(id, field) {
+//   let x = await jsonCache.get(id, field);
+//   console.log(success('getJson() retrieved:', printJson(x)));
+//   return x;
+// }
 
 io.use((socket, next) => {
   const { sessionID, userID, username } = socket.handshake.auth;
@@ -110,12 +106,12 @@ io.use((socket, next) => {
   if (sessionID) {
     const session = sessionCache.get(sessionID);
     // console.log(success(getJson(sessionID)));
-    getJson(sessionID).then((json) =>
-      console.log('Using this session:', success(json))
-    );
-    getJson(sessionID, 'username').then((json) =>
-      console.log('for:', success(printJson(json)))
-    );
+    // getJson(sessionID).then((json) =>
+    //   console.log('Using this session:', success(json))
+    // );
+    // getJson(sessionID, 'username').then((json) =>
+    //   console.log('for:', success(printJson(json)))
+    // );
 
     sessionCache.print(session, 'Rehydrated session:');
 
@@ -159,16 +155,16 @@ io.on('connection', (socket) => {
     lastInteraction: new Date().toLocaleString(),
     connected: true,
   });
-  setJson(
-    sessionID,
+  // setJson(
+  //   sessionID,
 
-    {
-      userID: userID,
-      username: username,
-      lastInteraction: new Date().toLocaleString(),
-      connected: true,
-    }
-  );
+  //   {
+  //     userID: userID,
+  //     username: username,
+  //     lastInteraction: new Date().toLocaleString(),
+  //     connected: true,
+  //   }
+  // );
 
   sessionCache.print(
     sessionID,
