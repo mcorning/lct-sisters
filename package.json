@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.6.2214",
+  "version": "0.6.2418",
   "scripts": {
     "start": "node index.js",
     "serve": "vue-cli-service serve",
@@ -15,9 +15,9 @@
     "core-js": "^3.14.0",
     "express": "^4.17.1",
     "ioredis": "^4.27.6",
+    "iorejson": "^0.1.1",
     "luxon": "^1.27.0",
     "material-design-icons-iconfont": "^6.1.0",
-    "redis-json": "^6.0.1",
     "redisgraph.js": "^2.3.0",
     "register-service-worker": "1.7.2",
     "roboto-fontface": "*",
