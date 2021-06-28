@@ -1,11 +1,7 @@
+// see :https://developer.redislabs.com/howtos/redisjson/
+
 const cache = require('./redisJsonCache');
-const {
-  printJson,
-  err,
-  success,
-  warn,
-  highlight,
-} = require('./src/utils/colors');
+const { printJson, err, success, warn } = require('./src/utils/colors');
 
 // NOTE: redisJson requires us to prepend _ to ID string keys
 const s1 = {
@@ -34,10 +30,6 @@ const s3 = {
 };
 const sessions = [s1, s2, s3];
 const defaultKey = 'sessionsTest';
-// add this back in if we need to use Arrays
-// function append(rootNode, path, data) {
-//   return cache.append(rootNode, path, data).then((x) => printX(x));
-// }
 
 function printCache(data) {
   const { key, path, note, node } = data;
@@ -64,53 +56,16 @@ function printResult(result, f, path) {
   }
 }
 
-function readyData(data, key = defaultKey) {
-  const path = '._' + Object.keys(data)[0];
-  return {
-    key: key,
-    path: path,
-    node: Object.values(data)[0],
-  };
-}
-
-function appendObject(data) {
-  const { key, path, node } = data;
-
-  cache
-    .set(key || defaultKey, path, node)
-    .then((x) => printResult(x, 'appended', path));
+function checkPath(path) {
+  path = Array.isArray(path) ? path[0] : path;
+  return path.startsWith('_') ? path : '_' + path;
 }
 
 function del(data) {
   const { key, path } = data;
-
   cache
-    .del(key || defaultKey, path)
+    .del(key || defaultKey, checkPath(path))
     .then((x) => printResult(x, 'delete', path));
-}
-
-function getPath(x, node) {
-  let path, val;
-  if (!x) {
-    path = '.';
-    // prepend _ in id
-    let n = {};
-    n['_' + Object.keys(node)[0]] = Object.values(node)[0];
-    val = n;
-  } else {
-    path = '._' + Object.keys(node)[0];
-    val = Object.values(node)[0];
-  }
-  return { path, val };
-}
-
-function setTest(data) {
-  const { key, node } = data;
-  return cache
-    .get(key, '.')
-    .then((x) => getPath(x, node))
-    .then((data) => cache.set(key, data.path, data.val))
-    .then(() => cache.get(key));
 }
 
 cache
@@ -126,11 +81,12 @@ cache
   })
   .catch((e) => console.error(err(e)));
 
-// setTest({ key: 'sessionsTest', node: sessions[2] });
-setTest({ key: 'sessionsTest', node: sessions[0] })
+// set({ key: 'sessionsTest', node: sessions[2] });
+cache
+  .set({ key: 'sessionsTest', node: sessions[2] })
   .then((x) => printCache({ node: x, note: 'Test ->' }))
-  .then(() => appendObject(readyData(sessions[1])))
-  .then(() => appendObject(readyData(sessions[2])))
+  .then(() => cache.set({ key: 'sessionsTest', node: sessions[1] }))
+  .then(() => cache.set({ key: 'sessionsTest', node: sessions[0] }))
   .then(() =>
     printCache({ key: 'sessionsTest', path: '.', note: 'End of the line.' })
   )
@@ -142,8 +98,8 @@ setTest({ key: 'sessionsTest', node: sessions[0] })
         printJson(x)
       )
     )
-  );
-// .then(() => del(readyData(sessions[0])))
-// .then(() => del(readyData(sessions[1])))
-// .then(() => del(readyData(sessions[2])))
-// .then(() => del(readyData(sessions[0])));
+  )
+  .then(() => del({ path: Object.keys(sessions[0]) }))
+  .then(() => del({ path: Object.keys(sessions[1]) }))
+  .then(() => del({ path: Object.keys(sessions[2])[0] }))
+  .then(() => del({ path: Object.keys(sessions[2]) }));
