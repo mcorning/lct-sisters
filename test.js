@@ -81,25 +81,33 @@ cache
   })
   .catch((e) => console.error(err(e)));
 
-// set({ key: 'sessionsTest', node: sessions[2] });
+// set(
+//  {
+//    key, path, node;
+//  }
+// )
 cache
-  .set({ key: 'sessionsTest', node: sessions[2] })
-  .then((x) => printCache({ node: x, note: 'Test ->' }))
-  .then(() => cache.set({ key: 'sessionsTest', node: sessions[1] }))
-  .then(() => cache.set({ key: 'sessionsTest', node: sessions[0] }))
-  .then(() =>
-    printCache({ key: 'sessionsTest', path: '.', note: 'End of the line.' })
-  )
-  .then((x) =>
-    console.log(
-      success(
-        'Tested printCache returns the cache after printing:',
-        '\n',
-        printJson(x)
-      )
-    )
-  )
-  .then(() => del({ path: Object.keys(sessions[0]) }))
-  .then(() => del({ path: Object.keys(sessions[1]) }))
-  .then(() => del({ path: Object.keys(sessions[2])[0] }))
-  .then(() => del({ path: Object.keys(sessions[2]) }));
+  .set({
+    key: 'sessionsTest',
+    path: Object.keys(sessions[1])[0],
+    node: Object.values(sessions[1])[0],
+  })
+  .then((x) => console.log('cache', x));
+// .then(() => cache.set({ key: 'sessionsTest', node: sessions[1] }))
+// .then(() => cache.set({ key: 'sessionsTest', node: sessions[0] }))
+// .then(() =>
+//   printCache({ key: 'sessionsTest', path: '.', note: 'End of the line.' })
+// )
+// .then((x) =>
+//   console.log(
+//     success(
+//       'Tested printCache returns the cache after printing:',
+//       '\n',
+//       printJson(x)
+//     )
+//   )
+// )
+// .then(() => del({ path: Object.keys(sessions[0]) }))
+// .then(() => del({ path: Object.keys(sessions[1]) }))
+// .then(() => del({ path: Object.keys(sessions[2])[0] }))
+// .then(() => del({ path: Object.keys(sessions[2]) }));

@@ -46,14 +46,7 @@ const {
   onExposureWarning,
 } = require('./redis');
 
-const {
-  append,
-  del,
-  get,
-  isEmpty,
-  printCache,
-  set,
-} = require('./redisJsonCache');
+const { del, get, printCache, set } = require('./redisJsonCache');
 console.log(special(new Date().toLocaleString()));
 console.log(special('redis host:', host));
 console.log(highlight('pwd:', dirPath));
@@ -172,7 +165,9 @@ io.on('connection', (socket) => {
     connected: true,
   };
   sessionCache.set(sessionID, session);
-  set('sessions', '._' + sessionID, session).then((x) => {
+  // set({ key: 'sessionsTest', node: sessions[2] });
+
+  set({ key: 'sessions', path: sessionID, node: session }).then((x) => {
     console.log(x);
   });
 
