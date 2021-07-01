@@ -553,11 +553,16 @@ export default {
 
     // sent from Server after Server has all the data it needs to register the Visitor
     // TODO better style uses a single object as arg. function deconstructs vars.
+    //    socket.emit('session', {
+    //        sessionID,
+    //        userID,
+    //        username,
+    //        graphName,
+    //    });
     session({ sessionID, userID, username, graphName }) {
       console.group('Handling Session event from Server');
 
-      Setting.updatePromise({ id: 1, sessionID });
-      localStorage.setItem('sessionID', sessionID);
+      Setting.updatePromise({ data: { id: 1, sessionID, userID, username } });
       // attach the session ID to the next reconnection attempts
       this.$socket.client.auth = { sessionID };
       this.sessionID = sessionID;
@@ -668,19 +673,30 @@ export default {
 
     //#region Welcome method
     // username passed in from Welcome
-    onConnectMe(data) {
-      const { username, sessionID } = data;
+    onConnectMe(payload) {
+      const { username, sessionID } = payload;
+      console.assert(
+        username && sessionID,
+        `missing payload username: ${username} sessionID: ${sessionID}`
+      );
+      if (!(username && sessionID)) {
+        return;
+      }
       this.username = username;
       this.sessionID = sessionID;
       // if (!this.settings.sessionID) {
       //   data = { ...data, sessionID: 'toBeReplacedByServer' };
       // }
-      const payload = { ...data, id: 1 };
+      const data = { data: { ...payload, id: 1 } };
 
-      console.info(warn('payload:', JSON.stringify(payload, null, 3)));
-      Setting.updatePromise(payload)
-        .then((s) => console.info(s))
-        .catch((e) => console.error(e));
+      console.info(warn('data:', JSON.stringify(data, null, 3)));
+      Setting.updatePromise(data)
+        .then((s) => {
+          console.info(s);
+        })
+        .catch((e) => {
+          console.error(e);
+        });
 
       this.showWelcome = false;
 

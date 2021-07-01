@@ -17,21 +17,6 @@
           clearable
         ></v-text-field
       ></v-card-text>
-      <!-- <v-card-text>
-        <v-row>
-          <v-col cols="12">
-            <v-select
-              v-model="avgStay"
-              :items="intervals"
-              :menu-props="{ top: true, offsetY: true }"
-              label="Your average stay per visit (in hours) "
-              hint="This value controls your calendar event height."
-              autofocus
-            ></v-select>
-          </v-col>
-        </v-row>
-      </v-card-text> -->
-
       <v-card-text v-html="html">
         <p>Ready to crush this virus?</p>
       </v-card-text>
@@ -74,7 +59,7 @@ export default {
   methods: {
     onGo() {
       this.dialog = false;
-      this.$emit('go', { username: this.username, whatIsThis: false });
+      this.$emit('go', { username: this.username });
     },
   },
 };

@@ -35,7 +35,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const host = options.host;
 
-console.log(highlight('Redis Options:'), printJson(options));
+console.log(highlight('Redis Options:', printJson(options)));
 
 let Graph = new RedisGraph(graphName, null, null, options);
 

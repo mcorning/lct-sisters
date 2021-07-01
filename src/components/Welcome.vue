@@ -30,30 +30,13 @@
 export default {
   name: 'Welcome',
 
-  props: {
-    sessionID: {
-      type: String,
-      default: '',
-    },
-    username: {
-      type: String,
-      default: '',
-    },
-
-    usesPublicCalendar: {
-      type: Boolean,
-      default: false,
-    },
-  },
   components: {
     myCard: () => import('./cards/myCard'),
   },
 
   computed: {
     welcomeMessage() {
-      let msg = this.sessionID
-        ? `Welcome back to your old session, ${this.sessionID}`
-        : "We can beat this thing. Let's get started, shall we? There's no time to lose. So let's get you connected to the server...";
+      let msg =  "We can beat this thing. Let's get started, shall we? There's no time to lose. So let's get you connected to the server...";
       return msg;
     },
   },
@@ -67,7 +50,7 @@ export default {
   methods: {
     onGo(data) {
       console.info(
-        'passing data back to App.vue',
+        'Passing data back to App.vue with connectMe event',
         JSON.stringify(data, null, 3)
       );
 
@@ -77,15 +60,9 @@ export default {
   },
 
   watch: {
-    userName(val, oldVal) {
-      if (!oldVal) {
-        //this.username = 'Anon';
-      }
-      console.log(val);
-    },
+
   },
   created() {
-    //this.username = localStorage.getItem('username');
   },
 
   beforeUnmount() {},

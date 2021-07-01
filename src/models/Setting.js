@@ -12,6 +12,7 @@ export default class Setting extends Model {
       id: this.number(1),
       sessionID: this.string(''),
       username: this.string(''),
+      userID: this.string(''),
       people: this.string(''),
       business: this.string(''),
       openAt: this.string('00:00'),
@@ -30,9 +31,9 @@ export default class Setting extends Model {
         'Update Setting collection with',
         JSON.stringify(settings, null, 3)
       );
-      this.$create({
-        data: settings,
-      })
+      this.$create(
+         settings,
+      )
         .then((p) => resolve(p))
         .catch((e) => reject(e));
     });

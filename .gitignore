@@ -24,3 +24,4 @@ redisConfig.js
 /archive
 /redis
 redisJson.options.js
+0-index.js
