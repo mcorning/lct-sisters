@@ -59,21 +59,24 @@ function changeGraph(graphName) {
 // see if an alerted visitor has potential alerts to share
 function findExposedVisitors(userID, subject = false) {
   return new Promise(function(resolve) {
-    Graph.query(
-      `MATCH (a:visitor{userID:'${userID}'})-[v:visited]->(s:space)
+    // be sure we have only valid visits to query
+    deleteExpiredVisits().then(() =>
+      Graph.query(
+        `MATCH (a:visitor{userID:'${userID}'})-[v:visited]->(s:space)
     RETURN a.userID, a.name, id(a), s.name, id(s), v.start, v.end, id(v), id(s)`
-    ).then((res) => {
-      if (!res._results.length) {
-        console.log(userID, 'exposed nobody');
-        return resolve(userID);
-      }
+      ).then((res) => {
+        if (!res._results.length) {
+          console.log(userID, 'exposed nobody');
+          return resolve(userID);
+        }
 
-      printExposedVisitors(res);
-      const others = [
-        ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
-      ];
-      resolve(others);
-    });
+        printExposedVisitors(res);
+        const others = [
+          ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
+        ];
+        resolve(others);
+      })
+    );
   });
 
   function printExposedVisitors(res) {
@@ -119,18 +122,21 @@ function onExposureWarning(userID) {
     AND exposed.name <> carrier.name    
     RETURN exposed.userID, exposed.name, id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
     console.log(highlight(q));
-    Graph.query(q)
-      .then((res) => {
-        printExposureWarnings(res);
-        const visitors = [
-          ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
-        ];
-        printJson(visitors);
-        resolve(visitors);
-      })
-      .catch((error) => {
-        reject(error);
-      });
+    // be sure we have only valid visits to query
+    deleteExpiredVisits().then(() =>
+      Graph.query(q)
+        .then((res) => {
+          printExposureWarnings(res);
+          const visitors = [
+            ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
+          ];
+          printJson(visitors);
+          resolve(visitors);
+        })
+        .catch((error) => {
+          reject(error);
+        })
+    );
   });
 
   function printExposureWarnings(res) {
@@ -271,6 +277,7 @@ function logVisit(data) {
           id: id,
         });
       })
+      .then(() => deleteExpiredVisits())
       .catch((error) => {
         console.log(error);
         reject({
@@ -305,6 +312,27 @@ function deleteVisit(data) {
         console.log(`stats: ${printJson(stats)}`);
         resolve({ deleted: true });
       })
+      .then(() => deleteExpiredVisits())
+      .catch((error) => {
+        console.log(error);
+        reject({ deleted: false, error: error });
+      });
+  });
+}
+// handled internally each time the graph gets called
+// Example query:
+// MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
+function deleteExpiredVisits() {
+  return new Promise((resolve, reject) => {
+    const expiry = Date.now() - 1000 * 60 * 60 * 14;
+    let query = `MATCH ()-[v:visited]->() WHERE (v.start<=${expiry})  DELETE v`;
+    console.log(warn('DELETE Expired Visits query:', query));
+    Graph.query(query)
+      .then((results) => {
+        const stats = results._statistics._raw;
+        console.log(`stats: ${printJson(stats)}`);
+        resolve({ deleted: true });
+      })
       .catch((error) => {
         console.log(error);
         reject({ deleted: false, error: error });
@@ -322,6 +350,9 @@ function deleteVisit(data) {
 /*
 CREATE a RELATIONSHIP between MATCHed nodes:
 MATCH (a:visitor), (b:room) WHERE (a.name = "" AND b.name="" ) CREATE (a)-[:visited]->(b)
+
+READ all expired RELATIONSHIPs:
+MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
 
 READ all NODES:
 MATCH n=() RETURN n
