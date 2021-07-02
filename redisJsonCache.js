@@ -3,7 +3,6 @@ const {
   heading,
   warn,
   success,
-  special,
   printJson,
   getNow,
   columns,
@@ -21,17 +20,21 @@ const Rejson = require('iorejson');
 Rejson.defaultOptions = options;
 
 const jsonCache = new Rejson();
-jsonCache.connect().then(() => {
-  console.log(special(new Date().toLocaleString()));
-  console.log('Connected to RedisJSON using:');
-  console.log(options, '\n');
+jsonCache
+  .connect()
+  .then(() => {
+    console.log(getNow());
+    console.log('Connected to RedisJSON using:');
+    console.log(options, '\n');
 
-  jsonCache.get('sessions', '.').then((node) => {
-    console.groupCollapsed('Past Sessions (including unconnected):');
-    console.log(getNow(), printJson(node) || 'empty cache', '\n');
-    console.groupEnd();
-  });
-});
+    jsonCache.get('sessions', '.').then((node) => {
+      console.log(getNow());
+      console.groupCollapsed('Past Sessions (including unconnected):');
+      asTable(node);
+      console.groupEnd();
+    });
+  })
+  .catch((e) => console.log('error connecting to rejson', e));
 
 function isEmpty(key, path = '.') {
   return jsonCache.objlen(key, path).then((x) => {
@@ -86,9 +89,11 @@ function get(key, path = '.') {
 function printCache(key, path = '.') {
   jsonCache
     .get(key, path)
-    .then((node) =>
-      console.log(getNow(), `Cache (${key}) for ${path}`, printJson(node))
-    )
+    .then((node) => {
+      console.log(getNow());
+      console.log(`Cache (${key}) for ${path}:`);
+      asTable(node);
+    })
     .catch((e) => console.log(err('Error in cache.printCache()', e)));
 }
 
@@ -100,18 +105,40 @@ function map(key, fn, path = '.') {
   return get(key, path).then((cache) => Object.entries(cache).map(fn));
 }
 
-function asTable(o) {
-  const s = Object.keys(o); //[s1,s2...]
-  let hs = Object.values(o)[0];
-  let hsk = ['sessionID', ...Object.keys(hs)];
+const heads = (k) => heading(k);
 
-  const heads = (k) => heading(k);
-  const pk = (v, i) => [s[i], ...v];
+function handleAsSingleEntry(cache) {
+  // the fields of the single entry cache
+  const headings = Object.keys(cache).map(heads);
 
-  const vals = Object.entries(o).map((v) => Object.values(v[1]));
-  const finalGrid = vals.map(pk);
+  const vals = Object.values(cache);
+  const finalGrid = [headings, vals];
+  return finalGrid;
+}
 
-  console.log(columns([hsk.map(heads), ...finalGrid]));
+function handleAsManyEntries(cache) {
+  const primaryKeys = Object.keys(cache);
+  // array of objects each with the values of their cache
+  const headings = Object.keys(Object.values(cache)[0]);
+  const allHeadings = ['sessionID', ...headings].map(heads);
+
+  // insert the primary keys
+  const insertPrimaryKeys = (v, i) => [primaryKeys[i], ...v];
+
+  const vals = Object.entries(cache).map((v) => Object.values(v[1]));
+  // don't iterate the elements of allHeadings,
+  // add the single array of headings to the array of cache element values
+  const finalGrid = [allHeadings, ...vals.map(insertPrimaryKeys)];
+  return finalGrid;
+}
+
+// TODO play with Console.BackgroundColor = ConsoleColor.Green
+function asTable(cache) {
+  const fn =
+    typeof Object.values(cache)[0] === 'string'
+      ? handleAsSingleEntry
+      : handleAsManyEntries;
+  console.log(columns(fn(cache)));
 }
 
 module.exports = {

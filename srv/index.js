@@ -65,7 +65,7 @@ let setCache = function(key, path, node) {
 };
 //#endregion
 
-console.log(special(new Date().toLocaleString()));
+console.log(getNow());
 console.log('RedisGraph host:', host);
 console.log('social graph:', special(graphName), '\n');
 
@@ -105,11 +105,12 @@ function getSession(data) {
   const { userID, username } = session;
 
   if (session && userID && sessionID) {
+    console.log(getNow());
     console.group(`Handshake: Known party: ${username}`);
     // if we have seen this session before, ensure the client uses the same
     // userID and username used in the last session
     if (session) {
-      console.log(getNow(), `Data for session ${sessionID}`);
+      console.log(`Data for session ${sessionID}`);
       console.log(printJson(session));
       cache.printCache('sessions', '_' + sessionID);
 
@@ -358,6 +359,7 @@ io.on('connection', (socket) => {
           // notify other users
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session
+          cache.printCache('sessions');
 
           setCache('sessions', socket.sessionID, {
             userID: socket.userID,

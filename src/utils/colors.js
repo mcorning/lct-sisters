@@ -19,7 +19,7 @@ function printJson(json) {
   return JSON.stringify(json, null, 3);
 }
 function getNow() {
-  return special(new Date().toLocaleString());
+  return special(`\n${new Date().toLocaleString()}`);
 }
 function printNow() {
   console.log(getNow());
