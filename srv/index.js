@@ -27,6 +27,9 @@ const {
   info,
   success,
   special,
+  url,
+  printNow,
+  getNow,
 } = require('../src/utils/colors.js');
 
 const PORT = process.env.PORT || 3003;
@@ -34,7 +37,6 @@ const dirPath = path.join(__dirname, '../dist');
 
 const { Cache } = require('../CacheClass');
 
-const sessionCache = new Cache('../sessions.json');
 const alertsCache = new Cache('../alerts.json');
 const errorCache = new Cache('../errors.json');
 const feedbackCache = new Cache('../feedback.json');
@@ -70,18 +72,14 @@ console.log('social graph:', special(graphName), '\n');
 const server = express()
   .use(serveStatic(dirPath))
   .listen(PORT, () => {
-    console.log(special(new Date().toLocaleString()));
+    printNow();
     console.log('Listening on:');
-    console.log(special(`http://localhost:${PORT}`, '\n'));
+    console.log('\t\t', url(`http://localhost:${PORT}`, '\t\n'));
   });
 const io = socketIO(server);
 
-function getNow() {
-  return new Date().toJSON();
-}
-
 function report(sessionID, userID, username) {
-  console.log(warn('Middleware handling socket:'));
+  console.log(warn(getNow(), 'Middleware handling socket:'));
   console.log(
     warn(
       'sessionID:',
@@ -98,27 +96,26 @@ function report(sessionID, userID, username) {
 //#endregion
 
 function getSession(data) {
-  const { socket, session } = data;
+  const { sessionID, socket, session } = data;
   if (!session) {
     // so we can create a session
     return;
   }
-  
+
   const { userID, username } = session;
-  const { sessionID } = socket;
 
-  const msg = `${sessionID}'s session data: ${printJson(session)}`;
-  userID ? console.log(success(msg)) : console.log(err(msg));
   if (session && userID && sessionID) {
-    cache.printCache('sessions', '_' + sessionID);
-
+    console.group(`Handshake: Known party: ${username}`);
     // if we have seen this session before, ensure the client uses the same
     // userID and username used in the last session
     if (session) {
+      console.log(getNow(), `Data for session ${sessionID}`);
+      console.log(printJson(session));
+      cache.printCache('sessions', '_' + sessionID);
+
       socket.sessionID = sessionID;
       socket.userID = userID;
       socket.username = username;
-      console.group('Handshake: Known party');
       console.log(
         highlight(`LEAVING io.use() with  ${sessionID}'s session data.`)
       );
@@ -165,6 +162,7 @@ io.use((socket, next) => {
     .get('sessions', '_' + sessionID)
     .then((session) =>
       getSession({
+        sessionID,
         socket,
         session,
         next,
@@ -193,12 +191,6 @@ io.on('connection', (socket) => {
     lastInteraction: new Date().toLocaleString(),
     connected: true,
   };
-  // TODO remove after testing redisJson cache
-  // sessionCache.set(sessionID, session);
-  // sessionCache.print(
-  //   sessionID,
-  //   `Binding Session: ${sessionID} to socket ${socketID}:`
-  // );
 
   setCache('sessions', sessionID, session);
 
@@ -233,14 +225,15 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region Handling Users
+
+  // TODO restore?
   // fetch existing users
-  const users = sessionCache.all();
+  // const users = sessionCache.all();
   // send users back to client so they know how widespread LCT usage is
   // (the more users are active, the safer the community)
-  socket.emit('users', [...users]);
+  // socket.emit('users', [...users]);
   // const onlineUsers = users.filter((v) => v[1].connected);
   // console.group(`There are ${onlineUsers.length} online users:`);
-  // TODO restore
   // console.log(printJson(onlineUsers));
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
@@ -333,20 +326,26 @@ io.on('connection', (socket) => {
       // notify other users
       socket.broadcast.emit('user disconnected', socket.userID);
       // update the connection status of the session
+      cache.printCache('sessions');
 
-      setCache(socket.sessionID, {
+      setCache('sessions', socket.sessionID, {
         userID: socket.userID,
         username: socket.username,
         lastInteraction: new Date().toLocaleString(),
         connected: false,
-      });
-      cache.printCache('sessions');
-      // TODO refactor for jsonCache
-      // const online = sessionCache.all().filter((v) => v[1].connected);
-      // console.log(
-      //   `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
-      // );
-      // console.log(printJson(online));
+      }).then(() =>
+        cache
+          .filter('sessions', (v) => v[1].connected)
+          .then((online) => {
+            console.log(
+              warn(
+                getNow(),
+                `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
+              )
+            );
+            console.log(printJson(online));
+          })
+      );
     }
   });
 
@@ -360,17 +359,24 @@ io.on('connection', (socket) => {
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session
 
-          sessionCache.set(socket.sessionID, {
+          setCache('sessions', socket.sessionID, {
             userID: socket.userID,
             username: socket.username,
             lastInteraction: new Date().toLocaleString(),
             connected: false,
-          });
-          const online = sessionCache.all().filter((v) => v[1].connected);
-          console.log(
-            `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
+          }).then(() =>
+            cache
+              .filter('sessions', (v) => v[1].connected)
+              .then((online) => {
+                console.log(
+                  warn(
+                    getNow(),
+                    `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
+                  )
+                );
+                console.log(printJson(online));
+              })
           );
-          console.log(printJson(online));
         }
       });
   });

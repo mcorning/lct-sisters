@@ -1,4 +1,13 @@
-const { err, warn, success, special } = require('./src/utils/colors.js');
+const {
+  err,
+  heading,
+  warn,
+  success,
+  special,
+  printJson,
+  getNow,
+  columns,
+} = require('./src/utils/colors.js');
 
 const cacheOptions = require('./redisCache.options.js');
 const options = {
@@ -15,23 +24,21 @@ const jsonCache = new Rejson();
 jsonCache.connect().then(() => {
   console.log(special(new Date().toLocaleString()));
   console.log('Connected to RedisJSON using:');
-  console.log(options);
+  console.log(options, '\n');
 
   jsonCache.get('sessions', '.').then((node) => {
-    console.groupCollapsed('Past Sessions:');
-    console.log(printJson(node) || 'empty cache');
+    console.groupCollapsed('Past Sessions (including unconnected):');
+    console.log(getNow(), printJson(node) || 'empty cache', '\n');
     console.groupEnd();
   });
 });
 
 function isEmpty(key, path = '.') {
-  return jsonCache
-    .objlen(key, path)
-    .then((x) => {
-      console.log('Cache size:', x);
-      return x;
-    })
-    .then((x) => !x); // (x ? null : key));
+  return jsonCache.objlen(key, path).then((x) => {
+    console.log(getNow(), 'Cache size:', x);
+    return !x;
+  });
+  // .then((x) => !x); // (x ? null : key));
 }
 
 function create(key, path, node) {
@@ -40,9 +47,9 @@ function create(key, path, node) {
     canCreate
       ? jsonCache
           .set(key, '.', { ['_' + path]: node })
-          .then((ok) => console.log(success('Created?', ok)))
+          .then((ok) => console.log(getNow(), success('Created?', ok)))
           .catch((e) => console.log(err('Error in create():', e)))
-      : console.log('Data exists. No create() results');
+      : console.log(getNow(), 'Cache is not empty');
   });
 }
 
@@ -50,7 +57,7 @@ function create(key, path, node) {
 function add(key, path, node) {
   return jsonCache
     .set(key, '_' + path, node)
-    .then((ok) => console.log('added?', ok))
+    .then((ok) => console.log(getNow(), 'added?', ok))
     .catch((e) => console.log(err('Error in add()', printJson(e))));
 }
 
@@ -79,13 +86,32 @@ function get(key, path = '.') {
 function printCache(key, path = '.') {
   jsonCache
     .get(key, path)
-    .then((node) => console.log(printJson(node)))
+    .then((node) =>
+      console.log(getNow(), `Cache (${key}) for ${path}`, printJson(node))
+    )
     .catch((e) => console.log(err('Error in cache.printCache()', e)));
 }
 
-function printJson(json) {
-  const j = JSON.stringify(json, null, 3);
-  return j;
+function filter(key, fn, path = '.') {
+  return get(key, path).then((cache) => Object.entries(cache).filter(fn));
+}
+
+function map(key, fn, path = '.') {
+  return get(key, path).then((cache) => Object.entries(cache).map(fn));
+}
+
+function asTable(o) {
+  const s = Object.keys(o); //[s1,s2...]
+  let hs = Object.values(o)[0];
+  let hsk = ['sessionID', ...Object.keys(hs)];
+
+  const heads = (k) => heading(k);
+  const pk = (v, i) => [s[i], ...v];
+
+  const vals = Object.entries(o).map((v) => Object.values(v[1]));
+  const finalGrid = vals.map(pk);
+
+  console.log(columns([hsk.map(heads), ...finalGrid]));
 }
 
 module.exports = {
@@ -93,8 +119,10 @@ module.exports = {
   append,
   create,
   del,
+  filter,
   get,
   isEmpty,
+  map,
   printCache,
-  printJson,
+  asTable,
 };
