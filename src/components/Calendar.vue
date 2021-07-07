@@ -166,9 +166,9 @@ export default {
 
   props: {
     selectedSpace: Object,
-    avgStay: Number,
-    userID: String,
-    username: String,
+    // avgStay: Number,
+    // userID: String,
+    // username: String,
     graphName: String, // changes to graph come from App.js
   },
 
@@ -178,6 +178,20 @@ export default {
   },
 
   computed: {
+    userID() {
+      return this.settings.userID;
+    },
+    username() {
+      return this.settings.username;
+    },
+    avgStay() {
+      return this.settings.avgStay * 60000;
+    },
+
+    params() {
+      return this.$router.params;
+    },
+
     settings() {
       const settings = Setting.all();
       return settings[0] || [];
@@ -1007,6 +1021,10 @@ export default {
   },
 
   watch: {
+    selectedSpace(newVal, oldVal) {
+      console.log(newVal, oldVal);
+    },
+
     graphName(newVal, oldVal) {
       console.log('Graph name is', newVal, 'and was', oldVal);
       this.status = `You are ${

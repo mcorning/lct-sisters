@@ -503,13 +503,25 @@ export default {
     //  * mark your calendar button
     addVisit(nativeEvent, startTime = Date.now(), endTime, shift) {
       console.log('Start Time:', startTime.toString());
-      this.$emit('addedPlace', {
+      const selectedSpace = {
         ...this.place,
         plus_code: Place.getPosition(this.place.place_id).plus_code || 'NA',
         startTime: startTime,
         endtime: endTime,
         shift: shift,
+      };
+      console.log({ ...selectedSpace });
+      this.$router.push({
+        name: 'Calendar',
+        params: { selectedSpace },
       });
+      // this.$emit('addedPlace', {
+      //   ...this.place,
+      //   plus_code: Place.getPosition(this.place.place_id).plus_code || 'NA',
+      //   startTime: startTime,
+      //   endtime: endTime,
+      //   shift: shift,
+      // });
     },
 
     // businessCard go event handler

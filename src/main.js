@@ -1,9 +1,12 @@
 // BASE imports
 import Vue from 'vue';
+import router from './router';
 import 'roboto-fontface/css/roboto/roboto-fontface.css';
 import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import vuetify from './plugins/vuetify';
 import './plugins';
+import AppLayout from '@/layouts/AppLayout';
+Vue.component('AppLayout', AppLayout);
 
 import VueCompositionAPI from '@vue/composition-api';
 Vue.use(VueCompositionAPI);
@@ -52,5 +55,7 @@ new Vue({
   vuetify,
   // use vuex-ORM
   store,
+  router,
+
   render: (h) => h(App),
 }).$mount('#app');

@@ -40,7 +40,7 @@
         </v-card-actions>
       </v-card>
 
-      <v-card v-else>
+      <v-card color="yellow" v-else>
         <v-card-title class="headline">Exposure Warnings</v-card-title>
         <v-card-subtitle> Oops, there is nobody to warn.</v-card-subtitle>
         <v-card-text>

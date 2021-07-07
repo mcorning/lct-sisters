@@ -1,113 +1,62 @@
-// see :https://developer.redislabs.com/howtos/redisjson/
-
 const cache = require('./redisJsonCache');
-const { printJson, err, success, warn } = require('./src/utils/colors');
+const { bold, printJson, columns } = require('./src/utils/colors.js');
 
-// NOTE: redisJson requires us to prepend _ to ID string keys
-const s1 = {
-  '7f4903dd3e71eb28': {
-    userID: '075b3b4935e8ea72',
-    username: 'littleFox',
-    lastInteraction: '6/22/2021, 1:55:21 PM',
+const m = {
+  _b2a6431079661988: {
+    userID: 'ede68a810d36a1dc',
+    username: 'debg',
+    lastInteraction: '7/1/2021, 2:28:06 PM',
+    connected: true,
+  },
+  _5d0172399c9be4c6: {
+    userID: '2f92f53a59104db1',
+    username: 'Edgy',
+    lastInteraction: '7/1/2021, 1:39:04 PM',
+    connected: true,
+  },
+  _f595d789fbb3b243: {
+    userID: 'a5b39d88d24d7b31',
+    username: 'what',
+    lastInteraction: '7/1/2021, 3:14:46 PM',
+    connected: true,
+  },
+  _3111ad130051fa02: {
+    userID: '95478b57c8d5efe1',
+    username: 'nickOfTime',
+    lastInteraction: '7/1/2021, 2:44:05 PM',
+    connected: true,
+  },
+  _6b318922a420fced: {
+    userID: '47a5a520a3542a6b',
+    username: 'whoseOnFirst',
+    lastInteraction: '7/1/2021, 4:40:48 PM',
     connected: false,
   },
 };
-const s2 = {
-  '28b97087a9bd5fa8': {
-    userID: 'ece07cf4a1340ea4',
-    username: 'Tony',
-    lastInteraction: '6/22/2021, 2:25:39 PM',
-    connected: true,
+let x = {
+  userID: '95478b57c8d5efe1',
+  username: 'nickOfTime',
+  lastInteraction: '7/2/2021, 10:59:15 AM',
+  connected: false,
+};
+const a = {
+  _6b318922a420fced: {
+    userID: '47a5a520a3542a6b',
+    username: 'whoseOnFirst',
+    lastInteraction: '7/1/2021, 4:40:48 PM',
+    connected: false,
   },
 };
-const s3 = {
-  MPC97087a9bd5mpc: {
-    userID: 'mpc07cf4a1340MPC',
-    username: 'mpc',
-    lastInteraction: '6/22/2021, 2:39 PM',
-    connected: true,
-  },
-};
-const sessions = [s1, s2, s3];
-const defaultKey = 'sessionsTest';
+// cache.asTable(o);
+const o = a;
 
-function printCache(data) {
-  const { key, path, note, node } = data;
-  if (node) {
-    // so you can chain functions:
-    return printNode(node, note);
-  }
-  return cache
-    .get(key || defaultKey, path)
-    .then((node) => printNode(node, note));
-}
-
-function printNode(node, note) {
-  console.log(success(note || '', printJson(node)));
-  // so you can chain functions:
-  return node;
-}
-
-function printResult(result, f, path) {
-  if (result) {
-    console.log(success(`Successfully ${f} sessions using ${path}`));
-  } else {
-    console.log(warn(`Failed to ${f} sessions  using ${path}`));
-  }
-}
-
-function checkPath(path) {
-  path = Array.isArray(path) ? path[0] : path;
-  return path.startsWith('_') ? path : '_' + path;
-}
-
-function del(data) {
-  const { key, path } = data;
-  cache
-    .del(key || defaultKey, checkPath(path))
-    .then((x) => printResult(x, 'delete', path));
-}
-
-cache
-  .isEmpty('sessionsTest')
-  .then((isEmpty) => {
-    console.log(
-      isEmpty
-        ? warn('Cache is empty, so be sure to add a key at the root')
-        : success(
-            'Cache is not empty, so use a path that prepends a "._" to the ID value'
-          )
-    );
-  })
-  .catch((e) => console.error(err(e)));
-
-// set(
-//  {
-//    key, path, node;
-//  }
-// )
-cache
-  .set({
-    key: 'sessionsTest',
-    path: Object.keys(sessions[1])[0],
-    node: Object.values(sessions[1])[0],
-  })
-  .then((x) => console.log('cache', x));
-// .then(() => cache.set({ key: 'sessionsTest', node: sessions[1] }))
-// .then(() => cache.set({ key: 'sessionsTest', node: sessions[0] }))
-// .then(() =>
-//   printCache({ key: 'sessionsTest', path: '.', note: 'End of the line.' })
-// )
-// .then((x) =>
-//   console.log(
-//     success(
-//       'Tested printCache returns the cache after printing:',
-//       '\n',
-//       printJson(x)
-//     )
-//   )
-// )
-// .then(() => del({ path: Object.keys(sessions[0]) }))
-// .then(() => del({ path: Object.keys(sessions[1]) }))
-// .then(() => del({ path: Object.keys(sessions[2])[0] }))
-// .then(() => del({ path: Object.keys(sessions[2]) }));
+cache.asTable(o);
+// const heads = (k) => bold(k);
+// let grid = Object.entries(o).map((v) => Object.values(v[1]));
+// console.log('grid:', printJson(grid));
+// const s = Object.keys(o);
+// console.log('s', printJson(s));
+// let hs = Object.values(o)[0];
+// let hsk = Object.keys(hs);
+// grid = [hsk.map(heads), ...grid];
+// console.log(columns(grid));

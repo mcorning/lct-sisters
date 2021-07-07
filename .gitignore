@@ -25,3 +25,5 @@ redisConfig.js
 /redis
 redisJson.options.js
 0-index.js
+test.js
+test2.js
