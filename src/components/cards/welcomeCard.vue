@@ -6,8 +6,10 @@
         <v-card max-width="320">
           <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
           <v-card-subtitle
-            >Local Contact Tracing can deprive the virus of time to replicate
-            and mutate.
+            >Instead of time-consuming contact tracing driving COVID testing,
+            Local Contact Tracing deprives the virus of time to replicate and
+            mutate because you use your tracking data to drive testing and
+            treatment.
           </v-card-subtitle>
 
           <v-card-text>
@@ -29,7 +31,7 @@
 <script>
 export default {
   name: 'WelcomeCard',
-
+  props: {},
   components: {
     myCard: () => import('./myCard.vue'),
   },

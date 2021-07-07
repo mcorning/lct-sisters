@@ -26,6 +26,7 @@
       />
       <!-- End Options Menu-->
     </v-app-bar>
+
     <v-main>
       <error-boundary id="errorBoundary" @error="onError($event)">
         <v-alert

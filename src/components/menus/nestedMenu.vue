@@ -65,10 +65,10 @@
 import { getRandomIntInclusive } from '../../utils/colors';
 
 export default {
-  // name: nestedMenuCard,
+  name: 'nestedMenu',
 
   components: {
-    nestedMenuCard: () => import('./nestedMenuCard'),
+    nestedMenuCard: () => import('./nestedMenu.vue'),
   },
   props: {
     name: String,

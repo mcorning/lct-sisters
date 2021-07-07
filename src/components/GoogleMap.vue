@@ -254,7 +254,7 @@ export default {
       drawer: false,
       username: '',
       ready: false,
-      status: 'Waiting for Gogot',
+      status: 'Waiting for Godot',
 
       place: null,
       customOptions: {
@@ -725,7 +725,7 @@ export default {
     const bp = self.$vuetify.breakpoint;
     console.log(bp.name, bp.height);
     const x = bp.height;
-    const y = 177;
+    const y = 183;
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
     console.groupEnd();
