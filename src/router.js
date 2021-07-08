@@ -6,14 +6,6 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: '/',
-    name: 'Welcome',
-    component: () => import('@/components/Welcome.vue'),
-    meta: {
-      layout: 'AppLayoutWelcome',
-    },
-  },
-  {
-    path: '/spaces',
     name: 'Spaces',
     component: () => import('@/components/GoogleMap.vue'),
     props: true,
@@ -22,9 +14,22 @@ const routes = [
     },
   },
   {
+    path: '/welcome',
+    name: 'Welcome',
+    component: () => import('@/components/Welcome.vue'),
+    props: true,
+
+    meta: {
+      layout: 'AppLayoutWelcome',
+    },
+  },
+
+  {
     path: '/warning',
     name: 'Warn',
     component: () => import('@/components/Warning.vue'),
+    props: true,
+
     meta: {
       layout: 'AppLayoutWarn',
     },

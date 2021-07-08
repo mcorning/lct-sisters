@@ -1,6 +1,7 @@
 <template>
-  <Messaging>
+  <State>
     <div id="calendarDiv" slot-scope="{ state, update }" class="fill-height">
+      <pre>{{ state }}</pre>
       <v-btn @click="update">Log</v-btn>
       <v-snackbar
         id="calendarSnackbar"
@@ -144,7 +145,7 @@
         </v-row>
       </v-sheet>
     </div>
-  </Messaging>
+  </State>
 </template>
 
 <script>
@@ -161,7 +162,7 @@ import Appointment from '@/models/Appointment';
 
 import { DateTime, getNow, formatSmallTime } from '../utils/luxonHelpers';
 import { success, warn, highlight, printJson } from '../utils/colors';
-import Messaging from './renderless/Messaging.vue';
+import State from './renderless/State.vue';
 
 export default {
   name: 'Calendar',
@@ -179,7 +180,7 @@ export default {
   components: {
     // ConfirmModernDialog: () => import('./cards/dialogCard'),
     EventModernDialog: () => import('./cards/eventDialogCard'),
-    Messaging,
+    State,
   },
 
   computed: {

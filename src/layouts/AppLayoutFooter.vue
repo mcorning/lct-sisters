@@ -1,7 +1,7 @@
 <template>
   <v-footer app color="primary" class="white--text">
     <v-bottom-navigation color="secondary" background-color="primary" dark grow>
-      <v-btn grow to="spaces">
+      <v-btn to="/">
         <span>Spaces</span>
         <v-icon>mdi-map-marker</v-icon>
       </v-btn>

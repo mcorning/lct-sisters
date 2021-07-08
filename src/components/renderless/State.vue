@@ -90,20 +90,12 @@ export default {
       // attach the userID to the client object for easy reference on server
       this.$socket.client.userID = userID;
 
-      //   this.sessionID = sessionID;
-      //   this.userID = userID;
-      //   this.username = username;
-
-      //   // sessions always load with the configured exposure graph
-      //   // setting the current graph to Sandbox only happens after connecting to the server
-      //   this.graphName = graphName;
-
       console.group(info('Step 2:Handling Session event from Server: >'));
       console.log(success('Session ID', sessionID));
       console.log(success('User Name:', username));
       console.log(success('User ID:', userID));
       console.log(success('graphName used by redis', graphName));
-      console.log(...this.state);
+      console.log('Entire State:', ...this.state);
       console.groupEnd();
     },
   },
@@ -115,9 +107,6 @@ export default {
         console.log(warn('No username yet. Let us get them signed up...'));
         return;
       }
-      //   this.username = username;
-      //   this.userID = userID;
-      //   this.sessionID = sessionID;
 
       const data = { data: { ...payload, id: 1 } };
 
@@ -181,7 +170,8 @@ export default {
         const places = entities[0].places || [];
         const visits = entities[1].visits || [];
         const appointments = entities[2].appointments || [];
-        const settings = entities[3].settings || [];
+        // there is only one settings array element
+        const settings = entities[3].settings[0] || [];
 
         self.update({ places, visits, appointments, settings });
 
@@ -201,13 +191,9 @@ export default {
   render() {
     // Pass *all* our props and function into our scoped slot
     // so we can render children with State data.
-    // TODO consider using the single state prop instead of individual props
-    // this way children can destructure the props they need
     return this.$scopedSlots.default({
       state: this.state,
       update: this.update,
-      //   sessionID: this.sessionID,
-      //   username: this.username,
       onConnectMe: this.onConnectMe,
     });
   },
