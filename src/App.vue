@@ -7,12 +7,12 @@
     <v-main>
       <State>
         <AppLayout slot-scope="{ state }">
-          {{ state.settings }}
           <router-view
             :state="state"
             @logVisit="onLogVisit"
             @exposureWarning="onExposureWarning"
           />
+          Remove this and Spaces can't see state! {{ state.settings.username }}
         </AppLayout>
       </State>
     </v-main>
@@ -22,6 +22,7 @@
 
 <script>
 //thanks to danvega: https://youtu.be/JwccQYpsE2Q for tip on router events
+// TODO NOTE: ApplyLayout is configured in main.js
 
 import AppLayoutHeader from '@/layouts/AppLayoutHeader';
 import AppLayoutFooter from '@/layouts/AppLayoutFooter';
