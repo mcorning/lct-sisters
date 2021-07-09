@@ -51,7 +51,6 @@ export default {
     return {
       ready: false,
 
-      isConnected: false,
       sessionID: '',
       userID: '',
       username: '',

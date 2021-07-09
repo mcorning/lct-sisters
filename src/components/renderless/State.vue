@@ -14,6 +14,10 @@ export default {
   },
 
   computed: {
+    isConnected() {
+      const x = !!this.$socket.connected;
+      return x;
+    },
     settings() {
       return Setting.all()[0];
     },
@@ -30,6 +34,7 @@ export default {
       // We can initialize our state using the
       // prop `initialState`
       state: this.initialState,
+      pendingVisits: new Map(),
     };
   },
   sockets: {
@@ -38,7 +43,6 @@ export default {
      */
     connect() {
       console.log(success('Connected to the socket server.'));
-      this.isConnected = true;
     },
 
     // sent from Server after Server has all the data it needs to register the Visitor
@@ -95,13 +99,29 @@ export default {
       console.log(success('User Name:', username));
       console.log(success('User ID:', userID));
       console.log(success('graphName used by redis', graphName));
-      console.log('Entire State:', ...this.state);
+      console.log('Entire State:', this.state);
       console.groupEnd();
+      this.pendingVisits.forEach((value, key) => {
+        console.log('Logging pending visit:', key);
+        this.emitFromClient('logVisit', value);
+      });
     },
   },
 
   methods: {
-    onConnectMe(payload) {
+    // TODO Next fix: restore the callback so we can update the Visit record with the graphNodeID
+    emitFromClient(eventName, data, ack) {
+      if (!this.connected) {
+        const { username, userID, sessionID } = this.settings;
+        this.connectMe({ username, userID, sessionID });
+      }
+      this.$socket.client.emit(eventName, data, ack);
+    },
+
+    connectMe(payload) {
+      if (this.isConnected) {
+        return 'Already connected';
+      }
       const { username, userID, sessionID } = payload;
       if (!username) {
         console.log(warn('No username yet. Let us get them signed up...'));
@@ -129,8 +149,8 @@ export default {
       const msg = sessionID
         ? `${username} connected to server with session ${sessionID}`
         : `Step 1: first server contact with ${username}. Awaiting reply in session event..`;
-      console.log(info(msg));
       this.$socket.client.open();
+      return msg;
     },
 
     update(newState) {
@@ -203,9 +223,10 @@ export default {
     // Pass *all* our props and function into our scoped slot
     // so we can render children with State data.
     return this.$scopedSlots.default({
+      emitFromClient: this.emitFromClient,
       state: this.state,
-      update: this.update,
-      onConnectMe: this.onConnectMe,
+      connectMe: this.connectMe,
+      isConnected: this.isConnected,
     });
   },
 };

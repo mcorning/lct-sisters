@@ -6,13 +6,29 @@
 
     <v-main>
       <State>
-        <AppLayout slot-scope="{ state }">
+        <AppLayout
+          slot-scope="{
+            state,
+            connectMe,
+            emitFromClient,
+            isConnected,
+          }"
+        >
+          <!-- you MUJST assign relevant props below in each relevent component 
+               you can assign ALL methods from renderless component here
+               and then assign only those needed by a working component in that component's props object
+          -->
           <router-view
             :state="state"
-            @logVisit="onLogVisit"
+            :connectMe="connectMe"
+            :emitFromClient="emitFromClient"
+            :isConnected="isConnected"
             @exposureWarning="onExposureWarning"
           />
-          Remove this and Spaces can't see state! {{ state.settings.username }}
+          <small>
+            Places: {{ state.places.length }} Visits:
+            {{ state.visits.length }}</small
+          >
         </AppLayout>
       </State>
     </v-main>
@@ -47,9 +63,6 @@ export default {
   },
 
   methods: {
-    onLogVisit(visit) {
-      alert('success' + visit);
-    },
     onExposureWarning(reason) {
       alert('success' + reason);
     },

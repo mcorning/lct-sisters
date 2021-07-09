@@ -151,10 +151,10 @@
         id="statusRow"
         no-gutters
         align="end"
-        class="mt-0 ml-0 overflow-hidden"
+        class="ma-0  overflow-hidden"
       >
         <v-col
-          ><div class="mt-5">
+          ><div class="mt-5 mb-0 ml-15">
             <small>{{ status }}</small>
           </div>
         </v-col>
@@ -166,7 +166,7 @@
         class="mt-0 ml-0 overflow-hidden"
       >
         <v-col
-          ><div class="text-left pl-7 mt-5">
+          ><div class="text-center  mt-2">
             <small>Tip: {{ tip }}</small>
           </div>
         </v-col>
@@ -195,10 +195,13 @@ export default {
 
   // mixins: [eventDialog],
 
+  // TODO Remember this is the last step in wiring renderless components (see App.vue)
   props: {
     selectedSpace: Object,
     state: { type: Object, required: true },
-    onConnectMe: Function,
+    connectMe: Function,
+    emitFromClient: Function,
+    isConnected: Boolean,
     graphName: String, // changes to graph come from App.js
   },
 
@@ -412,7 +415,7 @@ export default {
   methods: {
     onConnect() {
       this.showConnectSnackbar = false;
-      this.onConnectMe;
+      this.connectMe;
     },
     //#region Helper functions
     validateEntities() {
@@ -555,7 +558,7 @@ export default {
       );
       const statusBarHeight = 50;
       const x = bp.height;
-      const y = 133; // height of appbar header and footer
+      const y = 110; // height of appbar header and footer
       this.sheetHeight = x - y;
       this.calendarHeight = this.sheetHeight - 100 - statusBarHeight;
       console.log('sheetHeight:', this.sheetHeight);
@@ -857,8 +860,22 @@ export default {
     },
 
     logVisit(visit) {
-      this.$emit('logVisit', visit);
-      this.status = 'Logged to server. Stay safe out there.';
+      // const { username, userID, sessionID } = this.state.settings;
+
+      // console.log(
+      //   'Received from State:',
+      //   this.connectMe({ username, userID, sessionID })
+      // );
+      // const msg = this.isConnected
+      //   ? 'Logging visit:' + JSON.stringify(visit, null, 3)
+      //   : 'Caching visit until you get connected to the server...';
+      // alert(msg);
+
+      // if (this.isConnected) {
+      this.emitFromClient('logVisit', visit, (results) => {
+        this.status = results;
+      });
+      // }
     },
 
     revert(entity) {
