@@ -137,6 +137,7 @@ export default {
       // Copy all properties from newState on to
       // this.state, overriding anything on this.state
       this.state = { ...this.state, ...newState };
+      console.log(this.state);
     },
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
@@ -153,6 +154,16 @@ export default {
           console.log(printJson(invalidAppointments));
         }
         console.groupEnd();
+      });
+    },
+    throwError(payload) {
+      const { source, error, comment } = payload;
+      const msg = `ERROR: ${error.message} at ${source} (${comment})`;
+      console.error(msg);
+      this.snackBarText = msg;
+      this.showSnackbar = true;
+      this.$emit('error', {
+        payload,
       });
     },
   },

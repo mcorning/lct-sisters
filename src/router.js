@@ -9,6 +9,7 @@ const routes = [
     name: 'Spaces',
     component: () => import('@/components/GoogleMap.vue'),
     props: true,
+
     meta: {
       layout: 'AppLayoutSpaces',
     },
@@ -18,7 +19,6 @@ const routes = [
     name: 'Welcome',
     component: () => import('@/components/Welcome.vue'),
     props: true,
-
     meta: {
       layout: 'AppLayoutWelcome',
     },
@@ -29,7 +29,6 @@ const routes = [
     name: 'Warn',
     component: () => import('@/components/Warning.vue'),
     props: true,
-
     meta: {
       layout: 'AppLayoutWarn',
     },

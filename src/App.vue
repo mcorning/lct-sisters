@@ -5,12 +5,16 @@
     <AppLayoutHeader :userID="userID" :namespace="namespace" />
 
     <v-main>
-      <AppLayout>
-        <router-view
-          @logVisit="onLogVisit"
-          @exposureWarning="onExposureWarning"
-        />
-      </AppLayout>
+      <State>
+        <AppLayout slot-scope="{ state }">
+          {{ state.settings }}
+          <router-view
+            :state="state"
+            @logVisit="onLogVisit"
+            @exposureWarning="onExposureWarning"
+          />
+        </AppLayout>
+      </State>
     </v-main>
     <AppLayoutFooter />
   </v-app>
@@ -27,6 +31,7 @@ export default {
   components: {
     AppLayoutFooter,
     AppLayoutHeader,
+    State: () => import('../src/components/renderless/State.vue'),
   },
   data() {
     return {
@@ -109,6 +114,18 @@ export default {
     });
     //#endregion PWA
     console.groupEnd();
+  },
+  destroyed() {
+    document.removeEventListener('swUpdated', this.showRefreshUI);
+    document.removeEventListener('offline', this.showOfflineUI);
+    document.removeEventListener('controllerchange', () => {
+      if (this.refreshing) return;
+      this.refreshing = true;
+      window.location.reload();
+    });
+    document.removeEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+    });
   },
 };
 </script>

@@ -1,152 +1,155 @@
 <template>
-  <State>
-    <v-sheet class="fill-height position:absolute">
-      <ConfirmModernDialog
-        id="ConfirmModernDialogId"
-        ref="ConfirmModernDialog"
-        :customOptions="customOptions"
-      />
-      <!-- Recent Visits -->
-      <v-navigation-drawer v-model="drawer" absolute temporary>
-        <v-list-item>
-          <v-list-item-avatar>
-            <v-img :src="getAvatar()"></v-img>
-          </v-list-item-avatar>
+  <v-sheet class="fill-height position:absolute">
+    <ConfirmModernDialog
+      id="ConfirmModernDialogId"
+      ref="ConfirmModernDialog"
+      :customOptions="customOptions"
+    />
+    <!-- Recent Visits -->
+    <v-navigation-drawer v-model="drawer" absolute temporary>
+      <v-list-item>
+        <v-list-item-avatar>
+          <v-img :src="getAvatar()"></v-img>
+        </v-list-item-avatar>
 
-          <v-list-item-content>
-            <v-list-item-title
-              ><strong>{{ username }}'s</strong> Recent
-              Visits</v-list-item-title
-            >
-          </v-list-item-content>
-        </v-list-item>
-        <v-card-text>Click outside this box to use Map</v-card-text>
+        <v-list-item-content>
+          <v-list-item-title
+            ><strong>{{ username }}'s</strong> Recent Visits</v-list-item-title
+          >
+        </v-list-item-content>
+      </v-list-item>
+      <v-card-text>Click outside this box to use Map</v-card-text>
 
-        <v-divider></v-divider>
+      <v-divider></v-divider>
 
-        <!-- consider replacing list with select and use obects instead of arrays for items -->
-        <v-list dense nav>
-          <v-list-item-group v-model="recent" mandatory color="primary">
-            <v-list-item
-              v-for="place in places"
-              :key="place.name"
-              link
-              :value="place"
-              @click="openInfoWindowWithSelectedPlace(place)"
-            >
-              <v-list-item-icon>
-                <v-icon>{{ getIcon(place) }}</v-icon>
-              </v-list-item-icon>
+      <!-- consider replacing list with select and use obects instead of arrays for items -->
+      <v-list dense nav>
+        <v-list-item-group v-model="recent" mandatory color="primary">
+          <v-list-item
+            v-for="place in places"
+            :key="place.name"
+            link
+            :value="place"
+            @click="openInfoWindowWithSelectedPlace(place)"
+          >
+            <v-list-item-icon>
+              <v-icon>{{ getIcon(place) }}</v-icon>
+            </v-list-item-icon>
 
-              <v-list-item-content>
-                <v-list-item-title>{{ place.name }}</v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
-      </v-navigation-drawer>
-
-      <GmapMap
-        :center="center"
-        :zoom="zoom"
-        :style="mapSize"
-        ref="mapRef"
-        @click="addPlace($event)"
+            <v-list-item-content>
+              <v-list-item-title>{{ place.name }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
+      </v-list>
+    </v-navigation-drawer>
+    <GmapMap
+      :center="center"
+      :zoom="zoom"
+      :style="mapSize"
+      ref="mapRef"
+      @click="addPlace($event)"
+    >
+      <GmapInfoWindow
+        :options="infoOptions"
+        :position="infoWindowPos"
+        :opened="infoWinOpen"
+        @closeclick="infoWinOpen = false"
       >
-        <GmapInfoWindow
-          :options="infoOptions"
-          :position="infoWindowPos"
-          :opened="infoWinOpen"
-          @closeclick="infoWinOpen = false"
-        >
-          <v-card v-if="place">
-            <h3 class="headline">
-              <v-text-field
-                v-if="!place.name || place.name === 'Here'"
-                @change="updateName"
-                dense
-                hide-details
-                placeholder="Give this gathering a name"
-                autofocus
-              ></v-text-field>
-              <span v-else> {{ place.name }} </span>
-            </h3>
-            <v-card-subtitle class="pb-0">{{
-              place.formatted_address
-            }}</v-card-subtitle>
-            <v-card-text>
-              <v-select :items="addresses" dense label="Coordinates"></v-select>
-            </v-card-text>
+        <v-card v-if="place">
+          <h3 class="headline">
+            <v-text-field
+              v-if="!place.name || place.name === 'Here'"
+              @change="updateName"
+              dense
+              hide-details
+              placeholder="Give this gathering a name"
+              autofocus
+            ></v-text-field>
+            <span v-else> {{ place.name }} </span>
+          </h3>
+          <v-card-subtitle class="pb-0">{{
+            place.formatted_address
+          }}</v-card-subtitle>
+          <v-card-text>
+            <v-select :items="addresses" dense label="Coordinates"></v-select>
+          </v-card-text>
 
-            <v-card-actions v-if="place.name" class="pb-1">
-              <businessCard :settings="settings" @go="onGo"></businessCard>
-              <v-spacer></v-spacer>
+          <v-card-actions v-if="place.name" class="pb-1">
+            <State>
+              <div slot-scope="{ state }">
+                <businessCard
+                  :settings="state.settings"
+                  @go="onGo"
+                ></businessCard>
+              </div>
+            </State>
+            <v-spacer></v-spacer>
 
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    color="primary"
-                    fab
-                    dark
-                    @click="addVisit"
-                  >
-                    <v-icon>mdi-calendar</v-icon>
-                  </v-btn>
-                </template>
-                <span>Mark your calendar with a Visit</span></v-tooltip
-              >
-            </v-card-actions>
-            <v-card-text>
-              <v-text-field v-html="getStatus" readonly dense hide-details />
-            </v-card-text>
-          </v-card>
-        </GmapInfoWindow>
-        <GmapMarker
-          :key="index"
-          v-for="(m, index) in markers"
-          :position="m.position"
-          :draggable="true"
-          @click="getMarker(m, index)"
-          >{{ m.title }}
-        </GmapMarker>
-      </GmapMap>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn
+                  v-bind="attrs"
+                  v-on="on"
+                  color="primary"
+                  fab
+                  dark
+                  @click="addVisit"
+                >
+                  <v-icon>mdi-calendar</v-icon>
+                </v-btn>
+              </template>
+              <span>Mark your calendar with a Visit</span></v-tooltip
+            >
+          </v-card-actions>
+          <v-card-text>
+            <v-text-field v-html="getStatus" readonly dense hide-details />
+          </v-card-text>
+        </v-card>
+      </GmapInfoWindow>
+      <GmapMarker
+        :key="index"
+        v-for="(m, index) in markers"
+        :position="m.position"
+        :draggable="true"
+        @click="getMarker(m, index)"
+        >{{ m.title }}
+      </GmapMarker>
+    </GmapMap>
 
-      <GmapAutocomplete
-        class="pl-3"
-        @place_changed="setPlace"
-        auto-select-first
-        :options="options"
-        style="
+    <GmapAutocomplete
+      class="pl-3"
+      @place_changed="setPlace"
+      auto-select-first
+      :options="options"
+      style="
         width: 100%;
         border: orange;
         border-width: 2px;
         border-style: solid;
       "
-      >
-      </GmapAutocomplete>
-      <v-row
-        id="statusRow"
-        no-gutters
-        align="end"
-        class="mt-0 ml-0 overflow-hidden"
-      >
-        <v-col
-          ><div class="mt-0">
-            <small>{{ status }}</small>
-          </div>
-        </v-col>
-      </v-row>
-      <v-banner v-if="needInput" single-line transition="slide-y-transition">
-        No details available for input value. Be sure you select the location
-        from the dropdown.
-        <template v-slot:actions="{ dismiss }">
-          <v-btn text color="primary" @click="dismiss">Dismiss</v-btn>
-        </template>
-      </v-banner>
-    </v-sheet>
-  </State>
+    >
+    </GmapAutocomplete>
+    <v-row
+      id="statusRow"
+      no-gutters
+      align="end"
+      class="mt-0 ml-0 overflow-hidden"
+    >
+      <v-col
+        ><div class="mt-0">
+          <small>{{ status }}</small>
+        </div>
+      </v-col>
+    </v-row>
+    <v-banner v-if="needInput" single-line transition="slide-y-transition">
+      No details available for input value. Be sure you select the location from
+      the dropdown.
+      <template v-slot:actions="{ dismiss }">
+        <v-btn text color="primary" @click="dismiss">Dismiss</v-btn>
+      </template>
+    </v-banner>
+  </v-sheet>
 </template>
 
 <script>
@@ -158,6 +161,7 @@ import Place from '@/models/Place';
 
 import {
   highlight,
+  // success,
   warn,
   getRandomIntInclusive,
   printJson,
@@ -167,7 +171,11 @@ import { DateTime } from '../utils/luxonHelpers';
 export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
-
+  props: {
+    state: {
+      type: Object,
+    },
+  },
   components: {
     ConfirmModernDialog: () => import('./cards/dialogCard'),
     businessCard: () => import('./cards/businessCard'),
@@ -513,10 +521,11 @@ export default {
         endtime: endTime,
         shift: shift,
       };
+      const state = { ...this.state };
       console.log({ ...selectedSpace });
       this.$router.push({
         name: 'Calendar',
-        params: { selectedSpace },
+        params: { selectedSpace, state },
       });
       // this.$emit('addedPlace', {
       //   ...this.place,
@@ -652,6 +661,9 @@ export default {
 
     //#region functions that depend on Place
     deserializeVisitAsMarker(visits) {
+      if (!visits) {
+        return;
+      }
       try {
         this.place_map = Place.getPlaceMap();
         this.markersMap = new Map();
@@ -705,12 +717,12 @@ export default {
   },
 
   watch: {
-    ready(newVal, oldVal) {
-      // TODO figure out how to get state
-      console.log(this.state, this.$router.currentRoute.path);
-      console.log('Ready:', newVal, '/', oldVal);
+    ready() {
+      console.log('Ready?', this.ready);
       if (this.ready) {
         this.username = this.settings.username;
+        console.log(this.username);
+        this.deserializeVisitAsMarker(this.state.visits, this.map);
       }
     },
   },
@@ -721,9 +733,6 @@ export default {
       lat: parseFloat(process.env.VUE_APP_LAT),
       lng: parseFloat(process.env.VUE_APP_LNG),
     };
-  },
-
-  mounted() {
     const self = this;
     console.groupCollapsed('Mounting GoogleMap');
     const bp = self.$vuetify.breakpoint;
@@ -733,35 +742,17 @@ export default {
     self.mapSize = `width: 100%; height: ${x - y}px`;
     console.log('mapSize:', self.mapSize);
     console.groupEnd();
+  },
 
-    // self.mapPromise.then((map) => {
-    //   self.map = map;
-    //   self.showMap(map);
-    //   self.getAssets(map);
-    //   Promise.all([self.visitsPromise, self.placePromise, self.statePromise])
-    //     .then((results) => {
-    //       // const map = results[0];
-    //       const visits = results[0].visits;
-    //       const settings = results[2].settings;
-    //       console.info('settings:', printJson(settings));
-
-    //       // self.showMap(map);
-    //       // self.getAssets(map);
-
-    //       // we don't use results[2] here,
-    //       // but the promise resolved with fetched Place records used next
-    //       if (visits) {
-    //         self.deserializeVisitAsMarker(visits, self.map);
-    //       }
-    //       // this.map = map;
-
-    //       // not sure we need this...
-    //       this.recent = true;
-    this.ready = true;
-    //       console.log(success('GoogleMap loaded successfully'));
-    //     })
-    //     .catch((err) => this.throwError('GoogleMap.mounted()', err));
-    // });
+  mounted() {
+    const self = this;
+    console.log(self.state);
+    self.$refs.mapRef.$mapPromise.then((map) => {
+      self.map = map;
+      self.showMap(map);
+      self.getAssets(map);
+      self.ready = true;
+    });
   },
 };
 </script>

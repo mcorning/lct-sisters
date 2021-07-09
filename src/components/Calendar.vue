@@ -1,160 +1,187 @@
 <template>
-  <State>
-    <div id="calendarDiv" slot-scope="{ state, update }" class="fill-height">
-      <pre>{{ state }}</pre>
-      <v-btn @click="update">Log</v-btn>
-      <v-snackbar
-        id="calendarSnackbar"
-        :timeout="-1"
-        :value="showSnackbar"
-        absolute
-        centered
-        :color="snackBarColor"
-        elevation="24"
-        vertical
-      >
-        {{ snackBarText }}
+  <div id="calendarDiv" class="fill-height">
+    <v-snackbar
+      id="connectSnackbar"
+      :value="showConnectSnackbar"
+      :timeout="-1"
+      absolute
+      centered
+      :color="snackBarColor"
+      elevation="24"
+      vertical
+    >
+      Ready to connect to Server?
 
-        <template v-slot:action="{ attrs }">
-          <v-btn
-            :color="snackBarButtonColor"
-            text
-            v-bind="attrs"
-            @click="showSnackbar = false"
-          >
-            Close
-          </v-btn>
-        </template>
-      </v-snackbar>
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          :color="snackBarButtonColor"
+          text
+          v-bind="attrs"
+          @click="onConnect"
+        >
+          Yes
+        </v-btn>
+        <v-btn
+          :color="snackBarButtonColor"
+          text
+          v-bind="attrs"
+          @click="showConnectSnackbar = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      id="calendarSnackbar"
+      :timeout="-1"
+      :value="showSnackbar"
+      absolute
+      centered
+      :color="snackBarColor"
+      elevation="24"
+      vertical
+    >
+      {{ snackBarText }}
 
-      <EventModernDialog
-        id="EventModernDialog"
-        ref="EventModernDialog"
-        :customEventOptions="selectedOptions"
-        @setDate="onSetDate"
-        @setTime="onSetTime"
-      />
-      <v-sheet id="calendarSheet" class="overflow-hidden" :height="sheetHeight">
-        <v-row id="calendarRow" align="start" class="overflow-hidden ">
-          <v-col>
-            <!-- calendar controls -->
-            <v-sheet height="48">
-              <v-toolbar flat>
-                <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
-                <v-btn fab text small color="grey darken-2" @click="prev">
-                  <v-icon> mdi-chevron-left </v-icon>
-                </v-btn>
-                <v-btn fab text small color="grey darken-2" @click="next">
-                  <v-icon> mdi-chevron-right </v-icon>
-                </v-btn>
-                <v-toolbar-title v-if="cal">
-                  {{ cal.title }}
-                </v-toolbar-title>
-                <v-spacer></v-spacer>
-                <v-menu bottom right>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn
-                      outlined
-                      color="grey darken-2"
-                      v-bind="attrs"
-                      v-on="on"
-                    >
-                      <span>{{ typeToLabel[type] }}</span>
-                      <v-icon right> mdi-menu-down </v-icon>
-                    </v-btn>
-                  </template>
-                  <v-list>
-                    <v-list-item @click="type = 'category'">
-                      <v-list-item-title>Work</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="type = 'day'">
-                      <v-list-item-title>Day</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="type = '4day'">
-                      <v-list-item-title>4 days</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="type = 'week'">
-                      <v-list-item-title>Week</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="type = 'month'">
-                      <v-list-item-title>Month</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-              </v-toolbar>
-            </v-sheet>
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          :color="snackBarButtonColor"
+          text
+          v-bind="attrs"
+          @click="showSnackbar = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
 
-            <!-- calendar sheet-->
-            <v-sheet ref="calendarSheet" :height="calendarHeight">
-              <v-calendar
-                id="calendar-target"
-                ref="calendar"
-                v-model="focus"
-                color="primary"
-                :type="type"
-                :events="relevantEvents"
-                :categories="categories"
-                :event-color="getEventColor"
-                :now="currentDate"
-                :show-interval-label="onShowIntervalLabel"
-                :interval-count="intervalCount"
-                :first-time="firstTime"
-                :interval-minutes="intervalMinutes"
-                @click:more="viewDay"
-                @click:date="viewDay"
-                @click:interval="onIntervalClick"
-                @click:event="showEvent"
-                @change="handleChange"
-              >
-                <template v-slot:event="{ event, timed, eventSummary }">
-                  <div class="v-event-draggable" v-html="eventSummary()"></div>
-                  <div
-                    v-if="timed"
-                    class="v-event-drag-bottom"
-                    @mousedown.stop="extendBottom(event)"
-                  ></div>
+    <EventModernDialog
+      id="EventModernDialog"
+      ref="EventModernDialog"
+      :customEventOptions="selectedOptions"
+      @setDate="onSetDate"
+      @setTime="onSetTime"
+    />
+    <v-sheet id="calendarSheet" class="overflow-hidden" :height="sheetHeight">
+      <v-row id="calendarRow" align="start" class="overflow-hidden ">
+        <v-col>
+          <!-- calendar controls -->
+          <v-sheet height="48">
+            <v-toolbar flat>
+              <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
+              <v-btn fab text small color="grey darken-2" @click="prev">
+                <v-icon> mdi-chevron-left </v-icon>
+              </v-btn>
+              <v-btn fab text small color="grey darken-2" @click="next">
+                <v-icon> mdi-chevron-right </v-icon>
+              </v-btn>
+              <v-toolbar-title v-if="cal">
+                {{ cal.title }}
+              </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-menu bottom right>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    outlined
+                    color="grey darken-2"
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <span>{{ typeToLabel[type] }}</span>
+                    <v-icon right> mdi-menu-down </v-icon>
+                  </v-btn>
                 </template>
-              </v-calendar>
-            </v-sheet>
-          </v-col>
-        </v-row>
+                <v-list>
+                  <v-list-item @click="type = 'category'">
+                    <v-list-item-title>Work</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'day'">
+                    <v-list-item-title>Day</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = '4day'">
+                    <v-list-item-title>4 days</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'week'">
+                    <v-list-item-title>Week</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="type = 'month'">
+                    <v-list-item-title>Month</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </v-toolbar>
+          </v-sheet>
 
-        <v-row
-          id="statusRow"
-          no-gutters
-          align="end"
-          class="mt-0 ml-0 overflow-hidden"
-        >
-          <v-col
-            ><div class="mt-5">
-              <small>{{ status }}</small>
-            </div>
-          </v-col>
-        </v-row>
-        <v-row
-          id="tipRow"
-          no-gutters
-          align="end"
-          class="mt-0 ml-0 overflow-hidden"
-        >
-          <v-col
-            ><div class="text-left pl-7 mt-5">
-              <small>Tip: {{ tip }}</small>
-            </div>
-          </v-col>
-        </v-row>
-      </v-sheet>
-    </div>
-  </State>
+          <!-- calendar sheet-->
+          <v-sheet ref="calendarSheet" :height="calendarHeight">
+            <v-calendar
+              id="calendar-target"
+              ref="calendar"
+              v-model="focus"
+              color="primary"
+              :type="type"
+              :events="relevantEvents"
+              :categories="categories"
+              :event-color="getEventColor"
+              :now="currentDate"
+              :show-interval-label="onShowIntervalLabel"
+              :interval-count="intervalCount"
+              :first-time="firstTime"
+              :interval-minutes="intervalMinutes"
+              @click:more="viewDay"
+              @click:date="viewDay"
+              @click:interval="onIntervalClick"
+              @click:event="showEvent"
+              @change="handleChange"
+            >
+              <template v-slot:event="{ event, timed, eventSummary }">
+                <div class="v-event-draggable" v-html="eventSummary()"></div>
+                <div
+                  v-if="timed"
+                  class="v-event-drag-bottom"
+                  @mousedown.stop="extendBottom(event)"
+                ></div>
+              </template>
+            </v-calendar>
+          </v-sheet>
+        </v-col>
+      </v-row>
+
+      <v-row
+        id="statusRow"
+        no-gutters
+        align="end"
+        class="mt-0 ml-0 overflow-hidden"
+      >
+        <v-col
+          ><div class="mt-5">
+            <small>{{ status }}</small>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row
+        id="tipRow"
+        no-gutters
+        align="end"
+        class="mt-0 ml-0 overflow-hidden"
+      >
+        <v-col
+          ><div class="text-left pl-7 mt-5">
+            <small>Tip: {{ tip }}</small>
+          </div>
+        </v-col>
+      </v-row>
+    </v-sheet>
+  </div>
 </template>
 
 <script>
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
-import Setting from '@/models/Setting';
+// import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
-import Place from '@/models/Place';
+// import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
 // TODO Come back to fix this complex mixin strategy later
@@ -162,7 +189,6 @@ import Appointment from '@/models/Appointment';
 
 import { DateTime, getNow, formatSmallTime } from '../utils/luxonHelpers';
 import { success, warn, highlight, printJson } from '../utils/colors';
-import State from './renderless/State.vue';
 
 export default {
   name: 'Calendar',
@@ -171,16 +197,14 @@ export default {
 
   props: {
     selectedSpace: Object,
-    // avgStay: Number,
-    // userID: String,
-    // username: String,
+    state: { type: Object, required: true },
+    onConnectMe: Function,
     graphName: String, // changes to graph come from App.js
   },
 
   components: {
     // ConfirmModernDialog: () => import('./cards/dialogCard'),
     EventModernDialog: () => import('./cards/eventDialogCard'),
-    State,
   },
 
   computed: {
@@ -199,8 +223,8 @@ export default {
     },
 
     settings() {
-      const settings = Setting.all();
-      return settings[0] || [];
+      const settings = this.state.settings;
+      return settings || [];
     },
     usesPublicCalendar() {
       return this.settings.usesPublicCalendar;
@@ -350,6 +374,7 @@ export default {
     selectedEventId: '',
     selectedOptions: null,
     sheetHeight: 0,
+    showConnectSnackbar: false,
     showSnackbar: false,
     snackBarButtonColor: 'error lighten-3',
     snackBarColor: 'error',
@@ -385,6 +410,10 @@ export default {
   }),
 
   methods: {
+    onConnect() {
+      this.showConnectSnackbar = false;
+      this.onConnectMe;
+    },
     //#region Helper functions
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
@@ -539,7 +568,7 @@ export default {
     },
 
     configureCalendar() {
-      this.status = 'changing calendars';
+      this.status = `Changing calendars. Username: ${this.state?.settings.username} SessionID: ${this.state?.settings.sessionID}`;
       if (this.isCategoryCalendar && this.isTakingAppointments) {
         this.tip =
           'You can add appointments by clicking a time interval for any selected day.';
@@ -1046,45 +1075,20 @@ export default {
   mounted() {
     const self = this;
 
-    Promise.all([
-      Place.$fetch(),
-      Visit.$fetch(),
-      Appointment.$fetch(),
-      Setting.$fetch(),
-    ])
-      .then((entities) => {
-        this.configureCalendar();
+    self.configureCalendar();
 
-        const places = entities[0].places || [];
-        const visits = entities[1].visits || [];
-        const appointments = entities[2].appointments || [];
-        const settings = entities[3].settings || [];
+    self.type = self.state.appointments?.length > 0 ? 'category' : 'day';
 
-        console.log(settings.length, 'States');
-        console.log(places.length, 'Places');
-        console.log(visits.length, 'Visits');
-        console.log(appointments.length, 'Appointments');
+    self.setHeight();
 
-        this.type = appointments.length > 0 ? 'category' : 'day';
+    self.place = self.selectedSpace;
+    if (self.place) {
+      self.newVisit();
+    }
 
-        this.setHeight();
+    self.validateEntities();
 
-        self.place = self.selectedSpace;
-        if (self.place) {
-          self.newVisit();
-        }
-
-        self.validateEntities();
-
-        console.log(success('mounted calendarCard'));
-      })
-      .catch((err) =>
-        this.throwError({
-          source: 'Calendar.mounted()',
-          error: err,
-          comment: 'This is bad.',
-        })
-      );
+    console.log(success('mounted calendarCard'));
   },
 
   destroyed() {

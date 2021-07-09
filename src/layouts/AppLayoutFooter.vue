@@ -1,31 +1,55 @@
 <template>
   <v-footer app color="primary" class="white--text">
-    <v-bottom-navigation color="secondary" background-color="primary" dark grow>
-      <v-btn to="/">
-        <span>Spaces</span>
-        <v-icon>mdi-map-marker</v-icon>
-      </v-btn>
-
-      <v-btn fab color="red" class="black--text" dark to="warning">
-        <span>Warn</span>
-        <v-icon dark> mdi-alert </v-icon></v-btn
+    <State>
+      <v-bottom-navigation
+        slot-scope="{ state }"
+        color="secondary"
+        background-color="primary"
+        dark
+        grow
       >
+        <v-btn @click="open('Spaces', state)">
+          <span>Spaces</span>
+          <v-icon>mdi-map-marker</v-icon>
+        </v-btn>
 
-      <v-btn to="calendar">
-        <span>Calendar</span>
-        <v-icon>mdi-calendar</v-icon>
-      </v-btn>
-    </v-bottom-navigation>
+        <v-btn
+          fab
+          color="red"
+          class="black--text"
+          dark
+          @click="open('Warning', state)"
+        >
+          <span>Warn</span>
+          <v-icon dark> mdi-alert </v-icon></v-btn
+        >
+        <v-btn @click="open('Calendar', state)">
+          <span>Calendar</span>
+          <v-icon>mdi-calendar</v-icon>
+        </v-btn>
+      </v-bottom-navigation>
+    </State>
   </v-footer>
 </template>
 
 <script>
 export default {
   name: 'AppLayoutFooter',
-
+  components: {
+    State: () => import('../components/renderless/State.vue'),
+  },
   computed: {
     connection() {
       return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
+    },
+  },
+  methods: {
+    open(view, state) {
+      const selectedSpace = null;
+      this.$router.push({
+        name: view,
+        params: { selectedSpace, state },
+      });
     },
   },
 };

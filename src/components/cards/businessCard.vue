@@ -129,7 +129,6 @@
 </template>
 
 <script>
-import Place from '@/models/Place';
 
 export default {
   props: {
@@ -188,8 +187,7 @@ export default {
     },
   },
   mounted() {
-    Place.$fetch();
-    console.log(JSON.stringify(this.$props, null, 3));
+    console.log('this.$props:', JSON.stringify(this.$props, null, 3));
   },
 };
 </script>
