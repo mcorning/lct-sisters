@@ -1,8 +1,9 @@
 <template>
   <div id="calendarDiv" class="fill-height">
+    <!-- YesNo snackbar -->
     <v-snackbar
       id="connectSnackbar"
-      :value="showConnectSnackbar"
+      :value="showYesNoSnackbar"
       :timeout="-1"
       absolute
       centered
@@ -10,24 +11,19 @@
       elevation="24"
       vertical
     >
-      Ready to connect to Server?
+      {{ yesNoSnackbarText }}
 
       <template v-slot:action="{ attrs }">
-        <v-btn
-          :color="snackBarButtonColor"
-          text
-          v-bind="attrs"
-          @click="onConnect"
-        >
+        <v-btn :color="snackBarButtonColor" text v-bind="attrs" @click="onYes">
           Yes
         </v-btn>
         <v-btn
           :color="snackBarButtonColor"
           text
           v-bind="attrs"
-          @click="showConnectSnackbar = false"
+          @click="showYesNoSnackbar = false"
         >
-          Close
+          No
         </v-btn>
       </template>
     </v-snackbar>
@@ -196,21 +192,31 @@ export default {
   // mixins: [eventDialog],
 
   // TODO Remember this is the last step in wiring renderless components (see App.vue)
+  // Step 5: take one or more properties exposed by State render() function
   props: {
     selectedSpace: Object,
     state: { type: Object, required: true },
-    connectMe: Function,
     emitFromClient: Function,
+    logVisit: Function,
+    lastLoggedNodeId: Number,
     isConnected: Boolean,
     graphName: String, // changes to graph come from App.js
   },
 
   components: {
     // ConfirmModernDialog: () => import('./cards/dialogCard'),
-    EventModernDialog: () => import('./cards/eventDialogCard'),
+    EventModernDialog: () => import('../components/cards/eventDialogCard.vue'),
   },
 
   computed: {
+    cachedVisits() {
+      const x = this.state.visits.filter((v) => v.loggedNodeId === '');
+      return x;
+    },
+    cachedVisitsCt() {
+      return this.cachedVisits.length;
+    },
+
     userID() {
       return this.settings.userID;
     },
@@ -377,11 +383,12 @@ export default {
     selectedEventId: '',
     selectedOptions: null,
     sheetHeight: 0,
-    showConnectSnackbar: false,
+    showYesNoSnackbar: false,
     showSnackbar: false,
     snackBarButtonColor: 'error lighten-3',
     snackBarColor: 'error',
     snackBarText: '',
+    yesNoSnackbarText: '',
     calendarHeight: 0,
     typeToLabel: {
       category: 'Work',
@@ -413,10 +420,20 @@ export default {
   }),
 
   methods: {
-    onConnect() {
-      this.showConnectSnackbar = false;
-      this.connectMe;
+    onYes() {
+      this.showYesNoSnackbar = false;
+      if (this.isConnected && this.cachedVisitsCt) {
+        this.logVisits();
+      }
     },
+
+    logVisits() {
+      this.cachedVisits.forEach((visit) => {
+        console.log(printJson(visit));
+        this.logVisit(visit);
+      });
+    },
+
     //#region Helper functions
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
@@ -682,6 +699,15 @@ export default {
     //#endregion Appointment functions
 
     //#region Visit management functions
+    checkCachedVisits() {
+      if (this.cachedVisitsCt) {
+        this.yesNoSnackbarText = `You have ${this.cachedVisitsCt} unlogged visits. Update the virus exposure alert graph now?`;
+        this.snackBarColor = 'warning';
+        this.snackBarButtonColor = 'white';
+        this.showYesNoSnackbar = true;
+      }
+    },
+
     showEventDialog() {
       const question = `Edit ${this.isAtWorkAt ? 'Shift at' : 'Visit to'} ${
         this.currentEvent.name
@@ -857,25 +883,6 @@ export default {
       category = this.currentEvent.category
     ) {
       this.updateCache({ action: 'delete', entity: { id, category } });
-    },
-
-    logVisit(visit) {
-      // const { username, userID, sessionID } = this.state.settings;
-
-      // console.log(
-      //   'Received from State:',
-      //   this.connectMe({ username, userID, sessionID })
-      // );
-      // const msg = this.isConnected
-      //   ? 'Logging visit:' + JSON.stringify(visit, null, 3)
-      //   : 'Caching visit until you get connected to the server...';
-      // alert(msg);
-
-      // if (this.isConnected) {
-      this.emitFromClient('logVisit', visit, (results) => {
-        this.status = results;
-      });
-      // }
     },
 
     revert(entity) {
@@ -1073,6 +1080,12 @@ export default {
   },
 
   watch: {
+    lastLoggedNodeId() {
+      this.snackBarText = `Visit logged to graph node ${this.lastLoggedNodeId}`;
+      this.snackBarColor = 'success';
+      this.showSnackbar = true;
+    },
+
     selectedSpace(newVal, oldVal) {
       console.log(newVal, oldVal);
     },
@@ -1098,13 +1111,13 @@ export default {
 
     self.setHeight();
 
-    self.place = self.selectedSpace;
+    // self.place = self.selectedSpace;
     if (self.place) {
       self.newVisit();
     }
 
     self.validateEntities();
-
+    self.checkCachedVisits();
     console.log(success('mounted calendarCard'));
   },
 

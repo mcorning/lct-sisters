@@ -1,6 +1,6 @@
 <template>
   <div>
-    <slot @logVisit="onLogVisit" />
+    <slot @cachedVisits="onCachedVisits" />
   </div>
 </template>
 
@@ -9,8 +9,8 @@ export default {
   name: 'AppLayoutCalendar',
 
   methods: {
-    onLogVisit() {
-      alert('good');
+    onCachedVisits(data) {
+      alert(data.length);
     },
   },
 };

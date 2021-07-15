@@ -171,15 +171,16 @@ import { DateTime } from '../utils/luxonHelpers';
 export default {
   // see main.js for vue2-google-maps instantiation
   name: 'GoogleMap',
+  // Step 5: take one or more properties exposed by State render() function
   props: {
     state: {
       type: Object,
     },
   },
   components: {
-    ConfirmModernDialog: () => import('./cards/dialogCard'),
-    businessCard: () => import('./cards/businessCard'),
-    State: () => import('./renderless/State.vue'),
+    ConfirmModernDialog: () => import('../components/cards/dialogCard'),
+    businessCard: () => import('../components/cards/businessCard.vue'),
+    State: () => import('../components/renderless/State.vue'),
   },
 
   computed: {
@@ -722,7 +723,7 @@ export default {
       if (this.ready) {
         this.username = this.settings.username;
         console.log(this.username);
-        this.deserializeVisitAsMarker(this.state.visits, this.map);
+        this.deserializeVisitAsMarker(this.state?.visits, this.map);
       }
     },
   },
@@ -746,6 +747,7 @@ export default {
 
   mounted() {
     const self = this;
+
     console.log(self.state);
     self.$refs.mapRef.$mapPromise.then((map) => {
       self.map = map;

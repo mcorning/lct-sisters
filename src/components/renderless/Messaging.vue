@@ -34,11 +34,11 @@ export default {
     session({ sessionID, userID, username, graphName }) {
       console.group('Handling Session event from Server');
 
-      Setting.updatePromise({ data: { id: 1, sessionID, userID, username } });
+      // updateSettings({ data: { id: 1, sessionID, userID, username } });
       // attach the session ID to the next reconnection attempts
       this.$socket.client.auth = { sessionID };
       this.sessionID = sessionID;
-      console.log(success('Session ID', this.sessionID));
+      console.log('Session ID', this.sessionID);
 
       // save the ID of the user
       // TODO isn't userID already assigned in middleware? and why assign to client instead of .auth?

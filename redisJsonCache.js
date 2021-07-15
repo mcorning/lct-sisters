@@ -60,7 +60,6 @@ function create(key, path, node) {
 function add(key, path, node) {
   return jsonCache
     .set(key, '_' + path, node)
-    .then((ok) => console.log(getNow(), 'added?', ok))
     .catch((e) => console.log(err('Error in add()', printJson(e))));
 }
 

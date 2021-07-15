@@ -79,7 +79,8 @@ const server = express()
 const io = socketIO(server);
 
 function report(sessionID, userID, username) {
-  console.log(warn(getNow(), 'Middleware handling socket:'));
+  console.log(getNow());
+  console.log(warn('Middleware handling socket:'));
   console.log(
     warn(
       'sessionID:',
@@ -273,12 +274,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('manageAppointment', (data) => {
-    console.log(highlight(getNow(), printJson(data)));
+    console.log(getNow());
+
+    console.log(highlight(printJson(data)));
   });
 
   socket.on('logVisit', (data, ack) => {
     // call the graph
-    console.log(highlight(getNow(), printJson(data)));
+    console.log(getNow());
+    console.log(highlight('Visit to log:', printJson(data)));
     logVisit(data).then((res) => {
       console.log(res);
       ack(res);
@@ -338,9 +342,9 @@ io.on('connection', (socket) => {
         cache
           .filter('sessions', (v) => v[1].connected)
           .then((online) => {
+            console.log(getNow());
             console.log(
               warn(
-                getNow(),
                 `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
               )
             );
@@ -370,9 +374,10 @@ io.on('connection', (socket) => {
             cache
               .filter('sessions', (v) => v[1].connected)
               .then((online) => {
+                console.log(getNow());
+
                 console.log(
                   warn(
-                    getNow(),
                     `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
                   )
                 );

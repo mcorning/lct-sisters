@@ -1,34 +1,40 @@
 <template>
   <!-- the new layouts strategy https://itnext.io/vue-tricks-smart-layouts-for-vuejs-5c61a472b69b
-  still requires the v-app wrapper for vueitfy to work properly -->
+  still requires the v-app wrapper for vuetify to work properly -->
   <v-app>
     <AppLayoutHeader :userID="userID" :namespace="namespace" />
 
     <v-main>
-      <State>
+      <!-- Step 2: include all and only properties from State render() function -->
+
+      <State :initialState="state">
+        <!-- NOTE: ApplyLayout is configured in main.js -->
         <AppLayout
           slot-scope="{
             state,
             connectMe,
             emitFromClient,
+            logVisit,
+            lastLoggedNodeId,
             isConnected,
           }"
         >
-          <!-- you MUJST assign relevant props below in each relevent component 
+          <!-- you MUST assign relevant props below in each relevent component 
                you can assign ALL methods from renderless component here
                and then assign only those needed by a working component in that component's props object
+
+               Step 3: pass on all properties from State render() function to dynamic components
           -->
           <router-view
             :state="state"
             :connectMe="connectMe"
             :emitFromClient="emitFromClient"
             :isConnected="isConnected"
+            :logVisit="logVisit"
+            :lastLoggedNodeId="lastLoggedNodeId,"
             @exposureWarning="onExposureWarning"
           />
-          <small>
-            Places: {{ state.places.length }} Visits:
-            {{ state.visits.length }}</small
-          >
+          <small> Ready...</small>
         </AppLayout>
       </State>
     </v-main>
@@ -42,14 +48,26 @@
 
 import AppLayoutHeader from '@/layouts/AppLayoutHeader';
 import AppLayoutFooter from '@/layouts/AppLayoutFooter';
+import State from '../src/components/renderless/State.vue';
+// import Setting from '@/models/Setting';
+// import Visit from '@/models/Visit';
+// import Place from '@/models/Place';
+// import Appointment from '@/models/Appointment';
 
 export default {
   name: 'App',
   components: {
     AppLayoutFooter,
     AppLayoutHeader,
-    State: () => import('../src/components/renderless/State.vue'),
+    State,
   },
+
+  computed: {
+    state() {
+      return this.data;
+    },
+  },
+
   data() {
     return {
       userID: 'mpc',
@@ -59,6 +77,7 @@ export default {
       refreshing: false,
       registration: null,
       updateExists: false,
+      initialState: {},
     };
   },
 
@@ -101,6 +120,7 @@ export default {
       this.registration.waiting.postMessage('skipWaiting');
     },
   },
+
   created() {
     console.group('Creating PWA:');
 
@@ -129,17 +149,44 @@ export default {
     //#endregion PWA
     console.groupEnd();
   },
+
+  mounted() {
+    // const self = this;
+    // Promise.all([
+    //   Place.$fetch(),
+    //   Visit.$fetch(),
+    //   Appointment.$fetch(),
+    //   Setting.$fetch(),
+    // ])
+    //   .then((entities) => {
+    //     const places = entities[0].places || [];
+    //     const visits = entities[1].visits || [];
+    //     const appointments = entities[2].appointments || [];
+    //     // there is only one settings array element
+    //     const settings = entities[3].settings[0] || [];
+    //     self.validateEntities();
+    //     self.initialState = { places, visits, appointments, settings };
+    //     console.log('mounted State component');
+    //   })
+    //   .catch((err) =>
+    //     this.throwError({
+    //       source: 'Calendar.mounted()',
+    //       error: err,
+    //       comment: 'This is bad.',
+    //     })
+    //   );
+  },
   destroyed() {
-    document.removeEventListener('swUpdated', this.showRefreshUI);
-    document.removeEventListener('offline', this.showOfflineUI);
-    document.removeEventListener('controllerchange', () => {
-      if (this.refreshing) return;
-      this.refreshing = true;
-      window.location.reload();
-    });
-    document.removeEventListener('appinstalled', () => {
-      console.log('PWA was installed');
-    });
+    // document.removeEventListener('swUpdated', this.showRefreshUI);
+    // document.removeEventListener('offline', this.showOfflineUI);
+    // document.removeEventListener('controllerchange', () => {
+    //   if (this.refreshing) return;
+    //   this.refreshing = true;
+    //   window.location.reload();
+    // });
+    // document.removeEventListener('appinstalled', () => {
+    //   console.log('PWA was installed');
+    // });
   },
 };
 </script>

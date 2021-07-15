@@ -33,10 +33,12 @@
 </template>
 
 <script>
+import State from '../components/renderless/State.vue';
+
 export default {
   name: 'AppLayoutFooter',
   components: {
-    State: () => import('../components/renderless/State.vue'),
+    State,
   },
   computed: {
     connection() {

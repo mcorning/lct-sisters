@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import GoogleMap from '@/views/GoogleMap.vue';
 
 Vue.use(VueRouter);
 
@@ -7,7 +8,7 @@ const routes = [
   {
     path: '/',
     name: 'Spaces',
-    component: () => import('@/components/GoogleMap.vue'),
+    component: GoogleMap,
     props: true,
 
     meta: {
@@ -17,7 +18,7 @@ const routes = [
   {
     path: '/welcome',
     name: 'Welcome',
-    component: () => import('@/components/Welcome.vue'),
+    component: () => import('@/views/Welcome.vue'),
     props: true,
     meta: {
       layout: 'AppLayoutWelcome',
@@ -27,7 +28,7 @@ const routes = [
   {
     path: '/warning',
     name: 'Warn',
-    component: () => import('@/components/Warning.vue'),
+    component: () => import('@/views/Warning.vue'),
     props: true,
     meta: {
       layout: 'AppLayoutWarn',
@@ -36,7 +37,7 @@ const routes = [
   {
     path: '/calendar',
     name: 'Calendar',
-    component: () => import('@/components/Calendar.vue'),
+    component: () => import('@/views/Calendar.vue'),
     props: true,
     meta: {
       layout: 'AppLayoutCalendar',

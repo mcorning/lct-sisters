@@ -1,4 +1,7 @@
 <script>
+// State's first job is make a connection to the server in case an Alert awaits// append: Append a value to a key
+// State's second job is to handle local state including ORM entities.
+
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
@@ -7,11 +10,7 @@ import Appointment from '@/models/Appointment';
 import { err, info, success, warn, printJson } from '../../utils/colors';
 
 export default {
-  props: {
-    initialState: {
-      type: Object,
-    },
-  },
+  props: {},
 
   computed: {
     isConnected() {
@@ -25,16 +24,19 @@ export default {
       return this.settings?.sessionID;
     },
     username() {
-      return this.settings?.username || 'default';
+      return this.settings?.username || '';
+    },
+    visits() {
+      return Visit.all().visits;
     },
   },
 
   data() {
     return {
-      // We can initialize our state using the
-      // prop `initialState`
-      state: this.initialState,
+      state: {},
       pendingVisits: new Map(),
+      lastLoggedNodeId: -1,
+      loading: true,
     };
   },
   sockets: {
@@ -106,29 +108,49 @@ export default {
         this.emitFromClient('logVisit', value);
       });
     },
+
+    exposureAlert(msg) {
+      alert(msg);
+    },
   },
 
   methods: {
+    logVisit(visit) {
+      this.emitFromClient('logVisit', visit, (results) => {
+        this.lastLoggedNodeId = results.id;
+      });
+    },
+
     // TODO Next fix: restore the callback so we can update the Visit record with the graphNodeID
     emitFromClient(eventName, data, ack) {
       if (!this.connected) {
-        const { username, userID, sessionID } = this.settings;
-        this.connectMe({ username, userID, sessionID });
+        // const { username, userID, sessionID } = this.settings;
+        this.connectMe(); //{ username, userID, sessionID });
       }
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    connectMe(payload) {
+    // why are we passing in a payload when State gets that itself from the server?
+    // const { username, userID, sessionID } = payload;    // connectMe(payload) {
+    connectMe() {
       if (this.isConnected) {
         return 'Already connected';
       }
-      const { username, userID, sessionID } = payload;
+      const { username, userID, sessionID } = this.settings;
+
       if (!username) {
         console.log(warn('No username yet. Let us get them signed up...'));
         return;
       }
 
-      const data = { data: { ...payload, id: 1 } };
+      const data = {
+        data: {
+          username,
+          userID,
+          sessionID,
+          id: 1,
+        },
+      };
 
       console.info(warn('data:', JSON.stringify(data, null, 3)));
       Setting.updatePromise(data)
@@ -148,7 +170,7 @@ export default {
       };
       const msg = sessionID
         ? `${username} connected to server with session ${sessionID}`
-        : `Step 1: first server contact with ${username}. Awaiting reply in session event..`;
+        : `Step 1: first server contact with ${username}. Awaiting reply in session event for sessionID and userID.`;
       this.$socket.client.open();
       return msg;
     },
@@ -159,6 +181,7 @@ export default {
       this.state = { ...this.state, ...newState };
       console.log(this.state);
     },
+
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
       Visit.validateVisits().then((invalidVisits) => {
@@ -188,9 +211,8 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
     const self = this;
-
     Promise.all([
       Place.$fetch(),
       Visit.$fetch(),
@@ -209,6 +231,7 @@ export default {
         self.validateEntities();
 
         console.log(success('mounted State component'));
+        self.loading = false;
       })
       .catch((err) =>
         this.throwError({
@@ -220,8 +243,15 @@ export default {
   },
 
   render() {
+    // The first user of State will not see data if we render() while loading
+    if (this.loading) {
+      return { loading: this.loading };
+    }
+
     // Pass *all* our props and function into our scoped slot
     // so we can render children with State data.
+    // Step 1: Expose all data and methods that could be used by dynamic components
+
     return this.$scopedSlots.default({
       emitFromClient: this.emitFromClient,
       state: this.state,

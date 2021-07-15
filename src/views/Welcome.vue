@@ -21,8 +21,8 @@
  *    So, the next run will have username and sessionID taken from the Setting entity.
  */
 
-import State from './renderless/State.vue';
-import welcomeCard from './cards/welcomeCard.vue';
+import State from '../components/renderless/State.vue';
+import welcomeCard from '../components/cards/welcomeCard.vue';
 
 import Setting from '@/models/Setting';
 
