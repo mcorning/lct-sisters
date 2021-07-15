@@ -7,15 +7,21 @@ import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
-import { err, info, success, warn, printJson } from '../../utils/colors';
+import {
+  err,
+  info,
+  success,
+  warn,
+  getNow,
+  printJson,
+} from '../../utils/colors';
 
 export default {
   props: {},
 
   computed: {
     isConnected() {
-      const x = !!this.$socket.connected;
-      return x;
+      return !!this.$socket.connected;
     },
     settings() {
       return Setting.all()[0];
@@ -44,7 +50,8 @@ export default {
      * 👂 Listen to socket events emitted from the socket server
      */
     connect() {
-      console.log(success('Connected to the socket server.'));
+      console.log(getNow());
+      console.log(success('Connected to the socket server.\n'));
     },
 
     // sent from Server after Server has all the data it needs to register the Visitor
@@ -230,6 +237,7 @@ export default {
 
         self.validateEntities();
 
+        self.connectMe();
         console.log(success('mounted State component'));
         self.loading = false;
       })
@@ -251,12 +259,11 @@ export default {
     // Pass *all* our props and function into our scoped slot
     // so we can render children with State data.
     // Step 1: Expose all data and methods that could be used by dynamic components
-
     return this.$scopedSlots.default({
-      emitFromClient: this.emitFromClient,
       state: this.state,
-      connectMe: this.connectMe,
       isConnected: this.isConnected,
+      logVisit: this.logVisit,
+      lastLoggedNodeId: this.lastLoggedNodeId,
     });
   },
 };

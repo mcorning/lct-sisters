@@ -747,7 +747,6 @@ export default {
 
   mounted() {
     const self = this;
-
     console.log(self.state);
     self.$refs.mapRef.$mapPromise.then((map) => {
       self.map = map;

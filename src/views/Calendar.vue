@@ -196,7 +196,6 @@ export default {
   props: {
     selectedSpace: Object,
     state: { type: Object, required: true },
-    emitFromClient: Function,
     logVisit: Function,
     lastLoggedNodeId: Number,
     isConnected: Boolean,
@@ -422,6 +421,7 @@ export default {
   methods: {
     onYes() {
       this.showYesNoSnackbar = false;
+      // TODO We should see a warning if we have cachedVisits but are not connected
       if (this.isConnected && this.cachedVisitsCt) {
         this.logVisits();
       }
@@ -1111,7 +1111,7 @@ export default {
 
     self.setHeight();
 
-    // self.place = self.selectedSpace;
+    self.place = self.selectedSpace;
     if (self.place) {
       self.newVisit();
     }

@@ -2,7 +2,7 @@
   <v-footer app color="primary" class="white--text">
     <State>
       <v-bottom-navigation
-        slot-scope="{ state }"
+        slot-scope="{ state, logVisit }"
         color="secondary"
         background-color="primary"
         dark
@@ -23,7 +23,7 @@
           <span>Warn</span>
           <v-icon dark> mdi-alert </v-icon></v-btn
         >
-        <v-btn @click="open('Calendar', state)">
+        <v-btn @click="open('Calendar', state, logVisit)">
           <span>Calendar</span>
           <v-icon>mdi-calendar</v-icon>
         </v-btn>
@@ -46,11 +46,16 @@ export default {
     },
   },
   methods: {
-    open(view, state) {
+    // TODO NOTE: this design is fairly complex, a sign of bad design. In any case,
+    // the parent component (that is the child of the State renderless component),
+    // takes what it needs to serve its children (which may be different capabilities).
+    // Each button stipulates the capabilities it needs.
+    // The open() function passes all the parent components props, even though a button may not need them.
+    open(view, state, logVisit) {
       const selectedSpace = null;
       this.$router.push({
         name: view,
-        params: { selectedSpace, state },
+        params: { selectedSpace, state, logVisit },
       });
     },
   },

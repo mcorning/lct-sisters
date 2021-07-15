@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import GoogleMap from '@/views/GoogleMap.vue';
+import Calendar from '@/views/Calendar.vue';
 
 Vue.use(VueRouter);
 
@@ -10,10 +11,12 @@ const routes = [
     name: 'Spaces',
     component: GoogleMap,
     props: true,
-
-    meta: {
-      layout: 'AppLayoutSpaces',
-    },
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: Calendar,
+    props: true,
   },
   {
     path: '/welcome',
@@ -32,15 +35,6 @@ const routes = [
     props: true,
     meta: {
       layout: 'AppLayoutWarn',
-    },
-  },
-  {
-    path: '/calendar',
-    name: 'Calendar',
-    component: () => import('@/views/Calendar.vue'),
-    props: true,
-    meta: {
-      layout: 'AppLayoutCalendar',
     },
   },
 ];
