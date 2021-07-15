@@ -76,14 +76,14 @@
           </v-card-text>
 
           <v-card-actions v-if="place.name" class="pb-1">
-            <State>
-              <div slot-scope="{ state }">
-                <businessCard
-                  :settings="state.settings"
-                  @go="onGo"
-                ></businessCard>
-              </div>
-            </State>
+            <!-- <State> -->
+            <div slot-scope="{ state }">
+              <businessCard
+                :settings="state.settings"
+                @go="onGo"
+              ></businessCard>
+            </div>
+            <!-- </State> -->
             <v-spacer></v-spacer>
 
             <v-tooltip bottom>
@@ -180,7 +180,7 @@ export default {
   components: {
     ConfirmModernDialog: () => import('../components/cards/dialogCard'),
     businessCard: () => import('../components/cards/businessCard.vue'),
-    State: () => import('../components/renderless/State.vue'),
+    // State: () => import('../components/renderless/State.vue'),
   },
 
   computed: {

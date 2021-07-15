@@ -1,40 +1,41 @@
 <template>
-  <v-app-bar color="primary" app dark>
-    <v-toolbar-title
-      >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
-    >
+  <State>
+    <v-app-bar slot-scope="{ isConnected }" color="primary" app dark>
+      <v-toolbar-title
+        >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
+      >
 
-    <v-spacer></v-spacer>
-    {{ $version }}
-    <v-icon right class="pl-3">{{ connectIcon }} </v-icon>
+      <v-spacer></v-spacer>
+      {{ $version }}
+      <v-icon right class="pl-3"
+        >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+      </v-icon>
 
-    <!-- Begin Options Menu-->
-    <nestedMenu
-      :menu-items="fileMenuItems"
-      @nestedMenu-click="onMenuItemClick"
-    />
-    <!-- End Options Menu-->
-  </v-app-bar>
+      <!-- Begin Options Menu-->
+      <nestedMenu
+        :menu-items="fileMenuItems"
+        @nestedMenu-click="onMenuItemClick"
+      />
+      <!-- End Options Menu-->
+    </v-app-bar>
+  </State>
 </template>
 
 <script>
+import State from '../components/renderless/State.vue';
+
 export default {
   name: 'AppLayoutHeader',
   props: {
     namespace: {
       type: String,
     },
-    userID: {
-      type: String,
-    },
   },
   components: {
+    State,
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
   },
   computed: {
-    connectIcon() {
-      return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
-    },
     fileMenuItems() {
       const x = [
         { isDivider: true },

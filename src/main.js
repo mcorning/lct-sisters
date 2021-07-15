@@ -11,8 +11,6 @@ import './plugins';
 
 import './registerServiceWorker';
 
-import Crud from './components/renderless/Crud.vue';
-Vue.use(Crud);
 import AppLayout from '@/layouts/AppLayout';
 Vue.component('AppLayout', AppLayout);
 

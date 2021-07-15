@@ -2,12 +2,12 @@
   <!-- the new layouts strategy https://itnext.io/vue-tricks-smart-layouts-for-vuejs-5c61a472b69b
   still requires the v-app wrapper for vuetify to work properly -->
   <v-app>
-    <AppLayoutHeader :userID="userID" :namespace="namespace" />
+    <AppLayoutHeader :namespace="namespace" />
 
     <v-main>
       <!-- Step 2: include all and only properties from State render() function -->
 
-      <State :initialState="state">
+      <State>
         <!-- NOTE: ApplyLayout is configured in main.js -->
         <AppLayout
           slot-scope="{

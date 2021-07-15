@@ -1,12 +1,12 @@
 <template>
   <v-row justify="center" no-gutters>
-    <State>
-      <welcomeCard
-        slot-scope="{ onConnectMe }"
-        @connectMe="onConnectMe($event)"
-      />
-      ></State
+    <!-- <State> -->
+    <welcomeCard
+      slot-scope="{ onConnectMe }"
+      @connectMe="onConnectMe($event)"
+    />
     >
+    <!-- </State    > -->
   </v-row>
 </template>
 
@@ -21,17 +21,22 @@
  *    So, the next run will have username and sessionID taken from the Setting entity.
  */
 
-import State from '../components/renderless/State.vue';
+// import State from '../components/renderless/State.vue';
 import welcomeCard from '../components/cards/welcomeCard.vue';
 
 import Setting from '@/models/Setting';
 
 export default {
   name: 'Welcome',
+  props: {
+    onConnectMe: {
+      type: Function,
+    },
+  },
 
   components: {
     welcomeCard,
-    State,
+    // State,
   },
 
   computed: {
