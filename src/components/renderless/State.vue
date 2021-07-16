@@ -9,6 +9,7 @@ import Appointment from '@/models/Appointment';
 
 import {
   err,
+  highlight,
   info,
   success,
   warn,
@@ -43,6 +44,7 @@ export default {
       pendingVisits: new Map(),
       lastLoggedNodeId: -1,
       loading: true,
+      graphName: '',
     };
   },
   sockets: {
@@ -122,9 +124,55 @@ export default {
   },
 
   methods: {
+    getGraphName() {
+      return this.graphName || this.$defaultGraphName;
+    },
+
     logVisit(visit) {
-      this.emitFromClient('logVisit', visit, (results) => {
-        this.lastLoggedNodeId = results.id;
+      if (!this.$socket.client.userID) {
+        this.confirmationColor = 'orange';
+        this.confirmationMessage = `You are not connected to the server`;
+        return;
+      }
+      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
+      console.log('What is visit.id?', id);
+      this.selectedSpace = visit;
+      const query = {
+        username: this.username,
+        userID: this.$socket.client.userID,
+        selectedSpace: name,
+        start: start,
+        end: end,
+        date: new Date(start).toDateString(),
+        interval: interval,
+        loggedNodeId,
+        graphName,
+      };
+      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+      console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
+
+      // send the visit to the server
+      this.updateVisitOnGraph(query).then((node) => {
+        // here's where we update the logged field to the id of the graph node
+        // TODO Visit is not installed yet
+        const data = {
+          visitId: id,
+          loggedNodeId: node.id,
+          useGraphName: this.getGraphName(),
+        };
+        Visit.updateLoggedPromise(data).then((v) => {
+          console.log(success(`Returned Visit:`, printJson(v)));
+          console.log(highlight(`Updated Visit to:`, printJson(visit)));
+        });
+      });
+    },
+
+    updateVisitOnGraph(query) {
+      console.log('query to update graph:', printJson(query));
+      return new Promise((resolve) => {
+        this.emitFromClient('logVisit', query, (results) => {
+          resolve(results);
+        });
       });
     },
 

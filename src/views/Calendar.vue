@@ -197,8 +197,6 @@ export default {
     selectedSpace: Object,
     state: { type: Object, required: true },
     logVisit: Function,
-    lastLoggedNodeId: Number,
-    isConnected: Boolean,
     graphName: String, // changes to graph come from App.js
   },
 
@@ -208,6 +206,9 @@ export default {
   },
 
   computed: {
+    isConnected() {
+      return this.$socket.connected;
+    },
     cachedVisits() {
       const x = this.state.visits.filter((v) => v.loggedNodeId === '');
       return x;
@@ -743,6 +744,17 @@ export default {
 
             case 'LOG':
               this.logVisit(this.currentEvent);
+              // TODO WAIT! there's no UI in renderless State.vue! Refactor now.
+              // const msg = `${name} logged to ${this.getGraphName()} on node ${
+              //   node.id
+              // }.`;
+              // this.snackBtnText = '';
+              // this.snackWithBtnText = msg;
+              // this.snackWithButtons = true;
+              // console.log('updateVisitOnGraph', name, msg, node);
+
+              // this.confirmationColor = '';
+              // this.confirmationMessage = `You have logged ${this.selectedSpace.name}`;
               break;
 
             default:
