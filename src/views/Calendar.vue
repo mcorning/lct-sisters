@@ -175,10 +175,11 @@
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
+// TODO these models are now in the State component
 // import Setting from '@/models/Setting';
-import Visit from '@/models/Visit';
+// import Visit from '@/models/Visit';
 // import Place from '@/models/Place';
-import Appointment from '@/models/Appointment';
+// import Appointment from '@/models/Appointment';
 
 // TODO Come back to fix this complex mixin strategy later
 // import { eventDialog } from '../mixins/eventDialog';
@@ -206,9 +207,6 @@ export default {
   },
 
   computed: {
-    isConnected() {
-      return this.$socket.connected;
-    },
     cachedVisits() {
       const x = this.state.visits.filter((v) => v.loggedNodeId === '');
       return x;
@@ -232,6 +230,7 @@ export default {
     },
 
     settings() {
+      // todo make this.state a Maybe monad (though why/when it should be null is odd)
       const settings = this.state.settings;
       return settings || [];
     },
@@ -240,7 +239,7 @@ export default {
     },
 
     appointments() {
-      const a = Appointment.all();
+      const a = this.state.appointments;
       return a;
     },
 
@@ -300,8 +299,7 @@ export default {
 
     isAtWorkAt() {
       const x = this.settings.business === this.currentEvent.name;
-      const y = localStorage.getItem('business') === this.currentEvent.name;
-      return x || y;
+      return x;
     },
 
     isCategoryCalendar() {
@@ -313,10 +311,7 @@ export default {
     },
 
     isTakingAppointments() {
-      return (
-        this.usesPublicCalendar ||
-        localStorage.getItem('usesPublicCalendar') === 'true'
-      );
+      return this.usesPublicCalendar;
     },
 
     relevantEvents() {
@@ -324,10 +319,13 @@ export default {
         return [];
       }
       // TODO should this property include all visits or only those for the selected day?
-      const x = [...Visit.all(), ...this.appointments];
+      const x = [...this.visits, ...this.appointments];
       return x;
     },
 
+    visits() {
+      return this.state.visits;
+    },
     visibleEvents() {
       // TODO does this property include past or future events?
       const x = this.cal?.getVisibleEvents();
@@ -340,6 +338,7 @@ export default {
   },
 
   data: () => ({
+    disableLog: true,
     tip:
       'You can add appointments by clicking a time interval for any selected day.',
     dragAndDrop: false,
@@ -356,7 +355,12 @@ export default {
         { label: 'Close', act: 'DONE' },
 
         { spacer: true },
-        { label: 'Log', act: 'LOG', color: 'secondary', outlined: true },
+        {
+          label: 'Log',
+          act: 'LOG',
+          color: 'secondary',
+          outlined: true,
+        },
 
         // { label: 'Book', act: 'BOOK', tip: 'Make an appointment' },
       ],
@@ -406,15 +410,16 @@ export default {
      *   Delete Visit (category==='You')
      */
     actions: {
+      // TODO refactor for State component
       isDay: {
-        add: (data, f) => Visit.updatePromise(data, f),
-        update: (data, f) => Visit.updateFieldPromise(data, f),
-        delete: (data, f) => Visit.deletePromise(data, f),
+        // add: (data, f) => Visit.updatePromise(data, f),
+        // update: (data, f) => Visit.updateFieldPromise(data, f),
+        // delete: (data, f) => Visit.deletePromise(data, f),
       },
       isCategory: {
-        add: (data, f) => Appointment.updatePromise(data, f),
-        update: (data, f) => Appointment.updateFieldPromise(data, f),
-        delete: (data, f) => Appointment.deletePromise(data, f),
+        // add: (data, f) => Appointment.updatePromise(data, f),
+        // update: (data, f) => Appointment.updateFieldPromise(data, f),
+        // delete: (data, f) => Appointment.deletePromise(data, f),
       },
     },
   }),
@@ -436,33 +441,32 @@ export default {
     },
 
     //#region Helper functions
+    // TODO Refactor for State component
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
-      Visit.validateVisits().then((invalidVisits) => {
-        if (invalidVisits.length > 0) {
-          this.tip = `We found and deleted ${invalidVisits.length} visits without IDs.`;
-
-          console.groupCollapsed(warn('Invalid visit(s):'));
-          console.log(printJson(invalidVisits));
-        }
-        console.groupEnd();
-        this.ready = true;
-        this.scrollToTime();
-      });
-      Appointment.validateAppointments().then((invalidAppointments) => {
-        if (invalidAppointments.length > 0) {
-          this.tip = `We found and deleted ${invalidAppointments.length} appointment(s) without IDs.`;
-
-          console.groupCollapsed(warn('Invalid appointments:'));
-          console.log(printJson(invalidAppointments));
-        }
-        console.groupEnd();
-        if (this.isCategoryCalendar) {
-          this.tip = 'Select an appointment to edit customer, date, and times.';
-        }
-        this.ready = true;
-        this.scrollToTime();
-      });
+      // Visit.validateVisits().then((invalidVisits) => {
+      //   if (invalidVisits.length > 0) {
+      //     this.tip = `We found and deleted ${invalidVisits.length} visits without IDs.`;
+      //     console.groupCollapsed(warn('Invalid visit(s):'));
+      //     console.log(printJson(invalidVisits));
+      //   }
+      //   console.groupEnd();
+      //   this.ready = true;
+      //   this.scrollToTime();
+      // });
+      // Appointment.validateAppointments().then((invalidAppointments) => {
+      //   if (invalidAppointments.length > 0) {
+      //     this.tip = `We found and deleted ${invalidAppointments.length} appointment(s) without IDs.`;
+      //     console.groupCollapsed(warn('Invalid appointments:'));
+      //     console.log(printJson(invalidAppointments));
+      //   }
+      //   console.groupEnd();
+      //   if (this.isCategoryCalendar) {
+      //     this.tip = 'Select an appointment to edit customer, date, and times.';
+      //   }
+      //   this.ready = true;
+      //   this.scrollToTime();
+      // });
     },
 
     throwError(payload) {
@@ -507,59 +511,59 @@ export default {
         this.showAppointmentDialog();
       }
     },
-    updateCacheX(data, f) {
-      const { val, id, deleteMe } = data;
-      const model = val.category === 'You' ? Visit : Appointment;
+    // updateCacheX(data, f) {
+    //   const { val, id, deleteMe } = data;
+    //   const model = val.category === 'You' ? Visit : Appointment;
 
-      if (deleteMe) {
-        model
-          .deletePromise(id)
-          .then(() => {
-            const msg = `Deleted ${val.name}'s ${model.name} ${id}`;
-            console.log(success(msg));
-            this.status = msg;
-            return;
-          })
-          .catch((err) => {
-            this.status = err;
-          });
-      }
-      if (id) {
-        model
-          .updateFieldPromise(id, val)
-          .then((p) => {
-            console.log(
-              `Updated ${
-                model.name === 'Visit' ? 'visit' : 'appointment'
-              } with`,
-              printJson(p)
-            );
-            if (f) {
-              f(p);
-            }
-          })
-          .catch((err) => {
-            this.status = err;
-          });
-      } else {
-        model
-          .updatePromise(val)
-          .then((p) => {
-            console.log(
-              `Added ${
-                model.name === 'Visit' ? 'visit' : 'appointment'
-              } to cache`,
-              printJson(p)
-            );
-            if (f) {
-              f(p);
-            }
-          })
-          .catch((err) => {
-            this.status = err;
-          });
-      }
-    },
+    //   if (deleteMe) {
+    //     model
+    //       .deletePromise(id)
+    //       .then(() => {
+    //         const msg = `Deleted ${val.name}'s ${model.name} ${id}`;
+    //         console.log(success(msg));
+    //         this.status = msg;
+    //         return;
+    //       })
+    //       .catch((err) => {
+    //         this.status = err;
+    //       });
+    //   }
+    //   if (id) {
+    //     model
+    //       .updateFieldPromise(id, val)
+    //       .then((p) => {
+    //         console.log(
+    //           `Updated ${
+    //             model.name === 'Visit' ? 'visit' : 'appointment'
+    //           } with`,
+    //           printJson(p)
+    //         );
+    //         if (f) {
+    //           f(p);
+    //         }
+    //       })
+    //       .catch((err) => {
+    //         this.status = err;
+    //       });
+    //   } else {
+    //     model
+    //       .updatePromise(val)
+    //       .then((p) => {
+    //         console.log(
+    //           `Added ${
+    //             model.name === 'Visit' ? 'visit' : 'appointment'
+    //           } to cache`,
+    //           printJson(p)
+    //         );
+    //         if (f) {
+    //           f(p);
+    //         }
+    //       })
+    //       .catch((err) => {
+    //         this.status = err;
+    //       });
+    //   }
+    // },
 
     setHeight() {
       const bp = this.$vuetify.breakpoint;
@@ -589,18 +593,18 @@ export default {
     },
 
     configureCalendar() {
-      this.status = `Changing calendars. Username: ${this.state?.settings.username} SessionID: ${this.state?.settings.sessionID}`;
+      // TODO move this.state refs to separate computed properties
+      this.status = `Changing calendars. Username: ${this.state?.settings?.username} SessionID: ${this.state?.settings?.sessionID}`;
       if (this.isCategoryCalendar && this.isTakingAppointments) {
         this.tip =
           'You can add appointments by clicking a time interval for any selected day.';
-        this.openAt = this.settings.openAt || localStorage.getItem('openAt');
-        this.closeAt = this.settings.closeAt || localStorage.getItem('closeAt');
+        this.openAt = this.settings.openAt;
+        this.closeAt = this.settings.closeAt;
         const open = Number(this.openAt.slice(0, 2));
         const close = Number(this.closeAt.slice(0, 2));
         const range = close - open;
 
-        this.intervalMinutes =
-          this.settings.slotInterval || localStorage.getItem('slotInterval');
+        this.intervalMinutes = this.settings.slotInterval;
         this.firstTime = `${String(
           Number(this.openAt.split(':')[0]) - 1
         ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
@@ -608,8 +612,7 @@ export default {
         this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
       } else {
         this.firstTime = '00:00';
-        this.intervalMinutes =
-          this.settings.avgStay || localStorage.getItem('avgStay');
+        this.intervalMinutes = this.settings.avgStay;
         this.intervalCount = 24 * (60 / this.intervalMinutes);
 
         this.tip = 'Stay safe out there...';
@@ -743,18 +746,8 @@ export default {
             //   break;
 
             case 'LOG':
-              this.logVisit(this.currentEvent);
-              // TODO WAIT! there's no UI in renderless State.vue! Refactor now.
-              // const msg = `${name} logged to ${this.getGraphName()} on node ${
-              //   node.id
-              // }.`;
-              // this.snackBtnText = '';
-              // this.snackWithBtnText = msg;
-              // this.snackWithButtons = true;
-              // console.log('updateVisitOnGraph', name, msg, node);
-
-              // this.confirmationColor = '';
-              // this.confirmationMessage = `You have logged ${this.selectedSpace.name}`;
+              // TODO logVisit is a problem now because of the way Promises are working
+              this.status=this.logVisit(this.currentEvent);
               break;
 
             default:
@@ -801,8 +794,6 @@ export default {
       this.updateCache({ action: 'add', entity });
     },
 
-    // only called by mount. shift will be taken from localStorage for employee
-    // customer has null shift
     // TODO  avgStay should be computed based on visitor's history
     newVisit() {
       const time = this.place.startTime || Date.now();
@@ -1092,8 +1083,18 @@ export default {
   },
 
   watch: {
-    lastLoggedNodeId() {
-      this.snackBarText = `Visit logged to graph node ${this.lastLoggedNodeId}`;
+    // 'visits.loggedNodeId': {
+    //   immediate: true,
+    //   handler(newValue) {
+    //     alert('New node ID:', newValue);
+    //   },
+    // },
+    loggedNodeId() {
+      const msg = `${
+        this.currentEvent.name
+      } logged to ${this.graphName()} on node ${this.loggedNodeId}.`;
+      console.log(success(msg));
+      this.snackBarText = msg;
       this.snackBarColor = 'success';
       this.showSnackbar = true;
     },
@@ -1115,11 +1116,12 @@ export default {
   created() {},
 
   mounted() {
+    console.assert(this.state, 'State object not available to mounted()');
     const self = this;
 
     self.configureCalendar();
 
-    self.type = self.state.appointments?.length > 0 ? 'category' : 'day';
+    self.type = self.appointments?.length > 0 ? 'category' : 'day';
 
     self.setHeight();
 
@@ -1128,8 +1130,11 @@ export default {
       self.newVisit();
     }
 
-    self.validateEntities();
-    self.checkCachedVisits();
+    self.ready = true;
+    // const startTime = self.relevantEvents[0]?.start;
+    self.cal.scrollToTime('09:30');
+    // TODO move this someplace else
+    // self.checkCachedVisits();
     console.log(success('mounted calendarCard'));
   },
 

@@ -2,13 +2,13 @@
   <v-footer app color="primary" class="white--text">
     <State>
       <v-bottom-navigation
-        slot-scope="{ state, logVisit }"
+        slot-scope="{ state, logVisit, isConnected }"
         color="secondary"
         background-color="primary"
         dark
         grow
       >
-        <v-btn @click="open('Spaces', state)">
+        <v-btn @click="open('Spaces', state, logVisit, isConnected)">
           <span>Spaces</span>
           <v-icon>mdi-map-marker</v-icon>
         </v-btn>
@@ -18,12 +18,12 @@
           color="red"
           class="black--text"
           dark
-          @click="open('Warning', state)"
+          @click="open('Warning', state, logVisit, isConnected)"
         >
           <span>Warn</span>
           <v-icon dark> mdi-alert </v-icon></v-btn
         >
-        <v-btn @click="open('Calendar', state, logVisit)">
+        <v-btn @click="open('Calendar', state, logVisit, isConnected)">
           <span>Calendar</span>
           <v-icon>mdi-calendar</v-icon>
         </v-btn>
@@ -51,11 +51,18 @@ export default {
     // takes what it needs to serve its children (which may be different capabilities).
     // Each button stipulates the capabilities it needs.
     // The open() function passes all the parent components props, even though a button may not need them.
-    open(view, state, logVisit) {
+    // NOTE ALSO: we did not pass props to appLayoutFooter because we wrapped this component in State;
+    // so to get the State props down here in this method, we pass them on down through method params.
+    open(view, state, logVisit, isConnected) {
       const selectedSpace = null;
       this.$router.push({
         name: view,
-        params: { selectedSpace, state, logVisit },
+        params: {
+          selectedSpace,
+          state,
+          logVisit,
+          isConnected,
+        },
       });
     },
   },

@@ -160,9 +160,10 @@
             :color="btn.color"
             class="body-2 "
             :outlined="btn.outlined"
+            
             @click.native="answer(btn.act)"
           >
-            {{ btn.label }}
+            {{ btn.label }} {{ btn.disabled }}
           </v-btn>
           <v-spacer v-else :key="index"></v-spacer>
         </template>

@@ -173,9 +173,9 @@ export default {
   name: 'GoogleMap',
   // Step 5: take one or more properties exposed by State render() function
   props: {
-    state: {
-      type: Object,
-    },
+    state: Object,
+    logVisit: Function,
+    isConnected: Boolean,
   },
   components: {
     ConfirmModernDialog: () => import('../components/cards/dialogCard'),
@@ -522,19 +522,24 @@ export default {
         endtime: endTime,
         shift: shift,
       };
-      const state = { ...this.state };
       console.log({ ...selectedSpace });
+
+      const state = { ...this.state };
+      const logVisit = this.logVisit;
+      const isConnected = this.isConnected;
+
+      // TODO NOTE: be sure the router push to Calendar uses the same params everywhere
+      // e.g., forgetting 'logVisit' and 'isConnected' below made Calendar misbehave
+      // but when called from the appLayoutFooter push, Calendar could access logVisit.
       this.$router.push({
         name: 'Calendar',
-        params: { selectedSpace, state },
+        params: {
+          selectedSpace,
+          state,
+          logVisit,
+          isConnected,
+        },
       });
-      // this.$emit('addedPlace', {
-      //   ...this.place,
-      //   plus_code: Place.getPosition(this.place.place_id).plus_code || 'NA',
-      //   startTime: startTime,
-      //   endtime: endTime,
-      //   shift: shift,
-      // });
     },
 
     // businessCard go event handler

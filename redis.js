@@ -324,7 +324,7 @@ function deleteVisit(data) {
 // MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
 function deleteExpiredVisits() {
   return new Promise((resolve, reject) => {
-    const expiry = Date.now() - 1000 * 60 * 60 * 14;
+    const expiry = Date.now() - 86400000 * 14;
     let query = `MATCH ()-[v:visited]->() WHERE (v.start<=${expiry})  DELETE v`;
     console.log(warn('DELETE Expired Visits query:', query));
     Graph.query(query)

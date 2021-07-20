@@ -42,7 +42,6 @@ export default {
     return {
       state: {},
       pendingVisits: new Map(),
-      lastLoggedNodeId: -1,
       loading: true,
       graphName: '',
     };
@@ -129,10 +128,15 @@ export default {
     },
 
     logVisit(visit) {
+      const self = this;
+      // TODO There's no UI here. Use a Maybe monad, instead.
+      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
       if (!this.$socket.client.userID) {
-        this.confirmationColor = 'orange';
-        this.confirmationMessage = `You are not connected to the server`;
-        return;
+        const msg = {
+          confirmationColor: 'orange',
+          confirmationMessage: `You are not connected to the server`,
+        };
+        return msg;
       }
       const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
       console.log('What is visit.id?', id);
@@ -154,16 +158,22 @@ export default {
       // send the visit to the server
       this.updateVisitOnGraph(query).then((node) => {
         // here's where we update the logged field to the id of the graph node
-        // TODO Visit is not installed yet
         const data = {
           visitId: id,
           loggedNodeId: node.id,
-          useGraphName: this.getGraphName(),
+          useGraphName: self.getGraphName(),
         };
         Visit.updateLoggedPromise(data).then((v) => {
           console.log(success(`Returned Visit:`, printJson(v)));
           console.log(highlight(`Updated Visit to:`, printJson(visit)));
         });
+        const msg = {
+          confirmationColor: 'success',
+          confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
+            node.id
+          }`,
+        };
+        return msg;
       });
     },
 
@@ -171,6 +181,9 @@ export default {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve) => {
         this.emitFromClient('logVisit', query, (results) => {
+          console.log(
+            success('updateVisitOnGraph results:', printJson(results))
+          );
           resolve(results);
         });
       });
@@ -311,7 +324,6 @@ export default {
       state: this.state,
       isConnected: this.isConnected,
       logVisit: this.logVisit,
-      lastLoggedNodeId: this.lastLoggedNodeId,
     });
   },
 };
