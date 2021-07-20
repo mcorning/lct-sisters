@@ -5,21 +5,21 @@
     <div class="CaptureErrorSnackbar" slot-scope="{ reset }">
       <slot />
       <v-snackbar v-model="snackbar" :multi-line="multiLine" vertical>
-          <v-spacer />
-            <v-btn-toggle rounded>
-              <v-btn @click="text = message">
-                Message
-              </v-btn>
-              <v-btn @click="text = info">
-                Info
-              </v-btn>
-              <v-btn @click="text = stack">
-                Stack
-              </v-btn>
-            </v-btn-toggle>
-          </v-col>
-          <div>
-        {{ text }}</div>
+        <v-spacer />
+        <v-btn-toggle rounded>
+          <v-btn @click="text = message">
+            Message
+          </v-btn>
+          <v-btn @click="text = info">
+            Info
+          </v-btn>
+          <v-btn @click="text = stack">
+            Stack
+          </v-btn>
+        </v-btn-toggle>
+        <div>
+          {{ text }}
+        </div>
         <template v-slot:action="{ attrs }">
           <v-btn color="red" text v-bind="attrs" @click="reset">
             Reset

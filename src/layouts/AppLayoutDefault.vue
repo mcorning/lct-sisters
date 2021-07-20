@@ -2,7 +2,6 @@
   <div>
     <AppLayoutHeader :namespace="namespace" />
     <CaptureErrorSnackbar>
-      <!-- <ErrorThrowerButton v-if="test" slot-scope="{ info }" /> -->
       <v-btn v-if="test" @click="throwError">Throw error</v-btn>
 
       <State>
@@ -24,9 +23,7 @@
 import AppLayoutHeader from '@/layouts/AppLayoutHeader';
 import AppLayoutFooter from '@/layouts/AppLayoutFooter';
 import State from '@/components/renderless/State.vue';
-// these components are still experimental until we see they work across the app
-import CaptureErrorSnackbar from '@/components/lab/CaptureErrorSnackbar.vue';
-// import ErrorThrowerButton from '@/components/lab/ErrorThrowerButton';
+import CaptureErrorSnackbar from '@/components/errorBoundary/CaptureErrorSnackbar.vue';
 
 export default {
   name: 'DefaultLayout',
@@ -35,12 +32,11 @@ export default {
     AppLayoutHeader,
     State,
     CaptureErrorSnackbar,
-    // ErrorThrowerButton,
   },
   data() {
     return {
       namespace: 'OR',
-      test: true,
+      test: false,
     };
   },
   methods: {
