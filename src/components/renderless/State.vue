@@ -301,6 +301,7 @@ export default {
         self.connectMe();
         console.log(success('mounted State component'));
         self.loading = false;
+        this.$emit('stateAvailable');
       })
       .catch((err) =>
         this.throwError({

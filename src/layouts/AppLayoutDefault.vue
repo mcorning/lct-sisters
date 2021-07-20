@@ -4,7 +4,7 @@
     <CaptureErrorSnackbar>
       <v-btn v-if="test" @click="throwError">Throw error</v-btn>
 
-      <State>
+      <State @stateAvailable="onStateAvailable">
         <div slot-scope="{ state, logVisit, isConnected, lastLoggedNodeId }">
           <slot
             :state="state"
@@ -42,6 +42,9 @@ export default {
   methods: {
     throwError() {
       throw new Error('Oops, something went wrong!');
+    },
+    onStateAvailable() {
+      console.log('onStateAvailable');
     },
   },
   mounted() {},

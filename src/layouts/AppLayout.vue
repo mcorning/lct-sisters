@@ -1,7 +1,9 @@
 <template>
-  <component :is="layout">
-    <slot />
-  </component>
+  <keep-alive>
+    <component :is="layout">
+      <slot />
+    </component>
+  </keep-alive>
 </template>
 
 <script>

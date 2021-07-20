@@ -3,7 +3,31 @@
   still requires the v-app wrapper for vuetify to work properly -->
   <v-app>
     <!-- <AppLayoutHeader :namespace="namespace" /> -->
-
+    <!-- PWA snackbar -->
+    <v-snackbar
+      v-model="snackWithButtons"
+      bottom
+      left
+      timeout="-1"
+      height="100px"
+    >
+      {{ snackWithBtnText }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          v-if="snackBtnText"
+          text
+          color="#00f500"
+          v-bind="attrs"
+          @click.stop="act"
+        >
+          {{ snackBtnText }}
+        </v-btn>
+        <v-btn icon class="ml-4" @click="snackWithButtons = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <!-- End PWA snackbar -->
     <v-main>
       <!-- Step 2: include all and only properties from State render() function -->
       <!-- <State> -->
@@ -49,11 +73,14 @@ export default {
       userID: 'mpc',
       namespace: 'Sisters',
 
+      snackBtnText: '',
+      snackWithButtons: false,
+      snackWithBtnText: '',
+
       // for PWA
       refreshing: false,
       registration: null,
       updateExists: false,
-      initialState: {},
     };
   },
 
