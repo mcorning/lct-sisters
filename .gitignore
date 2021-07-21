@@ -31,3 +31,5 @@ src/components/renderless/Crud.vue
 src/components/renderless/Messaging.vue
 src/components/renderless/Messaging.vue
 src/components/renderless/Socket.vue
+src/views/Calendar0.vue
+src/views/GoogleMap0.vue

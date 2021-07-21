@@ -3,17 +3,7 @@
     <AppLayoutHeader :namespace="namespace" />
     <CaptureErrorSnackbar>
       <v-btn v-if="test" @click="throwError">Throw error</v-btn>
-
-      <State @stateAvailable="onStateAvailable">
-        <div slot-scope="{ state, logVisit, isConnected, lastLoggedNodeId }">
-          <slot
-            :state="state"
-            :isConnected="isConnected"
-            :logVisit="logVisit"
-            :lastLoggedNodeId="lastLoggedNodeId"
-          />
-        </div>
-      </State>
+      <slot />
     </CaptureErrorSnackbar>
 
     <AppLayoutFooter />
@@ -22,7 +12,7 @@
 <script>
 import AppLayoutHeader from '@/layouts/AppLayoutHeader';
 import AppLayoutFooter from '@/layouts/AppLayoutFooter';
-import State from '@/components/renderless/State.vue';
+// import State from '@/components/renderless/State.vue';
 import CaptureErrorSnackbar from '@/components/errorBoundary/CaptureErrorSnackbar.vue';
 
 export default {
@@ -30,23 +20,24 @@ export default {
   components: {
     AppLayoutFooter,
     AppLayoutHeader,
-    State,
+    // State,
     CaptureErrorSnackbar,
   },
   data() {
     return {
       namespace: 'OR',
       test: false,
+      ready: false,
     };
   },
   methods: {
     throwError() {
       throw new Error('Oops, something went wrong!');
     },
-    onStateAvailable() {
-      console.log('onStateAvailable');
+    onStateAvailable(f) {
+      console.log('onStateAvailable for all components');
+      console.log(f({ action: 'test' }));
     },
   },
-  mounted() {},
 };
 </script>

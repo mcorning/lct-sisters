@@ -1,9 +1,9 @@
 {
   "name": "lct-sisters",
-  "version": "0.7.2016",
+  "version": "0.7.2113",
   "scripts": {
+    "localhost": "vue-cli-service serve",
     "start": "node srv/index.js",
-    "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "herokuLogs": "heroku logs -a lct-sisters"

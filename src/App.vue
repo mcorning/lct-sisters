@@ -2,7 +2,6 @@
   <!-- the new layouts strategy https://itnext.io/vue-tricks-smart-layouts-for-vuejs-5c61a472b69b
   still requires the v-app wrapper for vuetify to work properly -->
   <v-app>
-    <!-- <AppLayoutHeader :namespace="namespace" /> -->
     <!-- PWA snackbar -->
     <v-snackbar
       v-model="snackWithButtons"
@@ -29,38 +28,20 @@
     </v-snackbar>
     <!-- End PWA snackbar -->
     <v-main>
-      <!-- Step 2: include all and only properties from State render() function -->
-      <!-- <State> -->
       <!-- NOTE: ApplyLayout is configured in main.js -->
       <AppLayout>
-        <!-- you MUST assign relevant props below in each relevent component 
-               you can assign ALL methods from renderless component here
-               and then assign only those needed by a working component in that component's props object
-
-               Step 3: pass on all properties from State render() function to dynamic components
-          -->
         <router-view @exposureWarning="onExposureWarning" />
       </AppLayout>
-      <!-- </State> -->
     </v-main>
-    <!-- <AppLayoutFooter /> -->
   </v-app>
 </template>
 
 <script>
 //thanks to danvega: https://youtu.be/JwccQYpsE2Q for tip on router events
 
-// import AppLayoutHeader from '@/layouts/AppLayoutHeader';
-// import AppLayoutFooter from '@/layouts/AppLayoutFooter';
-// import State from '../src/components/renderless/State.vue';
-
 export default {
   name: 'App',
-  components: {
-    // AppLayoutFooter,
-    // AppLayoutHeader,
-    // State,
-  },
+  components: {},
 
   computed: {
     state() {

@@ -21,6 +21,11 @@ export default {
   props: {},
 
   computed: {
+    relevantEvents() {
+      // TODO should this property include all visits or only those for the selected day?
+      const x = [...this.state.visits, ...this.state.appointments];
+      return x;
+    },
     isConnected() {
       return !!this.$socket.connected;
     },
@@ -33,9 +38,6 @@ export default {
     username() {
       return this.settings?.username || '';
     },
-    visits() {
-      return Visit.all().visits;
-    },
   },
 
   data() {
@@ -44,6 +46,27 @@ export default {
       pendingVisits: new Map(),
       loading: true,
       graphName: '',
+
+      /* combinations of update
+       *   Add Visit (category==='You')
+       *   Add Appointment (category==='Them')
+       *   Update Visit field (category==='You' || id)
+       *   Update Appointment field (category==='Them' || id)
+       *   Delete Appointment (category==='Them')
+       *   Delete Visit (category==='You')
+       */
+      actions: {
+        isDay: {
+          add: (data, f) => Visit.updatePromise(data, f),
+          update: (data, f) => Visit.updateFieldPromise(data, f),
+          delete: (data, f) => Visit.deletePromise(data, f),
+        },
+        isCategory: {
+          add: (data, f) => Appointment.updatePromise(data, f),
+          update: (data, f) => Appointment.updateFieldPromise(data, f),
+          delete: (data, f) => Appointment.deletePromise(data, f),
+        },
+      },
     };
   },
   sockets: {
@@ -123,11 +146,26 @@ export default {
   },
 
   methods: {
+    funcx(payload) {
+      const { action, entity } = payload;
+      if (action === 'test') {
+        return 'Funtion (funcx) test passed';
+      }
+      const first = entity.category === 'You' ? 'isDay' : 'isCategory';
+      const second = action;
+      const fun = this.actions[first][second];
+      fun();
+    },
+
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
 
-    logVisit(visit) {
+    logVisit(payload) {
+      const { action, visit } = payload;
+      if (action === 'test') {
+        return 'Funtion (logVisit) test passed';
+      }
       const self = this;
       // TODO There's no UI here. Use a Maybe monad, instead.
       // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
@@ -267,6 +305,8 @@ export default {
         console.groupEnd();
       });
     },
+
+    // TODO refactor for FrameError component
     throwError(payload) {
       const { source, error, comment } = payload;
       const msg = `ERROR: ${error.message} at ${source} (${comment})`;
@@ -279,7 +319,9 @@ export default {
     },
   },
 
-  async mounted() {
+  watch: {},
+
+  mounted() {
     const self = this;
     Promise.all([
       Place.$fetch(),
@@ -288,8 +330,17 @@ export default {
       Setting.$fetch(),
     ])
       .then((entities) => {
-        const places = entities[0].places || [];
-        const visits = entities[1].visits || [];
+        const places = entities[0].places.filter((v) => v.name) || [];
+        const visits =
+          entities[1].visits.filter(
+            (v) =>
+              !(
+                Number.isNaN(v.end) ||
+                Number.isNaN(v.start) ||
+                !v.id ||
+                v.id.startsWith('$')
+              )
+          ) || [];
         const appointments = entities[2].appointments || [];
         // there is only one settings array element
         const settings = entities[3].settings[0] || [];
@@ -301,7 +352,7 @@ export default {
         self.connectMe();
         console.log(success('mounted State component'));
         self.loading = false;
-        this.$emit('stateAvailable');
+        this.$emit('stateAvailable', this.funcx);
       })
       .catch((err) =>
         this.throwError({
@@ -323,7 +374,9 @@ export default {
     // Step 1: Expose all data and methods that could be used by dynamic components
     return this.$scopedSlots.default({
       state: this.state,
+      relevantEvents: this.relevantEvents,
       isConnected: this.isConnected,
+      funcx: this.funcx,
       logVisit: this.logVisit,
     });
   },

@@ -10,6 +10,7 @@
         vertical
         :timeout="timeout"
       >
+        <!--TODO refactor according to https://codesandbox.io/s/github/vuejs/vuejs.org/tree/master/src/v2/examples/vue-20-dynamic-components?file=/index.html:741-796 -->
         <v-btn-toggle rounded>
           <v-btn @click="value = message">
             Message
