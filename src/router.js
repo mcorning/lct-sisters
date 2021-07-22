@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import GoogleMap from '@/views/GoogleMap.vue';
+import Map from '@/views/Map.vue';
 import Calendar from '@/views/Calendar.vue';
 
 Vue.use(VueRouter);
@@ -9,7 +9,7 @@ const routes = [
   {
     path: '/',
     name: 'Spaces',
-    component: GoogleMap,
+    component: Map,
     props: true,
   },
   {

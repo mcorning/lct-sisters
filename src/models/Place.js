@@ -32,6 +32,7 @@ export default class Place extends Model {
     }, new Map());
   }
 
+  // TODO deprecate? we already have necessary data in GoogleMap after updating cache.
   static getPosition(id) {
     if (!id) {
       throw { code: -1, message: 'Missing a place_id' };

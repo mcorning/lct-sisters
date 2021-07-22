@@ -52,6 +52,7 @@
           :now="currentDate"
           :first-time="firstTime"
           :interval-minutes="intervalMinutes"
+          :interval-count="intervalCount"
           @click:more="viewDay"
           @click:date="viewDay"
           @click:event="showEvent"
@@ -62,16 +63,19 @@
           </template>
         </v-calendar>
       </v-sheet>
-    </State>
 
-    <div class="mt-5 mb-0 ml-15">
-      <small>{{ status }}</small>
-    </div>
+      <div class="mt-5 mb-0 ml-15">
+        <small>{{ status }}</small>
+      </div>
+    </State>
   </div>
 </template>
 
 <script>
 import State from '@/components/renderless/State.vue';
+import crypto from 'crypto';
+const randomId = () => crypto.randomBytes(8).toString('hex');
+import { DateTime, getNow } from '../utils/luxonHelpers';
 
 export default {
   name: 'Calendar',
@@ -118,6 +122,30 @@ export default {
     onStateAvailable() {
       console.log('onStateAvailable for all components');
     },
+    configureCalendar() {
+      // TODO Refactor if block to use grid under calendar for workers only
+      if (this.isCategoryCalendar && this.isTakingAppointments) {
+        this.tip =
+          'You can add appointments by clicking a time interval for any selected day.';
+        // this.openAt = this.settings.openAt;
+        // this.closeAt = this.settings.closeAt;
+        // const open = Number(this.openAt.slice(0, 2));
+        // const close = Number(this.closeAt.slice(0, 2));
+        const range = 8; // close - open;
+
+        // this.intervalMinutes = this.settings.slotInterval;
+        // this.firstTime = `${String(
+        //   Number(this.openAt.split(':')[0]) - 1
+        // ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
+        this.intervalCount = range * (60 / this.intervalMinutes) + 2;
+        this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
+      } else {
+        this.firstTime = '00:00';
+        this.intervalCount = 24 * (60 / this.intervalMinutes);
+
+        this.tip = 'Stay safe out there...';
+      }
+    },
     //#region Calendar controls functions
     viewDay({ date }) {
       this.focus = date;
@@ -127,7 +155,7 @@ export default {
       this.currentDate = date;
       this.intervalCount = 24;
       this.firstTime = '00:00';
-      this.intervalMinutes = 60;
+      this.intervalMinutes = 30;
     },
     setToday() {
       this.focus = '';
@@ -171,6 +199,48 @@ export default {
       this.showDialog();
     },
     //#endregion Calendar functions
+
+    newVisit() {
+      const time = this.place.startTime || Date.now();
+      const shift = this.place.shift;
+      const place_id = this.place.place_id;
+      this.addVisit(time, place_id, shift);
+    },
+    addVisit(
+      time,
+      place_id = this.place.place_id,
+      stay = this.intervalMinutes
+    ) {
+      console.log(time, place_id, stay);
+      const starttime = this.roundTime(time);
+      const endtime = starttime + stay;
+      const entity = {
+        id: randomId(),
+        name: this.place.name,
+        place_id: place_id,
+        start: starttime,
+        end: endtime,
+        date: DateTime.fromMillis(starttime).toISODate(),
+        category: 'You',
+
+        timed: true,
+        marked: getNow(),
+        graphName: this.graphname,
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+      };
+
+      this.updateCache({ action: 'add', entity });
+    },
+
+    roundTime(time, down = true) {
+      const roundTo = 15; // minutes
+      const roundDownTime = roundTo * 60 * 1000;
+
+      return down
+        ? time - (time % roundDownTime)
+        : time + (roundDownTime - (time % roundDownTime));
+    },
   },
 
   watch: {
@@ -179,7 +249,13 @@ export default {
     },
   },
   mounted() {
-    this.ready = true;
+    const self = this;
+    self.configureCalendar();
+    self.place = self.selectedSpace;
+    if (self.place) {
+      self.newVisit();
+    }
+    self.ready = true;
   },
 };
 </script>

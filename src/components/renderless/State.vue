@@ -92,7 +92,7 @@ export default {
         `Session event missing args: ${sessionID} ${userID} ${username}`
       );
 
-      this.update({ sessionID, userID, username });
+      this.updateState({ sessionID, userID, username });
 
       const data = { data: { id: 1, sessionID, userID, username } };
       Setting.updatePromise(data)
@@ -146,6 +146,33 @@ export default {
   },
 
   methods: {
+    addPlace(payload) {
+      const { place, placesService, fields } = payload;
+      placesService.getDetails(
+        {
+          placeId: place.placeId,
+          fields: fields,
+        },
+        (place, status) => {
+          if (status === 'OK') {
+            // getDetails() returns the place
+            Place.updatePromise(place)
+              .then((result) => {
+                this.$emit('cacheUpdated', result[0]);
+              })
+              .catch((err) => {
+                this.throwError(
+                  'GoogleMap.addPlaceWithID(space).Place.updatePromise(place)',
+                  err
+                );
+              });
+          } else {
+            this.throwError('GoogleMap.addPlaceWithID(space)', status);
+          }
+        }
+      );
+    },
+
     funcx(payload) {
       const { action, entity } = payload;
       if (action === 'test') {
@@ -281,7 +308,7 @@ export default {
       return msg;
     },
 
-    update(newState) {
+    updateState(newState) {
       // Copy all properties from newState on to
       // this.state, overriding anything on this.state
       this.state = { ...this.state, ...newState };
@@ -345,7 +372,7 @@ export default {
         // there is only one settings array element
         const settings = entities[3].settings[0] || [];
 
-        self.update({ places, visits, appointments, settings });
+        self.updateState({ places, visits, appointments, settings });
 
         self.validateEntities();
 
@@ -374,6 +401,7 @@ export default {
     // Step 1: Expose all data and methods that could be used by dynamic components
     return this.$scopedSlots.default({
       state: this.state,
+      addPlace: this.addPlace,
       relevantEvents: this.relevantEvents,
       isConnected: this.isConnected,
       funcx: this.funcx,
