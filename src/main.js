@@ -6,8 +6,9 @@ import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import vuetify from './plugins/vuetify';
 import './plugins';
 
-// import VueCompositionAPI from '@vue/composition-api';
-// Vue.use(VueCompositionAPI);
+// import for Vuex-ORM
+// see Vuex-ORM section in lct-docs app
+import store from './store';
 
 import './registerServiceWorker';
 
@@ -16,20 +17,15 @@ Vue.component('AppLayout', AppLayout);
 
 import App from './App.vue';
 
-// import for Map compo9nent
-import * as VueGoogleMaps from 'vue2-google-maps';
-
-// import for Vuex-ORM
-// see Vuex-ORM section in lct-docs app
-import store from './store';
-
-Vue.use(VueGoogleMaps, {
-  load: {
-    key: process.env.VUE_APP_MAP_API_KEY,
-    libraries: 'places',
-    autobindAllEvents: true,
-  },
-});
+// import for Map component
+// import * as VueGoogleMaps from 'vue2-google-maps';
+// Vue.use(VueGoogleMaps, {
+//   load: {
+//     key: process.env.VUE_APP_MAP_API_KEY,
+//     libraries: 'places',
+//     autobindAllEvents: true,
+//   },
+// });
 
 console.log(
   process.env.VUE_APP_NAMESPACE,
