@@ -24,6 +24,16 @@ function getNow() {
 function printNow() {
   console.log(getNow());
 }
+
+function roundTime(time, down = true) {
+  const roundTo = 15; // minutes
+  const roundDownTime = roundTo * 60 * 1000;
+
+  return down
+    ? time - (time % roundDownTime)
+    : time + (roundDownTime - (time % roundDownTime));
+}
+
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
@@ -36,6 +46,7 @@ module.exports = {
   printJson,
   getNow,
   printNow,
+  roundTime,
   success,
   bold,
   err,

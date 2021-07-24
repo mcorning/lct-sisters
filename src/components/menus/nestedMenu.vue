@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import { getRandomIntInclusive } from '../../utils/colors';
+import { getRandomIntInclusive } from '../../utils/helpers';
 
 export default {
   name: 'nestedMenu',

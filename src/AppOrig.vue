@@ -290,7 +290,7 @@ import {
   warn,
   getRandomIntInclusive,
   printJson,
-} from './utils/colors';
+} from './utils/helpers';
 
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';

@@ -1,6 +1,8 @@
 <script>
 // State's first job is make a connection to the server in case an Alert awaits// append: Append a value to a key
 // State's second job is to handle local state including ORM entities.
+import crypto from 'crypto';
+const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
@@ -13,9 +15,10 @@ import {
   info,
   success,
   warn,
-  getNow,
   printJson,
-} from '../../utils/colors';
+  roundTime,
+} from '../../utils/helpers';
+import { DateTime, getNow } from '../../utils/luxonHelpers';
 
 export default {
   props: {},
@@ -42,11 +45,13 @@ export default {
 
   data() {
     return {
+      avgStay: 1000 * 60 * 30,
       state: {},
+      selectedMarker: null,
       pendingVisits: new Map(),
       loading: true,
       graphName: '',
-
+      // TODO send this data down to Calendar
       /* combinations of update
        *   Add Visit (category==='You')
        *   Add Appointment (category==='Them')
@@ -146,52 +151,111 @@ export default {
   },
 
   methods: {
-    addPlace(payload) {
-      const { place, placesService, fields } = payload;
-      placesService.getDetails(
-        {
-          placeId: place.placeId,
-          fields: fields,
-        },
-        (place, status) => {
-          if (status === 'OK') {
-            // getDetails() returns the place
-            Place.updatePromise(place)
-              .then((result) => {
-                this.$emit('cacheUpdated', result[0]);
-              })
-              .catch((err) => {
-                this.throwError(
-                  'GoogleMap.addPlaceWithID(space).Place.updatePromise(place)',
-                  err
-                );
-              });
-          } else {
-            this.throwError('GoogleMap.addPlaceWithID(space)', status);
-          }
-        }
-      );
-    },
-
-    funcx(payload) {
-      const { action, entity } = payload;
-      if (action === 'test') {
-        return 'Funtion (funcx) test passed';
+    /**
+     * Makers let us revisit a place.
+     * Iterate visits entity
+     * Find place using visit.place_id
+     * Use filtered places to add Markers to map (map passed in to event handler)
+     */
+    // TODO this is a good reason to refactor Place to include Visits
+    deserializeVisitAsMarker(visits) {
+      if (!visits) {
+        return;
       }
-      const first = entity.category === 'You' ? 'isDay' : 'isCategory';
-      const second = action;
-      const fun = this.actions[first][second];
-      fun();
+
+      // TODO Refactor for State
+      this.place_map = this.state.place.getPlaceMap();
+      this.markersMap = new Map();
+      console.groupCollapsed(
+        warn(
+          `deserializeVisitAsMarker(visits) making ${visits.length} markers:`
+        )
+      );
+      if (visits) {
+        this.visitSet = new Set(visits);
+        visits.forEach((visit, index) => {
+          if (!visit.place_id) {
+            // these are appointments not visits
+            return;
+          }
+          const place = this.place_map.get(visit.place_id);
+          // if visit and place are not related, notify and skip further processing
+          if (!place) {
+            alert(
+              `Visit ${visit.id} does not have a Place corresponding to ${visit.place_id}`
+            );
+            return;
+          }
+
+          console.log('Using place:', printJson(place));
+          let m = {
+            title: visit.name,
+            label: { text: 'V' + index, color: 'white' },
+            name: visit.name,
+            place_id: visit.place_id,
+            position: { lat: place.lat, lng: place.lng },
+          };
+          this.markersMap.set(visit.name, m);
+          this.$emit('log', `added marker for ${visit.name}`);
+        });
+        console.groupEnd();
+      }
     },
 
-    getGraphName() {
-      return this.graphName || this.$defaultGraphName;
+    onMarkerClicked(marker) {
+      this.selectedMarker = marker;
+      this.updateState({ currentPlace: marker.name });
+    },
+    onToWork() {},
+    // called by
+    //  * onGo() with the shift startTime
+    //  * mark your calendar button
+    onVisitPlace() {
+      const place = Place.find(this.selectedMarker.place_id);
+      const starttime = roundTime(Date.now());
+      const endtime = starttime + this.avgStay;
+      const visit = {
+        id: randomId(),
+        name: place.name,
+        place_id: place.place_id,
+        start: starttime,
+        end: endtime,
+        date: DateTime.fromMillis(starttime).toISODate(),
+        category: 'You',
+
+        timed: true,
+        marked: getNow(),
+        graphName: this.graphname,
+        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+
+        // TODO setup isDefaultGraph
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+      };
+
+      Visit.updatePromise({ visit });
+
+      // TODO NOTE: be sure the router push to Calendar uses the same params everywhere
+      // e.g., forgetting 'logVisit' and 'isConnected' below made Calendar misbehave
+      // but when called from the appLayoutFooter push, Calendar could access logVisit.
+      this.$router.push({
+        name: 'Calendar',
+      });
     },
 
-    logVisit(payload) {
+    onMakeAppointment() {
+      alert('Under construction');
+    },
+
+    onMarkerAdded(place) {
+      Place.updatePromise(place).then((result) => {
+        this.$emit('cacheUpdated', result[0]);
+      });
+    },
+
+    onLogVisit(payload) {
       const { action, visit } = payload;
       if (action === 'test') {
-        return 'Funtion (logVisit) test passed';
+        return 'Funtion (onLogVisit) test passed';
       }
       const self = this;
       // TODO There's no UI here. Use a Maybe monad, instead.
@@ -240,6 +304,46 @@ export default {
         };
         return msg;
       });
+    },
+
+    onDeletePlace(placeId) {
+      Place.delete(placeId);
+    },
+
+    // TODO this is 1/2 the refactore to reduce the load on Spaces component
+    addPlace(payload) {
+      const { place, placesService, fields } = payload;
+      placesService.getDetails(
+        {
+          placeId: place.placeId,
+          fields: fields,
+        },
+        (place, status) => {
+          if (status === 'OK') {
+            // getDetails() returns the place
+            Place.updatePromise(place).then((result) => {
+              this.$emit('cacheUpdated', result[0]);
+            });
+          } else {
+            throw new Error('GoogleMap.addPlaceWithID(space)', status);
+          }
+        }
+      );
+    },
+
+    funcx(payload) {
+      const { action, entity } = payload;
+      if (action === 'test') {
+        return 'Funtion (funcx) test passed';
+      }
+      const first = entity.category === 'You' ? 'isDay' : 'isCategory';
+      const second = action;
+      const fun = this.actions[first][second];
+      fun();
+    },
+
+    getGraphName() {
+      return this.graphName || this.$defaultGraphName;
     },
 
     updateVisitOnGraph(query) {
@@ -332,18 +436,6 @@ export default {
         console.groupEnd();
       });
     },
-
-    // TODO refactor for FrameError component
-    throwError(payload) {
-      const { source, error, comment } = payload;
-      const msg = `ERROR: ${error.message} at ${source} (${comment})`;
-      console.error(msg);
-      this.snackBarText = msg;
-      this.showSnackbar = true;
-      this.$emit('error', {
-        payload,
-      });
-    },
   },
 
   watch: {},
@@ -381,13 +473,9 @@ export default {
         self.loading = false;
         this.$emit('stateAvailable', this.funcx);
       })
-      .catch((err) =>
-        this.throwError({
-          source: 'Calendar.mounted()',
-          error: err,
-          comment: 'This is bad.',
-        })
-      );
+      .catch((err) => {
+        throw err;
+      });
   },
 
   render() {
@@ -401,11 +489,15 @@ export default {
     // Step 1: Expose all data and methods that could be used by dynamic components
     return this.$scopedSlots.default({
       state: this.state,
-      addPlace: this.addPlace,
+      onMarkerClicked: this.onMarkerClicked,
+      onMarkerAdded: this.onMarkerAdded,
+      onToWork: this.onToWork,
+      onVisitPlace: this.onVisitPlace,
+      onMakeAppointment: this.onMakeAppointment,
       relevantEvents: this.relevantEvents,
       isConnected: this.isConnected,
-      funcx: this.funcx,
-      logVisit: this.logVisit,
+      onLogVisit: this.onLogVisit,
+      onDeletePlace: this.onDeletePlace,
     });
   },
 };

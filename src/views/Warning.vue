@@ -69,7 +69,7 @@
 
 <script>
 import Visit from '@/models/Visit';
-import { success, printJson } from '../utils/colors';
+import { success, printJson } from '../utils/helpers';
 import { formatTime } from '../utils/luxonHelpers';
 
 export default {

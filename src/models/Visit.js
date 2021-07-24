@@ -87,20 +87,20 @@ export default class Visit extends Model {
     });
   }
 
-  // Calendar addEvent() creates the visit (without reference to the exposure graph (see below))
+  // State addVisit() creates the visit (without reference to the exposure graph (see below))
   static updatePromise(data) {
     return new Promise((resolve, reject) => {
-      const { entity } = data;
+      const { visit } = data;
       // ensure the incoming data is for Visits (not Appointments)
-      if (!entity.category || entity.category !== 'You') {
+      if (!visit.category || visit.category !== 'You') {
         reject({
           violation: 'contract',
           message: 'Object was not a Visit or Shift',
         });
       }
-      console.log('update Visit with', JSON.stringify(entity, null, 3));
+      console.log('update Visit with', JSON.stringify(visit, null, 3));
       this.$create({
-        data: entity,
+        data: visit,
       })
         .then((p) => resolve(p))
         .catch((e) => reject(e));

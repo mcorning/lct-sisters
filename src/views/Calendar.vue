@@ -73,14 +73,11 @@
 
 <script>
 import State from '@/components/renderless/State.vue';
-import crypto from 'crypto';
-const randomId = () => crypto.randomBytes(8).toString('hex');
-import { DateTime, getNow } from '../utils/luxonHelpers';
 
 export default {
   name: 'Calendar',
   props: {
-    selectedSpace: Object,
+    // selectedSpace: Object,
   },
   components: {
     State,
@@ -200,38 +197,39 @@ export default {
     },
     //#endregion Calendar functions
 
-    newVisit() {
-      const time = this.place.startTime || Date.now();
-      const shift = this.place.shift;
-      const place_id = this.place.place_id;
-      this.addVisit(time, place_id, shift);
-    },
-    addVisit(
-      time,
-      place_id = this.place.place_id,
-      stay = this.intervalMinutes
-    ) {
-      console.log(time, place_id, stay);
-      const starttime = this.roundTime(time);
-      const endtime = starttime + stay;
-      const entity = {
-        id: randomId(),
-        name: this.place.name,
-        place_id: place_id,
-        start: starttime,
-        end: endtime,
-        date: DateTime.fromMillis(starttime).toISODate(),
-        category: 'You',
+    // newVisit() {
+    //   const time = this.place.startTime || Date.now();
+    //   const shift = this.place.shift;
+    //   const place_id = this.place.place_id;
+    //   this.addVisit(time, place_id, shift);
+    // },
+    // addVisit(
+    //   time,
+    //   place_id = this.place.place_id,
+    //   stay = this.intervalMinutes
+    // ) {
+    //   console.log(time, place_id, stay);
+    //   const starttime = this.roundTime(time);
+    //   const endtime = starttime + stay;
+    //   const entity = {
+    //     id: randomId(),
+    //     name: this.place.name,
+    //     place_id: place_id,
+    //     start: starttime,
+    //     end: endtime,
+    //     date: DateTime.fromMillis(starttime).toISODate(),
+    //     category: 'You',
 
-        timed: true,
-        marked: getNow(),
-        graphName: this.graphname,
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
-      };
+    //     timed: true,
+    //     marked: getNow(),
+    //     graphName: this.graphname,
+    //     color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+    //     loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+    //   };
 
-      this.updateCache({ action: 'add', entity });
-    },
+    //   // TODO refactor for State
+    //   //this.updateCache({ action: 'add', entity });
+    // },
 
     roundTime(time, down = true) {
       const roundTo = 15; // minutes
@@ -251,10 +249,10 @@ export default {
   mounted() {
     const self = this;
     self.configureCalendar();
-    self.place = self.selectedSpace;
-    if (self.place) {
-      self.newVisit();
-    }
+    // self.place = self.selectedSpace;
+    // if (self.place) {
+    //   self.newVisit();
+    // }
     self.ready = true;
   },
 };

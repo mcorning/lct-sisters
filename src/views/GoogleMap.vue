@@ -6,7 +6,7 @@
 // import MarkerClusterer from '@google/markerclustererplus';
 
 import gmapsInit from '../utils/gmaps';
-import { printJson } from '../utils/colors';
+import { printJson } from '../utils/helpers';
 
 export default {
   name: `Map`,
@@ -21,8 +21,15 @@ export default {
   computed: {
     locations() {
       return this.state.places.map((v) => {
-        return { position: { lat: v.lat, lng: v.lng } };
+        return {
+          position: { lat: v.lat, lng: v.lng },
+          place_id: v.place_id,
+          name: v.name,
+        };
       });
+    },
+    visits() {
+      return this.state.visits.filter((v) => v.name);
     },
 
     options() {
@@ -54,6 +61,8 @@ export default {
     };
   },
   methods: {
+    // TODO see if we can push all or most of these methods to State
+
     validServiceRequest(place, status) {
       const x =
         status === 'OK' && place && place.geometry && place.geometry.location;
@@ -67,9 +76,11 @@ export default {
         position: location,
         label: this.labels[this.labelIndex++ % this.labels.length],
         place_id: this.place.place_id,
+        name: this.place.name,
         map: this.map,
       });
       marker.addListener(`click`, () => this.onClickMarker(marker));
+      this.$emit('markerAdded', this.place);
     },
 
     getDetails(placeId, location) {
@@ -117,10 +128,8 @@ export default {
         self.geocodeLocation(latLng);
       }
     },
+
     onClickMarker(marker) {
-      if (marker != this.marker) {
-        this.infoWinOpen = false;
-      }
       this.$emit('markerClicked', marker);
     },
   },
@@ -141,6 +150,63 @@ export default {
           mapTypeIds: ['roadmap', 'terrain'],
         },
       });
+
+      //#region Autocomplete Setup
+      const input = document.getElementById('autoCompleteInput');
+      const searchBox = new google.maps.places.SearchBox(input);
+
+      // map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+      // Bias the SearchBox results towards current map's viewport.
+      map.addListener('bounds_changed', () => {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      let markers = [];
+
+      // Listen for the event fired when the user selects a prediction and retrieve
+      // more details for that place.
+      searchBox.addListener('places_changed', () => {
+        const places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        // For each place, get the icon, name and location.
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach((place) => {
+          if (!place.geometry || !place.geometry.location) {
+            console.log('Returned place contains no geometry');
+            return;
+          }
+          const icon = {
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(25, 25),
+          };
+          // Create a marker for each place.
+          markers.push(
+            new google.maps.Marker({
+              map,
+              icon,
+              title: place.name,
+              position: place.geometry.location,
+            })
+          );
+
+          if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        });
+        map.fitBounds(bounds);
+      });
+      //#endregion Autocomplete Setup
+
       const geocoder = new google.maps.Geocoder();
       self.service = new google.maps.places.PlacesService(map);
 
@@ -154,13 +220,24 @@ export default {
         map.setZoom(self.defaultZoom);
       });
 
-      // map.addListener(`click`, (event) => self.addMarker(event.latLng, map));
       map.addListener(`click`, (event) => self.onClickMap(event));
 
-      const markers = self.locations.map((location) => {
+      markers = self.locations.map((location) => {
         const marker = new google.maps.Marker({ ...location, map });
         marker.addListener(`click`, () => self.onClickMarker(marker));
-
+        marker.addListener(`rightclick`, (event) => {
+          if (confirm('Delete marker at ' + event.latLng + '?')) {
+            const x = markers.filter(
+              (v) =>
+                v.position.lat() === event.latLng.lat() &&
+                v.position.lng() === event.latLng.lng()
+            )[0];
+            if (confirm('Delete place ' + x.place_id + ', as well?')) {
+              this.$emit('deletePlace', x.place_id);
+            }
+            x.setMap(null);
+          }
+        });
         return marker;
       });
       console.log(`Rendered ${markers.length} markers`);
@@ -168,13 +245,7 @@ export default {
       self.geocoder = geocoder;
       self.map = map;
       self.ready = true;
-
-      // eslint-disable-next-line no-new
-      // new MarkerClusterer(map, markers, {
-      //   imagePath: `https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m`,
-      // });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error);
     }
   },
@@ -190,6 +261,6 @@ body {
 
 .App {
   width: 100vw;
-  height: 80vh;
+  height: 77vh;
 }
 </style>

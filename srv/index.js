@@ -30,7 +30,7 @@ const {
   url,
   printNow,
   getNow,
-} = require('../src/utils/colors.js');
+} = require('../src/utils/helpers.js');
 
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');

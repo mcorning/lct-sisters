@@ -22,7 +22,7 @@
 
 import welcomeCard from './cards/welcomeCard.vue';
 
-import { err, info, success, warn, printJson } from '../utils/colors';
+import { err, info, success, warn, printJson } from '../utils/helpers';
 
 import Setting from '@/models/Setting';
 

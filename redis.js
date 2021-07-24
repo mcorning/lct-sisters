@@ -8,7 +8,7 @@ const {
   highlight,
   success,
   special,
-} = require('./src/utils/colors.js');
+} = require('./src/utils/helpers.js');
 
 let options, graphName;
 

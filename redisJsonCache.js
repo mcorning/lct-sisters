@@ -6,7 +6,7 @@ const {
   printJson,
   getNow,
   columns,
-} = require('./src/utils/colors.js');
+} = require('./src/utils/helpers.js');
 
 const cacheOptions = require('./redisCache.options.js');
 const options = {

@@ -1,5 +1,5 @@
 const cache = require('./redisJsonCache');
-const { bold, printJson, columns } = require('./src/utils/colors.js');
+const { bold, printJson, columns } = require('./src/utils/helpers.js');
 
 const m = {
   _b2a6431079661988: {

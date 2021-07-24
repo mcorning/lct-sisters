@@ -1,7 +1,7 @@
 const path = require('path');
 const { readFileSync } = require('fs');
 const { writeFile } = require('fs').promises;
-const { printJson, warn } = require('./src/utils/colors.js');
+const { printJson, warn } = require('./src/utils/helpers.js');
 
 function tryParse(filepath) {
   try {
