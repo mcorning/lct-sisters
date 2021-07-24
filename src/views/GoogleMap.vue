@@ -67,7 +67,7 @@ export default {
     addMarker(location) {
       // Add the marker at the clicked location, and add the next-available label
       // from the array of alphabetical characters.
-      const marker = new this.google.maps.Marker({
+      const marker = new window.google.maps.Marker({
         position: location,
         label: this.labels[this.labelIndex++ % this.labels.length],
         place_id: this.place.place_id,
@@ -224,6 +224,7 @@ export default {
           } else {
             bounds.extend(place.geometry.location);
           }
+          this.$emit('markerAdded', place);
         });
         map.fitBounds(bounds);
       });
