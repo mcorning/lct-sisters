@@ -3,10 +3,7 @@
 </template>
 
 <script>
-// import MarkerClusterer from '@google/markerclustererplus';
-
 import gmapsInit from '../utils/gmaps';
-import { printJson } from '../utils/helpers';
 
 export default {
   name: `Map`,
@@ -48,11 +45,9 @@ export default {
   data() {
     return {
       ready: false,
-      google: null,
       map: null,
       geocoder: null,
       service: null,
-      marker: null,
       place: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
@@ -83,7 +78,7 @@ export default {
       this.$emit('markerAdded', this.place);
     },
 
-    getDetails(placeId, location) {
+    getPlaceDetails(placeId, location) {
       const self = this;
 
       this.service.getDetails(
@@ -123,7 +118,7 @@ export default {
       console.log(event);
       const { placeId, latLng } = event;
       if (placeId) {
-        self.getDetails(placeId, latLng);
+        self.getPlaceDetails(placeId, latLng);
       } else if (latLng) {
         self.geocodeLocation(latLng);
       }
@@ -132,6 +127,31 @@ export default {
     onClickMarker(marker) {
       this.$emit('markerClicked', marker);
     },
+
+    newMarker(location, map) {
+      const marker = new window.google.maps.Marker({ ...location, map });
+      marker.addListener(`click`, () => this.onClickMarker(marker));
+      marker.addListener(`rightclick`, (event) => {
+        const map = this.map;
+        if (confirm('Delete marker at ' + event.latLng + '?')) {
+          const x = this.locations
+            .filter(
+              (v) =>
+                v.position.lat === event.latLng.lat() &&
+                v.position.lng === event.latLng.lng()
+            )
+            .reduce((a, location) => {
+              return new window.google.maps.Marker({ ...location, map });
+            }, {});
+          x.setMap(null);
+          if (confirm('Delete place ' + x.place_id + ', as well?')) {
+            this.$emit('deletePlace', x.place_id);
+          }
+          // x.setMap(null);
+        }
+      });
+      return marker;
+    },
   },
 
   watch: {
@@ -139,10 +159,13 @@ export default {
   },
 
   async mounted() {
+    // TODO experimant with renderless subcomponents specialized for googlemaps
     const self = this;
     try {
-      console.log(printJson(this.locations));
+      console.time('Mounted GoogleMaps');
       const google = await gmapsInit();
+
+      //#region Map
       const map = new google.maps.Map(this.$el, {
         mapTypeControl: true,
         mapTypeControlOptions: {
@@ -151,17 +174,16 @@ export default {
         },
       });
 
-      //#region Autocomplete Setup
-      const input = document.getElementById('autoCompleteInput');
-      const searchBox = new google.maps.places.SearchBox(input);
-
-      // map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
       // Bias the SearchBox results towards current map's viewport.
       map.addListener('bounds_changed', () => {
         searchBox.setBounds(map.getBounds());
       });
+      map.addListener(`click`, (event) => self.onClickMap(event));
+      //#endregion
 
-      let markers = [];
+      //#region Autocomplete Setup
+      const input = document.getElementById('autoCompleteInput');
+      const searchBox = new google.maps.places.SearchBox(input);
 
       // Listen for the event fired when the user selects a prediction and retrieve
       // more details for that place.
@@ -207,9 +229,8 @@ export default {
       });
       //#endregion Autocomplete Setup
 
+      //#region Geocoder
       const geocoder = new google.maps.Geocoder();
-      self.service = new google.maps.places.PlacesService(map);
-
       geocoder.geocode({ address: self.defaultPoi }, (results, status) => {
         if (status !== `OK` || !results[0]) {
           throw new Error(status);
@@ -219,32 +240,37 @@ export default {
         map.fitBounds(results[0].geometry.viewport);
         map.setZoom(self.defaultZoom);
       });
+      //#endregion
 
-      map.addListener(`click`, (event) => self.onClickMap(event));
-
-      markers = self.locations.map((location) => {
+      //#region Markers
+      const markers = self.locations.map((location) => {
         const marker = new google.maps.Marker({ ...location, map });
         marker.addListener(`click`, () => self.onClickMarker(marker));
         marker.addListener(`rightclick`, (event) => {
           if (confirm('Delete marker at ' + event.latLng + '?')) {
-            const x = markers.filter(
+            const marker = markers.filter(
               (v) =>
                 v.position.lat() === event.latLng.lat() &&
                 v.position.lng() === event.latLng.lng()
             )[0];
-            if (confirm('Delete place ' + x.place_id + ', as well?')) {
-              this.$emit('deletePlace', x.place_id);
+
+            if (confirm('Delete place ' + marker.place_id + ', as well?')) {
+              this.$emit('deletePlace', marker.place_id);
             }
-            x.setMap(null);
+            marker.setMap(null);
           }
         });
         return marker;
       });
       console.log(`Rendered ${markers.length} markers`);
-      self.google = google;
+      //#endregion
+
+      self.service = new google.maps.places.PlacesService(map);
       self.geocoder = geocoder;
       self.map = map;
+
       self.ready = true;
+      console.timeEnd('Mounted GoogleMaps');
     } catch (error) {
       console.error(error);
     }
