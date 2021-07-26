@@ -56,12 +56,43 @@
           @click:more="viewDay"
           @click:date="viewDay"
           @click:event="showEvent"
+          @change="onChange"
         >
           <template v-slot:event="{ timed, eventSummary }">
             <div class="v-event-draggable" v-html="eventSummary()"></div>
             <div v-if="timed" class="v-event-drag-bottom"></div>
           </template>
         </v-calendar>
+        <v-menu
+          v-model="selectedOpen"
+          :close-on-content-click="false"
+          :activator="selectedElement"
+          offset-x
+        >
+          <v-card color="grey lighten-4" min-width="350px" flat>
+            <v-toolbar :color="selectedEvent.color" dark>
+              <v-btn icon>
+                <v-icon>mdi-pencil</v-icon>
+              </v-btn>
+              <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-btn icon>
+                <v-icon>mdi-heart</v-icon>
+              </v-btn>
+              <v-btn icon>
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </v-toolbar>
+            <v-card-text>
+              <span v-html="eventDetails"></span>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn text color="secondary" @click="selectedOpen = false">
+                Cancel
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-menu>
       </v-sheet>
 
       <div class="mt-5 mb-0 ml-15">
@@ -77,19 +108,24 @@ import State from '@/components/renderless/State.vue';
 export default {
   name: 'Calendar',
   props: {
-    // selectedSpace: Object,
+    selectedSpace: Object,
   },
   components: {
     State,
   },
   computed: {
-    cal() {
-      // TODO why is cal() undefined?
-      return this.ready ? this.$refs.calendar : null;
+    intervalCount() {
+      return this.range * (60 / this.intervalMinutes) + 2;
+    },
+    eventDetails() {
+      // TODO This is where you decide what and how to display event details
+      const x = this.selectedEvent.details;
+      return x;
     },
   },
   data() {
     return {
+      cal: null,
       ready: false,
       focus: '',
       type: 'day',
@@ -105,17 +141,30 @@ export default {
       categories: ['You', 'Them'],
       currentDate: null,
       firstTime: '00:00',
-      intervalCount: 24,
       intervalMinutes: 30,
+      range: 24,
 
       selectedElement: null,
+      selectedEvent: {},
       selectedEventId: '',
       selectedEventParsed: null,
+      selectedOpen: false,
 
       status: 'Ready',
     };
   },
   methods: {
+    onChange() {
+      // TODO this is the first place you use Maybe monad
+      const cal = this.$refs.calendar || null;
+      const firstEvent = cal.getVisibleEvents().reduce((a, c) => {
+        return a.startTimestampIdentifier < c.startTimestampIdentifier ? a : c;
+      });
+      const time = firstEvent ? firstEvent.start.time : '12:00';
+      cal.scrollToTime(time);
+      this.cal = cal;
+    },
+
     onStateAvailable() {
       console.log('onStateAvailable for all components');
     },
@@ -128,18 +177,14 @@ export default {
         // this.closeAt = this.settings.closeAt;
         // const open = Number(this.openAt.slice(0, 2));
         // const close = Number(this.closeAt.slice(0, 2));
-        const range = 8; // close - open;
+        this.range = 8; // close - open;
 
         // this.intervalMinutes = this.settings.slotInterval;
         // this.firstTime = `${String(
         //   Number(this.openAt.split(':')[0]) - 1
         // ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
-        this.intervalCount = range * (60 / this.intervalMinutes) + 2;
-        this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${range}  intervalCount: ${this.intervalCount} `;
+        this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${this.range}  intervalCount: ${this.intervalCount} `;
       } else {
-        this.firstTime = '00:00';
-        this.intervalCount = 24 * (60 / this.intervalMinutes);
-
         this.tip = 'Stay safe out there...';
       }
     },
@@ -150,15 +195,12 @@ export default {
       this.status = `Going to ${date}`;
       this.type = 'day';
       this.currentDate = date;
-      this.intervalCount = 24;
-      this.firstTime = '00:00';
-      this.intervalMinutes = 30;
     },
     setToday() {
       this.focus = '';
       this.status = `Going back to today`;
-      this.scrollToTime();
     },
+
     prev() {
       this.cal.prev();
     },
@@ -176,24 +218,43 @@ export default {
           : event.color;
       return c;
     },
-
     showEvent({ nativeEvent, event }) {
+      const open = () => {
+        this.selectedEvent = event;
+        this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
+
+        this.selectedElement = nativeEvent.target;
+        setTimeout(() => (this.selectedOpen = true), 10);
+      };
+
+      if (this.selectedOpen) {
+        this.selectedOpen = false;
+        setTimeout(open, 10);
+      } else {
+        open();
+      }
+
+      nativeEvent.stopPropagation();
+    },
+
+    showEventOrig({ nativeEvent, event }) {
       if (!event) {
         return;
       }
       const { id } = event;
       // can be used as an activator for a control
       this.selectedElement = nativeEvent.target;
-
+      this.selectedEvent = event;
       // this enables us to get the currentEventParsed (and all it's dependencies)
       this.selectedEventId = id;
       // selectedEventParsed used for past/future events (not included in cal.getVisibleEvents())
       this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
 
       this.status = `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`;
+    },
 
-      // determine which dialog to render
-      this.showDialog();
+    logVisit() {
+      this.$emit('logVisit', this.selectedEventParsed);
     },
     //#endregion Calendar functions
 
@@ -241,18 +302,11 @@ export default {
     },
   },
 
-  watch: {
-    ready() {
-      console.log('stop');
-    },
-  },
+  watch: {},
+
   mounted() {
     const self = this;
     self.configureCalendar();
-    // self.place = self.selectedSpace;
-    // if (self.place) {
-    //   self.newVisit();
-    // }
     self.ready = true;
   },
 };
