@@ -16,6 +16,8 @@ export default {
   },
 
   computed: {
+    // To create markers during mounting and delete markers in the UI,
+    // fetch some data out of places entity
     locations() {
       return this.state.places.map((v) => {
         return {
@@ -29,6 +31,7 @@ export default {
       return this.state.visits.filter((v) => v.name);
     },
 
+    // to limit query cost at Google, only fetch Place data essential for our mission
     options() {
       return {
         fields: [

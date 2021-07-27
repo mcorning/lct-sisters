@@ -12,7 +12,6 @@
 <script>
 import AppLayoutHeader from '@/layouts/AppLayoutHeader';
 import AppLayoutFooter from '@/layouts/AppLayoutFooter';
-// import State from '@/components/renderless/State.vue';
 import CaptureErrorSnackbar from '@/components/errorBoundary/CaptureErrorSnackbar.vue';
 
 export default {
@@ -20,7 +19,6 @@ export default {
   components: {
     AppLayoutFooter,
     AppLayoutHeader,
-    // State,
     CaptureErrorSnackbar,
   },
   data() {

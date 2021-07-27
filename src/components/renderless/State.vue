@@ -208,8 +208,8 @@ export default {
     },
     onToWork() {},
     // called by
-    //  * onGo() with the shift startTime
-    //  * mark your calendar button
+    //  * onGo() with the shift startTime or
+    //  * Visit button in Googlemaps
     onVisitPlace() {
       const place = Place.find(this.selectedMarker.place_id);
       const starttime = roundTime(Date.now());
@@ -232,13 +232,11 @@ export default {
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };
 
-      Visit.updatePromise({ visit });
-
-      // TODO NOTE: be sure the router push to Calendar uses the same params everywhere
-      // e.g., forgetting 'logVisit' and 'isConnected' below made Calendar misbehave
-      // but when called from the appLayoutFooter push, Calendar could access logVisit.
-      this.$router.push({
-        name: 'Calendar',
+      Visit.updatePromise({ visit }).then((visits) => {
+        this.updateState(visits);
+        this.$router.push({
+          name: 'Calendar',
+        });
       });
     },
 
@@ -451,7 +449,7 @@ export default {
       .then((entities) => {
         const places = entities[0].places.filter((v) => v.name) || [];
         const visits =
-          entities[1].visits.filter(
+          entities[1].visits?.filter(
             (v) =>
               !(
                 Number.isNaN(v.end) ||

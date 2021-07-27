@@ -52,7 +52,7 @@ export default {
     // Each button stipulates the capabilities it needs.
     // The open() function passes all the parent components props, even though a button may not need them.
     // NOTE ALSO: we did not pass props to appLayoutFooter because we wrapped this component in State;
-    // so to get the State props down here in this method, we pass them on down through method params.
+    // so to get the State props down here in this method, we pass them on down through open() params.
     open(view, state, logVisit, isConnected) {
       const selectedSpace = null;
       this.$router.push({

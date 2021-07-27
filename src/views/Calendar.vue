@@ -62,6 +62,13 @@
             <div class="v-event-draggable" v-html="eventSummary()"></div>
             <div v-if="timed" class="v-event-drag-bottom"></div>
           </template>
+          <template #day-body="{ date, week }">
+            <div
+              class="v-current-time"
+              :class="{ first: date === week[0].date }"
+              :style="{ top: nowY }"
+            ></div>
+          </template>
         </v-calendar>
         <v-menu
           v-model="selectedOpen"
@@ -122,10 +129,15 @@ export default {
       const x = this.selectedEvent.details;
       return x;
     },
+    nowY() {
+      return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px';
+    },
   },
   data() {
     return {
       cal: null,
+      value: '',
+
       ready: false,
       focus: '',
       type: 'day',
@@ -154,15 +166,15 @@ export default {
     };
   },
   methods: {
+    scrollToTime() {
+      const time = this.getCurrentTime();
+      const first = Math.max(0, time - (time % 30) - 30);
+      this.cal.scrollToTime(first);
+    },
+
     onChange() {
-      // TODO this is the first place you use Maybe monad
-      const cal = this.$refs.calendar || null;
-      const firstEvent = cal.getVisibleEvents().reduce((a, c) => {
-        return a.startTimestampIdentifier < c.startTimestampIdentifier ? a : c;
-      });
-      const time = firstEvent ? firstEvent.start.time : '12:00';
-      cal.scrollToTime(time);
-      this.cal = cal;
+      this.cal = this.$refs.calendar;
+      this.scrollToTime();
     },
 
     onStateAvailable() {
@@ -198,6 +210,7 @@ export default {
     },
     setToday() {
       this.focus = '';
+      this.viewDay(Date.now());
       this.status = `Going back to today`;
     },
 
@@ -291,7 +304,11 @@ export default {
     //   // TODO refactor for State
     //   //this.updateCache({ action: 'add', entity });
     // },
-
+    getCurrentTime() {
+      return this.cal
+        ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
+        : 0;
+    },
     roundTime(time, down = true) {
       const roundTo = 15; // minutes
       const roundDownTime = roundTo * 60 * 1000;
@@ -300,14 +317,79 @@ export default {
         ? time - (time % roundDownTime)
         : time + (roundDownTime - (time % roundDownTime));
     },
+    updateTime() {
+      setInterval(() => this.cal.updateTimes(), 60 * 1000);
+    },
   },
 
   watch: {},
 
   mounted() {
-    const self = this;
-    self.configureCalendar();
-    self.ready = true;
+    this.ready = true;
+
+    this.configureCalendar();
+    this.updateTime();
   },
 };
 </script>
+
+<style scoped lang="scss">
+.v-current-time {
+  height: 2px;
+  background-color: #ea4335;
+  position: absolute;
+  left: -1px;
+  right: 0;
+  pointer-events: none;
+
+  &.first::before {
+    content: '';
+    position: absolute;
+    background-color: #ea4335;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: -5px;
+    margin-left: -6.5px;
+  }
+}
+.v-event-draggable {
+  padding-left: 6px;
+}
+
+.v-event-timed {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.v-event-drag-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 4px;
+  cursor: ns-resize;
+
+  &::after {
+    display: none;
+    position: absolute;
+    left: 50%;
+    height: 4px;
+    border-top: 1px solid white;
+    border-bottom: 1px solid white;
+    width: 16px;
+    margin-left: -8px;
+    opacity: 0.8;
+    content: '';
+  }
+
+  &:hover::after {
+    display: block;
+  }
+
+  #calendar-target {
+    touch-action: none;
+    overflow-y: hidden;
+  }
+}
+</style>
