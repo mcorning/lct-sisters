@@ -1,6 +1,6 @@
 <template>
   <v-footer app color="primary" class="white--text">
-    <State>
+    <Model>
       <v-bottom-navigation
         slot-scope="{ state, logVisit, isConnected }"
         color="secondary"
@@ -8,8 +8,8 @@
         dark
         grow
       >
-        <v-btn @click="open('Spaces', state, logVisit, isConnected)">
-          <span>Spaces</span>
+        <v-btn @click="open('Space', state, logVisit, isConnected)">
+          <span>Space</span>
           <v-icon>mdi-map-marker</v-icon>
         </v-btn>
 
@@ -23,22 +23,22 @@
           <span>Warn</span>
           <v-icon dark> mdi-alert </v-icon></v-btn
         >
-        <v-btn @click="open('Calendar', state, logVisit, isConnected)">
-          <span>Calendar</span>
+        <v-btn @click="open('Time', state, logVisit, isConnected)">
+          <span>Time</span>
           <v-icon>mdi-calendar</v-icon>
         </v-btn>
       </v-bottom-navigation>
-    </State>
+    </Model>
   </v-footer>
 </template>
 
 <script>
-import State from '../components/renderless/State.vue';
+import Model from '../components/renderless/Model.vue';
 
 export default {
   name: 'AppLayoutFooter',
   components: {
-    State,
+    Model,
   },
   computed: {
     connection() {
@@ -47,12 +47,12 @@ export default {
   },
   methods: {
     // TODO NOTE: this design is fairly complex, a sign of bad design. In any case,
-    // the parent component (that is the child of the State renderless component),
+    // the parent component (that is the child of the Model renderless component),
     // takes what it needs to serve its children (which may be different capabilities).
     // Each button stipulates the capabilities it needs.
     // The open() function passes all the parent components props, even though a button may not need them.
-    // NOTE ALSO: we did not pass props to appLayoutFooter because we wrapped this component in State;
-    // so to get the State props down here in this method, we pass them on down through open() params.
+    // NOTE ALSO: we did not pass props to appLayoutFooter because we wrapped this component in Model;
+    // so to get the Model props down here in this method, we pass them on down through open() params.
     open(view, state, logVisit, isConnected) {
       const selectedSpace = null;
       this.$router.push({
@@ -65,6 +65,9 @@ export default {
         },
       });
     },
+  },
+  mounted() {
+    console.log('AppLayoutFooter mounted');
   },
 };
 </script>

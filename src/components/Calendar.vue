@@ -38,87 +38,102 @@
         </v-list>
       </v-menu>
     </v-toolbar>
-    <State @stateAvailable="onStateAvailable">
-      <v-sheet slot-scope="{ relevantEvents }" :height="calendarHeight">
-        <v-calendar
-          id="calendar-target"
-          ref="calendar"
-          v-model="focus"
-          :events="relevantEvents"
-          color="primary"
-          :type="type"
-          :categories="categories"
-          :event-color="getEventColor"
-          :now="currentDate"
-          :first-time="firstTime"
-          :interval-minutes="intervalMinutes"
-          :interval-count="intervalCount"
-          @click:more="viewDay"
-          @click:date="viewDay"
-          @click:event="showEvent"
-          @change="onChange"
-        >
-          <template v-slot:event="{ timed, eventSummary }">
-            <div class="v-event-draggable" v-html="eventSummary()"></div>
-            <div v-if="timed" class="v-event-drag-bottom"></div>
-          </template>
-          <template #day-body="{ date, week }">
-            <div
-              class="v-current-time"
-              :class="{ first: date === week[0].date }"
-              :style="{ top: nowY }"
-            ></div>
-          </template>
-        </v-calendar>
-        <v-menu
-          v-model="selectedOpen"
-          :close-on-content-click="false"
-          :activator="selectedElement"
-          offset-x
-        >
-          <v-card color="grey lighten-4" min-width="350px" flat>
-            <v-toolbar :color="selectedEvent.color" dark>
-              <v-btn icon>
-                <v-icon>mdi-pencil</v-icon>
-              </v-btn>
-              <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn icon>
-                <v-icon>mdi-heart</v-icon>
-              </v-btn>
-              <v-btn icon>
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-toolbar>
-            <v-card-text>
-              <span v-html="eventDetails"></span>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn text color="secondary" @click="selectedOpen = false">
-                Cancel
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-menu>
-      </v-sheet>
 
-      <div class="mt-5 mb-0 ml-15">
-        <small>{{ status }}</small>
-      </div>
-    </State>
+    <v-sheet :height="calendarHeight">
+      <v-calendar
+        id="calendar-target"
+        ref="calendar"
+        v-model="focus"
+        :events="relevantEvents"
+        color="primary"
+        :type="type"
+        :categories="categories"
+        :event-color="getEventColor"
+        :now="currentDate"
+        :first-time="firstTime"
+        :interval-minutes="intervalMinutes"
+        :interval-count="intervalCount"
+        @click:more="viewDay"
+        @click:date="viewDay"
+        @click:event="showEvent"
+        @change="onChange"
+      >
+        <template v-slot:event="{ timed, eventSummary }">
+          <div class="v-event-draggable" v-html="eventSummary()"></div>
+          <div v-if="timed" class="v-event-drag-bottom"></div>
+        </template>
+        <template #day-body="{ date, week }">
+          <div
+            class="v-current-time"
+            :class="{ first: date === week[0].date }"
+            :style="{ top: nowY }"
+          ></div>
+        </template>
+      </v-calendar>
+      <v-menu
+        v-model="selectedOpen"
+        :close-on-content-click="false"
+        :activator="selectedElement"
+        offset-x
+      >
+        <v-card color="grey lighten-4" min-width="350px" flat>
+          <v-toolbar :color="selectedEvent.color" dark>
+            <v-btn icon>
+              <v-icon>mdi-pencil</v-icon>
+            </v-btn>
+            <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon>
+              <v-icon>mdi-heart</v-icon>
+            </v-btn>
+            <v-btn icon>
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <PickersMenu
+            :changeEvent="changeEvent"
+            :selectedEventParsed="selectedEventParsed"
+          />
+          <v-card-text>
+            <span v-html="eventDetails"></span>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn text color="secondary" @click="selectedOpen = false">
+              Cancel
+            </v-btn>
+            <v-spacer />
+            <v-btn text color="secondary" @click="updateVisit">
+              Save
+            </v-btn>
+            <v-spacer />
+            <v-btn text color="secondary" @click="logVisit">
+              Log
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
+    </v-sheet>
+
+    <div class="mt-5 mb-0 ml-15">
+      <small>{{ status }}</small>
+    </div>
   </div>
 </template>
 
 <script>
-import State from '@/components/renderless/State.vue';
-
+import PickersMenu from '@/components/menus/pickersMenu.vue';
+import { DateTime } from '@/utils/luxonHelpers';
+// import { printJson } from '@/utils/helpers';
 export default {
   name: 'Calendar',
   props: {
     selectedSpace: Object,
+    isConnected: Boolean,
+    state: Object,
+    relevantEvents: Array,
   },
   components: {
-    State,
+    PickersMenu,
   },
   computed: {
     intervalCount() {
@@ -135,6 +150,7 @@ export default {
   },
   data() {
     return {
+      tested: this.test,
       cal: null,
       value: '',
 
@@ -163,9 +179,19 @@ export default {
       selectedOpen: false,
 
       status: 'Ready',
+      graphName: this.$defaultGraphName,
     };
   },
   methods: {
+    updateVisit() {
+      this.$emit('updateVisit', this.selectedEvent);
+      this.selectedOpen = false;
+    },
+    logVisit() {
+      this.$emit('logVisit', this.selectedEvent);
+      this.selectedOpen = false;
+    },
+
     scrollToTime() {
       const time = this.getCurrentTime();
       const first = Math.max(0, time - (time % 30) - 30);
@@ -266,9 +292,6 @@ export default {
       this.status = `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`;
     },
 
-    logVisit() {
-      this.$emit('logVisit', this.selectedEventParsed);
-    },
     //#endregion Calendar functions
 
     // newVisit() {
@@ -301,7 +324,7 @@ export default {
     //     loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
     //   };
 
-    //   // TODO refactor for State
+    //   // TODO refactor for Model
     //   //this.updateCache({ action: 'add', entity });
     // },
     getCurrentTime() {
@@ -320,13 +343,31 @@ export default {
     updateTime() {
       setInterval(() => this.cal.updateTimes(), 60 * 1000);
     },
+
+    getMillis(ts) {
+      return DateTime.fromJSDate(this.cal.timestampToDate(ts))
+        .toLocal()
+        .toMillis();
+    },
+
+    changeTimeStamp(cts) {
+      const { year, month, day, hour, minute } = cts;
+      let dt = DateTime.local(year, month, day, hour, minute);
+      return dt.toMillis();
+    },
+
+    changeEvent(cts) {
+      const { start, end } = cts;
+      this.selectedEvent.start = this.changeTimeStamp(start);
+      this.selectedEvent.end = this.changeTimeStamp(end);
+      this.selectedEvent.date = start.date;
+    },
   },
 
   watch: {},
 
   mounted() {
     this.ready = true;
-
     this.configureCalendar();
     this.updateTime();
   },
@@ -336,7 +377,7 @@ export default {
 <style scoped lang="scss">
 .v-current-time {
   height: 2px;
-  background-color: #ea4335;
+  background-color: #a235ea;
   position: absolute;
   left: -1px;
   right: 0;
@@ -345,7 +386,7 @@ export default {
   &.first::before {
     content: '';
     position: absolute;
-    background-color: #ea4335;
+    background-color: #a235ea;
     width: 12px;
     height: 12px;
     border-radius: 50%;

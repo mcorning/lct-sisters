@@ -1,21 +1,22 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Map from '@/views/Map.vue';
-import Calendar from '@/views/Calendar.vue';
+import Space from '@/views/Space.vue';
+// import Time from '@/components/Calendar.vue';
+import Time from '@/views/Time.vue';
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: '/',
-    name: 'Spaces',
-    component: Map,
+    name: 'Space',
+    component: Space,
     props: true,
   },
   {
-    path: '/calendar',
-    name: 'Calendar',
-    component: Calendar,
+    path: '/time',
+    name: 'Time',
+    component: Time,
     props: true,
   },
   {

@@ -87,7 +87,7 @@ export default class Visit extends Model {
     });
   }
 
-  // State addVisit() creates the visit (without reference to the exposure graph (see below))
+  // Model addVisit() creates the visit (without reference to the exposure graph (see below))
   static updatePromise(data) {
     return new Promise((resolve, reject) => {
       const { visit } = data;

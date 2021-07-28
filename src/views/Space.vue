@@ -1,5 +1,5 @@
 <template>
-  <State>
+  <Model>
     <div
       slot-scope="{
         isConnected,
@@ -65,52 +65,28 @@
         </v-col>
       </v-row>
     </div>
-  </State>
+  </Model>
 </template>
 
 <script>
-import Spaces from './GoogleMap.vue';
+import Spaces from '@/components/GoogleMap.vue';
 
-import State from '@/components/renderless/State.vue';
+import Model from '@/components/renderless/Model.vue';
 
 export default {
-  name: `Map`,
+  name: `Space`,
   components: {
     Spaces,
-    State,
+    Model,
   },
   data() {
-    return {
-      marker: null,
-    };
+    return {};
   },
-  methods: {
-    // called by
-    //  * onGo() with the shift startTime
-    //  * mark your calendar button
-    onVisitPlace(nativeEvent, startTime = Date.now(), endTime, shift) {
-      console.log('Start Time:', startTime.toString());
-      const selectedSpace = {
-        ...this.place,
-        startTime: startTime,
-        endtime: endTime,
-        shift: shift,
-      };
-      console.log('selectedSpace:', { ...selectedSpace });
+  methods: {},
 
-      // TODO NOTE: be sure the router push to Calendar uses the same params everywhere
-      // e.g., forgetting 'logVisit' and 'isConnected' below made Calendar misbehave
-      // but when called from the appLayoutFooter push, Calendar could access logVisit.
-      this.$router.push({
-        name: 'Calendar',
-        params: {
-          selectedSpace,
-        },
-      });
-    },
+  mounted() {
+    console.log('Space.vue mounted');
   },
-
-  mounted() {},
 };
 </script>
 

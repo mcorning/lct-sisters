@@ -17,7 +17,7 @@
           text
           color="#00f500"
           v-bind="attrs"
-          @click.stop="act"
+          @click.stop="refreshApp"
         >
           {{ snackBtnText }}
         </v-btn>

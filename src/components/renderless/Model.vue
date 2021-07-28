@@ -1,6 +1,6 @@
 <script>
-// State's first job is make a connection to the server in case an Alert awaits// append: Append a value to a key
-// State's second job is to handle local state including ORM entities.
+// Model's first job is make a connection to the server in case an Alert awaits// append: Append a value to a key
+// Model's second job is to handle local state including ORM entities.
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
@@ -24,6 +24,10 @@ export default {
   props: {},
 
   computed: {
+    isDefaultGraph() {
+      return this.graphName === this.$defaultGraphName;
+    },
+
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
       const x = [...this.state.visits, ...this.state.appointments];
@@ -50,7 +54,7 @@ export default {
       selectedMarker: null,
       pendingVisits: new Map(),
       loading: true,
-      graphName: '',
+      graphName: this.$defaultGraphName,
       // TODO send this data down to Calendar
       /* combinations of update
        *   Add Visit (category==='You')
@@ -137,7 +141,7 @@ export default {
       console.log(success('User Name:', username));
       console.log(success('User ID:', userID));
       console.log(success('graphName used by redis', graphName));
-      console.log('Entire State:', this.state);
+      console.log('Entire Model:', this.state);
       console.groupEnd();
       this.pendingVisits.forEach((value, key) => {
         console.log('Logging pending visit:', key);
@@ -151,19 +155,75 @@ export default {
   },
 
   methods: {
+    onUpdateVisit(visit) {
+      console.log(visit);
+    },
+
+    onLogVisit(payload) {
+      const { action, visit } = payload;
+      if (action === 'test') {
+        return 'Funtion (onLogVisit) test passed';
+      }
+      const self = this;
+      // TODO There's no UI here. Use a Maybe monad, instead.
+      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
+      if (!this.$socket.client.userID) {
+        const msg = {
+          confirmationColor: 'orange',
+          confirmationMessage: `You are not connected to the server`,
+        };
+        return msg;
+      }
+      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
+      console.log('What is visit.id?', id);
+      this.selectedSpace = visit;
+      const query = {
+        username: this.username,
+        userID: this.$socket.client.userID,
+        selectedSpace: name,
+        start: start,
+        end: end,
+        date: new Date(start).toDateString(),
+        interval: interval,
+        loggedNodeId,
+        graphName,
+      };
+      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+      console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
+
+      // send the visit to the server
+      this.updateVisitOnGraph(query).then((node) => {
+        // here's where we update the logged field to the id of the graph node
+        const data = {
+          visitId: id,
+          loggedNodeId: node.id,
+          useGraphName: self.getGraphName(),
+        };
+        Visit.updateLoggedPromise(data).then((v) => {
+          console.log(success(`Returned Visit:`, printJson(v)));
+          console.log(highlight(`Updated Visit to:`, printJson(visit)));
+        });
+        const msg = {
+          confirmationColor: 'success',
+          confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
+            node.id
+          }`,
+        };
+        return msg;
+      });
+    },
     /**
      * Makers let us revisit a place.
      * Iterate visits entity
      * Find place using visit.place_id
      * Use filtered places to add Markers to map (map passed in to event handler)
-     */
-    // TODO this is a good reason to refactor Place to include Visits
+     */ // TODO this is a good reason to refactor Place to include Visits
     deserializeVisitAsMarker(visits) {
       if (!visits) {
         return;
       }
 
-      // TODO Refactor for State
+      // TODO Refactor for Model
       this.place_map = this.state.place.getPlaceMap();
       this.markersMap = new Map();
       console.groupCollapsed(
@@ -235,7 +295,7 @@ export default {
       Visit.updatePromise({ visit }).then((visits) => {
         this.updateState(visits);
         this.$router.push({
-          name: 'Calendar',
+          name: 'Time',
         });
       });
     },
@@ -247,60 +307,6 @@ export default {
     onMarkerAdded(place) {
       Place.updatePromise(place).then((result) => {
         this.$emit('cacheUpdated', result[0]);
-      });
-    },
-
-    onLogVisit(payload) {
-      const { action, visit } = payload;
-      if (action === 'test') {
-        return 'Funtion (onLogVisit) test passed';
-      }
-      const self = this;
-      // TODO There's no UI here. Use a Maybe monad, instead.
-      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
-      if (!this.$socket.client.userID) {
-        const msg = {
-          confirmationColor: 'orange',
-          confirmationMessage: `You are not connected to the server`,
-        };
-        return msg;
-      }
-      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
-      console.log('What is visit.id?', id);
-      this.selectedSpace = visit;
-      const query = {
-        username: this.username,
-        userID: this.$socket.client.userID,
-        selectedSpace: name,
-        start: start,
-        end: end,
-        date: new Date(start).toDateString(),
-        interval: interval,
-        loggedNodeId,
-        graphName,
-      };
-      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
-      console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
-
-      // send the visit to the server
-      this.updateVisitOnGraph(query).then((node) => {
-        // here's where we update the logged field to the id of the graph node
-        const data = {
-          visitId: id,
-          loggedNodeId: node.id,
-          useGraphName: self.getGraphName(),
-        };
-        Visit.updateLoggedPromise(data).then((v) => {
-          console.log(success(`Returned Visit:`, printJson(v)));
-          console.log(highlight(`Updated Visit to:`, printJson(visit)));
-        });
-        const msg = {
-          confirmationColor: 'success',
-          confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
-            node.id
-          }`,
-        };
-        return msg;
       });
     },
 
@@ -365,7 +371,7 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    // why are we passing in a payload when State gets that itself from the server?
+    // why are we passing in a payload when Model gets that itself from the server?
     // const { username, userID, sessionID } = payload;    // connectMe(payload) {
     connectMe() {
       if (this.isConnected) {
@@ -467,7 +473,7 @@ export default {
         self.validateEntities();
 
         self.connectMe();
-        console.log(success('mounted State component'));
+        console.log(success('mounted Model component'));
         self.loading = false;
         this.$emit('stateAvailable', this.funcx);
       })
@@ -477,13 +483,13 @@ export default {
   },
 
   render() {
-    // The first user of State will not see data if we render() while loading
+    // The first user of Model will not see data if we render() while loading
     if (this.loading) {
       return { loading: this.loading };
     }
 
     // Pass *all* our props and function into our scoped slot
-    // so we can render children with State data.
+    // so we can render children with Model data.
     // Step 1: Expose all data and methods that could be used by dynamic components
     return this.$scopedSlots.default({
       state: this.state,
@@ -496,6 +502,8 @@ export default {
       isConnected: this.isConnected,
       onLogVisit: this.onLogVisit,
       onDeletePlace: this.onDeletePlace,
+      changeEvent: this.changeEvent,
+      onUpdateVisit: this.onUpdateVisit,
     });
   },
 };

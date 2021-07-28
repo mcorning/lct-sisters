@@ -290,12 +290,12 @@ import {
   warn,
   getRandomIntInclusive,
   printJson,
-} from './utils/helpers';
+} from '../utils/helpers';
 
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
-import Auditor from './utils/Auditor';
-import FeedbackCard from './components/cards/feedbackCard.vue';
+import Auditor from '../utils/Auditor';
+import FeedbackCard from '../components/cards/feedbackCard.vue';
 
 export default {
   name: 'App',

@@ -59,7 +59,7 @@ export default {
     };
   },
   methods: {
-    // TODO see if we can push all or most of these methods to State
+    // TODO see if we can push all or most of these methods to Model
 
     validServiceRequest(place, status) {
       const x =

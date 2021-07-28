@@ -1,5 +1,5 @@
 <template>
-  <State>
+  <Model>
     <v-app-bar slot-scope="{ isConnected }" color="primary" app dark>
       <v-toolbar-title
         >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
@@ -18,11 +18,11 @@
       />
       <!-- End Options Menu-->
     </v-app-bar>
-  </State>
+  </Model>
 </template>
 
 <script>
-import State from '../components/renderless/State.vue';
+import Model from '../components/renderless/Model.vue';
 
 export default {
   name: 'AppLayoutHeader',
@@ -32,7 +32,7 @@ export default {
     },
   },
   components: {
-    State,
+    Model,
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
   },
   computed: {
@@ -125,7 +125,7 @@ export default {
   },
 
   methods: {
-    // TODO this is part of the State component, too
+    // TODO this is part of the Model component, too
     changeGraph(graphName) {
       this.graphName =
         graphName === 'Sandbox' ? 'Sandbox' : this.$defaultGraphName;
@@ -162,13 +162,16 @@ export default {
           );
           break;
         case 'Reset':
-          // TODO replace with State renderless component
+          // TODO replace with Model renderless component
           // Visit.deleteAll();
           // Setting.deleteAll();
           window.location.reload();
           break;
       }
     },
+  },
+  mounted() {
+    console.log('AppLayoutHeader mounted');
   },
 };
 </script>
