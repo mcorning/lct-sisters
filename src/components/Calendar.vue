@@ -102,11 +102,11 @@
               Cancel
             </v-btn>
             <v-spacer />
-            <v-btn text color="secondary" @click="updateVisit">
+            <v-btn text color="secondary" @click="update('cache')">
               Save
             </v-btn>
             <v-spacer />
-            <v-btn text color="secondary" @click="logVisit">
+            <v-btn text color="secondary" @click="update('graph')">
               Log
             </v-btn>
           </v-card-actions>
@@ -130,12 +130,20 @@ export default {
     selectedSpace: Object,
     isConnected: Boolean,
     state: Object,
-    relevantEvents: Array,
+    onUpdate: Function,
   },
   components: {
     PickersMenu,
   },
   computed: {
+    // TODO NOTE: Classic ViewModel property here: Model provides primitive values
+    // and relevantEvents transforms them for the UI as an array of two entities.
+    // further refinement such as events in a date range would be handled as computed property or filter.
+    relevantEvents() {
+      // TODO should this property include all visits or only those for the selected day?
+      const x = [...this.state.visits, ...this.state.appointments];
+      return x;
+    },
     intervalCount() {
       return this.range * (60 / this.intervalMinutes) + 2;
     },
@@ -183,12 +191,8 @@ export default {
     };
   },
   methods: {
-    updateVisit() {
-      this.$emit('updateVisit', this.selectedEvent);
-      this.selectedOpen = false;
-    },
-    logVisit() {
-      this.$emit('logVisit', this.selectedEvent);
+    update(target) {
+      this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
     },
 

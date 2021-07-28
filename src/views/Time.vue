@@ -1,20 +1,10 @@
 <template>
   <Model>
-    <div
-      slot-scope="{
-        isConnected,
-        state,
-        relevantEvents,
-        onUpdateVisit,
-        onLogVisit,
-      }"
-    >
+    <div slot-scope="{ isConnected, state, onUpdate }">
       <Calendar
         :isConnected="isConnected"
         :state="state"
-        :relevantEvents="relevantEvents"
-        @updateVisit="onUpdateVisit"
-        @logVisit="onLogVisit"
+        :onUpdate="onUpdate"
       />
     </div>
   </Model>

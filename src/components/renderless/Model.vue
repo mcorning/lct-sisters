@@ -28,11 +28,6 @@ export default {
       return this.graphName === this.$defaultGraphName;
     },
 
-    relevantEvents() {
-      // TODO should this property include all visits or only those for the selected day?
-      const x = [...this.state.visits, ...this.state.appointments];
-      return x;
-    },
     isConnected() {
       return !!this.$socket.connected;
     },
@@ -155,8 +150,9 @@ export default {
   },
 
   methods: {
-    onUpdateVisit(visit) {
-      console.log(visit);
+    onUpdate(target, selectedEvent) {
+      console.log(target);
+      console.log(selectedEvent);
     },
 
     onLogVisit(payload) {
@@ -211,14 +207,13 @@ export default {
         };
         return msg;
       });
-    },
+    }, // TODO this is a good reason to refactor Place to include Visits
     /**
      * Makers let us revisit a place.
      * Iterate visits entity
      * Find place using visit.place_id
      * Use filtered places to add Markers to map (map passed in to event handler)
-     */ // TODO this is a good reason to refactor Place to include Visits
-    deserializeVisitAsMarker(visits) {
+     */ deserializeVisitAsMarker(visits) {
       if (!visits) {
         return;
       }
@@ -492,18 +487,21 @@ export default {
     // so we can render children with Model data.
     // Step 1: Expose all data and methods that could be used by dynamic components
     return this.$scopedSlots.default({
+      // Global assets
       state: this.state,
+      isConnected: this.isConnected,
+
+      // Space assets
       onMarkerClicked: this.onMarkerClicked,
       onMarkerAdded: this.onMarkerAdded,
       onToWork: this.onToWork,
       onVisitPlace: this.onVisitPlace,
       onMakeAppointment: this.onMakeAppointment,
-      relevantEvents: this.relevantEvents,
-      isConnected: this.isConnected,
-      onLogVisit: this.onLogVisit,
       onDeletePlace: this.onDeletePlace,
+
+      // Time assets
       changeEvent: this.changeEvent,
-      onUpdateVisit: this.onUpdateVisit,
+      onUpdate: this.onUpdate,
     });
   },
 };
