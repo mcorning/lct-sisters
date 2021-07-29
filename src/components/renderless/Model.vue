@@ -8,6 +8,7 @@ import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
+import { Try } from '@/monads/TryCatch.js';
 
 import {
   err,
@@ -47,6 +48,7 @@ export default {
       avgStay: 1000 * 60 * 30,
       state: {},
       selectedMarker: null,
+      selectedEvent: null,
       pendingVisits: new Map(),
       loading: true,
       graphName: this.$defaultGraphName,
@@ -151,8 +153,26 @@ export default {
 
   methods: {
     onUpdate(target, selectedEvent) {
-      console.log(target);
-      console.log(selectedEvent);
+      this.selectedEvent = selectedEvent;
+      const f = this[target];
+      Try(f)
+        .map((x) => {
+          const msg =
+            typeof x === 'undefined'
+              ? 'Waiting for Promise...'
+              : `Result of TryCatch: ${x}`;
+          return msg;
+        })
+        .matchWith({
+          right: (v) => this.$emit('success', v),
+          left: (v) => this.$emit('error', v),
+        });
+    },
+
+    cache() {
+      Visit.updatePromise({ visit: this.selectedEvent }).then((p) => {
+        this.$emit('success', `...Updated visit to ${p.name}`);
+      });
     },
 
     onLogVisit(payload) {
@@ -328,17 +348,6 @@ export default {
           }
         }
       );
-    },
-
-    funcx(payload) {
-      const { action, entity } = payload;
-      if (action === 'test') {
-        return 'Funtion (funcx) test passed';
-      }
-      const first = entity.category === 'You' ? 'isDay' : 'isCategory';
-      const second = action;
-      const fun = this.actions[first][second];
-      fun();
     },
 
     getGraphName() {

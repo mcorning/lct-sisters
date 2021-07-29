@@ -1,5 +1,5 @@
 <template>
-  <Model>
+  <Model @error="onError" @success="onSuccess">
     <div slot-scope="{ isConnected, state, onUpdate }">
       <Calendar
         :isConnected="isConnected"
@@ -24,7 +24,14 @@ export default {
   data() {
     return {};
   },
-  methods: {},
+  methods: {
+    onError(error) {
+      throw error;
+    },
+    onSuccess(msg) {
+      console.log(msg);
+    },
+  },
 
   mounted() {
     console.log('Time.vue mounted');

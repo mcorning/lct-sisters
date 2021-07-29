@@ -87,42 +87,35 @@ export default class Visit extends Model {
     });
   }
 
-  // Model addVisit() creates the visit (without reference to the exposure graph (see below))
+  // Model add/updateVisit() creates the visit (without reference to the exposure graph (see below))
+  // error handling for data handled by client
   static updatePromise(data) {
-    return new Promise((resolve, reject) => {
-      const { visit } = data;
-      // ensure the incoming data is for Visits (not Appointments)
-      if (!visit.category || visit.category !== 'You') {
-        reject({
-          violation: 'contract',
-          message: 'Object was not a Visit or Shift',
-        });
-      }
-      console.log('update Visit with', JSON.stringify(visit, null, 3));
-      this.$create({
-        data: visit,
-      })
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
+    const { visit } = data;
+    console.log(
+      `Updated Visit for ${visit.name} with`,
+      JSON.stringify(visit, null, 3)
+    );
+    return this.$create({
+      data: visit,
+    })
+      .then((p) => p[0])
+      .catch((e) => e);
   }
 
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
   static updateLoggedPromise(data) {
     const { visitId, loggedNodeId, useGraphName } = data;
-    return new Promise((resolve, reject) => {
-      console.log(`Update Visit with`, JSON.stringify(data, null, 3));
-      this.$update({
-        where: visitId,
-        data: {
-          loggedNodeId: loggedNodeId,
-          graphName: useGraphName,
-          color: 'primary',
-        },
-      })
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
+    console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
+    return this.$update({
+      where: visitId,
+      data: {
+        loggedNodeId: loggedNodeId,
+        graphName: useGraphName,
+        color: 'primary',
+      },
+    })
+      .then((p) => p[0])
+      .catch((e) => e);
   }
 
   static deletePromise(data) {
