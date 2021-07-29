@@ -5,6 +5,7 @@
         :isConnected="isConnected"
         :state="state"
         :onUpdate="onUpdate"
+        :successFul="successFul"
       />
     </div>
   </Model>
@@ -22,7 +23,7 @@ export default {
     Model,
   },
   data() {
-    return {};
+    return { successFul: '' };
   },
   methods: {
     onError(error) {
@@ -30,6 +31,7 @@ export default {
     },
     onSuccess(msg) {
       console.log(msg);
+      this.successFul = msg;
     },
   },
 

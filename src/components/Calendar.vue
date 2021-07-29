@@ -117,6 +117,14 @@
     <div class="mt-5 mb-0 ml-15">
       <small>{{ status }}</small>
     </div>
+    <v-snackbar v-model="snackbar" :color="confirmationColor"
+      >{{ confirmationMessage }}
+      <template v-slot:action="{ attrs }">
+        <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -131,6 +139,7 @@ export default {
     isConnected: Boolean,
     state: Object,
     onUpdate: Function,
+    successFul: String,
   },
   components: {
     PickersMenu,
@@ -188,12 +197,22 @@ export default {
 
       status: 'Ready',
       graphName: this.$defaultGraphName,
+
+      snackbar: false,
+      confirmationColor: 'success',
+      confirmationMessage: '',
     };
   },
   methods: {
     update(target) {
-      this.onUpdate(target, this.selectedEvent);
+      let msg = this.onUpdate(target, this.selectedEvent);
+      const { confirmationColor, confirmationMessage } = msg;
+      this.confirmationColor = confirmationColor
+        ? confirmationColor
+        : 'success';
+      this.confirmationMessage = confirmationMessage || msg;
       this.selectedOpen = false;
+      this.snackbar = true;
     },
 
     scrollToTime() {
@@ -368,7 +387,16 @@ export default {
     },
   },
 
-  watch: {},
+  watch: {
+    successFul(msg) {
+      const { confirmationColor, confirmationMessage } = msg;
+      this.confirmationColor = confirmationColor
+        ? confirmationColor
+        : 'success';
+      this.confirmationMessage = confirmationMessage || msg;
+      this.snackbar = true;
+    },
+  },
 
   mounted() {
     this.ready = true;

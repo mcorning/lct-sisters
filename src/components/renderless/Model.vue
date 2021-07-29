@@ -154,25 +154,47 @@ export default {
   methods: {
     onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
+      // return the final result of this implementation of Try() to caller
+      // NOTE: The actual TryCatch monad does not change.
+      // The different content configurations of the monad do.
       const f = this[target];
-      Try(f)
-        .map((x) => {
-          const msg =
-            typeof x === 'undefined'
-              ? 'Waiting for Promise...'
-              : `Result of TryCatch: ${x}`;
-          return msg;
-        })
-        .matchWith({
-          right: (v) => this.$emit('success', v),
-          left: (v) => this.$emit('error', v),
-        });
+      return (
+        Try(f) //#0: call cache() or graph() and get a right() or a left() function (with the result of the try{}) as result
+          .map(
+            //#2 pass this function (along with the result of the try/catch) to the map() function of the right() or left() function
+            // here, absent async-either (used elsewhere), we pass either the resultOfTryCatch or a message about a pending Promise
+            (resultOfTryCatch) => {
+              return resultOfTryCatch || 'Waiting for Promise...';
+            }
+          )
+          // pass your matchWith object here to the matchWith of the right() or left() function
+          .matchWith({
+            right: (v) => {
+              console.log(success(v));
+              // all's well? return the result of the map() function
+              return v;
+            },
+            left: (v) => {
+              console.log(err(v));
+              // here's where you might send the error to the server error stream
+              // otherwise, the error get's handled on the UI with the snackbar
+              throw v;
+            },
+          })
+      );
     },
 
     cache() {
+      //#1 return value to Try() where map() handles this value
       Visit.updatePromise({ visit: this.selectedEvent }).then((p) => {
         this.$emit('success', `...Updated visit to ${p.name}`);
       });
+    },
+    graph() {
+      // TODO handle the notconnected state
+      // better make this a Maybe Monad, instead. <g/>
+      const x = this.onLogVisit({ visit: this.selectedEvent });
+      return x; //#1 return value to Try() where map() handles this value
     },
 
     onLogVisit(payload) {
@@ -183,8 +205,9 @@ export default {
       const self = this;
       // TODO There's no UI here. Use a Maybe monad, instead.
       // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
-      if (!this.$socket.client.userID) {
+      if (!this.$socket.connected) {
         const msg = {
+          type: 'warning',
           confirmationColor: 'orange',
           confirmationMessage: `You are not connected to the server`,
         };
