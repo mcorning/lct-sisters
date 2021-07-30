@@ -8,7 +8,6 @@ import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
-import { Try } from '@/monads/TryCatch.js';
 
 import {
   err,
@@ -20,6 +19,8 @@ import {
   roundTime,
 } from '../../utils/helpers';
 import { DateTime, getNow } from '../../utils/luxonHelpers';
+import { firstOrNone } from '@/fp/functors/utils.js';
+import { Try } from '@/fp/monads/TryCatch.js';
 
 export default {
   props: {},
@@ -447,7 +448,7 @@ export default {
       // Copy all properties from newState on to
       // this.state, overriding anything on this.state
       this.state = { ...this.state, ...newState };
-      console.log(this.state);
+      console.log(info('updated state:'), this.state);
     },
 
     validateEntities() {
@@ -467,9 +468,29 @@ export default {
         console.groupEnd();
       });
     },
+
+    mountedX() {
+      // TODO there are Either and Maybe monads everywhere here:
+      Visit.$fetch()
+        .map((response) => response) //this is promise map
+        .toEither()
+        .map((all) => all.visits) //this is Either map
+        .matchWith({
+          ok: (v) => firstOrNone(v).map(console.log),
+          error: (err) => {
+            this.$emit('error', {
+              err,
+            });
+          },
+        });
+    },
   },
 
-  watch: {},
+  watch: {
+    loading() {
+      this.mountedX();
+    },
+  },
 
   mounted() {
     const self = this;
@@ -480,7 +501,7 @@ export default {
       Setting.$fetch(),
     ])
       .then((entities) => {
-        const places = entities[0].places.filter((v) => v.name) || [];
+        const places = entities[0].places?.filter((v) => v.name) || [];
         const visits =
           entities[1].visits?.filter(
             (v) =>
@@ -493,8 +514,8 @@ export default {
           ) || [];
         const appointments = entities[2].appointments || [];
         // there is only one settings array element
-        const settings = entities[3].settings[0] || [];
-
+        const s = entities[3].settings;
+        const settings = s ? s[0] : [];
         self.updateState({ places, visits, appointments, settings });
 
         self.validateEntities();

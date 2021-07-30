@@ -5,7 +5,7 @@
         :isConnected="isConnected"
         :state="state"
         :onUpdate="onUpdate"
-        :successFul="successFul"
+        :confirmations="confirmations"
       />
     </div>
   </Model>
@@ -23,15 +23,19 @@ export default {
     Model,
   },
   data() {
-    return { successFul: '' };
+    return { confirmations: '' };
   },
   methods: {
-    onError(error) {
-      throw error;
+    onError(payload) {
+      // let the global error handler pick up and display this error
+      throw new Error(
+        `Time.vue error message: ${payload.err.message}`,
+        payload.err
+      );
     },
     onSuccess(msg) {
       console.log(msg);
-      this.successFul = msg;
+      this.confirmations = msg;
     },
   },
 

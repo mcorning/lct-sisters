@@ -38,7 +38,6 @@
 
 <script>
 //thanks to danvega: https://youtu.be/JwccQYpsE2Q for tip on router events
-
 export default {
   name: 'App',
   components: {},
@@ -106,7 +105,7 @@ export default {
   },
 
   created() {
-    console.group('Creating PWA:');
+    console.time('Created PWA:');
 
     console.log('Namespace', process.env.VUE_APP_NAMESPACE);
 
@@ -131,7 +130,7 @@ export default {
       console.log('PWA was installed');
     });
     //#endregion PWA
-    console.groupEnd();
+    console.timeEnd('Created PWA:');
   },
 
   mounted() {},

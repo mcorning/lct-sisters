@@ -139,7 +139,7 @@ export default {
     isConnected: Boolean,
     state: Object,
     onUpdate: Function,
-    successFul: String,
+    confirmations: String,
   },
   components: {
     PickersMenu,
@@ -376,7 +376,7 @@ export default {
     changeTimeStamp(cts) {
       const { year, month, day, hour, minute } = cts;
       let dt = DateTime.local(year, month, day, hour, minute);
-      return dt.toMillis();
+      return this.roundTime(dt.toMillis());
     },
 
     changeEvent(cts) {
@@ -388,7 +388,7 @@ export default {
   },
 
   watch: {
-    successFul(msg) {
+    confirmations(msg) {
       const { confirmationColor, confirmationMessage } = msg;
       this.confirmationColor = confirmationColor
         ? confirmationColor

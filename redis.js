@@ -264,7 +264,7 @@ function logVisit(data) {
       MERGE (v)-[r:visited{start:${start}, end:${end}, date: '${date}', interval: '${interval}'}]->(s)
         RETURN id(r)`;
 
-    console.log(warn('Visit query:', query));
+    console.log(warn(`${graphName} visit query: ${query}`));
     Graph.query(query)
       .then((results) => {
         let x = results.next();

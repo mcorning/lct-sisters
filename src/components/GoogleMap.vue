@@ -237,7 +237,7 @@ export default {
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address: self.defaultPoi }, (results, status) => {
         if (status !== `OK` || !results[0]) {
-          throw new Error(status);
+          throw new Error('GoogleMap.vue error:', status);
         }
 
         map.setCenter(results[0].geometry.location);

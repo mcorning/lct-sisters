@@ -27,7 +27,7 @@
       <v-menu
         ref="menuStartTime"
         v-model="menuStartTime"
-        :close-on-content-click="true"
+        :close-on-content-click="false"
         :nudge-right="40"
         :return-value.sync="startTime"
         transition="scale-transition"

@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.7.2912",
+  "version": "0.7.3015",
   "scripts": {
     "localhost": "vue-cli-service serve",
     "start": "node srv/index.js",
@@ -13,6 +13,7 @@
     "@vuex-orm/core": "^0.36.4",
     "cli-color": "^2.0.0",
     "core-js": "^3.14.0",
+    "either-async": "^1.0.3",
     "express": "^4.17.1",
     "ioredis": "^4.27.6",
     "iorejson": "^0.1.1",

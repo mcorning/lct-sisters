@@ -1,5 +1,5 @@
 <template>
-  <Model>
+  <Model @error="onError">
     <div
       slot-scope="{
         isConnected,
@@ -82,7 +82,15 @@ export default {
   data() {
     return {};
   },
-  methods: {},
+  methods: {
+    onError(payload) {
+      // let the global error handler pick up and display this error
+      throw new Error(
+        `Space.vue error message: ${payload.err.message}`,
+        payload.err
+      );
+    },
+  },
 
   mounted() {
     console.log('Space.vue mounted');
