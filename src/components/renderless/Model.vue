@@ -19,7 +19,7 @@ import {
   roundTime,
 } from '../../utils/helpers';
 import { DateTime, getNow } from '../../utils/luxonHelpers';
-import { firstOrNone } from '@/fp/functors/utils.js';
+import { firstOrNone, allOrNone, inspect } from '@/fp/functors/utils.js';
 import { Try } from '@/fp/monads/TryCatch.js';
 
 export default {
@@ -469,15 +469,56 @@ export default {
       });
     },
 
-    mountedX() {
-      // TODO there are Either and Maybe monads everywhere here:
+    mountedPrototype() {
+      // We are dealing here with and array. reference object element only with ok map:
       Visit.$fetch()
-        .map((response) => response) //this is promise map
+        .map((response) => response) //this is promise map. here we pass the identity monad.
         .toEither()
         .map((all) => all.visits) //this is Either map
         .matchWith({
+          // firstOrNone is a utility function for arrays to fetch the first element or a None.
           ok: (v) => firstOrNone(v).map(console.log),
           error: (err) => {
+            // let global error handler take over so we see the error in the snackbar.
+            this.$emit('error', {
+              err,
+            });
+          },
+        });
+    },
+
+    validVisits(visits) {
+      // TODO how do i use Either instead of checking for undefined visits?
+      const valid = visits.filter(
+        (v) =>
+          !(
+            Number.isNaN(v.end) ||
+            Number.isNaN(v.start) ||
+            !v.id ||
+            v.id.startsWith('$')
+          )
+      );
+      console.log('Valid Visits:', valid);
+      return valid;
+    },
+
+    mountedLab() {
+      Visit.$fetch()
+        .toEither() // first, let's see if there are any errors
+        .matchWith({
+          ok: (all) =>
+            // allOrNone returns a Maybe on an array either None if the array is empty
+            //or Some of the entire array.
+            // remember to use the entity name with the fetched object
+            allOrNone(all.visits).map((visits) => this.validVisits(visits)),
+
+          // firstOrNone is a utility function for arrays returning a Maybe
+          // of either Some (viz., the first element) or a None.
+          // firstOrNone(all.visits).map((v) =>
+          //   console.log('First Visit:\n', printJson(v))
+          // ),
+          error: (err) => {
+            // let global error handler take over so we see the error in the snackbar.
             this.$emit('error', {
               err,
             });
@@ -488,7 +529,7 @@ export default {
 
   watch: {
     loading() {
-      this.mountedX();
+      this.mountedLab();
     },
   },
 
