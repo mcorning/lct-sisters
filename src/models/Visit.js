@@ -1,6 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
+import { firstOrNone } from '@/fp/functors/utils';
 
 console.log('Loading Visit entity');
 
@@ -100,6 +101,27 @@ export default class Visit extends Model {
     })
       .then((p) => p[0])
       .catch((e) => e);
+  }
+  static update(visit) {
+    this.$create({
+      data: visit,
+    })
+
+      .toEither()
+      // .map((visit) =>
+      //   console.log(
+      //     `Updated Visit for ${firstOrNone(visit).name} with`,
+      //     JSON.stringify(visit, null, 3)
+      //   )
+      // )
+      .matchWith({
+        // firstOrNone is a utility function for arrays to fetch the first element or a None.
+        ok: (v) => console.log(firstOrNone(v)),
+        error: (err) => {
+          // let global error handler take over so we see the error in the snackbar.
+          console.log('Leaving error', err, 'to global error handler');
+        },
+      });
   }
 
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName

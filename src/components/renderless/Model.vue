@@ -19,7 +19,7 @@ import {
   roundTime,
 } from '../../utils/helpers';
 import { DateTime, getNow } from '../../utils/luxonHelpers';
-import { firstOrNone, allOrNone, inspect } from '@/fp/functors/utils.js';
+import { firstOrNone, allOrNone } from '@/fp/functors/utils.js';
 import { Try } from '@/fp/monads/TryCatch.js';
 
 export default {
@@ -40,7 +40,7 @@ export default {
       return this.settings?.sessionID;
     },
     username() {
-      return this.settings?.username || '';
+      return this.settings?.username || prompt('User name?');
     },
   },
 
@@ -153,6 +153,7 @@ export default {
   },
 
   methods: {
+    // TODO Rethink updates in terms of AsyncEither/Maybe
     onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
       // return the final result of this implementation of Try() to caller
@@ -405,12 +406,10 @@ export default {
       if (this.isConnected) {
         return 'Already connected';
       }
-      const { username, userID, sessionID } = this.settings;
-
-      if (!username) {
-        console.log(warn('No username yet. Let us get them signed up...'));
-        return;
-      }
+      const settings = Setting.getSettings()
+        ? Setting.getSettings()
+        : { username: prompt('Username?') };
+      const { username, userID, sessionID } = settings;
 
       const data = {
         data: {
@@ -447,10 +446,14 @@ export default {
     updateState(newState) {
       // Copy all properties from newState on to
       // this.state, overriding anything on this.state
+      // TODO NOTE: if any of the props in newState are undefined, iterating halts
+      // should we be using Maybes here?
       this.state = { ...this.state, ...newState };
-      console.log(info('updated state:'), this.state);
+      console.log('updated state:');
+      console.log(this.state);
     },
 
+    //deprecated. Visit and Appointment handle deleting old entries
     validateEntities() {
       // ensure we have identifiable entities that have valid start and end dates
       Visit.validateVisits().then((invalidVisits) => {
@@ -502,9 +505,31 @@ export default {
       return valid;
     },
 
+    visitLab() {
+      const visit = {
+        id: 1,
+        name: 'place.name',
+        place_id: `place.place_id`,
+        start: `starttime`,
+        end: `endtime`,
+        date: `DateTime.fromMillis(starttime).toISODate()`,
+        category: 'You',
+
+        timed: true,
+        marked: Date.now(),
+        graphName: `this.graphname`,
+        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+
+        // TODO setup isDefaultGraph
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+      };
+      Visit.update(visit);
+    },
+
     mountedLab() {
       Visit.$fetch()
         .toEither() // first, let's see if there are any errors
+        .inspect()
         .matchWith({
           ok: (all) =>
             // allOrNone returns a Maybe on an array either None if the array is empty
@@ -525,26 +550,34 @@ export default {
           },
         });
     },
+
+    validateUser() {},
   },
 
   watch: {
     loading() {
-      this.mountedLab();
+      // this.mountedLab();
+      //this.visitLab();
     },
   },
 
   mounted() {
     const self = this;
     Promise.all([
+      Setting.$fetch(),
       Place.$fetch(),
       Visit.$fetch(),
       Appointment.$fetch(),
-      Setting.$fetch(),
     ])
       .then((entities) => {
-        const places = entities[0].places?.filter((v) => v.name) || [];
+        const [allSettings, allPlaces, allVisits, allAppointments] = entities;
+        // TODO NOTE: this is one advantage to having the AppLayoutHeader use Model: we can tell easily when we have a new user.
+
+        // there is only one settings array element
+        const settings = allSettings.settings;
+        const places = allPlaces.places?.filter((v) => v.name) || [];
         const visits =
-          entities[1].visits?.filter(
+          allVisits.visits?.filter(
             (v) =>
               !(
                 Number.isNaN(v.end) ||
@@ -553,16 +586,18 @@ export default {
                 v.id.startsWith('$')
               )
           ) || [];
-        const appointments = entities[2].appointments || [];
-        // there is only one settings array element
-        const s = entities[3].settings;
-        const settings = s ? s[0] : [];
-        self.updateState({ places, visits, appointments, settings });
+        const appointments = allAppointments.appointments || [];
+        self.updateState({
+          settings,
+          places,
+          visits,
+          appointments,
+        });
 
-        self.validateEntities();
+        // self.validateEntities();
 
         self.connectMe();
-        console.log(success('mounted Model component'));
+        console.log(success('\tMODEL mounted'));
         self.loading = false;
         this.$emit('stateAvailable', this.funcx);
       })
@@ -584,6 +619,7 @@ export default {
       // Global assets
       state: this.state,
       isConnected: this.isConnected,
+      onConnectMe: this.onConnectMe,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

@@ -1,39 +1,45 @@
 <template>
-  <div>
-    <v-row align="center" justify="center">
+  <v-container fluid>
+    <Model> </Model>
+
+    <!-- <v-row align="center" justify="center">
       <v-spacer></v-spacer>
-      <v-col cols="12">
-        <v-card max-width="320">
-          <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
-          <v-card-subtitle
-            >Instead of time-consuming contact tracing driving COVID testing,
-            Local Contact Tracing deprives the virus of time to replicate and
-            mutate because you use your tracking data to drive testing and
-            treatment.
-          </v-card-subtitle>
+      <v-col cols="12"> -->
+    <v-card max-width="320">
+      <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
+      <v-card-subtitle>A COVID Early Warning System</v-card-subtitle>
+      <v-card-text>
+        LCT is our community's way of getting back to work safely. This means we
+        can balance the risk of infection against the risk of bankruptcy.
+      </v-card-text>
+      <v-card-text
+        >How? By depriving the virus of time to replicate and mutate. As soon as
+        you show symptoms or test positive, LCT sends alerts to all your tracked
+        visits. Each of those alerted users, in turn, alerts their own tracked
+        visits. An entire small community or large organization can get tested
+        and treated orders of magnitude faster than with conventional
+        time-consuming contract tracing.
+      </v-card-text>
+      <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
 
-          <v-card-text>
-            LCT is our community's way of getting back to work safely. This
-            means we can balance the risk of infection against the risk of
-            bankruptcy.
-          </v-card-text>
-          <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
-
-          <v-card-actions>
-            <myCard @go="onGo"></myCard>
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
-  </div>
+      <v-card-actions>
+        <myCard @go="onGo"></myCard>
+      </v-card-actions>
+    </v-card>
+    <!-- </v-col>
+    </v-row> -->
+  </v-container>
 </template>
 
 <script>
+import Model from '@/components/renderless/Model.vue';
+
 export default {
   name: 'WelcomeCard',
   props: {},
   components: {
     myCard: () => import('./myCard.vue'),
+    Model,
   },
 
   computed: {
@@ -67,6 +73,8 @@ export default {
 
   beforeUnmount() {},
 
-  mounted() {},
+  mounted() {
+    console.log('\tWELCOMECARD mounted');
+  },
 };
 </script>

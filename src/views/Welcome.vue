@@ -1,12 +1,12 @@
 <template>
   <v-row justify="center" no-gutters>
-    <!-- <Model> -->
-    <welcomeCard
-      slot-scope="{ onConnectMe }"
-      @connectMe="onConnectMe($event)"
-    />
-    >
-    <!-- </Model    > -->
+    <Model>
+      <welcomeCard
+        slot-scope="{ onConnectMe }"
+        @connectMe="onConnectMe($event)"
+      />
+      >
+    </Model>
   </v-row>
 </template>
 
@@ -23,6 +23,7 @@
 
 // import Model from '../components/renderless/Model.vue';
 import welcomeCard from '../components/cards/welcomeCard.vue';
+import Model from '@/components/renderless/Model.vue';
 
 import Setting from '@/models/Setting';
 
@@ -36,7 +37,7 @@ export default {
 
   components: {
     welcomeCard,
-    // Model,
+    Model,
   },
 
   computed: {
@@ -91,7 +92,9 @@ export default {
 
   created() {},
 
-  async mounted() {},
+  async mounted() {
+    console.log('\tWELCOME.vue mounted');
+  },
 
   // TODO Figure out how to unsub events
   destroyed() {},

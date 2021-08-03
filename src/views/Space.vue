@@ -93,7 +93,7 @@ export default {
   },
 
   mounted() {
-    console.log('Space.vue mounted');
+    console.log('\tSPACE.vue mounted');
   },
 };
 </script>

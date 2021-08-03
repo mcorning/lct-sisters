@@ -1,5 +1,5 @@
 <template>
-  <Model>
+  <Model @welcome="onWelcome">
     <v-app-bar slot-scope="{ isConnected }" color="primary" app dark>
       <v-toolbar-title
         >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
@@ -125,6 +125,12 @@ export default {
   },
 
   methods: {
+    onWelcome() {
+      alert('Welcome');
+      this.$router.push({
+        name: 'Welcome',
+      });
+    },
     // TODO this is part of the Model component, too
     changeGraph(graphName) {
       this.graphName =
@@ -171,7 +177,7 @@ export default {
     },
   },
   mounted() {
-    console.log('AppLayoutHeader mounted');
+    console.log('\tAppLayoutHeader mounted');
   },
 };
 </script>

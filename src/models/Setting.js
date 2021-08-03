@@ -1,6 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
+import { firstOrNone } from '@/fp/functors/utils';
 
 console.log('Loading Setting entity');
 
@@ -25,18 +26,44 @@ export default class Setting extends Model {
     };
   }
 
+  static getSettings() {
+    let x = Setting.all()[0];
+    console.log('settings:', JSON.stringify(x, null, 3));
+    return x;
+  }
+
   static updatePromise(settings) {
     return new Promise((resolve, reject) => {
       console.log(
         'Update Setting collection with',
         JSON.stringify(settings, null, 3)
       );
-      this.$create(
-         settings,
-      )
+      this.$create(settings)
         .then((p) => resolve(p))
         .catch((e) => reject(e));
     });
+  }
+
+  static update(settings) {
+    // settings like this puts too much knowledge about this api on the caller.
+    // better if we wrap the settings data in a data object here.
+    this.$create({ data: settings })
+
+      .toEither()
+      // .map((visit) =>
+      //   console.log(
+      //     `Updated Visit for ${firstOrNone(visit).name} with`,
+      //     JSON.stringify(visit, null, 3)
+      //   )
+      // )
+      .matchWith({
+        // firstOrNone is a utility function for arrays to fetch the first element or a None.
+        ok: (v) => console.log(firstOrNone(v)),
+        error: (err) => {
+          // let global error handler take over so we see the error in the snackbar.
+          console.log('Leaving error', err, 'to global error handler');
+        },
+      });
   }
 
   static deletePromise() {

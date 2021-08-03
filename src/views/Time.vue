@@ -40,7 +40,7 @@ export default {
   },
 
   mounted() {
-    console.log('Time.vue mounted');
+    console.log('\tTIME.vue mounted');
   },
 };
 </script>

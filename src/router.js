@@ -1,7 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Space from '@/views/Space.vue';
-// import Time from '@/components/Calendar.vue';
 import Time from '@/views/Time.vue';
 
 Vue.use(VueRouter);
@@ -19,15 +18,15 @@ const routes = [
     component: Time,
     props: true,
   },
-  {
-    path: '/welcome',
-    name: 'Welcome',
-    component: () => import('@/views/Welcome.vue'),
-    props: true,
-    meta: {
-      layout: 'AppLayoutWelcome',
-    },
-  },
+  // {
+  //   path: '/welcome',
+  //   name: 'Welcome',
+  //   component: () => import('@/views/Welcome.vue'),
+  //   props: true,
+  //   // meta: {
+  //   //   layout: 'AppLayoutWelcome',
+  //   // },
+  // },
 
   {
     path: '/warning',

@@ -38,7 +38,7 @@ export default {
     },
   },
   mounted() {
-    console.log('AppLayoutFooter mounted');
+    console.log('\tAppLayoutFooter mounted');
   },
 };
 </script>
