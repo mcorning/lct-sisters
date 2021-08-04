@@ -449,8 +449,8 @@ export default {
       // TODO NOTE: if any of the props in newState are undefined, iterating halts
       // should we be using Maybes here?
       this.state = { ...this.state, ...newState };
-      console.log('updated state:');
-      console.log(this.state);
+      console.log('Updated state:');
+      console.log(printJson(this.state));
     },
 
     //deprecated. Visit and Appointment handle deleting old entries
@@ -552,6 +552,31 @@ export default {
     },
 
     validateUser() {},
+
+    getStomeEntityData(source) {
+      return allOrNone(source).match({
+        some: (v) => {
+          console.log(success(`${v[0].constructor.name}:\n`, printJson(v)));
+          return v;
+        },
+
+        none: () => {
+          return [];
+        },
+      });
+    },
+
+    tryForEntityData(f, label) {
+      return Try(f).matchWith({
+        right: (v) => {
+          console.log(success(label, v ? printJson(v) : 'nothing yet'));
+          return v;
+        },
+        left: (v) => {
+          console.log(err(v));
+        },
+      });
+    },
   },
 
   watch: {
@@ -571,22 +596,33 @@ export default {
     ])
       .then((entities) => {
         const [allSettings, allPlaces, allVisits, allAppointments] = entities;
-        // TODO NOTE: this is one advantage to having the AppLayoutHeader use Model: we can tell easily when we have a new user.
 
-        // there is only one settings array element
-        const settings = allSettings.settings;
-        const places = allPlaces.places?.filter((v) => v.name) || [];
-        const visits =
-          allVisits.visits?.filter(
-            (v) =>
-              !(
-                Number.isNaN(v.end) ||
-                Number.isNaN(v.start) ||
-                !v.id ||
-                v.id.startsWith('$')
-              )
-          ) || [];
-        const appointments = allAppointments.appointments || [];
+        const settings = self.getStomeEntityData(allSettings.settings);
+
+        const places = self.tryForEntityData(
+          () => allPlaces.places?.filter((v) => v.name),
+          'Filtered Places:'
+        );
+
+        const visits = self.tryForEntityData(
+          () =>
+            allVisits.visits?.filter(
+              (v) =>
+                !(
+                  Number.isNaN(v.end) ||
+                  Number.isNaN(v.start) ||
+                  !v.id ||
+                  v.id.startsWith('$')
+                )
+            ),
+          'Filtered Visits:'
+        );
+
+        const appointments = self.getStomeEntityData(
+          allAppointments.appointments
+        );
+
+        console.log('appointments', appointments);
         self.updateState({
           settings,
           places,
@@ -594,12 +630,9 @@ export default {
           appointments,
         });
 
-        // self.validateEntities();
-
         self.connectMe();
         console.log(success('\tMODEL mounted'));
         self.loading = false;
-        this.$emit('stateAvailable', this.funcx);
       })
       .catch((err) => {
         throw err;

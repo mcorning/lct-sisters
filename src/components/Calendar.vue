@@ -150,8 +150,13 @@ export default {
     // further refinement such as events in a date range would be handled as computed property or filter.
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
-      const x = [...this.state.visits, ...this.state.appointments];
-      return x;
+      try {
+        console.log(this.state.appointments, '.');
+        const x = [...this.state.visits, ...this.state.appointments];
+        return x;
+      } catch (error) {
+        return [];
+      }
     },
     intervalCount() {
       return this.range * (60 / this.intervalMinutes) + 2;

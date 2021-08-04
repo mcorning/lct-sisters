@@ -27,9 +27,7 @@ export default class Setting extends Model {
   }
 
   static getSettings() {
-    let x = Setting.all()[0];
-    console.log('settings:', JSON.stringify(x, null, 3));
-    return x;
+    return Setting.all()[0];
   }
 
   static updatePromise(settings) {

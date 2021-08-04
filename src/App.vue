@@ -131,9 +131,6 @@ export default {
     });
     //#endregion PWA
     console.timeEnd('Created PWA:');
-    // Setting.$fetch().then((all) => {
-    //   alert(all.settings.username);
-    // });
   },
 
   mounted() {

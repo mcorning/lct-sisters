@@ -19,13 +19,15 @@ export default {
     // To create markers during mounting and delete markers in the UI,
     // fetch some data out of places entity
     locations() {
-      return this.state.places.map((v) => {
-        return {
-          position: { lat: v.lat, lng: v.lng },
-          place_id: v.place_id,
-          name: v.name,
-        };
-      });
+      return (
+        this.state.places?.map((v) => {
+          return {
+            position: { lat: v.lat, lng: v.lng },
+            place_id: v.place_id,
+            name: v.name,
+          };
+        }) || []
+      );
     },
     visits() {
       return this.state.visits.filter((v) => v.name);
