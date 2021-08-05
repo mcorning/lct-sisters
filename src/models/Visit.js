@@ -1,8 +1,8 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import { firstOrNone } from '@/fp/functors/utils';
-
+import '@/fp/monads/eitherAsync';
+import { allOrNone } from '@/fp/utils';
 console.log('Loading Visit entity');
 
 export default class Visit extends Model {
@@ -66,57 +66,59 @@ export default class Visit extends Model {
       .where((visit) => visit.category === 'You')
       .get();
   }
-  static updateFieldPromise(data) {
-    return new Promise((resolve, reject) => {
-      const { entity } = data;
+  // static updateFieldPromise(data) {
+  //   return new Promise((resolve, reject) => {
+  //     const { entity } = data;
 
-      // ensure the incoming data is for Visits (not Appointments)
-      if (entity.category !== 'You') {
-        reject({
-          violation: 'contract',
-          message: 'Object was not a Visit or Shift',
-        });
-      }
-      this.$update({
-        where: entity.id,
-        data: entity,
-      })
-        .then((p) => {
-          resolve(p[0]);
-        })
-        .catch((e) => reject(e));
-    });
-  }
+  //     // ensure the incoming data is for Visits (not Appointments)
+  //     if (entity.category !== 'You') {
+  //       reject({
+  //         violation: 'contract',
+  //         message: 'Object was not a Visit or Shift',
+  //       });
+  //     }
+  //     this.$update({
+  //       where: entity.id,
+  //       data: entity,
+  //     })
+  //       .then((p) => {
+  //         resolve(p[0]);
+  //       })
+  //       .catch((e) => reject(e));
+  //   });
+  // }
 
   // Model add/updateVisit() creates the visit (without reference to the exposure graph (see below))
   // error handling for data handled by client
-  static updatePromise(data) {
-    const { visit } = data;
-    console.log(
-      `Updated Visit for ${visit.name} with`,
-      JSON.stringify(visit, null, 3)
-    );
+  // static updatePromise(data) {
+  //   const { visit } = data;
+  //   console.log(
+  //     `Updated Visit for ${visit.name} with`,
+  //     JSON.stringify(visit, null, 3)
+  //   );
+  //   return this.$create({
+  //     data: visit,
+  //   })
+  //     .then((p) => p[0])
+  //     .catch((e) => e);
+  // }
+
+  static update(visit) {
     return this.$create({
       data: visit,
     })
-      .then((p) => p[0])
-      .catch((e) => e);
-  }
-  static update(visit) {
-    this.$create({
-      data: visit,
-    })
-
       .toEither()
-      // .map((visit) =>
-      //   console.log(
-      //     `Updated Visit for ${firstOrNone(visit).name} with`,
-      //     JSON.stringify(visit, null, 3)
-      //   )
-      // )
-      .matchWith({
-        // firstOrNone is a utility function for arrays to fetch the first element or a None.
-        ok: (v) => console.log(firstOrNone(v)),
+      .map((visits) =>
+        allOrNone(visits).match({
+          some: (value) => {
+            console.log(JSON.stringify(value, null, 3));
+            return value;
+          },
+          none: () => console.log(`there is no visit to update `),
+        })
+      )
+      .cata({
+        ok: (v) => v,
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
           console.log('Leaving error', err, 'to global error handler');
@@ -125,7 +127,7 @@ export default class Visit extends Model {
   }
 
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
-  static updateLoggedPromise(data) {
+  static updateById(data) {
     const { visitId, loggedNodeId, useGraphName } = data;
     console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
     return this.$update({
@@ -136,8 +138,14 @@ export default class Visit extends Model {
         color: 'primary',
       },
     })
-      .then((p) => p[0])
-      .catch((e) => e);
+      .toEither()
+      .cata({
+        ok: (v) => v,
+        error: (err) => {
+          // let global error handler take over so we see the error in the snackbar.
+          console.log('Leaving error', err, 'to global error handler');
+        },
+      });
   }
 
   static deletePromise(data) {

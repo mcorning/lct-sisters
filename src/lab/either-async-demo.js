@@ -1,4 +1,4 @@
-require('either-async');
+require('./either-async-demo');
 
 Promise.resolve(5)
   .toEither()

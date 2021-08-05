@@ -19,8 +19,8 @@ import {
   roundTime,
 } from '../../utils/helpers';
 import { DateTime, getNow } from '../../utils/luxonHelpers';
-import { firstOrNone, allOrNone } from '@/fp/functors/utils.js';
-import { Try } from '@/fp/monads/TryCatch.js';
+import { firstOrNone, allOrNone } from '@/fp/utils.js';
+import { Try } from '@/fp/functors/TryCatch.js';
 
 export default {
   props: {},
@@ -102,15 +102,7 @@ export default {
       this.updateState({ sessionID, userID, username });
 
       const data = { data: { id: 1, sessionID, userID, username } };
-      Setting.updatePromise(data)
-        .then((s) => {
-          console.info(
-            info('Settings after session() event update:', printJson(s))
-          );
-        })
-        .catch((e) => {
-          console.error(err(printJson(e)));
-        });
+      Setting.update(data);
 
       // attach the session session data to the next reconnection attempts
       console.log(
@@ -240,7 +232,7 @@ export default {
           loggedNodeId: node.id,
           useGraphName: self.getGraphName(),
         };
-        Visit.updateLoggedPromise(data).then((v) => {
+        Visit.updateById(data).then((v) => {
           console.log(success(`Returned Visit:`, printJson(v)));
           console.log(highlight(`Updated Visit to:`, printJson(visit)));
         });
@@ -332,7 +324,8 @@ export default {
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };
 
-      Visit.updatePromise({ visit }).then((visits) => {
+      // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
+      Visit.update(visit).then((visits) => {
         this.updateState(visits);
         this.$router.push({
           name: 'Time',
@@ -412,24 +405,14 @@ export default {
       const { username, userID, sessionID } = settings;
 
       const data = {
-        data: {
-          username,
-          userID,
-          sessionID,
-          id: 1,
-        },
+        username,
+        userID,
+        sessionID,
+        id: 1,
       };
 
       console.info(warn('data:', JSON.stringify(data, null, 3)));
-      Setting.updatePromise(data)
-        .then((s) => {
-          console.info(
-            info('Settings after connectMe() update:', printJson(s))
-          );
-        })
-        .catch((e) => {
-          console.error(err(printJson(e)));
-        });
+      Setting.update(data);
 
       this.$socket.client.auth = {
         username,
@@ -604,6 +587,7 @@ export default {
           'Filtered Places:'
         );
 
+        // TODO i think this is a place where you can compose functions. first function gets the correct filter predicate. second function uses that predicate in the filter functor.
         const visits = self.tryForEntityData(
           () =>
             allVisits.visits?.filter(

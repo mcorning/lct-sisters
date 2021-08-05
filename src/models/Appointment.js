@@ -2,7 +2,8 @@
 
 import { Model } from '@vuex-orm/core';
 import { DateTime } from '../utils/luxonHelpers';
-
+import '@/fp/monads/eitherAsync';
+import { allOrNone } from '@/fp/utils';
 console.log('Loading Appointment entity');
 
 export default class Appointment extends Model {
@@ -80,51 +81,70 @@ export default class Appointment extends Model {
       .get();
   }
 
-  static updateFieldPromise(data) {
-    return new Promise((resolve, reject) => {
-      const { entity } = data;
+  // static updateFieldPromise(data) {
+  //   return new Promise((resolve, reject) => {
+  //     const { entity } = data;
 
-      // ensure the incoming data is for Visits (not Appointments)
-      if (entity.category !== 'Them') {
-        reject({
-          violation: 'contract',
-          message: 'Object was not an Appointment',
-        });
-      }
-      this.$update({
-        where: entity.id,
-        data: entity,
-      })
-        .then((p) => {
-          resolve(p[0]);
-        })
-        .catch((e) => reject(e));
-    });
+  //     // ensure the incoming data is for Visits (not Appointments)
+  //     if (entity.category !== 'Them') {
+  //       reject({
+  //         violation: 'contract',
+  //         message: 'Object was not an Appointment',
+  //       });
+  //     }
+  //     this.$update({
+  //       where: entity.id,
+  //       data: entity,
+  //     })
+  //       .then((p) => {
+  //         resolve(p[0]);
+  //       })
+  //       .catch((e) => reject(e));
+  //   });
+  // }
+
+  // // Calendar addEvent() creates the appointment (without reference to the exposure graph (see below))
+  // static updatePromise(data) {
+  //   return new Promise((resolve, reject) => {
+  //     const { entity } = data;
+  //     // ensure the incoming data is for Visits (not Appointments)
+  //     if (entity.category !== 'Them') {
+  //       reject({
+  //         violation: 'contract',
+  //         message: 'Object was not an Appointment',
+  //       });
+  //     }
+  //     console.log(
+  //       'Promise to update Appointment with',
+  //       JSON.stringify(entity, null, 3)
+  //     );
+  //     this.$create({
+  //       data: entity,
+  //     })
+  //       .then((a) => resolve(a))
+  //       .catch((e) => reject(e));
+  //   });
+  // }
+
+  static update(appointment) {
+    this.$create({
+      data: appointment,
+    })
+      .toEither()
+      // .map((appointment) =>
+      //   console.log(
+      //     `Updated Visit for ${firstOrNone(appointment).name} with`,
+      //     JSON.stringify(appointment, null, 3)
+      //   )
+      // )
+      .cata({
+        ok: (v) => console.log(allOrNone(v)),
+        error: (err) => {
+          // let global error handler take over so we see the error in the snackbar.
+          console.log('Leaving error', err, 'to global error handler');
+        },
+      });
   }
-
-  // Calendar addEvent() creates the appointment (without reference to the exposure graph (see below))
-  static updatePromise(data) {
-    return new Promise((resolve, reject) => {
-      const { entity } = data;
-      // ensure the incoming data is for Visits (not Appointments)
-      if (entity.category !== 'Them') {
-        reject({
-          violation: 'contract',
-          message: 'Object was not an Appointment',
-        });
-      }
-      console.log(
-        'Promise to update Appointment with',
-        JSON.stringify(entity, null, 3)
-      );
-      this.$create({
-        data: entity,
-      })
-        .then((a) => resolve(a))
-        .catch((e) => reject(e));
-    });
-  }
-
   static deletePromise(data) {
     return new Promise((resolve, reject) => {
       // instead of explicit test for Appointment here (as we check for visits in Visit)...

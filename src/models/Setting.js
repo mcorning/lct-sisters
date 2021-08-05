@@ -1,7 +1,8 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import { firstOrNone } from '@/fp/functors/utils';
+import '@/fp/monads/eitherAsync';
+import { firstOrNone } from '@/fp/utils';
 
 console.log('Loading Setting entity');
 
@@ -31,22 +32,16 @@ export default class Setting extends Model {
   }
 
   static updatePromise(settings) {
-    return new Promise((resolve, reject) => {
-      console.log(
-        'Update Setting collection with',
-        JSON.stringify(settings, null, 3)
-      );
-      this.$create(settings)
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
+    console.log(
+      'Update Setting collection with',
+      JSON.stringify(settings, null, 3)
+    );
+    this.$create({ data: settings });
   }
 
   static update(settings) {
-    // settings like this puts too much knowledge about this api on the caller.
-    // better if we wrap the settings data in a data object here.
     this.$create({ data: settings })
-
+      .then((v) => v)
       .toEither()
       // .map((visit) =>
       //   console.log(
@@ -54,9 +49,17 @@ export default class Setting extends Model {
       //     JSON.stringify(visit, null, 3)
       //   )
       // )
-      .matchWith({
-        // firstOrNone is a utility function for arrays to fetch the first element or a None.
-        ok: (v) => console.log(firstOrNone(v)),
+      .cata({
+        ok: (v) =>
+          console.log(
+            firstOrNone(v).match({
+              some: (value) => {
+                console.log(JSON.stringify(value, null, 3));
+                return value;
+              },
+              none: () => console.log(`there is no Settings to update `),
+            })
+          ),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
           console.log('Leaving error', err, 'to global error handler');
@@ -65,18 +68,8 @@ export default class Setting extends Model {
   }
 
   static deletePromise() {
-    return new Promise((resolve, reject) => {
-      console.log(`Deleting Setting`);
-      this.$delete(1)
-        .then((p) => {
-          if (p) {
-            resolve(p);
-          } else {
-            throw 'Nothing to delete';
-          }
-        })
-        .catch((e) => reject(e));
-    });
+    console.log(`Deleting Settings`);
+    this.$delete(1);
   }
 
   static async deleteAll() {
@@ -85,10 +78,6 @@ export default class Setting extends Model {
   }
 
   static deleteAllPromise() {
-    return new Promise((resolve, reject) => {
-      this.$deleteAll()
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
+    this.$deleteAll();
   }
 }
