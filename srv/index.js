@@ -283,10 +283,12 @@ io.on('connection', (socket) => {
     // call the graph
     console.log(getNow());
     console.log(highlight('Visit to log:', printJson(data)));
-    logVisit(data).then((res) => {
-      console.log(res);
-      ack(res);
-    });
+    logVisit(data)
+      .then((res) => {
+        console.log(res);
+        ack(res);
+      })
+      .catch((err) => ack(err));
   });
 
   socket.on('deleteVisit', (data, ack) => {

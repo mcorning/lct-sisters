@@ -1,8 +1,8 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import '@/fp/monads/eitherAsync';
-import { allOrNone } from '@/fp/utils';
+import '@/fp/monads/EitherAsync';
+import { allOrNone, firstOrNone } from '@/fp/utils';
 console.log('Loading Visit entity');
 
 export default class Visit extends Model {
@@ -110,18 +110,23 @@ export default class Visit extends Model {
       .toEither()
       .map((visits) =>
         allOrNone(visits).match({
-          some: (value) => {
+          Some: (value) => {
             console.log(JSON.stringify(value, null, 3));
             return value;
           },
-          none: () => console.log(`there is no visit to update `),
+          None: () => console.log(`there is no visit to update `),
         })
       )
       .cata({
-        ok: (v) => v,
+        ok: (v) =>
+          firstOrNone(v).match({
+            Some: (v) => v,
+            None: () => console.log(`NOOP`),
+          }),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          console.log('Leaving error', err, 'to global error handler');
+          err.message = +'Visit.update() had issues';
+          throw err;
         },
       });
   }
@@ -143,7 +148,8 @@ export default class Visit extends Model {
         ok: (v) => v,
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          console.log('Leaving error', err, 'to global error handler');
+          err.message = +'Visit.updateById() had issues';
+          throw err;
         },
       });
   }

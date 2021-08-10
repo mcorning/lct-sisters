@@ -2,7 +2,7 @@
 
 import { Model } from '@vuex-orm/core';
 import { DateTime } from '../utils/luxonHelpers';
-import '@/fp/monads/eitherAsync';
+import '@/fp/monads/EitherAsync';
 import { allOrNone } from '@/fp/utils';
 console.log('Loading Appointment entity');
 
@@ -141,7 +141,8 @@ export default class Appointment extends Model {
         ok: (v) => console.log(allOrNone(v)),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          console.log('Leaving error', err, 'to global error handler');
+          err.message = +'Appointment.update() had issues';
+          throw err;
         },
       });
   }

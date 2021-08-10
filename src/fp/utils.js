@@ -1,4 +1,4 @@
-import { Some, None } from './functors/maybe.js';
+import { Some, None } from './monads/Maybe.js';
 import { info, printJson } from '../utils/helpers';
 
 export let firstOrNone = function(array) {

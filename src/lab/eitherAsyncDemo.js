@@ -2,91 +2,7 @@
 //Copyright (c) 2019 dimitris papadimitriou
 const fetch = require('node-fetch');
 
-(function() {
-  const compose = (...fns) => (x) => fns.reduceRight((y, f) => f(y), x);
-
-  const id = (x) => x;
-
-  const EitherAsync = (actions, resolveMappings, rejectMappings) => ({
-    map: (f) =>
-      EitherAsync(actions, compose(f, resolveMappings), rejectMappings),
-
-    mapError: (f) =>
-      EitherAsync(actions, resolveMappings, compose(f, rejectMappings)),
-
-    bimap: (f, g) =>
-      EitherAsync(
-        actions,
-        compose(f, resolveMappings),
-        compose(g, rejectMappings)
-      ),
-
-    ap: (fv) =>
-      EitherAsync(
-        (resolve, reject) =>
-          actions(
-            (f) =>
-              fv.map(compose(f, resolveMappings)).cata({
-                ok: resolve,
-                error: reject,
-              }),
-            reject
-          ),
-        resolveMappings,
-        rejectMappings
-      ),
-
-    bind: (f) =>
-      EitherAsync(
-        (resolve, reject) =>
-          actions(
-            (x) =>
-              f(resolveMappings(x)).cata({
-                ok: resolve,
-                error: reject,
-              }),
-            reject
-          ),
-        id,
-        id
-      ),
-
-    cata: (alg) =>
-      actions(
-        compose(alg.ok, resolveMappings),
-        compose(alg.error, rejectMappings)
-      ),
-
-    toPromise: () =>
-      new Promise((resolve, reject) =>
-        actions(
-          compose(resolve, resolveMappings),
-          compose(reject, rejectMappings)
-        )
-      ),
-    toEither: () => EitherAsync(actions, resolveMappings, rejectMappings),
-  });
-
-  Promise.prototype.toEither = function() {
-    return EitherAsync(
-      (resolve, reject) => this.then(resolve).catch(reject),
-      id,
-      id
-    );
-  };
-})();
-
-const ok = (v) => ({
-  v: v,
-  map: (f) => ok(f(v)),
-  cata: (alg) => alg.ok(v),
-});
-
-const error = (v) => ({
-  v: v,
-  map: () => error(v),
-  cata: (alg) => alg.error(v),
-});
+require('either-async');
 
 Promise.prototype.map = function(mapping) {
   var initialPromise = this;
@@ -103,12 +19,14 @@ var getUserFollowers = (name) =>
 var toJson = (response) => response.json();
 
 getUser()
-  .map(toJson)
-  .toEither()
+  // getUser() returns a promise, so this map() function is in the Promise (not the array returned by fetch)
+  .map(toJson) //toJson() will be the mapping arg for the Promise's map and will be the name of the function called as the resolve method of the Promise
+  // map() returns a JSON type
+  .toEither() // converts the list of users returned by the Promise so the EitherAsync's map function (next) works
 
-  .map((users) => users[0].login)
-  .bind((v) =>
-    getUserFollowers(v)
+  .map((users) => users[10].login)
+  .bind((ofUser) =>
+    getUserFollowers(ofUser)
       .map(toJson)
       .toEither()
   )

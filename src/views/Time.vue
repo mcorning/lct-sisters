@@ -1,5 +1,5 @@
 <template>
-  <Model @error="onError" @success="onSuccess">
+  <Model @error="onError" @updatedModel="onUpdatedModel">
     <div slot-scope="{ isConnected, state, onUpdate }">
       <Calendar
         :isConnected="isConnected"
@@ -23,18 +23,15 @@ export default {
     Model,
   },
   data() {
-    return { confirmations: '' };
+    return { confirmations: null };
   },
   methods: {
-    onError(payload) {
+    onError(error) {
       // let the global error handler pick up and display this error
-      throw new Error(
-        `Time.vue error message: ${payload.err.message}`,
-        payload.err
-      );
+      error.message = `Time.vue error message: ${error.message}`;
+      throw error;
     },
-    onSuccess(msg) {
-      console.log(msg);
+    onUpdatedModel(msg) {
       this.confirmations = msg;
     },
   },

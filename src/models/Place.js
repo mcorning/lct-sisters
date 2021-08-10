@@ -1,7 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import '@/fp/monads/eitherAsync';
+import '@/fp/monads/EitherAsync';
 import { allOrNone } from '@/fp/utils';
 console.log('Loading Place entity');
 
@@ -108,7 +108,8 @@ export default class Place extends Model {
         ok: (v) => console.log(allOrNone(v)),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          console.log('Leaving error', err, 'to global error handler');
+          err.message=+'Place.update() had issues'
+          throw err
         },
       });
   }

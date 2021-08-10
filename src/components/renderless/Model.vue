@@ -10,7 +10,6 @@ import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
 import {
-  err,
   highlight,
   info,
   success,
@@ -20,7 +19,7 @@ import {
 } from '../../utils/helpers';
 import { DateTime, getNow } from '../../utils/luxonHelpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
-import { Try } from '@/fp/functors/TryCatch.js';
+import { Some } from '@/fp/monads/Maybe.js';
 
 export default {
   props: {},
@@ -145,71 +144,32 @@ export default {
   },
 
   methods: {
-    // TODO Rethink updates in terms of AsyncEither/Maybe
     onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
-      // return the final result of this implementation of Try() to caller
-      // NOTE: The actual TryCatch monad does not change.
-      // The different content configurations of the monad do.
       const f = this[target];
-      return (
-        Try(f) //#0: call cache() or graph() and get a right() or a left() function (with the result of the try{}) as result
-          .map(
-            //#2 pass this function (along with the result of the try/catch) to the map() function of the right() or left() function
-            // here, absent async-either (used elsewhere), we pass either the resultOfTryCatch or a message about a pending Promise
-            (resultOfTryCatch) => {
-              return resultOfTryCatch || 'Waiting for Promise...';
-            }
-          )
-          // pass your matchWith object here to the matchWith of the right() or left() function
-          .matchWith({
-            right: (v) => {
-              console.log(success(v));
-              // all's well? return the result of the map() function
-              return v;
-            },
-            left: (v) => {
-              console.log(err(v));
-              // here's where you might send the error to the server error stream
-              // otherwise, the error get's handled on the UI with the snackbar
-              throw v;
-            },
-          })
-      );
+      f();
     },
 
     cache() {
-      //#1 return value to Try() where map() handles this value
-      Visit.updatePromise({ visit: this.selectedEvent }).then((p) => {
-        this.$emit('success', `...Updated visit to ${p.name}`);
+      Visit.update(this.selectedEvent).then((p) => {
+        const msg = {
+          type: 'success',
+          confirmationColor: 'success',
+          confirmationMessage: `Updated visit to ${p.name}`,
+        };
+        this.$emit('updatedModel', msg);
       });
     },
     graph() {
-      // TODO handle the notconnected state
-      // better make this a Maybe Monad, instead. <g/>
-      const x = this.onLogVisit({ visit: this.selectedEvent });
-      return x; //#1 return value to Try() where map() handles this value
+      this.onLogVisit(this.selectedEvent);
     },
 
-    onLogVisit(payload) {
-      const { action, visit } = payload;
-      if (action === 'test') {
-        return 'Funtion (onLogVisit) test passed';
-      }
-      const self = this;
-      // TODO There's no UI here. Use a Maybe monad, instead.
-      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
-      if (!this.$socket.connected) {
-        const msg = {
-          type: 'warning',
-          confirmationColor: 'orange',
-          confirmationMessage: `You are not connected to the server`,
-        };
-        return msg;
-      }
+    onLogVisit(visit) {
+      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+
+      // const self = this;
+
       const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
-      console.log('What is visit.id?', id);
-      this.selectedSpace = visit;
       const query = {
         username: this.username,
         userID: this.$socket.client.userID,
@@ -221,8 +181,127 @@ export default {
         loggedNodeId,
         graphName,
       };
-      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
       console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
+
+      // send the visit to the server
+      this.updateVisitOnGraph(query)
+        .then((redisResult) => {
+          if (!redisResult.logged || !redisResult.id) {
+            throw new Error(`Redis could not log Visit to  ${name}`);
+          }
+          const data = {
+            visitId: id,
+            loggedNodeId: redisResult.id,
+            useGraphName: redisResult.graph,
+          };
+          console.log('updateVisitOnGraph() data:', data);
+          Visit.updateById(data);
+          const msg = {
+            confirmationColor: 'success',
+            confirmationMessage: `${name} logged to ${data.useGraphName} on node ${data.loggedNodeId}`,
+          };
+          this.$emit('updatedModel', msg);
+        })
+        .catch((err) => {
+          this.$emit('error', err);
+        });
+      // .then((node) => {
+      //   // here's where we update the logged field to the id of the graph node
+      //   const data = {
+      //     visitId: id,
+      //     loggedNodeId: node.id,
+      //     useGraphName: self.getGraphName(),
+      //   };
+      //   Visit.updateById(data).then((v) => {
+      //     console.log(success(`Returned Visit:`, printJson(v)));
+      //     console.log(highlight(`Updated Visit to:`, printJson(visit)));
+      //   });
+      //   const msg = {
+      //     confirmationColor: 'success',
+      //     confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
+      //       node.id
+      //     }`,
+      //   };
+      //   return msg;
+      // });
+    },
+
+    redisGraphCallback: (results) => {
+      console.log(success('updateVisitOnGraph results:', printJson(results)));
+      return results;
+    },
+
+    // updateVisitOnGraph(query) {
+    //   console.log('query to update graph:', printJson(query));
+
+    //   Promise.resolve(() => {
+    //     // send message to server
+    //     this.emitFromClient('logVisit', query, this.redisGraphCallback);
+    //   })
+    //     .toEither()
+    //     .cata({
+    //       ok: console.log,
+    //       error: (e) => console.log(`error: ${e}`),
+    //     });
+    // },
+
+    emitFromClient(eventName, data, ack) {
+      if (!this.isConnected) {
+        this.$emit('updatedModel', {
+          confirmationColor: 'orange',
+          confirmationMessage: 'Model not updated. Graph not connected.',
+        });
+        return;
+      }
+      this.$socket.client.emit(eventName, data, ack);
+    },
+    updateVisitOnGraph(query) {
+      console.log('query to update graph:', printJson(query));
+      return new Promise((resolve, reject) => {
+        // send message to server
+        try {
+          this.emitFromClient(
+            'logVisit',
+            query,
+            // and handle the callback
+            (results) => {
+              console.log(
+                success('updateVisitOnGraph results:', printJson(results))
+              );
+              resolve(results);
+            }
+          );
+        } catch (error) {
+          reject(error);
+        }
+      });
+    },
+    onLogVisitOrig(visit) {
+      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
+      if (!this.$socket.connected) {
+        const msg = {
+          type: 'warning',
+          confirmationColor: 'orange',
+          confirmationMessage: `You are not connected to the server`,
+        };
+        return msg;
+      }
+      const self = this;
+      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+
+      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
+      // this.selectedSpace = visit;
+      const query = {
+        username: this.username,
+        userID: this.$socket.client.userID,
+        selectedSpace: name,
+        start: start,
+        end: end,
+        date: new Date(start).toDateString(),
+        interval: interval,
+        loggedNodeId,
+        graphName,
+      };
 
       // send the visit to the server
       this.updateVisitOnGraph(query).then((node) => {
@@ -244,13 +323,17 @@ export default {
         };
         return msg;
       });
-    }, // TODO this is a good reason to refactor Place to include Visits
+    },
+
+    // TODO this is a good reason to refactor Place to include Visits
     /**
      * Makers let us revisit a place.
      * Iterate visits entity
      * Find place using visit.place_id
      * Use filtered places to add Markers to map (map passed in to event handler)
-     */ deserializeVisitAsMarker(visits) {
+     */
+
+    deserializeVisitAsMarker(visits) {
       if (!visits) {
         return;
       }
@@ -372,27 +455,6 @@ export default {
       return this.graphName || this.$defaultGraphName;
     },
 
-    updateVisitOnGraph(query) {
-      console.log('query to update graph:', printJson(query));
-      return new Promise((resolve) => {
-        this.emitFromClient('logVisit', query, (results) => {
-          console.log(
-            success('updateVisitOnGraph results:', printJson(results))
-          );
-          resolve(results);
-        });
-      });
-    },
-
-    // TODO Next fix: restore the callback so we can update the Visit record with the graphNodeID
-    emitFromClient(eventName, data, ack) {
-      if (!this.connected) {
-        // const { username, userID, sessionID } = this.settings;
-        this.connectMe(); //{ username, userID, sessionID });
-      }
-      this.$socket.client.emit(eventName, data, ack);
-    },
-
     // why are we passing in a payload when Model gets that itself from the server?
     // const { username, userID, sessionID } = payload;    // connectMe(payload) {
     connectMe() {
@@ -473,103 +535,82 @@ export default {
         });
     },
 
-    validVisits(visits) {
-      // TODO how do i use Either instead of checking for undefined visits?
-      const valid = visits.filter(
-        (v) =>
-          !(
-            Number.isNaN(v.end) ||
-            Number.isNaN(v.start) ||
-            !v.id ||
-            v.id.startsWith('$')
-          )
+    getSomeEntityData(source) {
+      return (
+        allOrNone(source)
+          // .inspect(`${v[0].constructor.name}:\n`)
+          .inspect()
+          .match({
+            Some: (v) => v,
+            None: () => [],
+          })
       );
-      console.log('Valid Visits:', valid);
-      return valid;
     },
 
-    visitLab() {
-      const visit = {
-        id: 1,
-        name: 'place.name',
-        place_id: `place.place_id`,
-        start: `starttime`,
-        end: `endtime`,
-        date: `DateTime.fromMillis(starttime).toISODate()`,
-        category: 'You',
-
-        timed: true,
-        marked: Date.now(),
-        graphName: `this.graphname`,
-        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
-
-        // TODO setup isDefaultGraph
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-      };
-      Visit.update(visit);
-    },
-
-    mountedLab() {
-      Visit.$fetch()
-        .toEither() // first, let's see if there are any errors
+    getFirstEntityData(source) {
+      return firstOrNone(source)
         .inspect()
-        .matchWith({
-          ok: (all) =>
-            // allOrNone returns a Maybe on an array either None if the array is empty
-            //or Some of the entire array.
-            // remember to use the entity name with the fetched object
-            allOrNone(all.visits).map((visits) => this.validVisits(visits)),
-
-          // firstOrNone is a utility function for arrays returning a Maybe
-          // of either Some (viz., the first element) or a None.
-          // firstOrNone(all.visits).map((v) =>
-          //   console.log('First Visit:\n', printJson(v))
-          // ),
-          error: (err) => {
-            // let global error handler take over so we see the error in the snackbar.
-            this.$emit('error', {
-              err,
-            });
-          },
+        .match({
+          Some: (v) => v,
+          None: () => [],
         });
     },
 
-    validateUser() {},
-
-    getStomeEntityData(source) {
+    filterSomeEntityData(f, source) {
       return allOrNone(source).match({
-        some: (v) => {
-          console.log(success(`${v[0].constructor.name}:\n`, printJson(v)));
-          return v;
-        },
-
-        none: () => {
-          return [];
-        },
+        Some: (v) => v.filter(f),
+        None: () => [],
       });
     },
 
-    tryForEntityData(f, label) {
-      return Try(f).matchWith({
-        right: (v) => {
-          console.log(success(label, v ? printJson(v) : 'nothing yet'));
-          return v;
-        },
-        left: (v) => {
-          console.log(err(v));
-        },
+    filterFunctionForValidVisits: (v) =>
+      !(
+        Number.isNaN(v.end) ||
+        Number.isNaN(v.start) ||
+        !v.id ||
+        v.id.startsWith('$')
+      ),
+
+    filterFunctionForNamedPlaces: (v) => v.name,
+
+    // remember to use the entity name with each fetched objects
+    manageData(entities) {
+      const [allSettings, allPlaces, allVisits, allAppointments] = entities;
+
+      const settings = this.getFirstEntityData(allSettings.settings);
+
+      const places = this.filterSomeEntityData(
+        this.filterFunctionForNamedPlaces,
+        allPlaces.places
+      );
+
+      const visits = this.filterSomeEntityData(
+        this.filterFunctionForValidVisits,
+        allVisits.visits
+      );
+
+      const appointments = this.getSomeEntityData(allAppointments.appointments);
+
+      const some = Some({
+        settings,
+        places,
+        visits,
+        appointments,
       });
+      return some;
     },
   },
 
   watch: {
     loading() {
-      // this.mountedLab();
-      //this.visitLab();
+      console.log(success('\tMODEL mounted'));
+      this.connectMe();
     },
   },
 
-  mounted() {
+  // strictly speaking, Promise.all() returns a promise, so we could use EitherAsync here, as well...
+  // so that's why we use mounted() below
+  mountedBigly() {
     const self = this;
     Promise.all([
       Setting.$fetch(),
@@ -577,36 +618,23 @@ export default {
       Visit.$fetch(),
       Appointment.$fetch(),
     ])
+
       .then((entities) => {
         const [allSettings, allPlaces, allVisits, allAppointments] = entities;
 
-        const settings = self.getStomeEntityData(allSettings.settings);
+        const settings = self.getFirstEntityData(allSettings.settings);
 
-        const places = self.tryForEntityData(
-          () => allPlaces.places?.filter((v) => v.name),
-          'Filtered Places:'
+        const places = self.filterSomeEntityData(
+          (v) => v.name,
+          allPlaces.places
         );
 
-        // TODO i think this is a place where you can compose functions. first function gets the correct filter predicate. second function uses that predicate in the filter functor.
-        const visits = self.tryForEntityData(
-          () =>
-            allVisits.visits?.filter(
-              (v) =>
-                !(
-                  Number.isNaN(v.end) ||
-                  Number.isNaN(v.start) ||
-                  !v.id ||
-                  v.id.startsWith('$')
-                )
-            ),
-          'Filtered Visits:'
-        );
+        const visits = self.filterSomeEntityData(this.filter, allVisits.visits);
 
-        const appointments = self.getStomeEntityData(
+        const appointments = self.getSomeEntityData(
           allAppointments.appointments
         );
 
-        console.log('appointments', appointments);
         self.updateState({
           settings,
           places,
@@ -615,11 +643,34 @@ export default {
         });
 
         self.connectMe();
-        console.log(success('\tMODEL mounted'));
         self.loading = false;
       })
       .catch((err) => {
         throw err;
+      });
+  },
+
+  mounted() {
+    Promise.all([
+      Setting.$fetch(),
+      Place.$fetch(),
+      Visit.$fetch(),
+      Appointment.$fetch(),
+    ])
+      .toEither()
+      .map((entities) => this.manageData(entities))
+      .map((someData) =>
+        someData.match({
+          Some: (data) => this.updateState(data),
+          None: () => console.log('No Data!'),
+        })
+      )
+      .cata({
+        ok: () => (this.loading = false),
+        error: (err) => {
+          // let global error handler take over so we see the error in the snackbar.
+          this.$emit('error', err);
+        },
       });
   },
 

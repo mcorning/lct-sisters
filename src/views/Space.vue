@@ -83,12 +83,10 @@ export default {
     return {};
   },
   methods: {
-    onError(payload) {
+    onError(error) {
       // let the global error handler pick up and display this error
-      throw new Error(
-        `Space.vue error message: ${payload.err.message}`,
-        payload.err
-      );
+      error.message = `Space.vue error message: ${error.message}`;
+      throw error;
     },
   },
 

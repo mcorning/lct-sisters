@@ -1,4 +1,4 @@
-require('./either-async-demo');
+require('either-async');
 
 Promise.resolve(5)
   .toEither()
@@ -35,7 +35,7 @@ Promise.resolve(5)
   .bind((x) => Promise.resolve(x + 5).toEither())
   .cata({
     ok: console.log,
-    error: (e) => console.log(`error: ${e}`),
+    error: (e) => console.log(`error 4: ${e}`),
   });
 
 const delayed = Promise.resolve(5)
@@ -52,9 +52,9 @@ setTimeout(function() {
 
 Promise.resolve((x) => (y) => x + y)
   .toEither()
-  .ap(Promise.reject(5).toEither())
   .ap(Promise.resolve(5).toEither())
+  .ap(Promise.reject(5).toEither())
   .cata({
     ok: console.log,
-    error: (e) => console.log(`error: ${e}`),
+    error: (e) => console.log(`Last error: ${e}`),
   });

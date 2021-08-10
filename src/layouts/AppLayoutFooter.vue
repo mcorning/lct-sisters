@@ -32,6 +32,9 @@ export default {
     // At this writing, we have Space and Time vue files that wrap the map and calendars in their own Model reference
     // One could argue that the router should be in charge of what view is current and what data that view needs.
     open(view) {
+      if (this.$router.currentRoute.name === view) {
+        return;
+      }
       this.$router.push({
         name: view,
       });

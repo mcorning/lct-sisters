@@ -269,10 +269,15 @@ function logVisit(data) {
       .then((results) => {
         let x = results.next();
         let id = x.get('id(r)');
+        if (!id) {
+          throw `${graphName} returned unexpected null id after update.`;
+        }
+
         const stats = results._statistics._raw;
         console.log(special(`Logged visit stats: ${printJson(stats)}`));
         console.log(special(`New Visit graph ID: ${printJson(id)}`));
         resolve({
+          graph: graphName,
           logged: true,
           id: id,
         });

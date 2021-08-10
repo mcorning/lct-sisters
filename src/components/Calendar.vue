@@ -139,7 +139,7 @@ export default {
     isConnected: Boolean,
     state: Object,
     onUpdate: Function,
-    confirmations: String,
+    confirmations: Object,
   },
   components: {
     PickersMenu,
@@ -210,14 +210,8 @@ export default {
   },
   methods: {
     update(target) {
-      let msg = this.onUpdate(target, this.selectedEvent);
-      const { confirmationColor, confirmationMessage } = msg;
-      this.confirmationColor = confirmationColor
-        ? confirmationColor
-        : 'success';
-      this.confirmationMessage = confirmationMessage || msg;
+      this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
-      this.snackbar = true;
     },
 
     scrollToTime() {
@@ -395,10 +389,8 @@ export default {
   watch: {
     confirmations(msg) {
       const { confirmationColor, confirmationMessage } = msg;
-      this.confirmationColor = confirmationColor
-        ? confirmationColor
-        : 'success';
-      this.confirmationMessage = confirmationMessage || msg;
+      this.confirmationColor = confirmationColor;
+      this.confirmationMessage = confirmationMessage;
       this.snackbar = true;
     },
   },

@@ -34,3 +34,5 @@ src/components/renderless/Socket.vue
 src/views/Calendar0.vue
 src/views/GoogleMap0.vue
 src/views/GoogleMap1.vue
+src/lab/eitherAsyncDemo.js
+src/lab/either-async-demo.js

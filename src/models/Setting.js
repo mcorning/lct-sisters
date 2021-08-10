@@ -1,7 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import '@/fp/monads/eitherAsync';
+import '@/fp/monads/EitherAsync';
 import { firstOrNone } from '@/fp/utils';
 
 console.log('Loading Setting entity');
@@ -53,16 +53,17 @@ export default class Setting extends Model {
         ok: (v) =>
           console.log(
             firstOrNone(v).match({
-              some: (value) => {
+              Some: (value) => {
                 console.log(JSON.stringify(value, null, 3));
                 return value;
               },
-              none: () => console.log(`there is no Settings to update `),
+              None: () => console.log(`there is no Settings to update `),
             })
           ),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          console.log('Leaving error', err, 'to global error handler');
+          err.message = +'Setting.update() had issues';
+          throw err;
         },
       });
   }

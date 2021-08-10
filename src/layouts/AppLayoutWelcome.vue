@@ -1,7 +1,6 @@
 <template>
   <div>
     <CaptureErrorSnackbar>
-      <v-btn v-if="test" @click="throwError">Throw error</v-btn>
       <welcome-card />
     </CaptureErrorSnackbar>
   </div>
@@ -18,15 +17,9 @@ export default {
     WelcomeCard,
   },
   data() {
-    return {
-      test: false,
-    };
+    return {};
   },
-  methods: {
-    throwError() {
-      throw new Error('Oops, something went wrong!');
-    },
-  },
+  methods: {},
   mounted() {
     console.log('\tAppLayoutWelcome.vue mounted');
   },

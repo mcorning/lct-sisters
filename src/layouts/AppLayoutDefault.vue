@@ -2,7 +2,6 @@
   <div>
     <AppLayoutHeader :namespace="namespace" />
     <CaptureErrorSnackbar>
-      <v-btn v-if="test" @click="throwError">Throw error</v-btn>
       <slot />
     </CaptureErrorSnackbar>
 
@@ -23,19 +22,10 @@ export default {
   },
   data() {
     return {
-      namespace: 'OR',
-      test: false,
+      namespace: 'Sisters',
       ready: false,
     };
   },
-  methods: {
-    throwError() {
-      throw new Error('Oops, something went wrong!');
-    },
-    onStateAvailable(f) {
-      console.log('onStateAvailable for all components');
-      console.log(f({ action: 'test' }));
-    },
-  },
+  methods: {},
 };
 </script>
