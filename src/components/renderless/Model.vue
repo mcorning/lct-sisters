@@ -151,9 +151,10 @@ export default {
     },
 
     cache() {
+      // TODO aren't we using monads now?
       Visit.update(this.selectedEvent).then((p) => {
         const msg = {
-          type: 'success',
+          logged: false,
           confirmationColor: 'success',
           confirmationMessage: `Updated visit to ${p.name}`,
         };
@@ -166,8 +167,6 @@ export default {
 
     onLogVisit(visit) {
       console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
-
-      // const self = this;
 
       const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
       const query = {
@@ -197,6 +196,7 @@ export default {
           console.log('updateVisitOnGraph() data:', data);
           Visit.updateById(data);
           const msg = {
+            logged: true,
             confirmationColor: 'success',
             confirmationMessage: `${name} logged to ${data.useGraphName} on node ${data.loggedNodeId}`,
           };
@@ -205,25 +205,6 @@ export default {
         .catch((err) => {
           this.$emit('error', err);
         });
-      // .then((node) => {
-      //   // here's where we update the logged field to the id of the graph node
-      //   const data = {
-      //     visitId: id,
-      //     loggedNodeId: node.id,
-      //     useGraphName: self.getGraphName(),
-      //   };
-      //   Visit.updateById(data).then((v) => {
-      //     console.log(success(`Returned Visit:`, printJson(v)));
-      //     console.log(highlight(`Updated Visit to:`, printJson(visit)));
-      //   });
-      //   const msg = {
-      //     confirmationColor: 'success',
-      //     confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
-      //       node.id
-      //     }`,
-      //   };
-      //   return msg;
-      // });
     },
 
     redisGraphCallback: (results) => {
@@ -231,23 +212,10 @@ export default {
       return results;
     },
 
-    // updateVisitOnGraph(query) {
-    //   console.log('query to update graph:', printJson(query));
-
-    //   Promise.resolve(() => {
-    //     // send message to server
-    //     this.emitFromClient('logVisit', query, this.redisGraphCallback);
-    //   })
-    //     .toEither()
-    //     .cata({
-    //       ok: console.log,
-    //       error: (e) => console.log(`error: ${e}`),
-    //     });
-    // },
-
     emitFromClient(eventName, data, ack) {
       if (!this.isConnected) {
         this.$emit('updatedModel', {
+          logged:false,
           confirmationColor: 'orange',
           confirmationMessage: 'Model not updated. Graph not connected.',
         });
@@ -255,6 +223,7 @@ export default {
       }
       this.$socket.client.emit(eventName, data, ack);
     },
+    
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve, reject) => {
@@ -276,54 +245,7 @@ export default {
         }
       });
     },
-    onLogVisitOrig(visit) {
-      // you can keep a guard here, but the Log button on Calendar should not be enabled if not connected.
-      if (!this.$socket.connected) {
-        const msg = {
-          type: 'warning',
-          confirmationColor: 'orange',
-          confirmationMessage: `You are not connected to the server`,
-        };
-        return msg;
-      }
-      const self = this;
-      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
 
-      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
-      // this.selectedSpace = visit;
-      const query = {
-        username: this.username,
-        userID: this.$socket.client.userID,
-        selectedSpace: name,
-        start: start,
-        end: end,
-        date: new Date(start).toDateString(),
-        interval: interval,
-        loggedNodeId,
-        graphName,
-      };
-
-      // send the visit to the server
-      this.updateVisitOnGraph(query).then((node) => {
-        // here's where we update the logged field to the id of the graph node
-        const data = {
-          visitId: id,
-          loggedNodeId: node.id,
-          useGraphName: self.getGraphName(),
-        };
-        Visit.updateById(data).then((v) => {
-          console.log(success(`Returned Visit:`, printJson(v)));
-          console.log(highlight(`Updated Visit to:`, printJson(visit)));
-        });
-        const msg = {
-          confirmationColor: 'success',
-          confirmationMessage: `${name} logged to ${self.getGraphName()} on node ${
-            node.id
-          }`,
-        };
-        return msg;
-      });
-    },
 
     // TODO this is a good reason to refactor Place to include Visits
     /**

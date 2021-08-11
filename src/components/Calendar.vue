@@ -387,10 +387,12 @@ export default {
   },
 
   watch: {
+
     confirmations(msg) {
-      const { confirmationColor, confirmationMessage } = msg;
+      const { logged, confirmationColor, confirmationMessage } = msg;
       this.confirmationColor = confirmationColor;
       this.confirmationMessage = confirmationMessage;
+      this.selectedEvent.color=logged?'primary':'secondary'
       this.snackbar = true;
     },
   },
