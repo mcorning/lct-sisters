@@ -36,3 +36,4 @@ src/views/GoogleMap0.vue
 src/views/GoogleMap1.vue
 src/lab/eitherAsyncDemo.js
 src/lab/either-async-demo.js
+src/components/renderless/ModelExperiment.vue

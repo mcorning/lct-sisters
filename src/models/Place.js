@@ -90,7 +90,7 @@ export default class Place extends Model {
   static update(place) {
     const data = {
       ...place,
-      plus_code: place.plus_code.global_code,
+      plus_code: place.plus_code.global_code || '',
       lat: place.geometry.location.lat(),
       lng: place.geometry.location.lng(),
     };
@@ -108,8 +108,8 @@ export default class Place extends Model {
         ok: (v) => console.log(allOrNone(v)),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
-          err.message=+'Place.update() had issues'
-          throw err
+          err.message = +'Place.update() had issues';
+          throw err;
         },
       });
   }

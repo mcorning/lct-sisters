@@ -80,7 +80,21 @@ export default {
         map: this.map,
       });
       marker.addListener(`click`, () => this.onClickMarker(marker));
+      marker.addListener(`rightclick`, () => this.delMarker(marker));
       this.$emit('markerAdded', this.place);
+    },
+
+    delMarker(marker) {
+      if (confirm('Remove map marker for ' + marker.latLng + '?')) {
+        marker.setMap(null);
+        if (
+          confirm(
+            'Delete from database place ' + marker.place_id + ', as well?'
+          )
+        ) {
+          this.$emit('deletePlace', marker.place_id);
+        }
+      }
     },
 
     getPlaceDetails(placeId, location) {
@@ -132,31 +146,6 @@ export default {
     onClickMarker(marker) {
       this.$emit('markerClicked', marker);
     },
-
-    newMarker(location, map) {
-      const marker = new window.google.maps.Marker({ ...location, map });
-      marker.addListener(`click`, () => this.onClickMarker(marker));
-      marker.addListener(`rightclick`, (event) => {
-        const map = this.map;
-        if (confirm('Delete marker at ' + event.latLng + '?')) {
-          const x = this.locations
-            .filter(
-              (v) =>
-                v.position.lat === event.latLng.lat() &&
-                v.position.lng === event.latLng.lng()
-            )
-            .reduce((a, location) => {
-              return new window.google.maps.Marker({ ...location, map });
-            }, {});
-          x.setMap(null);
-          if (confirm('Delete place ' + x.place_id + ', as well?')) {
-            this.$emit('deletePlace', x.place_id);
-          }
-          // x.setMap(null);
-        }
-      });
-      return marker;
-    },
   },
 
   watch: {
@@ -184,7 +173,7 @@ export default {
         searchBox.setBounds(map.getBounds());
       });
       map.addListener(`click`, (event) => self.onClickMap(event));
-      //#endregion
+      //#endregion Map
 
       //#region Autocomplete Setup
       const input = document.getElementById('autoCompleteInput');
@@ -249,18 +238,23 @@ export default {
       //#endregion
 
       //#region Markers
+      // locations is a compute prop that returns an array of marker data
       const markers = self.locations.map((location) => {
         const marker = new google.maps.Marker({ ...location, map });
         marker.addListener(`click`, () => self.onClickMarker(marker));
         marker.addListener(`rightclick`, (event) => {
-          if (confirm('Delete marker at ' + event.latLng + '?')) {
+          if (confirm('Remove map marker for ' + event.latLng + '?')) {
             const marker = markers.filter(
               (v) =>
                 v.position.lat() === event.latLng.lat() &&
                 v.position.lng() === event.latLng.lng()
             )[0];
 
-            if (confirm('Delete place ' + marker.place_id + ', as well?')) {
+            if (
+              confirm(
+                'Delete from database place ' + marker.place_id + ', as well?'
+              )
+            ) {
               this.$emit('deletePlace', marker.place_id);
             }
             marker.setMap(null);

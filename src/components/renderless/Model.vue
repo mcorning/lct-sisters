@@ -9,6 +9,10 @@ import Visit from '@/models/Visit';
 import Place from '@/models/Place';
 import Appointment from '@/models/Appointment';
 
+import { timeMixin } from '@/js/time';
+import { graphMixin } from '@/js/graph';
+import { spaceMixin } from '@/js/space';
+
 import {
   highlight,
   info,
@@ -23,6 +27,8 @@ import { Some } from '@/fp/monads/Maybe.js';
 
 export default {
   props: {},
+
+  mixins: [graphMixin, spaceMixin, timeMixin],
 
   computed: {
     isDefaultGraph() {
@@ -215,7 +221,7 @@ export default {
     emitFromClient(eventName, data, ack) {
       if (!this.isConnected) {
         this.$emit('updatedModel', {
-          logged:false,
+          logged: false,
           confirmationColor: 'orange',
           confirmationMessage: 'Model not updated. Graph not connected.',
         });
@@ -223,7 +229,7 @@ export default {
       }
       this.$socket.client.emit(eventName, data, ack);
     },
-    
+
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve, reject) => {
@@ -246,111 +252,21 @@ export default {
       });
     },
 
-
-    // TODO this is a good reason to refactor Place to include Visits
-    /**
-     * Makers let us revisit a place.
-     * Iterate visits entity
-     * Find place using visit.place_id
-     * Use filtered places to add Markers to map (map passed in to event handler)
-     */
-
-    deserializeVisitAsMarker(visits) {
-      if (!visits) {
-        return;
-      }
-
-      // TODO Refactor for Model
-      this.place_map = this.state.place.getPlaceMap();
-      this.markersMap = new Map();
-      console.groupCollapsed(
-        warn(
-          `deserializeVisitAsMarker(visits) making ${visits.length} markers:`
-        )
-      );
-      if (visits) {
-        this.visitSet = new Set(visits);
-        visits.forEach((visit, index) => {
-          if (!visit.place_id) {
-            // these are appointments not visits
-            return;
-          }
-          const place = this.place_map.get(visit.place_id);
-          // if visit and place are not related, notify and skip further processing
-          if (!place) {
-            alert(
-              `Visit ${visit.id} does not have a Place corresponding to ${visit.place_id}`
-            );
-            return;
-          }
-
-          console.log('Using place:', printJson(place));
-          let m = {
-            title: visit.name,
-            label: { text: 'V' + index, color: 'white' },
-            name: visit.name,
-            place_id: visit.place_id,
-            position: { lat: place.lat, lng: place.lng },
-          };
-          this.markersMap.set(visit.name, m);
-          this.$emit('log', `added marker for ${visit.name}`);
-        });
-        console.groupEnd();
-      }
-    },
-
-    onMarkerClicked(marker) {
-      this.selectedMarker = marker;
-      this.updateState({ currentPlace: marker.name });
-    },
     onToWork() {},
-    // called by
-    //  * onGo() with the shift startTime or
-    //  * Visit button in Googlemaps
-    onVisitPlace() {
-      const place = Place.find(this.selectedMarker.place_id);
-      const starttime = roundTime(Date.now());
-      const endtime = starttime + this.avgStay;
-      const visit = {
-        id: randomId(),
-        name: place.name,
-        place_id: place.place_id,
-        start: starttime,
-        end: endtime,
-        date: DateTime.fromMillis(starttime).toISODate(),
-        category: 'You',
-
-        timed: true,
-        marked: getNow(),
-        graphName: this.graphname,
-        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
-
-        // TODO setup isDefaultGraph
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-      };
-
-      // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
-      Visit.update(visit).then((visits) => {
-        this.updateState(visits);
-        this.$router.push({
-          name: 'Time',
-        });
-      });
-    },
 
     onMakeAppointment() {
       alert('Under construction');
     },
 
-    onMarkerAdded(place) {
-      Place.updatePromise(place).then((result) => {
-        this.$emit('cacheUpdated', result[0]);
-      });
-    },
+    // onMarkerAdded(place) {
+    //   Place.updatePromise(place).then((result) => {
+    //     this.$emit('cacheUpdated', result[0]);
+    //   });
+    // },
 
-    onDeletePlace(placeId) {
-      Place.delete(placeId);
-    },
+    // onDeletePlace(placeId) {
+    //   Place.delete(placeId);
+    // },
 
     // TODO this is 1/2 the refactore to reduce the load on Spaces component
     addPlace(payload) {
@@ -420,43 +336,6 @@ export default {
       console.log(printJson(this.state));
     },
 
-    //deprecated. Visit and Appointment handle deleting old entries
-    validateEntities() {
-      // ensure we have identifiable entities that have valid start and end dates
-      Visit.validateVisits().then((invalidVisits) => {
-        if (invalidVisits.length > 0) {
-          console.groupCollapsed(warn('Invalid visit(s):'));
-          console.log(printJson(invalidVisits));
-        }
-        console.groupEnd();
-      });
-      Appointment.validateAppointments().then((invalidAppointments) => {
-        if (invalidAppointments.length > 0) {
-          console.groupCollapsed(warn('Invalid appointments:'));
-          console.log(printJson(invalidAppointments));
-        }
-        console.groupEnd();
-      });
-    },
-
-    mountedPrototype() {
-      // We are dealing here with and array. reference object element only with ok map:
-      Visit.$fetch()
-        .map((response) => response) //this is promise map. here we pass the identity monad.
-        .toEither()
-        .map((all) => all.visits) //this is Either map
-        .matchWith({
-          // firstOrNone is a utility function for arrays to fetch the first element or a None.
-          ok: (v) => firstOrNone(v).map(console.log),
-          error: (err) => {
-            // let global error handler take over so we see the error in the snackbar.
-            this.$emit('error', {
-              err,
-            });
-          },
-        });
-    },
-
     getSomeEntityData(source) {
       return (
         allOrNone(source)
@@ -496,7 +375,7 @@ export default {
     filterFunctionForNamedPlaces: (v) => v.name,
 
     // remember to use the entity name with each fetched objects
-    manageData(entities) {
+    initState(entities) {
       const [allSettings, allPlaces, allVisits, allAppointments] = entities;
 
       const settings = this.getFirstEntityData(allSettings.settings);
@@ -530,48 +409,6 @@ export default {
     },
   },
 
-  // strictly speaking, Promise.all() returns a promise, so we could use EitherAsync here, as well...
-  // so that's why we use mounted() below
-  mountedBigly() {
-    const self = this;
-    Promise.all([
-      Setting.$fetch(),
-      Place.$fetch(),
-      Visit.$fetch(),
-      Appointment.$fetch(),
-    ])
-
-      .then((entities) => {
-        const [allSettings, allPlaces, allVisits, allAppointments] = entities;
-
-        const settings = self.getFirstEntityData(allSettings.settings);
-
-        const places = self.filterSomeEntityData(
-          (v) => v.name,
-          allPlaces.places
-        );
-
-        const visits = self.filterSomeEntityData(this.filter, allVisits.visits);
-
-        const appointments = self.getSomeEntityData(
-          allAppointments.appointments
-        );
-
-        self.updateState({
-          settings,
-          places,
-          visits,
-          appointments,
-        });
-
-        self.connectMe();
-        self.loading = false;
-      })
-      .catch((err) => {
-        throw err;
-      });
-  },
-
   mounted() {
     Promise.all([
       Setting.$fetch(),
@@ -580,7 +417,7 @@ export default {
       Appointment.$fetch(),
     ])
       .toEither()
-      .map((entities) => this.manageData(entities))
+      .map((entities) => this.initState(entities))
       .map((someData) =>
         someData.match({
           Some: (data) => this.updateState(data),
@@ -595,6 +432,48 @@ export default {
         },
       });
   },
+
+  // strictly speaking, Promise.all() returns a promise, so we could use EitherAsync here, as well...
+  // so that's why we use mounted() below
+  // mountedBigly() {
+  //   const self = this;
+  //   Promise.all([
+  //     Setting.$fetch(),
+  //     Place.$fetch(),
+  //     Visit.$fetch(),
+  //     Appointment.$fetch(),
+  //   ])
+
+  //     .then((entities) => {
+  //       const [allSettings, allPlaces, allVisits, allAppointments] = entities;
+
+  //       const settings = self.getFirstEntityData(allSettings.settings);
+
+  //       const places = self.filterSomeEntityData(
+  //         (v) => v.name,
+  //         allPlaces.places
+  //       );
+
+  //       const visits = self.filterSomeEntityData(this.filter, allVisits.visits);
+
+  //       const appointments = self.getSomeEntityData(
+  //         allAppointments.appointments
+  //       );
+
+  //       self.updateState({
+  //         settings,
+  //         places,
+  //         visits,
+  //         appointments,
+  //       });
+
+  //       self.connectMe();
+  //       self.loading = false;
+  //     })
+  //     .catch((err) => {
+  //       throw err;
+  //     });
+  // },
 
   render() {
     // The first user of Model will not see data if we render() while loading
