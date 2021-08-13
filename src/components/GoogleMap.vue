@@ -146,44 +146,37 @@ export default {
     onClickMarker(marker) {
       this.$emit('markerClicked', marker);
     },
-  },
 
-  watch: {
-    ready() {},
-  },
+    getMarkers({ google, map }) {
+      const markers = this.locations.map((location) => {
+        const marker = new google.maps.Marker({ ...location, map });
+        marker.addListener(`click`, () => this.onClickMarker(marker));
+        marker.addListener(`rightclick`, (event) => {
+          if (confirm('Remove map marker for ' + event.latLng + '?')) {
+            const marker = markers.filter(
+              (v) =>
+                v.position.lat() === event.latLng.lat() &&
+                v.position.lng() === event.latLng.lng()
+            )[0];
 
-  async mounted() {
-    // TODO experimant with renderless subcomponents specialized for googlemaps
-    const self = this;
-    try {
-      console.time('Mounted GoogleMaps');
-      const google = await gmapsInit();
-
-      //#region Map
-      const map = new google.maps.Map(this.$el, {
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-          style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-          mapTypeIds: ['roadmap', 'terrain'],
-        },
+            if (
+              confirm(
+                'Delete from database place ' + marker.place_id + ', as well?'
+              )
+            ) {
+              this.$emit('deletePlace', marker.place_id);
+            }
+            marker.setMap(null);
+          }
+        });
+        return marker;
       });
+      console.log(`Rendered ${markers.length} markers`);
+      return markers;
+    },
 
-      // Bias the SearchBox results towards current map's viewport.
-      map.addListener('bounds_changed', () => {
-        searchBox.setBounds(map.getBounds());
-      });
-      map.addListener(`click`, (event) => self.onClickMap(event));
-      //#endregion Map
-
-      //#region Autocomplete Setup
-      const input = document.getElementById('autoCompleteInput');
-      const searchBox = new google.maps.places.SearchBox(input);
-
-      // Listen for the event fired when the user selects a prediction and retrieve
-      // more details for that place.
-      searchBox.addListener('places_changed', () => {
-        const places = searchBox.getPlaces();
-
+    xFiles(google, places, markers, map) {
+      {
         if (places.length == 0) {
           return;
         }
@@ -221,59 +214,67 @@ export default {
           this.$emit('markerAdded', place);
         });
         map.fitBounds(bounds);
-      });
-      //#endregion Autocomplete Setup
-
-      //#region Geocoder
+      }
+    },
+    setupGeocoder({ google, map }) {
       const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: self.defaultPoi }, (results, status) => {
+      geocoder.geocode({ address: this.defaultPoi }, (results, status) => {
         if (status !== `OK` || !results[0]) {
           throw new Error('GoogleMap.vue error:', status);
         }
 
         map.setCenter(results[0].geometry.location);
         map.fitBounds(results[0].geometry.viewport);
-        map.setZoom(self.defaultZoom);
+        map.setZoom(this.defaultZoom);
       });
-      //#endregion
+      this.geocoder = geocoder;
+      return { google, map };
+    },
+  },
 
-      //#region Markers
-      // locations is a compute prop that returns an array of marker data
-      const markers = self.locations.map((location) => {
-        const marker = new google.maps.Marker({ ...location, map });
-        marker.addListener(`click`, () => self.onClickMarker(marker));
-        marker.addListener(`rightclick`, (event) => {
-          if (confirm('Remove map marker for ' + event.latLng + '?')) {
-            const marker = markers.filter(
-              (v) =>
-                v.position.lat() === event.latLng.lat() &&
-                v.position.lng() === event.latLng.lng()
-            )[0];
+  watch: {
+    ready() {},
+  },
 
-            if (
-              confirm(
-                'Delete from database place ' + marker.place_id + ', as well?'
-              )
-            ) {
-              this.$emit('deletePlace', marker.place_id);
-            }
-            marker.setMap(null);
-          }
+  mounted() {
+    // TODO experimant with renderless subcomponents specialized for googlemaps
+    const self = this;
+    console.time('Mounted GoogleMaps');
+    gmapsInit()
+      .then((google) => {
+        const map = new google.maps.Map(this.$el, {
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+            mapTypeIds: ['roadmap', 'terrain'],
+          },
         });
-        return marker;
-      });
-      console.log(`Rendered ${markers.length} markers`);
-      //#endregion
-
-      self.service = new google.maps.places.PlacesService(map);
-      self.geocoder = geocoder;
-      self.map = map;
-
-      self.ready = true;
-      console.timeEnd('Mounted GoogleMaps');
-    } catch (error) {
-      console.error(error);
-    }
+        return { google, map };
+      })
+      .then(({ google, map }) => {
+        const markers = this.getMarkers({ google, map });
+        return { google, map, markers };
+      })
+      .then(({ google, map, markers }) => {
+        map.addListener(`click`, (event) => self.onClickMap(event));
+        const input = document.getElementById('autoCompleteInput');
+        const searchBox = new google.maps.places.SearchBox(input);
+        map.addListener('bounds_changed', () => {
+          searchBox.setBounds(map.getBounds());
+        });
+        const places = searchBox.getPlaces();
+        searchBox.addListener('places_changed', () =>
+          this.xFiles(google, places, markers, map)
+        );
+        return { google, map };
+      })
+      .then(({ google, map }) => {
+        this.setupGeocoder({ google, map });
+        return map;
+      })
+      .then((map) => (self.map = map))
+      .catch((error) => console.log(error))
+      .finally(() => (self.ready = true));
   },
 };
 </script>
@@ -287,6 +288,6 @@ body {
 
 .App {
   width: 100vw;
-  height: 77vh;
+  height: 60vh;
 }
 </style>
