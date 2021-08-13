@@ -20,6 +20,8 @@ export default {
     // fetch some data out of places entity
     locations() {
       return (
+        // TODO this is a Maybe
+        // does state.places change when we add a place to Place?
         this.state.places?.map((v) => {
           return {
             position: { lat: v.lat, lng: v.lng },
@@ -49,6 +51,9 @@ export default {
   },
   data() {
     return {
+      snackbar: true,
+      timeout: 10000,
+      selectedMarker: null,
       ready: false,
       map: null,
       geocoder: null,
@@ -63,7 +68,7 @@ export default {
   methods: {
     // TODO see if we can push all or most of these methods to Model
 
-    validServiceRequest(place, status) {
+    isValidServiceRequest(place, status) {
       const x =
         status === 'OK' && place && place.geometry && place.geometry.location;
       return x;
@@ -77,24 +82,19 @@ export default {
         label: this.labels[this.labelIndex++ % this.labels.length],
         place_id: this.place.place_id,
         name: this.place.name,
-        // map: this.map,
+        // TODO is there a way to get map dependency injected instead of dereferenced in state?
+        map: this.map,
       });
       marker.addListener(`click`, () => this.onClickMarker(marker));
       marker.addListener(`rightclick`, () => this.delMarker(marker));
       this.$emit('markerAdded', this.place);
     },
 
-    delMarker(marker) {
-      if (confirm('Remove map marker for ' + marker.latLng + '?')) {
-        marker.setMap(null);
-        if (
-          confirm(
-            'Delete from database place ' + marker.place_id + ', as well?'
-          )
-        ) {
-          this.$emit('deletePlace', marker.place_id);
-        }
-      }
+    delMarker() {
+      this.selectedMarker.setMap(null);
+
+      this.$emit('deletePlace', this.selectedMarker.place_id);
+      this.selectedMarker = null;
     },
 
     getPlaceDetails(placeId, location) {
@@ -106,7 +106,7 @@ export default {
           fields: this.options.fields,
         },
         (place, status) => {
-          if (self.validServiceRequest(place, status)) {
+          if (self.isValidServiceRequest(place, status)) {
             self.place = place;
             self.addMarker(location);
           } else {
@@ -118,7 +118,7 @@ export default {
 
     geocodeLocation(latLng) {
       const self = this;
-
+      // this is a Maybe
       this.geocoder
         .geocode({ location: latLng })
         .then((response) => {
@@ -147,36 +147,72 @@ export default {
       this.$emit('markerClicked', marker);
     },
 
+    removeMarker({ google, selectedMarker }) {
+      if (confirm('Remove map marker for ' + selectedMarker.latLng + '?')) {
+        const location = this.locations.filter(
+          (v) =>
+            v.position.lat() === event.latLng.lat() &&
+            v.position.lng() === event.latLng.lng()
+        )[0];
+        const map = null;
+        const marker = new google.maps.Marker({ ...location, map });
+
+        if (
+          confirm(
+            'Delete from database place ' + marker.place_id + ', as well?'
+          )
+        ) {
+          this.$emit('deletePlace', marker.place_id);
+        }
+      }
+    },
+
     getMarkers({ google, map }) {
       const markers = this.locations.map((location) => {
         const marker = new google.maps.Marker({ ...location, map });
         marker.addListener(`click`, () => this.onClickMarker(marker));
-        marker.addListener(`rightclick`, (event) => {
-          if (confirm('Remove map marker for ' + event.latLng + '?')) {
-            const marker = markers.filter(
-              (v) =>
-                v.position.lat() === event.latLng.lat() &&
-                v.position.lng() === event.latLng.lng()
-            )[0];
-
-            if (
-              confirm(
-                'Delete from database place ' + marker.place_id + ', as well?'
-              )
-            ) {
-              this.$emit('deletePlace', marker.place_id);
-            }
-            marker.setMap(null);
-          }
-        });
+        marker.addListener(`rightclick`, () => this.$emit('delMarker', marker));
+        // marker.addListener(`rightclick`, (event) => {
+        //   if (confirm('Remove map marker for ' + event.latLng + '?')) {
+        //     if (
+        //       confirm(
+        //         'Delete from database place ' + marker.place_id + ', as well?'
+        //       )
+        //     ) {
+        //       this.$emit('deletePlace', marker.place_id);
+        //     }
+        //     marker.setMap(null);
+        //   }
+        // });
         return marker;
       });
       console.log(`Rendered ${markers.length} markers`);
       return markers;
     },
 
+    getNewMarker({ location, google, map }) {
+      const marker = new google.maps.Marker({ ...location, map });
+      marker.addListener(`click`, () => this.onClickMarker(marker));
+      marker.addListener(`rightclick`, () => {
+        // TODO make this a dialog with checkbox for delete Place
+        if (confirm('Remove map marker for ' + marker.latLng + '?')) {
+          marker.setMap(null);
+
+          if (
+            confirm(
+              'Delete from database place ' + marker.place_id + ', as well?'
+            )
+          ) {
+            this.$emit('deletePlace', marker.place_id);
+          }
+        }
+      });
+      return marker;
+    },
+
     xFiles(google, places, markers, map) {
       {
+        // TODO this is a Maybe
         if (places.length == 0) {
           return;
         }
@@ -196,14 +232,16 @@ export default {
             scaledSize: new google.maps.Size(25, 25),
           };
           // Create a marker for each place.
-          markers.push(
-            new google.maps.Marker({
-              map,
-              icon,
-              title: place.name,
-              position: place.geometry.location,
-            })
-          );
+          const data = {
+            map,
+            icon,
+            title: place.name,
+            position: place.geometry.location,
+          };
+
+          const marker = this.getNewMarker({ data, google, map });
+          // markers = [...markers, ...marker];
+          markers.push(marker);
 
           if (place.geometry.viewport) {
             // Only geocodes have viewport.
@@ -217,9 +255,23 @@ export default {
       }
     },
 
+    setupAutocomplete({ google, map, markers }) {
+      map.addListener(`click`, (event) => this.onClickMap(event));
+      const input = document.getElementById('autoCompleteInput');
+      const searchBox = new google.maps.places.SearchBox(input);
+      map.addListener('bounds_changed', () => {
+        searchBox.setBounds(map.getBounds());
+      });
+      searchBox.addListener('places_changed', () => {
+        const places = searchBox.getPlaces();
+        this.xFiles(google, places, markers, map);
+      });
+      return { google, map };
+    },
+
     setupGeocoder({ google, map }) {
       const geocoder = new google.maps.Geocoder();
-      geocoder
+      return geocoder
         .geocode({ address: this.defaultPoi })
         .toEither()
         .cata({
@@ -232,12 +284,15 @@ export default {
             this.geocoder = geocoder;
             this.service = new google.maps.places.PlacesService(map);
 
-            return { google, map };
+            return map;
           },
           error: (results) => {
             console.log(results, 'Geocoder had issues');
           },
         });
+    },
+    setMap(map) {
+      this.map = map;
     },
   },
 
@@ -263,20 +318,11 @@ export default {
         const markers = this.getMarkers({ google, map });
         return { google, map, markers };
       })
-      .then(({ google, map, markers }) => {
-        map.addListener(`click`, (event) => self.onClickMap(event));
-        const input = document.getElementById('autoCompleteInput');
-        const searchBox = new google.maps.places.SearchBox(input);
-        map.addListener('bounds_changed', () => {
-          searchBox.setBounds(map.getBounds());
-        });
-        const places = searchBox.getPlaces();
-        searchBox.addListener('places_changed', () =>
-          this.xFiles(google, places, markers, map)
-        );
-        return { google, map };
-      })
+      .then(({ google, map, markers }) =>
+        this.setupAutocomplete({ google, map, markers })
+      )
       .then(({ google, map }) => this.setupGeocoder({ google, map }))
+      .then((map) => this.setMap(map))
       .catch((error) => console.log(error))
       .finally(() => (self.ready = true));
   },
