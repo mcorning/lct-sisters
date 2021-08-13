@@ -67,25 +67,25 @@ export default class Place extends Model {
     });
   }
 
-  static updatePromise(place) {
-    return new Promise((resolve, reject) => {
-      const data = {
-        ...place,
-        plus_code: place.plus_code.global_code,
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-      };
-      console.log(
-        'Update Place collection with',
-        JSON.stringify(place, null, 3)
-      );
-      this.$create({
-        data: data,
-      })
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
-  }
+  // static updatePromise(place) {
+  //   return new Promise((resolve, reject) => {
+  //     const data = {
+  //       ...place,
+  //       plus_code: place.plus_code.global_code,
+  //       lat: place.geometry.location.lat(),
+  //       lng: place.geometry.location.lng(),
+  //     };
+  //     console.log(
+  //       'Update Place collection with',
+  //       JSON.stringify(place, null, 3)
+  //     );
+  //     this.$create({
+  //       data: data,
+  //     })
+  //       .then((p) => resolve(p))
+  //       .catch((e) => reject(e));
+  //   });
+  // }
 
   static update(place) {
     const data = {
@@ -105,6 +105,7 @@ export default class Place extends Model {
       //   )
       // )
       .cata({
+        // TODO that clg is not useful
         ok: (v) => console.log(allOrNone(v)),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.

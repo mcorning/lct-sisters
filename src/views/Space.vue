@@ -11,59 +11,47 @@
         onDeletePlace,
       }"
     >
-      <v-container>
-        <v-row justify="space-around">
+      <v-container fluid>
+        <v-row justify="space-around" no-gutters>
           <v-col cols="12" sm="6">
             <v-text-field
-              :value="state.currentPlace"
-              label="Select a marker to mark your calendar:"
+              v-model="state.currentPlace"
+              hint="Select a marker to mark your calendar:"
+              persistent-hint
               dense
-              hide-details
               readonly
+              clearable
+              @click:clear="state.currentPlace = false"
             >
             </v-text-field>
           </v-col>
           <v-spacer />
 
-          <v-col>
-            <v-btn
-              dark
-              color="green darken-2"
-              :disabled="!state.currentPlace"
-              @click="onToWork"
-              >Work</v-btn
-            >
+          <v-col v-if="state.currentPlace">
+            <v-btn dark color="green darken-2" @click="onToWork">Work</v-btn>
           </v-col>
-          <v-col>
-            <v-btn
-              dark
-              color="primary"
-              :disabled="!state.currentPlace"
-              @click="onVisitPlace"
-              >Visit</v-btn
-            >
+          <v-col v-if="state.currentPlace">
+            <v-btn dark color="primary" @click="onVisitPlace">Visit</v-btn>
           </v-col>
         </v-row>
-      </v-container>
-      <Spaces
-        :isConnected="isConnected"
-        :state="state"
-        @markerAdded="onMarkerAdded"
-        @markerClicked="onMarkerClicked"
-        @deletePlace="onDeletePlace"
-      />
-      <v-row>
-        <v-col>
-          <label for="autoCompleteInput" class="mx-3">
-            Search:
-          </label>
-          <input
-            id="autoCompleteInput"
-            size="30"
-            placeholder="Enter place search terms here"
-          />
-        </v-col>
-      </v-row>
+        <v-row>
+          <Spaces
+            :isConnected="isConnected"
+            :state="state"
+            @markerAdded="onMarkerAdded"
+            @markerClicked="onMarkerClicked"
+            @deletePlace="onDeletePlace"
+        /></v-row>
+        <v-row>
+          <v-col>
+            <v-text-field
+              dense
+              id="autoCompleteInput"
+              hint="Enter place search terms here"
+              persistent-hint
+            ></v-text-field>
+          </v-col> </v-row
+      ></v-container>
     </div>
   </Model>
 </template>
@@ -79,14 +67,28 @@ export default {
     Spaces,
     Model,
   },
+  props: {
+    state: {
+      type: Object,
+    },
+    isConnected: Boolean,
+  },
   data() {
-    return {};
+    return {
+      showButtons: true,
+    };
   },
   methods: {
     onError(error) {
       // let the global error handler pick up and display this error
       error.message = `Space.vue error message: ${error.message}`;
       throw error;
+    },
+  },
+  watch: {
+    // state() {
+    'state.currentPlace'() {
+      console.log(this.state.currentPlace);
     },
   },
 

@@ -77,7 +77,7 @@ export default {
         label: this.labels[this.labelIndex++ % this.labels.length],
         place_id: this.place.place_id,
         name: this.place.name,
-        map: this.map,
+        // map: this.map,
       });
       marker.addListener(`click`, () => this.onClickMarker(marker));
       marker.addListener(`rightclick`, () => this.delMarker(marker));
@@ -216,19 +216,28 @@ export default {
         map.fitBounds(bounds);
       }
     },
+
     setupGeocoder({ google, map }) {
       const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: this.defaultPoi }, (results, status) => {
-        if (status !== `OK` || !results[0]) {
-          throw new Error('GoogleMap.vue error:', status);
-        }
+      geocoder
+        .geocode({ address: this.defaultPoi })
+        .toEither()
+        .cata({
+          ok: (results) => {
+            const res = results.results;
+            console.log('results', res);
+            map.setCenter(res[0].geometry.location);
+            map.fitBounds(res[0].geometry.viewport);
+            map.setZoom(this.defaultZoom);
+            this.geocoder = geocoder;
+            this.service = new google.maps.places.PlacesService(map);
 
-        map.setCenter(results[0].geometry.location);
-        map.fitBounds(results[0].geometry.viewport);
-        map.setZoom(this.defaultZoom);
-      });
-      this.geocoder = geocoder;
-      return { google, map };
+            return { google, map };
+          },
+          error: (results) => {
+            console.log(results, 'Geocoder had issues');
+          },
+        });
     },
   },
 
@@ -237,7 +246,6 @@ export default {
   },
 
   mounted() {
-    // TODO experimant with renderless subcomponents specialized for googlemaps
     const self = this;
     console.time('Mounted GoogleMaps');
     gmapsInit()
@@ -268,11 +276,7 @@ export default {
         );
         return { google, map };
       })
-      .then(({ google, map }) => {
-        this.setupGeocoder({ google, map });
-        return map;
-      })
-      .then((map) => (self.map = map))
+      .then(({ google, map }) => this.setupGeocoder({ google, map }))
       .catch((error) => console.log(error))
       .finally(() => (self.ready = true));
   },

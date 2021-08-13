@@ -81,57 +81,24 @@ export const spaceMixin = {
         // TODO setup isDefaultGraph
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };
-      // moved to time.js
-      // // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
-      // Visit.update(visit).then((visits) => {
-      //   this.updateState(visits);
-      //   this.$router.push({
-      //     name: 'Time',
-      //   });
-      // });
       this.updateVisit(visit);
     },
 
     onMarkerClicked(marker) {
       const x = Place.find(marker.place_id);
-      console.log(printJson(x));
-      // this.state.currentPlace = x;
       this.updateState({ currentPlace: x.name, currentPlace_id: x.place_id });
     },
 
-    onMakeAppointment() {
-      alert('Under construction');
-    },
-
     onMarkerAdded(place) {
-      Place.updatePromise(place).then((result) => {
-        this.$emit('cacheUpdated', result[0]);
-      });
+      Place.update(place);
     },
 
     onDeletePlace(placeId) {
       Place.delete(placeId);
     },
 
-    // TODO this is 1/2 the refactore to reduce the load on Spaces component
-    addPlace(payload) {
-      const { place, placesService, fields } = payload;
-      placesService.getDetails(
-        {
-          placeId: place.placeId,
-          fields: fields,
-        },
-        (place, status) => {
-          if (status === 'OK') {
-            // getDetails() returns the place
-            Place.updatePromise(place).then((result) => {
-              this.$emit('cacheUpdated', result[0]);
-            });
-          } else {
-            throw new Error('GoogleMap.addPlaceWithID(space)', status);
-          }
-        }
-      );
+    onMakeAppointment() {
+      alert('Under construction');
     },
   },
 };

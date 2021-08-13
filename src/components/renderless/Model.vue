@@ -213,23 +213,6 @@ export default {
         });
     },
 
-    redisGraphCallback: (results) => {
-      console.log(success('updateVisitOnGraph results:', printJson(results)));
-      return results;
-    },
-
-    emitFromClient(eventName, data, ack) {
-      if (!this.isConnected) {
-        this.$emit('updatedModel', {
-          logged: false,
-          confirmationColor: 'orange',
-          confirmationMessage: 'Model not updated. Graph not connected.',
-        });
-        return;
-      }
-      this.$socket.client.emit(eventName, data, ack);
-    },
-
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve, reject) => {
@@ -252,42 +235,49 @@ export default {
       });
     },
 
+    redisGraphCallback: (results) => {
+      console.log(success('updateVisitOnGraph results:', printJson(results)));
+      return results;
+    },
+
+    emitFromClient(eventName, data, ack) {
+      if (!this.isConnected) {
+        this.$emit('updatedModel', {
+          logged: false,
+          confirmationColor: 'orange',
+          confirmationMessage: 'Model not updated. Graph not connected.',
+        });
+        return;
+      }
+      this.$socket.client.emit(eventName, data, ack);
+    },
+
     onToWork() {},
 
     onMakeAppointment() {
       alert('Under construction');
     },
 
-    // onMarkerAdded(place) {
-    //   Place.updatePromise(place).then((result) => {
-    //     this.$emit('cacheUpdated', result[0]);
-    //   });
-    // },
-
-    // onDeletePlace(placeId) {
-    //   Place.delete(placeId);
-    // },
-
     // TODO this is 1/2 the refactore to reduce the load on Spaces component
-    addPlace(payload) {
-      const { place, placesService, fields } = payload;
-      placesService.getDetails(
-        {
-          placeId: place.placeId,
-          fields: fields,
-        },
-        (place, status) => {
-          if (status === 'OK') {
-            // getDetails() returns the place
-            Place.updatePromise(place).then((result) => {
-              this.$emit('cacheUpdated', result[0]);
-            });
-          } else {
-            throw new Error('GoogleMap.addPlaceWithID(space)', status);
-          }
-        }
-      );
-    },
+    // addPlace(payload) {
+    //   const { place, placesService, fields } = payload;
+    //   placesService.getDetails(
+    //     {
+    //       placeId: place.placeId,
+    //       fields: fields,
+    //     },
+    //     (place, status) => {
+    //       if (status === 'OK') {
+    //         // getDetails() returns the place
+    //         Place.updatePromise(place).then((result) => {
+    //           this.$emit('cacheUpdated', result[0]);
+    //         });
+    //       } else {
+    //         throw new Error('GoogleMap.addPlaceWithID(space)', status);
+    //       }
+    //     }
+    //   );
+    // },
 
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
