@@ -43,23 +43,14 @@ export default class Setting extends Model {
     this.$create({ data: settings })
       .then((v) => v)
       .toEither()
-      // .map((visit) =>
-      //   console.log(
-      //     `Updated Visit for ${firstOrNone(visit).name} with`,
-      //     JSON.stringify(visit, null, 3)
-      //   )
-      // )
       .cata({
         ok: (v) =>
-          console.log(
-            firstOrNone(v).match({
-              Some: (value) => {
-                console.log(JSON.stringify(value, null, 3));
-                return value;
-              },
-              None: () => console.log(`there is no Settings to update `),
-            })
-          ),
+          firstOrNone(v).match({
+            Some: (value) => {
+              return value;
+            },
+            None: () => console.log(`There is no Settings to update `),
+          }),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
           err.message = +'Setting.update() had issues';

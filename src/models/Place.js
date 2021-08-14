@@ -19,6 +19,7 @@ export default class Place extends Model {
       plus_code: this.string(''), // Global address string
       lat: this.number(), // Latitude of visited space/place
       lng: this.number(), // Longitude of visited space/place
+      url: this.string(), // google link to location
     };
   }
 
@@ -88,25 +89,17 @@ export default class Place extends Model {
   // }
 
   static update(place) {
-    const data = {
-      ...place,
-      plus_code: place.plus_code.global_code || '',
-      lat: place.geometry.location.lat(),
-      lng: place.geometry.location.lng(),
-    };
+    // const data = {
+    //   ...place,
+    //   lat: place.geometry.location.lat(),
+    //   lng: place.geometry.location.lng(),
+    // };
     this.$create({
-      data: data,
+      data: place,
     })
       .toEither()
-      // .map((visit) =>
-      //   console.log(
-      //     `Updated Visit for ${firstOrNone(visit).name} with`,
-      //     JSON.stringify(visit, null, 3)
-      //   )
-      // )
       .cata({
-        // TODO that clg is not useful
-        ok: (v) => console.log(allOrNone(v)),
+        ok: (v) => allOrNone(v),
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
           err.message = +'Place.update() had issues';

@@ -52,6 +52,10 @@ export const spaceMixin = {
     },
 
     onMarkerAdded(place) {
+      //default place (coming from getMarkers()) is position.
+      // convert other sources of place to position before sending it here
+      place.lat = place.position.lat;
+      place.lng = place.position.lng;
       Place.update(place);
     },
 

@@ -112,10 +112,9 @@ export default {
       error.message = `Space.vue error message: ${error.message}`;
       throw error;
     },
-    deleteMarker(f) {
+    deleteMarker(onDeletePlace) {
       this.selectedMarker.setMap(null);
-      f();
-
+      onDeletePlace(this.selectedMarker.place_id);
       this.selectedMarker = null;
       this.snackbar = false;
     },

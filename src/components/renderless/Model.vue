@@ -1,8 +1,8 @@
 <script>
 // Model's first job is make a connection to the server in case an Alert awaits// append: Append a value to a key
 // Model's second job is to handle local state including ORM entities.
-import crypto from 'crypto';
-const randomId = () => crypto.randomBytes(8).toString('hex');
+// import crypto from 'crypto';
+// const randomId = () => crypto.randomBytes(8).toString('hex');
 
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
@@ -13,15 +13,8 @@ import { timeMixin } from '@/js/time';
 import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
 
-import {
-  highlight,
-  info,
-  success,
-  warn,
-  printJson,
-  roundTime,
-} from '../../utils/helpers';
-import { DateTime, getNow } from '../../utils/luxonHelpers';
+import { highlight, info, success, warn, printJson } from '../../utils/helpers';
+import { getNow } from '../../utils/luxonHelpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
 
@@ -300,8 +293,9 @@ export default {
         sessionID,
         id: 1,
       };
-
-      console.info(warn('data:', JSON.stringify(data, null, 3)));
+      if (this.$DEBUG) {
+        console.info(warn('data:', JSON.stringify(data, null, 3)));
+      }
       Setting.update(data);
 
       this.$socket.client.auth = {
@@ -322,29 +316,24 @@ export default {
       // TODO NOTE: if any of the props in newState are undefined, iterating halts
       // should we be using Maybes here?
       this.state = { ...this.state, ...newState };
-      console.log('Updated state:');
-      console.log(printJson(this.state));
+      if (this.$DEBUG) {
+        console.log('Updated state:');
+        console.log(printJson(this.state));
+      }
     },
 
     getSomeEntityData(source) {
-      return (
-        allOrNone(source)
-          // .inspect(`${v[0].constructor.name}:\n`)
-          .inspect()
-          .match({
-            Some: (v) => v,
-            None: () => [],
-          })
-      );
+      return allOrNone(source).match({
+        Some: (v) => v,
+        None: () => [],
+      });
     },
 
     getFirstEntityData(source) {
-      return firstOrNone(source)
-        .inspect()
-        .match({
-          Some: (v) => v,
-          None: () => [],
-        });
+      return firstOrNone(source).match({
+        Some: (v) => v,
+        None: () => [],
+      });
     },
 
     filterSomeEntityData(f, source) {

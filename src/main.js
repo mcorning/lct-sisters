@@ -47,6 +47,7 @@ Vue.use(VueSocketIOExt, socket);
 import { version } from '../package.json';
 Vue.prototype.$version = version;
 Vue.prototype.$defaultGraphName = process.env.VUE_APP_NAMESPACE;
+Vue.prototype.$DEBUG = false;
 
 Vue.config.productionTip = false;
 

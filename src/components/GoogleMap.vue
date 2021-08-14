@@ -27,6 +27,7 @@ export default {
             position: { lat: v.lat, lng: v.lng },
             place_id: v.place_id,
             name: v.name,
+            plus_code: v.plus_code,
           };
         }) || []
       );
@@ -45,6 +46,9 @@ export default {
           'geometry',
           'icon',
           'name',
+          'opening_hours',
+          'utc_offset_minutes',
+          'url',
         ],
       };
     },
@@ -58,6 +62,7 @@ export default {
       map: null,
       geocoder: null,
       service: null,
+      infowindow: null,
       place: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
@@ -66,65 +71,100 @@ export default {
     };
   },
   methods: {
-    // TODO see if we can push all or most of these methods to Model
-
-    isValidServiceRequest(place, status) {
-      const x =
-        status === 'OK' && place && place.geometry && place.geometry.location;
-      return x;
+    //#region Event Handlers
+    onClickMap(event) {
+      const { placeId, latLng } = event;
+      if (placeId) {
+        this.getPlaceServiceDetails(placeId);
+      } else if (latLng) {
+        this.geocodeLocation(latLng);
+      }
     },
+
+    onClickMarker(marker) {
+      this.$emit('markerClicked', marker);
+    },
+    //#endregion Event Handlers
+
+    //#region Marker code
+    getPosition(place) {
+      if (place.position) {
+        return place;
+      }
+      place.position = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+      };
+      return place;
+    },
+
+    showInfowindow({ place, marker }) {
+      const content = document.createElement('div');
+      const nameElement = document.createElement('h2');
+      nameElement.textContent = place.name;
+      content.appendChild(nameElement);
+
+      const placeIdElement = document.createElement('p');
+      const placeUrlElement = document.createElement('a');
+      placeUrlElement.href = place.url;
+      placeUrlElement.textContent = 'Details: ' + place.place_id;
+      placeIdElement.appendChild(placeUrlElement);
+      content.appendChild(placeIdElement);
+
+      const placeAddressElement = document.createElement('p');
+      placeAddressElement.textContent = place.formatted_address;
+      content.appendChild(placeAddressElement);
+
+      const placeVisitElement = document.createElement('button');
+      placeVisitElement.textContent = 'Visit';
+      content.appendChild(placeVisitElement);
+
+      this.infowindow.setContent(content);
+      this.infowindow.open(this.map, marker);
+    },
+
     // Adds a marker to the map.
-    addMarker(location) {
-      // Add the marker at the clicked location, and add the next-available label
-      // from the array of alphabetical characters.
+    addMarkerPlus({ google, map, place }) {
+      place = this.getPosition(place);
       const marker = new window.google.maps.Marker({
-        position: location,
+        map: map,
+        position: place.position || place.geometry.location,
         label: this.labels[this.labelIndex++ % this.labels.length],
-        place_id: this.place.place_id,
-        name: this.place.name,
-        // TODO is there a way to get map dependency injected instead of dereferenced in state?
-        map: this.map,
+        place_id: place.place_id,
+        url: place.url,
+        name: place.name,
       });
-      marker.addListener(`click`, () => this.onClickMarker(marker));
-      marker.addListener(`rightclick`, () => this.delMarker(marker));
-      this.$emit('markerAdded', this.place);
-    },
-
-    delMarker() {
-      this.selectedMarker.setMap(null);
-
-      this.$emit('deletePlace', this.selectedMarker.place_id);
-      this.selectedMarker = null;
-    },
-
-    getPlaceDetails(placeId, location) {
-      const self = this;
-
-      this.service.getDetails(
-        {
-          placeId: placeId,
-          fields: this.options.fields,
-        },
-        (place, status) => {
-          if (self.isValidServiceRequest(place, status)) {
-            self.place = place;
-            self.addMarker(location);
-          } else {
-            window.alert('PlacesService failed due to: ' + status);
-          }
-        }
+      google.maps.event.addListener(marker, 'click', () =>
+        this.showInfowindow({ place, marker })
       );
+
+      marker.addListener(`rightclick`, () => this.$emit('delMarker', marker));
+      this.showInfowindow({ place, marker });
+      this.$emit('markerAdded', place);
     },
 
+    getMarkers({ google, map }) {
+      const markers = this.locations.map((place) => {
+        this.addMarkerPlus({ google, map, place });
+      });
+      console.log(`Rendered ${markers.length} markers`);
+      return { google, map, markers };
+    },
+    //#endregion Marker code
+
+    //#region Map Assets
     geocodeLocation(latLng) {
       const self = this;
       // this is a Maybe
       this.geocoder
         .geocode({ location: latLng })
+        // TODO This is a firstOrNone
         .then((response) => {
           if (response.results[0]) {
-            self.place = response.results[0];
-            self.addMarker(latLng);
+            const place = response.results[0];
+            const google = window.google;
+            const map = this.map;
+            self.addMarkerPlus({ google, map, place });
           } else {
             window.alert('No results found');
           }
@@ -132,85 +172,30 @@ export default {
         .catch((e) => window.alert('Geocoder failed due to: ' + e));
     },
 
-    onClickMap(event) {
-      const self = this;
-      console.log(event);
-      const { placeId, latLng } = event;
-      if (placeId) {
-        self.getPlaceDetails(placeId, latLng);
-      } else if (latLng) {
-        self.geocodeLocation(latLng);
-      }
-    },
-
-    onClickMarker(marker) {
-      this.$emit('markerClicked', marker);
-    },
-
-    removeMarker({ google, selectedMarker }) {
-      if (confirm('Remove map marker for ' + selectedMarker.latLng + '?')) {
-        const location = this.locations.filter(
-          (v) =>
-            v.position.lat() === event.latLng.lat() &&
-            v.position.lng() === event.latLng.lng()
-        )[0];
-        const map = null;
-        const marker = new google.maps.Marker({ ...location, map });
-
-        if (
-          confirm(
-            'Delete from database place ' + marker.place_id + ', as well?'
-          )
-        ) {
-          this.$emit('deletePlace', marker.place_id);
-        }
-      }
-    },
-
-    getMarkers({ google, map }) {
-      const markers = this.locations.map((location) => {
-        const marker = new google.maps.Marker({ ...location, map });
-        marker.addListener(`click`, () => this.onClickMarker(marker));
-        marker.addListener(`rightclick`, () => this.$emit('delMarker', marker));
-        // marker.addListener(`rightclick`, (event) => {
-        //   if (confirm('Remove map marker for ' + event.latLng + '?')) {
-        //     if (
-        //       confirm(
-        //         'Delete from database place ' + marker.place_id + ', as well?'
-        //       )
-        //     ) {
-        //       this.$emit('deletePlace', marker.place_id);
-        //     }
-        //     marker.setMap(null);
-        //   }
-        // });
-        return marker;
-      });
-      console.log(`Rendered ${markers.length} markers`);
-      return markers;
-    },
-
-    getNewMarker({ location, google, map }) {
-      const marker = new google.maps.Marker({ ...location, map });
-      marker.addListener(`click`, () => this.onClickMarker(marker));
-      marker.addListener(`rightclick`, () => {
-        // TODO make this a dialog with checkbox for delete Place
-        if (confirm('Remove map marker for ' + marker.latLng + '?')) {
-          marker.setMap(null);
-
+    // TODO refactor this as default infowindow when we click POI (or map?)
+    getPlaceServiceDetails(placeId) {
+      this.service.getDetails(
+        {
+          placeId: placeId,
+          fields: this.options.fields,
+        },
+        (place, status) => {
           if (
-            confirm(
-              'Delete from database place ' + marker.place_id + ', as well?'
-            )
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            place &&
+            place.geometry &&
+            place.geometry.location
           ) {
-            this.$emit('deletePlace', marker.place_id);
+            const google = window.google;
+            const map = this.map;
+            // convert location to work with Place entity
+            this.addMarkerPlus({ google, map, place });
           }
         }
-      });
-      return marker;
+      );
     },
 
-    xFiles(google, places, markers, map) {
+    getAutocompleteResults({ google, map, places }) {
       {
         // TODO this is a Maybe
         if (places.length == 0) {
@@ -220,29 +205,12 @@ export default {
         // For each place, get the icon, name and location.
         const bounds = new google.maps.LatLngBounds();
         places.forEach((place) => {
+          // TODO this is a Maybe
           if (!place.geometry || !place.geometry.location) {
             console.log('Returned place contains no geometry');
             return;
           }
-          const icon = {
-            url: place.icon,
-            size: new google.maps.Size(71, 71),
-            origin: new google.maps.Point(0, 0),
-            anchor: new google.maps.Point(17, 34),
-            scaledSize: new google.maps.Size(25, 25),
-          };
-          // Create a marker for each place.
-          const data = {
-            map,
-            icon,
-            title: place.name,
-            position: place.geometry.location,
-          };
-
-          const marker = this.getNewMarker({ data, google, map });
-          // markers = [...markers, ...marker];
-          markers.push(marker);
-
+          this.addMarkerPlus({ google, map, place });
           if (place.geometry.viewport) {
             // Only geocodes have viewport.
             bounds.union(place.geometry.viewport);
@@ -255,7 +223,7 @@ export default {
       }
     },
 
-    setupAutocomplete({ google, map, markers }) {
+    setupAutocomplete({ google, map }) {
       map.addListener(`click`, (event) => this.onClickMap(event));
       const input = document.getElementById('autoCompleteInput');
       const searchBox = new google.maps.places.SearchBox(input);
@@ -264,7 +232,7 @@ export default {
       });
       searchBox.addListener('places_changed', () => {
         const places = searchBox.getPlaces();
-        this.xFiles(google, places, markers, map);
+        this.getAutocompleteResults({ google, map, places });
       });
       return { google, map };
     },
@@ -274,25 +242,31 @@ export default {
       return geocoder
         .geocode({ address: this.defaultPoi })
         .toEither()
+        .map(({ results }) => {
+          map.setCenter(results[0].geometry.location);
+          map.fitBounds(results[0].geometry.viewport);
+          map.setZoom(this.defaultZoom);
+        })
         .cata({
-          ok: (results) => {
-            const res = results.results;
-            console.log('results', res);
-            map.setCenter(res[0].geometry.location);
-            map.fitBounds(res[0].geometry.viewport);
-            map.setZoom(this.defaultZoom);
-            this.geocoder = geocoder;
-            this.service = new google.maps.places.PlacesService(map);
-
-            return map;
-          },
+          ok: (map) => map,
           error: (results) => {
-            console.log(results, 'Geocoder had issues');
+            console.log(results, 'Issues in setupGeocoder()');
           },
         });
     },
-    setMap(map) {
+
+    //#endregion Map Assets
+
+    isValidServiceRequest(place, status) {
+      const x =
+        status === 'OK' && place && place.geometry && place.geometry.location;
+      return x;
+    },
+    initAssets({ google, map }) {
       this.map = map;
+      this.service = new google.maps.places.PlacesService(map);
+      this.infowindow = new google.maps.InfoWindow();
+      return { google, map };
     },
   },
 
@@ -314,17 +288,15 @@ export default {
         });
         return { google, map };
       })
-      .then(({ google, map }) => {
-        const markers = this.getMarkers({ google, map });
-        return { google, map, markers };
-      })
+      .then(({ google, map }) => this.initAssets({ google, map }))
+      .then(({ google, map }) => this.getMarkers({ google, map }))
       .then(({ google, map, markers }) =>
         this.setupAutocomplete({ google, map, markers })
       )
       .then(({ google, map }) => this.setupGeocoder({ google, map }))
-      .then((map) => this.setMap(map))
+      .then(() => (self.ready = true))
       .catch((error) => console.log(error))
-      .finally(() => (self.ready = true));
+      .finally(() => console.timeEnd('Mounted GoogleMaps'));
   },
 };
 </script>
