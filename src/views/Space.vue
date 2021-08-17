@@ -12,7 +12,7 @@
       }"
     >
       <v-container fluid>
-        <v-row justify="space-around" no-gutters>
+        <!-- <v-row justify="space-around" no-gutters>
           <v-col cols="12" sm="6">
             <v-text-field
               v-model="state.currentPlace"
@@ -33,7 +33,7 @@
           <v-col v-if="state.currentPlace">
             <v-btn dark color="primary" @click="onVisitPlace">Visit</v-btn>
           </v-col>
-        </v-row>
+        </v-row> -->
         <v-row>
           <Spaces
             :isConnected="isConnected"
@@ -53,6 +53,7 @@
             ></v-text-field>
           </v-col>
         </v-row>
+
         <v-snackbar v-model="snackbar" color="orange"
           >{{ message }}
           <template v-slot:action="{ attrs }">

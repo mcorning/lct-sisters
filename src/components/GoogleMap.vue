@@ -1,9 +1,17 @@
 <template>
-  <div class="App"></div>
+  <div>
+    <info-window-card
+      ref="infowin"
+      id="infowin"
+      :marker="marker"
+    ></info-window-card>
+    <div class="App" ref="map"></div>
+  </div>
 </template>
 
 <script>
 import gmapsInit from '../utils/gmaps';
+import InfoWindowCard from './cards/infoWindowCard.vue';
 
 export default {
   name: `Map`,
@@ -13,6 +21,9 @@ export default {
       required: true,
     },
     isConnected: Boolean,
+  },
+  components: {
+    InfoWindowCard,
   },
 
   computed: {
@@ -63,7 +74,9 @@ export default {
       geocoder: null,
       service: null,
       infowindow: null,
+      seeInfowindow: true,
       place: null,
+      marker: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
       labels: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -98,29 +111,20 @@ export default {
       return place;
     },
 
-    showInfowindow({ place, marker }) {
-      const content = document.createElement('div');
-      const nameElement = document.createElement('h2');
-      nameElement.textContent = place.name;
-      content.appendChild(nameElement);
-
-      const placeIdElement = document.createElement('p');
-      const placeUrlElement = document.createElement('a');
-      placeUrlElement.href = place.url;
-      placeUrlElement.textContent = 'Details: ' + place.place_id;
-      placeIdElement.appendChild(placeUrlElement);
-      content.appendChild(placeIdElement);
-
-      const placeAddressElement = document.createElement('p');
-      placeAddressElement.textContent = place.formatted_address;
-      content.appendChild(placeAddressElement);
-
-      const placeVisitElement = document.createElement('button');
-      placeVisitElement.textContent = 'Visit';
-      content.appendChild(placeVisitElement);
-
-      this.infowindow.setContent(content);
+    // TODO can use use something like this, instead:
+    /**
+ * Vue.component('infoWindow', VueGoogleMap.InfoWindow);
+ * <infoWindow :position="{
+            lat: 57.708,
+            lng: 11.974
+        }" :opened="true" :content="Hello World">
+    </infoWindow>
+ */
+    showInfoWindow({ marker }) {
+      this.marker = marker;
       this.infowindow.open(this.map, marker);
+
+      this.seeInfowindow = true;
     },
 
     // Adds a marker to the map.
@@ -128,18 +132,19 @@ export default {
       place = this.getPosition(place);
       const marker = new window.google.maps.Marker({
         map: map,
-        position: place.position || place.geometry.location,
+        position: place.position,
         label: this.labels[this.labelIndex++ % this.labels.length],
         place_id: place.place_id,
         url: place.url,
         name: place.name,
       });
-      google.maps.event.addListener(marker, 'click', () =>
-        this.showInfowindow({ place, marker })
-      );
+      marker.addListener('click', (event) => {
+        event.stop();
+        this.showInfoWindow({ marker });
+      });
 
       marker.addListener(`rightclick`, () => this.$emit('delMarker', marker));
-      this.showInfowindow({ place, marker });
+      this.showInfoWindow({ place, marker });
       this.$emit('markerAdded', place);
     },
 
@@ -224,7 +229,10 @@ export default {
     },
 
     setupAutocomplete({ google, map }) {
-      map.addListener(`click`, (event) => this.onClickMap(event));
+      map.addListener(`click`, (event) => {
+        event.stop();
+        this.onClickMap(event);
+      });
       const input = document.getElementById('autoCompleteInput');
       const searchBox = new google.maps.places.SearchBox(input);
       map.addListener('bounds_changed', () => {
@@ -266,20 +274,29 @@ export default {
       this.map = map;
       this.service = new google.maps.places.PlacesService(map);
       this.infowindow = new google.maps.InfoWindow();
+
+      // this.infowindow = new google.maps.InfoWindow({
+      //   content: this.$refs.infowindow,
+      // });
       return { google, map };
     },
   },
 
   watch: {
-    ready() {},
+    ready() {
+      const x = document.getElementById('infowin');
+      this.infowindow.setContent(x);
+    },
   },
 
   mounted() {
+    this.seeInfowindow = false;
     const self = this;
     console.time('Mounted GoogleMaps');
     gmapsInit()
       .then((google) => {
-        const map = new google.maps.Map(this.$el, {
+        const map = new google.maps.Map(this.$refs.map, {
+          // const map = new google.maps.Map(this.$el, {
           mapTypeControl: true,
           mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
