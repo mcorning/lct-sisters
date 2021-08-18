@@ -84,6 +84,7 @@ export const spaceMixin = {
       this.updateVisit(visit);
     },
 
+    // TODO this updated currentPlac_id, but do we need to?
     onMarkerClicked(marker) {
       const x = Place.find(marker.place_id);
       this.updateState({ currentPlace: x.name, currentPlace_id: x.place_id });

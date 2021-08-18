@@ -1,16 +1,28 @@
 <template>
-  <div>
+  <v-container>
+    <div class="App" ref="map"></div>
+    <v-row>
+      <v-col>
+        <v-text-field
+          dense
+          id="autoCompleteInput"
+          hint="Enter place search terms here"
+          persistent-hint
+        >
+        </v-text-field>
+      </v-col>
+    </v-row>
     <info-window-card
       ref="infowin"
       id="infowin"
-      :marker="marker"
+      :data="data"
     ></info-window-card>
-    <div class="App" ref="map"></div>
-  </div>
+  </v-container>
 </template>
 
 <script>
 import gmapsInit from '../utils/gmaps';
+import { curry, compose, prop, testPlace, testLatLng } from '@/fp/utils';
 import InfoWindowCard from './cards/infoWindowCard.vue';
 
 export default {
@@ -28,7 +40,6 @@ export default {
 
   computed: {
     // To create markers during mounting and delete markers in the UI,
-    // fetch some data out of places entity
     locations() {
       return (
         // TODO this is a Maybe
@@ -47,7 +58,7 @@ export default {
       return this.state.visits.filter((v) => v.name);
     },
 
-    // to limit query cost at Google, only fetch Place data essential for our mission
+    // to limit query cost at Google, only fetch Place options essential for our mission
     options() {
       return {
         fields: [
@@ -66,6 +77,7 @@ export default {
   },
   data() {
     return {
+      data: null,
       snackbar: true,
       timeout: 10000,
       selectedMarker: null,
@@ -74,7 +86,6 @@ export default {
       geocoder: null,
       service: null,
       infowindow: null,
-      seeInfowindow: true,
       place: null,
       marker: null,
       defaultZoom: 15,
@@ -87,11 +98,9 @@ export default {
     //#region Event Handlers
     onClickMap(event) {
       const { placeId, latLng } = event;
-      if (placeId) {
-        this.getPlaceServiceDetails(placeId);
-      } else if (latLng) {
-        this.geocodeLocation(latLng);
-      }
+      placeId
+        ? this.getPlaceServiceDetails(placeId)
+        : this.geocodeLocation(latLng);
     },
 
     onClickMarker(marker) {
@@ -120,37 +129,50 @@ export default {
         }" :opened="true" :content="Hello World">
     </infoWindow>
  */
-    showInfoWindow({ marker }) {
+    showInfoWindow({ markedPlace, marker }) {
       this.marker = marker;
       this.infowindow.open(this.map, marker);
+      this.data = markedPlace;
+    },
 
-      this.seeInfowindow = true;
+    prepPlace(place) {
+      const getGeometry = prop('geometry');
+      const getLocation = prop('location');
+      const getLatAndLng = (latLng) => {
+        return { position: { lat: latLng.lat(), lng: latLng.lng() } };
+      };
+      const reduced = compose(getLatAndLng, getLocation, getGeometry);
+      const latLng = reduced(place);
+      console.log(latLng);
+      const markedPlace = { ...place, ...latLng };
+      return markedPlace;
     },
 
     // Adds a marker to the map.
-    addMarkerPlus({ google, map, place }) {
-      place = this.getPosition(place);
-      const marker = new window.google.maps.Marker({
+    addMarkerPlus({ google, map, markedPlace }) {
+      const marker = new google.maps.Marker({
         map: map,
-        position: place.position,
+        position: markedPlace.position,
         label: this.labels[this.labelIndex++ % this.labels.length],
-        place_id: place.place_id,
-        url: place.url,
-        name: place.name,
+        place_id: markedPlace.place_id,
+        url: markedPlace.url,
+        name: markedPlace.name,
       });
       marker.addListener('click', (event) => {
         event.stop();
-        this.showInfoWindow({ marker });
+        this.showInfoWindow({ markedPlace, marker });
       });
 
       marker.addListener(`rightclick`, () => this.$emit('delMarker', marker));
-      this.showInfoWindow({ place, marker });
-      this.$emit('markerAdded', place);
+      // this.showInfoWindow({ markedPlace, marker });
+      this.$emit('markerAdded', markedPlace);
+      return { marker, markedPlace };
     },
 
     getMarkers({ google, map }) {
-      const markers = this.locations.map((place) => {
-        this.addMarkerPlus({ google, map, place });
+      const markers = this.locations.map((markedPlace) => {
+        // this is the only call to addMarkersPlus that is not using a googlemaps Place
+        this.addMarkerPlus({ google, map, markedPlace });
       });
       console.log(`Rendered ${markers.length} markers`);
       return { google, map, markers };
@@ -159,7 +181,6 @@ export default {
 
     //#region Map Assets
     geocodeLocation(latLng) {
-      const self = this;
       // this is a Maybe
       this.geocoder
         .geocode({ location: latLng })
@@ -167,17 +188,24 @@ export default {
         .then((response) => {
           if (response.results[0]) {
             const place = response.results[0];
-            const google = window.google;
-            const map = this.map;
-            self.addMarkerPlus({ google, map, place });
+            this.goForIt(place);
           } else {
-            window.alert('No results found');
+            window.alert('No geocodeLocation results found');
           }
         })
         .catch((e) => window.alert('Geocoder failed due to: ' + e));
     },
 
-    // TODO refactor this as default infowindow when we click POI (or map?)
+    goForIt(place) {
+      const markedPlace = this.prepPlace(place);
+      const data = this.addMarkerPlus({
+        google: window.google,
+        map: this.map,
+        markedPlace,
+      });
+      this.showInfoWindow(data);
+    },
+
     getPlaceServiceDetails(placeId) {
       this.service.getDetails(
         {
@@ -185,16 +213,11 @@ export default {
           fields: this.options.fields,
         },
         (place, status) => {
-          if (
-            status === window.google.maps.places.PlacesServiceStatus.OK &&
-            place &&
-            place.geometry &&
-            place.geometry.location
-          ) {
-            const google = window.google;
-            const map = this.map;
-            // convert location to work with Place entity
-            this.addMarkerPlus({ google, map, place });
+          if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
+            throw 'Cannot get Place details from service.';
+          }
+          if (place && place.geometry && place.geometry.location) {
+            this.goForIt(place);
           }
         }
       );
@@ -215,7 +238,7 @@ export default {
             console.log('Returned place contains no geometry');
             return;
           }
-          this.addMarkerPlus({ google, map, place });
+          this.goForIt(place);
           if (place.geometry.viewport) {
             // Only geocodes have viewport.
             bounds.union(place.geometry.viewport);
@@ -229,10 +252,6 @@ export default {
     },
 
     setupAutocomplete({ google, map }) {
-      map.addListener(`click`, (event) => {
-        event.stop();
-        this.onClickMap(event);
-      });
       const input = document.getElementById('autoCompleteInput');
       const searchBox = new google.maps.places.SearchBox(input);
       map.addListener('bounds_changed', () => {
@@ -247,6 +266,7 @@ export default {
 
     setupGeocoder({ google, map }) {
       const geocoder = new google.maps.Geocoder();
+      this.geocoder = geocoder;
       return geocoder
         .geocode({ address: this.defaultPoi })
         .toEither()
@@ -271,26 +291,50 @@ export default {
       return x;
     },
     initAssets({ google, map }) {
+      map.addListener(`click`, (event) => {
+        event.stop();
+        this.onClickMap(event);
+      });
       this.map = map;
       this.service = new google.maps.places.PlacesService(map);
       this.infowindow = new google.maps.InfoWindow();
-
-      // this.infowindow = new google.maps.InfoWindow({
-      //   content: this.$refs.infowindow,
-      // });
       return { google, map };
+    },
+    fpLab() {
+      const test1 = (a) => a * 10;
+      const test2 = (a) => a * 2;
+      const r = compose(test2, test1);
+      console.log(r(10));
+
+      const sum = (a, b) => a + b;
+      let curriedSum = curry(sum);
+
+      console.log(curriedSum(3, 7));
+    },
+
+    fpLab2(x) {
+      // take raw input from googlemaps
+      // make it a consistent object for Place entity
+      const getGeometry = prop('geometry');
+      const getLocation = prop('location');
+      const reduced = compose(getLocation, getGeometry);
+      console.log(reduced(x));
+      // getPosition
+
+      // addPlace
+      // addMarker
+      // showInfo
     },
   },
 
   watch: {
     ready() {
-      const x = document.getElementById('infowin');
-      this.infowindow.setContent(x);
+      this.infowindow.setContent(document.getElementById('infowin'));
+      this.fpLab2(testLatLng);
     },
   },
 
   mounted() {
-    this.seeInfowindow = false;
     const self = this;
     console.time('Mounted GoogleMaps');
     gmapsInit()

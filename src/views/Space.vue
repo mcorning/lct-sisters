@@ -12,20 +12,7 @@
       }"
     >
       <v-container fluid>
-        <!-- <v-row justify="space-around" no-gutters>
-          <v-col cols="12" sm="6">
-            <v-text-field
-              v-model="state.currentPlace"
-              hint="Select a marker to mark your calendar:"
-              persistent-hint
-              dense
-              readonly
-              clearable
-              @click:clear="state.currentPlace = false"
-            >
-            </v-text-field>
-          </v-col>
-          <v-spacer />
+        <!--
 
           <v-col v-if="state.currentPlace">
             <v-btn dark color="green darken-2" @click="onToWork">Work</v-btn>
@@ -43,16 +30,16 @@
             @deletePlace="onDeletePlace"
             @delMarker="onDelMarker"
         /></v-row>
-        <v-row>
+        <!--    <v-row>
           <v-col>
-            <v-text-field
+             <v-text-field
               dense
               id="autoCompleteInput"
               hint="Enter place search terms here"
               persistent-hint
-            ></v-text-field>
+            ></v-text-field> 
           </v-col>
-        </v-row>
+        </v-row>-->
 
         <v-snackbar v-model="snackbar" color="orange"
           >{{ message }}
@@ -120,12 +107,7 @@ export default {
       this.snackbar = false;
     },
   },
-  watch: {
-    // state() {
-    'state.currentPlace'() {
-      console.log(this.state.currentPlace);
-    },
-  },
+  watch: {},
 
   mounted() {
     console.log('\tSPACE.vue mounted');
