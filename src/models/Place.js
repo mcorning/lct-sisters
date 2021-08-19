@@ -89,13 +89,13 @@ export default class Place extends Model {
   // }
 
   static update(place) {
-    // const data = {
-    //   ...place,
-    //   lat: place.geometry.location.lat(),
-    //   lng: place.geometry.location.lng(),
-    // };
+    const data = {
+      ...place,
+      lat: place.geometry.location.lat(),
+      lng: place.geometry.location.lng(),
+    };
     this.$create({
-      data: place,
+      data: data,
     })
       .toEither()
       .cata({

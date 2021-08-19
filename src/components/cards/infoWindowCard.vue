@@ -1,18 +1,25 @@
 <template>
   <div>
-    <v-card v-if="data">
+    <v-card v-if="info">
       <v-card-title>{{ name }}</v-card-title>
-      <v-card-subtitle v-html="placeLink"></v-card-subtitle>
-      <v-card-text
-        >{{ address }} <br />
-        <small>
-          {{ plusCode }}<br />
-          {{ placeId }}
-        </small>
+      <v-card-subtitle>{{ address }}</v-card-subtitle>
+      <v-card-text>
+        <v-row no-gutters>
+          <v-col cols="3">Postion Data</v-col>
+          <v-col>
+            <small>
+              {{ position | latLng }}<br />
+              PlusCode: {{ plusCode }}<br />
+              PlaceID: {{ placeId }}
+            </small></v-col
+          >
+        </v-row>
       </v-card-text>
-      <v-btn>Visit</v-btn>
-      <v-btn>Work</v-btn>
-      <v-btn>Share</v-btn>
+      <p v-if="info.url" v-html="placeLink"></p>
+
+      <v-btn @click="onVisitPlace(placeId)">Visit</v-btn>
+      <v-btn @click="onToWork(placeId)">Work</v-btn>
+      <v-btn @click="onShareGathering(placeId)">Share</v-btn>
     </v-card>
   </div>
 </template>
@@ -20,32 +27,44 @@
 <script>
 export default {
   props: {
-    data: {
+    info: {
       type: Object,
       require: true,
     },
+    onVisitPlace: Function,
+    onToWork: Function,
+    onShareGathering: Function,
   },
+  filters: {
+    latLng: (val) => {
+      return `Lat: ${val.lat} Lng:  ${val.lng}`;
+    },
+  },
+
   computed: {
     name() {
-      return this.data.name;
+      return this.info.name;
     },
+    position() {
+      return this.info.position;
+    },
+
     placeId() {
-      return this.data?.place_id;
+      return this.info.place_id;
     },
     plusCode() {
-      return this.data?.plus_code.global_code;
+      return this.info.plus_code?.global_code;
     },
     placeLink() {
-      return `<a href="${this.data.url}">Show details</a>`;
+      return `<a href="${this.info.url}">Show place details on Googlemap</a>`;
     },
     address() {
-      return this.data.formatted_address;
+      return this.info.formatted_address;
     },
   },
-  watch: {
-    data() {
-      console.log(this.data);
-    },
-  },
+
+  methods: {},
+
+  watch: {},
 };
 </script>

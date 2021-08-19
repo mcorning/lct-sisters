@@ -245,33 +245,6 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    onToWork() {},
-
-    onMakeAppointment() {
-      alert('Under construction');
-    },
-
-    // TODO this is 1/2 the refactore to reduce the load on Spaces component
-    // addPlace(payload) {
-    //   const { place, placesService, fields } = payload;
-    //   placesService.getDetails(
-    //     {
-    //       placeId: place.placeId,
-    //       fields: fields,
-    //     },
-    //     (place, status) => {
-    //       if (status === 'OK') {
-    //         // getDetails() returns the place
-    //         Place.updatePromise(place).then((result) => {
-    //           this.$emit('cacheUpdated', result[0]);
-    //         });
-    //       } else {
-    //         throw new Error('GoogleMap.addPlaceWithID(space)', status);
-    //       }
-    //     }
-    //   );
-    // },
-
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
@@ -412,48 +385,6 @@ export default {
       });
   },
 
-  // strictly speaking, Promise.all() returns a promise, so we could use EitherAsync here, as well...
-  // so that's why we use mounted() below
-  // mountedBigly() {
-  //   const self = this;
-  //   Promise.all([
-  //     Setting.$fetch(),
-  //     Place.$fetch(),
-  //     Visit.$fetch(),
-  //     Appointment.$fetch(),
-  //   ])
-
-  //     .then((entities) => {
-  //       const [allSettings, allPlaces, allVisits, allAppointments] = entities;
-
-  //       const settings = self.getFirstEntityData(allSettings.settings);
-
-  //       const places = self.filterSomeEntityData(
-  //         (v) => v.name,
-  //         allPlaces.places
-  //       );
-
-  //       const visits = self.filterSomeEntityData(this.filter, allVisits.visits);
-
-  //       const appointments = self.getSomeEntityData(
-  //         allAppointments.appointments
-  //       );
-
-  //       self.updateState({
-  //         settings,
-  //         places,
-  //         visits,
-  //         appointments,
-  //       });
-
-  //       self.connectMe();
-  //       self.loading = false;
-  //     })
-  //     .catch((err) => {
-  //       throw err;
-  //     });
-  // },
-
   render() {
     // The first user of Model will not see data if we render() while loading
     if (this.loading) {
@@ -475,6 +406,7 @@ export default {
       onToWork: this.onToWork,
       onVisitPlace: this.onVisitPlace,
       onMakeAppointment: this.onMakeAppointment,
+      onShareGathering: this.onShareGathering,
       onDeletePlace: this.onDeletePlace,
 
       // Time assets
