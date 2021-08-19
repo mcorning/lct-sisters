@@ -12,21 +12,6 @@ const routes = [
     component: Space,
     props: true,
   },
-  {
-    path: '/time',
-    name: 'Time',
-    component: Time,
-    props: true,
-  },
-  // {
-  //   path: '/welcome',
-  //   name: 'Welcome',
-  //   component: () => import('@/views/Welcome.vue'),
-  //   props: true,
-  //   // meta: {
-  //   //   layout: 'AppLayoutWelcome',
-  //   // },
-  // },
 
   {
     path: '/warning',
@@ -36,6 +21,12 @@ const routes = [
     meta: {
       layout: 'AppLayoutWarn',
     },
+  },
+  {
+    path: '/time',
+    name: 'Time',
+    component: Time,
+    props: true,
   },
 ];
 

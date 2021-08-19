@@ -12,19 +12,16 @@
         onDeletePlace,
       }"
     >
-      <v-container fluid>
-        <v-row>
-          <Spaces
-            :isConnected="isConnected"
-            :state="state"
-            :onToWork="onToWork"
-            :onVisitPlace="onVisitPlace"
-            :onShareGathering="onShareGathering"
-            :onMarkerAdded="onMarkerAdded"
-            :onMarkerClicked="onMarkerClicked"
-            :onDeletePlace="onDeletePlace"
-        /></v-row>
-      </v-container>
+      <Spaces
+        :isConnected="isConnected"
+        :state="state"
+        :onToWork="onToWork"
+        :onVisitPlace="onVisitPlace"
+        :onShareGathering="onShareGathering"
+        :onMarkerAdded="onMarkerAdded"
+        :onMarkerClicked="onMarkerClicked"
+        :onDeletePlace="onDeletePlace"
+      />
     </div>
   </Model>
 </template>

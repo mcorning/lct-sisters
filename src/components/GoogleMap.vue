@@ -1,26 +1,29 @@
 <template>
-  <v-container>
-    <div class="App" ref="map"></div>
-    <v-row>
-      <v-col>
-        <v-text-field
-          dense
-          id="autoCompleteInput"
-          hint="Enter place search terms here"
-          persistent-hint
-        >
-        </v-text-field>
-      </v-col>
-    </v-row>
-    <info-window-card
-      ref="infowin"
-      id="infowin"
-      :info="info"
-      :onToWork="onToWork"
-      :onShareGethering="onShareGethering"
-      :onVisitPlace="onVisitPlace"
-    ></info-window-card>
+  <div>
+    <div>
+      <!-- Map container -->
+      <div class="Map" ref="map"></div>
 
+      <v-row>
+        <v-col>
+          <v-text-field
+            dense
+            id="autoCompleteInput"
+            hint="Enter place search terms here"
+            persistent-hint
+          >
+          </v-text-field>
+        </v-col>
+      </v-row>
+      <info-window-card
+        ref="infowin"
+        id="infowin"
+        :info="info"
+        :onToWork="onToWork"
+        :onShareGethering="onShareGethering"
+        :onVisitPlace="onVisitPlace"
+      ></info-window-card>
+    </div>
     <v-snackbar v-model="snackbar" color="orange" centered
       >{{ message }}
       <template v-slot:action="{ attrs }">
@@ -32,7 +35,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>
@@ -60,6 +63,18 @@ export default {
   },
 
   computed: {
+    svgMarker() {
+      return {
+        path:
+          'M10.453 14.016l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z',
+        fillColor: 'purple',
+        fillOpacity: 0.6,
+        strokeWeight: 0,
+        rotation: 0,
+        scale: 2,
+        anchor: new window.google.maps.Point(10, 20),
+      };
+    },
     // To create markers during mounting and delete markers in the UI,
     cachedPlaces() {
       return (
@@ -258,11 +273,22 @@ export default {
     //#region Marker code
     // Adds a marker to the map.
     makeMarkerFromMarkedPlace({ google, map, markedPlace }) {
+      const strokeColor = 'purple';
       const marker = new google.maps.Marker({
         map: map,
         position: markedPlace.position,
-        label: this.labels[this.labelIndex++ % this.labels.length],
+        // label: this.labels[this.labelIndex++ % this.labels.length],
+        // TODO change this to add Last Visited text only if lastVisit is not null
+        title: `${markedPlace.name}\nLast Visited: ${markedPlace.lastVisit ||
+          'add lastVisit to Place type'}`,
         place_id: markedPlace.place_id, // so we can delete the marker's corresponding Place element
+        // icon: this.svgMarker,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          strokeColor: strokeColor,
+          strokeWeight: 12,
+          scale: 10,
+        },
       });
       marker.addListener('click', (event) => {
         event.stop();
@@ -374,10 +400,12 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.App {
-  width: 100vw;
-  height: 60vh;
+.Map {
+  width: 98vw;
+  height: 80vh;
 }
 </style>

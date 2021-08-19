@@ -101,11 +101,9 @@
             <v-btn text color="secondary" @click="selectedOpen = false">
               Cancel
             </v-btn>
-            <v-spacer />
             <v-btn text color="secondary" @click="update('cache')">
-              Save
+              Update
             </v-btn>
-            <v-spacer />
             <v-btn text color="secondary" @click="update('graph')">
               Log
             </v-btn>
@@ -316,39 +314,6 @@ export default {
 
     //#endregion Calendar functions
 
-    // newVisit() {
-    //   const time = this.place.startTime || Date.now();
-    //   const shift = this.place.shift;
-    //   const place_id = this.place.place_id;
-    //   this.addVisit(time, place_id, shift);
-    // },
-    // addVisit(
-    //   time,
-    //   place_id = this.place.place_id,
-    //   stay = this.intervalMinutes
-    // ) {
-    //   console.log(time, place_id, stay);
-    //   const starttime = this.roundTime(time);
-    //   const endtime = starttime + stay;
-    //   const entity = {
-    //     id: randomId(),
-    //     name: this.place.name,
-    //     place_id: place_id,
-    //     start: starttime,
-    //     end: endtime,
-    //     date: DateTime.fromMillis(starttime).toISODate(),
-    //     category: 'You',
-
-    //     timed: true,
-    //     marked: getNow(),
-    //     graphName: this.graphname,
-    //     color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-    //     loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
-    //   };
-
-    //   // TODO refactor for Model
-    //   //this.updateCache({ action: 'add', entity });
-    // },
     getCurrentTime() {
       return this.cal
         ? this.cal.times.now.hour * 60 + this.cal.times.now.minute
@@ -387,12 +352,11 @@ export default {
   },
 
   watch: {
-
     confirmations(msg) {
       const { logged, confirmationColor, confirmationMessage } = msg;
       this.confirmationColor = confirmationColor;
       this.confirmationMessage = confirmationMessage;
-      this.selectedEvent.color=logged?'primary':'secondary'
+      this.selectedEvent.color = logged ? 'primary' : 'secondary';
       this.snackbar = true;
     },
   },

@@ -6,7 +6,7 @@
         <v-icon>mdi-map-marker</v-icon>
       </v-btn>
 
-      <v-btn fab color="red" class="black--text" dark @click="open('Warning')">
+      <v-btn fab color="red" class="black--text" dark @click="open('Warn')">
         <span>Warn</span>
         <v-icon dark> mdi-alert </v-icon></v-btn
       >
