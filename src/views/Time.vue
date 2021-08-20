@@ -1,6 +1,7 @@
 <template>
   <Model @error="onError" @updatedModel="onUpdatedModel">
     <div slot-scope="{ isConnected, state, onUpdate }">
+      {{ state.visits.length }}
       <Calendar
         :isConnected="isConnected"
         :state="state"
@@ -37,7 +38,7 @@ export default {
   },
 
   mounted() {
-    console.log('\tTIME.vue mounted');
+    console.log('\tTime.vue mounted');
   },
 };
 </script>

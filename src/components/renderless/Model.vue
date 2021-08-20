@@ -31,14 +31,24 @@ export default {
     isConnected() {
       return !!this.$socket.connected;
     },
+
+    hasVisits() {
+      return this.state.visits.length > 0;
+    },
+    visits() {
+      return this.state.visits;
+    },
+    visitCount() {
+      return this.state.visits.length;
+    },
     settings() {
-      return Setting.all()[0];
+      return this.state.settings;
     },
     sessionID() {
-      return this.settings?.sessionID;
+      return this.settings.sessionID;
     },
     username() {
-      return this.settings?.username || prompt('User name?');
+      return this.settings.username || prompt('User name?');
     },
   },
 
@@ -143,6 +153,7 @@ export default {
   },
 
   methods: {
+    // TODO has this abstract approach been superseded by time.js and space.js?
     onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
       const f = this[target];
@@ -357,6 +368,7 @@ export default {
   watch: {
     loading() {
       console.log(success('\tMODEL mounted'));
+      console.log('Visits: ', this.state.visits.length);
       this.connectMe();
     },
   },
@@ -398,6 +410,7 @@ export default {
       // Global assets
       state: this.state,
       isConnected: this.isConnected,
+
       onConnectMe: this.onConnectMe,
 
       // Space assets
@@ -412,6 +425,10 @@ export default {
       // Time assets
       changeEvent: this.changeEvent,
       onUpdate: this.onUpdate,
+
+      //Warning assets
+      visitCount: this.visitCount,
+      hasVisits: this.hasVisits,
     });
   },
 };

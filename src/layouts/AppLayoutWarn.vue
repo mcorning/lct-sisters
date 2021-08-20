@@ -26,10 +26,6 @@ export default {
       ready: false,
     };
   },
-
-  mounted() {
-    console.log('Warning.vue mounted');
-  },
 };
 </script>
 
