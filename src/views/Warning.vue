@@ -26,7 +26,7 @@
           max-width="400"
         >
           <v-card dark>
-            <v-card-title>Loged Visits Status</v-card-title>
+            <v-card-title>Logged Visits Status</v-card-title>
             <v-card-subtitle
               >You have {{ hasUnloggedVisits }} visits to log to the
               server</v-card-subtitle
@@ -37,14 +37,13 @@
               visits now, anbody who shared space with you will get your alerts.
             </v-card-text>
             <v-card-actions>
-              <v-btn @click="logVisits">Yes</v-btn>
+              <v-btn @click="logVisitsX(logVisits)">Yes</v-btn>
               <v-btn @click="dialog = false">No</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
         <!-- End unlogged Visits -->
 
-        <!-- " -->
         <v-card
           v-if="hasVisits && (isConnected || isDebugging)"
           color="secondary"
@@ -55,10 +54,14 @@
             >Dated: {{ dated }}</v-card-subtitle
           >
           <v-card-text class="white--text pb-1">
-            {{ visitCount == 1 ? 'Public place' : 'Public places' }}
-            warned: {{ visitCount }}</v-card-text
-          >
-
+            <v-row>
+              <v-col>
+                {{ visitCount == 1 ? 'Public place' : 'Public places' }}
+                at risk: {{ visitCount }}</v-col
+              >
+              <v-col>Unlogged visits: {{ hasUnloggedVisits }}</v-col>
+            </v-row>
+          </v-card-text>
           <v-divider />
           <v-row no-gutters>
             <v-col>
@@ -275,6 +278,19 @@
             <v-btn text @click="returnToSpaces">OK</v-btn>
           </v-card-actions>
         </v-card>
+        <v-snackbar v-model="confSnackbar" timeout="5000"
+          >{{ confirmationMessage }}
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="red"
+              text
+              v-bind="attrs"
+              @click="confSnackbar = false"
+            >
+              Close
+            </v-btn>
+          </template>
+        </v-snackbar>
       </v-sheet>
     </div>
   </Model>
@@ -319,7 +335,7 @@ export default {
       return formatTime();
     },
     score() {
-      console.log(this.weight, this.epsilon);
+      console.log('Wt:', this.weight, 'e:', this.epsilon);
       return this.weight + this.epsilon;
     },
 
@@ -423,6 +439,8 @@ export default {
 
   data() {
     return {
+      confirmationMessage: '',
+      confSnackbar: false,
       // trick when using compound predicate for dialog (note we use :value not v-model when using compound predicates)
       dialog: true,
       snackbar: true,
@@ -468,6 +486,12 @@ export default {
     };
   },
   methods: {
+    logVisitsX(logVisits) {
+      this.dialog = false;
+      this.confirmationMessage = logVisits();
+      this.confSnackbar = true;
+    },
+
     checkModel(hasUnloggedVisits) {
       this.dialog = hasUnloggedVisits;
       return hasUnloggedVisits;

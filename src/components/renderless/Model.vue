@@ -187,10 +187,10 @@ export default {
 
   methods: {
     // TODO has this abstract approach been superseded by time.js and space.js?
-    onUpdate(target, selectedEvent, graph) {
+    onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
       const f = this[target];
-      f(graph);
+      f();
     },
 
     cache() {
@@ -206,37 +206,32 @@ export default {
     },
     // called by Calendar when logging a Visit
     graph() {
-      this.onLogVisitX(this.selectedEvent);
+      this.onLogVisit(this.selectedEvent);
     },
 
+    // called when there are unlogged visits
     logVisits() {
       this.visits.forEach((visit) => {
-        this.onLogVisitX(visit);
+        this.onLogVisit(visit);
       });
+      return `Logged ${this.visits.length} visits.`;
     },
 
-    onLogVisitX(visit, graph = this.getGraphName()) {
-      console.log(
-        highlight(
-          `Model.js: Visit to process graph ${graph} with: ${printJson(visit)}`
-        )
-      );
-
+    onLogVisit(visit) {
       const { id, name, start, end } = visit;
       const query = {
         visitId: id,
-        userID: this.$socket.client.userID,
         place: name,
         start: start,
         end: end,
-        graphName: graph,
+        graphName: this.getGraphName(),
+        userID: this.$socket.client.userID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
-      console.log(info('1.', query.graphName));
       this.emitFromClient('logVisit', query);
     },
 
-    // onLogVisit(visit) {
+    // onLogVisitOrig(visit) {
     //   console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
 
     //   const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
