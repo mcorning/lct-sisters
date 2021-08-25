@@ -8,7 +8,7 @@ export const timeMixin = {
       const msg = {
         logged: true,
         confirmationColor: 'success',
-        confirmationMessage: `${name} logged to ${data.useGraphName} on node ${data.loggedNodeId}`,
+        confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedNodeId}`,
       };
       this.$emit('updatedModel', msg);
     },

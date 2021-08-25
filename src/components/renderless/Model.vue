@@ -24,6 +24,14 @@ export default {
   mixins: [graphMixin, spaceMixin, timeMixin],
 
   computed: {
+    unloggedVisits() {
+      return this.visits.filter((v) => !v.loggedNodeId);
+    },
+
+    hasUnloggedVisits() {
+      return this.unloggedVisits.length;
+    },
+
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
     },
@@ -85,6 +93,28 @@ export default {
     };
   },
   sockets: {
+    visitLogged(redisResult) {
+      console.log('redisResult', redisResult);
+      const { id, place, graphName, visitId, logged } = redisResult;
+      console.log(id, logged);
+      if (!logged || id<0) {
+        this.$emit('error', new Error(`Redis could not log Visit to  ${place}`));
+      }
+      const data = {
+        visitId: visitId,
+        loggedNodeId: id,
+        graphName,
+      };
+      console.log('updateVisitOnGraph() data:', data);
+      Visit.updateById(data);
+      const msg = {
+        logged: true,
+        confirmationColor: 'success',
+        confirmationMessage: `${place} logged to ${data.graphName} on node ${data.loggedNodeId}`,
+      };
+      this.$emit('updatedModel', msg);
+    },
+
     /*
      * 👂 Listen to socket events emitted from the socket server
      */
@@ -107,9 +137,9 @@ export default {
         `Session event missing args: ${sessionID} ${userID} ${username}`
       );
 
-      this.updateState({ sessionID, userID, username });
+      this.updateState({ sessionID, userID, username, graphName });
 
-      const data = { data: { id: 1, sessionID, userID, username } };
+      const data = { id: 1, sessionID, userID, username };
       Setting.update(data);
 
       // attach the session session data to the next reconnection attempts
@@ -154,10 +184,10 @@ export default {
 
   methods: {
     // TODO has this abstract approach been superseded by time.js and space.js?
-    onUpdate(target, selectedEvent) {
+    onUpdate(target, selectedEvent, graph) {
       this.selectedEvent = selectedEvent;
       const f = this[target];
-      f();
+      f(graph);
     },
 
     cache() {
@@ -171,73 +201,102 @@ export default {
         this.$emit('updatedModel', msg);
       });
     },
-    graph() {
-      this.onLogVisit(this.selectedEvent);
+    // called by Calendar when logging a Visit
+    graph(graph) {
+      this.onLogVisitX(this.selectedEvent, graph);
     },
 
-    onLogVisit(visit) {
-      console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
-
-      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
-      const query = {
-        username: this.username,
-        userID: this.$socket.client.userID,
-        selectedSpace: name,
-        start: start,
-        end: end,
-        date: new Date(start).toDateString(),
-        interval: interval,
-        loggedNodeId,
-        graphName,
-      };
-      console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
-
-      // send the visit to the server
-      this.updateVisitOnGraph(query)
-        .then((redisResult) => {
-          if (!redisResult.logged || !redisResult.id) {
-            throw new Error(`Redis could not log Visit to  ${name}`);
-          }
-          const data = {
-            visitId: id,
-            loggedNodeId: redisResult.id,
-            useGraphName: redisResult.graph,
-          };
-          console.log('updateVisitOnGraph() data:', data);
-          Visit.updateById(data);
-          const msg = {
-            logged: true,
-            confirmationColor: 'success',
-            confirmationMessage: `${name} logged to ${data.useGraphName} on node ${data.loggedNodeId}`,
-          };
-          this.$emit('updatedModel', msg);
-        })
-        .catch((err) => {
-          this.$emit('error', err);
-        });
-    },
-
-    updateVisitOnGraph(query) {
-      console.log('query to update graph:', printJson(query));
-      return new Promise((resolve, reject) => {
-        // send message to server
-        try {
-          this.emitFromClient(
-            'logVisit',
-            query,
-            // and handle the callback
-            (results) => {
-              console.log(
-                success('updateVisitOnGraph results:', printJson(results))
-              );
-              resolve(results);
-            }
-          );
-        } catch (error) {
-          reject(error);
-        }
+    logVisits() {
+      this.visits.forEach((visit) => {
+        this.onLogVisitX(visit);
       });
     },
+
+    onLogVisitX(visit, graph = this.$defaultGraphName) {
+      console.log(
+        highlight(
+          `Model.js: Visit to process graph ${graph} with: ${printJson(visit)}`
+        )
+      );
+
+      const { id, name, start, end } = visit;
+      const query = {
+        visitId: id,
+        userID: this.$socket.client.userID,
+        place: name,
+        start: start,
+        end: end,
+        graphName: graph,
+      };
+      console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
+      console.log(info('1.', query.graphName));
+      this.emitFromClient('logVisit', query);
+    },
+
+    // onLogVisit(visit) {
+    //   console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+
+    //   const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
+    //   const query = {
+    //     username: this.username,
+    //     userID: this.$socket.client.userID,
+    //     selectedSpace: name,
+    //     start: start,
+    //     end: end,
+    //     date: new Date(start).toDateString(),
+    //     interval: interval,
+    //     loggedNodeId,
+    //     graphName,
+    //   };
+    //   console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
+
+    //   // send the visit to the server
+    //   this.updateVisitOnGraph(query)
+    //     .then((redisResult) => {
+    //       if (!redisResult.logged || !redisResult.id) {
+    //         this.$emit('error', new Error(`Redis could not log Visit to  ${name}`));
+    //       }
+    //       const data = {
+    //         visitId: id,
+    //         loggedNodeId: redisResult.id,
+    //         graphName: redisResult.graph,
+    //       };
+    //       console.log('updateVisitOnGraph() data:', data);
+    //       Visit.updateById(data);
+    //       const msg = {
+    //         logged: true,
+    //         confirmationColor: 'success',
+    //         confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedNodeId}`,
+    //       };
+    //       this.$emit('updatedModel', msg);
+    //     })
+    //     .catch((err) => {
+    //       console.log(err);
+    //       this.$emit('error', err);
+    //     });
+    // },
+
+    // updateVisitOnGraph(query) {
+    //   console.log('query to update graph:', printJson(query));
+    //   return new Promise((resolve, reject) => {
+    //     // send message to server
+    //     try {
+    //       this.emitFromClient(
+    //         'logVisit',
+    //         query,
+    //         // and handle the callback
+    //         (results) => {
+    //           console.log(
+    //             success('updateVisitOnGraph results:', printJson(results))
+    //           );
+    //           resolve(results);
+    //         }
+    //       );
+    //     } catch (error) {
+    //       reject(error);
+    //     }
+    //   });
+    // },
 
     redisGraphCallback: (results) => {
       console.log(success('updateVisitOnGraph results:', printJson(results)));
@@ -256,8 +315,12 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
+    // TODO Why isn't this a computed prop?
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
+    },
+    changeGraph(newGraphName) {
+      this.graphName = newGraphName;
     },
 
     // why are we passing in a payload when Model gets that itself from the server?
@@ -363,12 +426,17 @@ export default {
       });
       return some;
     },
+    test() {
+      alert('Tested');
+    },
   },
 
   watch: {
     loading() {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
+      console.log(this.getGraphName());
+      this.updateState({ currentGraphName: this.getGraphName() });
       this.connectMe();
     },
   },
@@ -410,7 +478,6 @@ export default {
       // Global assets
       state: this.state,
       isConnected: this.isConnected,
-
       onConnectMe: this.onConnectMe,
 
       // Space assets
@@ -425,10 +492,15 @@ export default {
       // Time assets
       changeEvent: this.changeEvent,
       onUpdate: this.onUpdate,
+      getGraphName: this.getGraphName,
+      changeGraphName: this.changeGraphName,
+      test: this.test,
 
       //Warning assets
       visitCount: this.visitCount,
       hasVisits: this.hasVisits,
+      hasUnloggedVisits: this.hasUnloggedVisits,
+      logVisits: this.logVisits, // takes an array of visits as input
     });
   },
 };

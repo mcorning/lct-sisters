@@ -29,7 +29,7 @@ export const graphMixin = {
           const data = {
             visitId: id,
             loggedNodeId: redisResult.id,
-            useGraphName: redisResult.graph,
+            graphName: redisResult.graph,
           };
           console.log('updateVisitOnGraph() data:', data);
 
@@ -38,7 +38,7 @@ export const graphMixin = {
           // const msg = {
           //   logged: true,
           //   confirmationColor: 'success',
-          //   confirmationMessage: `${name} logged to ${data.useGraphName} on node ${data.loggedNodeId}`,
+          //   confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedNodeId}`,
           // };
           // this.$emit('updatedModel', msg);
         })

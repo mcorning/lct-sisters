@@ -133,13 +133,13 @@ export default class Visit extends Model {
 
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
   static updateById(data) {
-    const { visitId, loggedNodeId, useGraphName } = data;
+    const { visitId, loggedNodeId, graphName } = data;
     console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
     return this.$update({
       where: visitId,
       data: {
         loggedNodeId: loggedNodeId,
-        graphName: useGraphName,
+        graphName: graphName,
         color: 'primary',
       },
     })

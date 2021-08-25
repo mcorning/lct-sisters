@@ -13,6 +13,8 @@
  */
 
 //#region Setup
+require('../src/fp/monads/EitherAsync');
+
 const path = require('path');
 const express = require('express');
 const socketIO = require('socket.io');
@@ -43,12 +45,12 @@ const feedbackCache = new Cache('../feedback.json');
 
 //#region Redis setup
 const {
-  graphName, // mapped to client nsp (aka namespace or community name)
+  currentGraphName, // mapped to client nsp (aka namespace or community name)
   host,
   deleteVisit,
   findExposedVisitors,
   changeGraph,
-  logVisit,
+  logVisitX,
   onExposureWarning,
 } = require('../redis');
 
@@ -67,7 +69,7 @@ let setCache = function(key, path, node) {
 
 console.log(getNow());
 console.log('RedisGraph host:', host);
-console.log('social graph:', special(graphName), '\n');
+console.log('Node sees Exposure graph:', special(currentGraphName), '\n');
 
 const server = express()
   .use(serveStatic(dirPath))
@@ -279,16 +281,32 @@ io.on('connection', (socket) => {
     console.log(highlight(printJson(data)));
   });
 
-  socket.on('logVisit', (data, ack) => {
+  // socket.on('logVisit', (data, ack) => {
+  socket.on('logVisit', (data) => {
     // call the graph
     console.log(getNow());
     console.log(highlight('Visit to log:', printJson(data)));
-    logVisit(data)
-      .then((res) => {
-        console.log(res);
-        ack(res);
+
+    logVisitX(data)
+      .toEither()
+      // TODO all inspect() to either-async
+      .map((x) => {
+        console.log(info('logVisitX.map():', JSON.stringify(data, null, 3)));
+        return x;
       })
-      .catch((err) => ack(err));
+      .cata({
+        ok: (results) => socket.emit('visitLogged', results),
+        error: (results) => {
+          console.log(results, 'Issues calling redis.logVisit()');
+        },
+      });
+
+    // logVisit(data)
+    //   .then((res) => {
+    //     console.log(res);
+    //     ack(res);
+    //   })
+    //   .catch((err) => ack(err));
   });
 
   socket.on('deleteVisit', (data, ack) => {

@@ -1,16 +1,19 @@
 //https://github.com/RedisGraph/redisgraph.js
 
 const RedisGraph = require('redisgraph.js').Graph;
+require('./src/fp/monads/EitherAsync');
 
+//#region Setup
 const {
   printJson,
   warn,
+  info,
   highlight,
   success,
   special,
 } = require('./src/utils/helpers.js');
 
-let options, graphName;
+let options, currentGraphName;
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -20,7 +23,7 @@ if (process.env.NODE_ENV === 'production') {
     password: process.env.REDIS_PASSWORD,
   };
 
-  graphName = process.env.VUE_APP_NAMESPACE;
+  currentGraphName = process.env.VUE_APP_NAMESPACE;
 } else {
   console.log('Dereferencing redisConfig.js');
 
@@ -30,32 +33,64 @@ if (process.env.NODE_ENV === 'production') {
     port: graphOptions.redisPort,
     password: graphOptions.redisPassword,
   };
-  graphName = graphOptions.graphName;
+  currentGraphName = graphOptions.graphName;
 }
 
 const host = options.host;
 
 console.log(highlight('Redis Options:', printJson(options)));
 
-let Graph = new RedisGraph(graphName, null, null, options);
-
+let Graph = new RedisGraph(currentGraphName, null, null, options);
+console.log(info(`Redis Graph ${currentGraphName} opened`));
 module.exports = {
   Graph,
-  graphName,
+  currentGraphName,
   host,
   deleteVisit,
   findExposedVisitors,
   changeGraph,
   logVisit,
+  logVisitX,
   onExposureWarning,
   options,
 };
+//#endregion Setup
 
 function changeGraph(graphName) {
+  currentGraphName = graphName;
   Graph = new RedisGraph(graphName, null, null, options);
   console.log(highlight(`Graph now using ${graphName}`));
 }
 
+//#region LAB
+function logVisitX(visit) {
+  const { visitId, userID, place, start, end, graphName } = visit;
+
+  if (graphName && graphName !== currentGraphName) {
+    changeGraph(graphName);
+  }
+  const query = `MERGE (v:visitor{  userID: '${userID}'}) 
+      MERGE (s:space{ name: '${place}'}) 
+      MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
+      RETURN id(r)`;
+  function returnResults(results) {
+    const id = results.next().get('id(r)');
+
+    return { id, place, graphName, visitId, logged: true };
+  }
+  return Graph.query(query)
+    .toEither()
+    .cata({
+      ok: (results) => returnResults(results),
+      error: (results) => {
+        // TODO shouldn't this return the same structure as ok (except logged=false)?
+        console.log(results, 'Issues when logging to graph()');
+      },
+    });
+}
+//#endregion
+
+//#region READ Graph
 // see if an alerted visitor has potential alerts to share
 function findExposedVisitors(userID, subject = false) {
   return new Promise(function(resolve) {
@@ -224,11 +259,12 @@ function onExposureWarning(userID) {
     );
   }
 }
+//#endregion Read Graph
 
+//#region UPDATE Graph
 // delegated in index.js to handle socket.on('logVisit')
 // Can add a visit to the graph or can edit the time(s) of a logged visit [when the data includes the logged field (which is the id of the Relationship)]
 // Example query:
-// MERGE (v:visitor{ name: 'hero', userID: '439ae5f4946d2d5d'}) MERGE (s:space{ name: 'Fika Sisters Coffeehouse'}) MERGE (v)-[:visited{start:'1615856400000'}]->(s)
 // MERGE (v:visitor{ name: 'hero', userID: '439ae5f4946d2d5d'}) MERGE (s:space{ name: 'Fika Sisters Coffeehouse'}) MERGE (v)-[:visited{start:'1615856400000'}]->(s)
 function logVisit(data) {
   return new Promise((resolve, reject) => {
@@ -241,10 +277,10 @@ function logVisit(data) {
       date,
       interval,
       loggedNodeId,
-      useGraphName,
+      graphName,
     } = data;
-    if (useGraphName && graphName !== useGraphName) {
-      changeGraph(useGraphName);
+    if (graphName && graphName !== graphName) {
+      changeGraph(graphName);
     }
 
     // update visit with loggedNodeId
@@ -292,13 +328,15 @@ function logVisit(data) {
       });
   });
 }
+//#endregion Update Graph
 
+//#region DELETE Graph Nodes
 // delegated in index.js to handle socket.on('deleteVisit')
 // Example query:
 // MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
 function deleteVisit(data) {
   return new Promise((resolve, reject) => {
-    const { loggedNodeId, useGraphName } = data;
+    const { loggedNodeId, graphName } = data;
     if (!loggedNodeId) {
       reject({
         deleted: false,
@@ -306,8 +344,8 @@ function deleteVisit(data) {
       });
       return;
     }
-    if (graphName !== useGraphName) {
-      changeGraph(useGraphName);
+    if (graphName !== currentGraphName) {
+      changeGraph(graphName);
     }
     let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId}  DELETE v`;
     console.log(warn('DELETE Visit query:', query));
@@ -344,14 +382,15 @@ function deleteExpiredVisits() {
       });
   });
 }
+//#endregion DELETE Graph Nodes
 
+//#region Cheatsheet
 // if we store these output Cypher commands in a text file, we can bulk import them into Redis
 // run this command in the terminal (outside of redis-cli)
 // cat sistersCommands.txt | redis-cli --pipe
 
 // or see https://github.com/RedisGraph/redisgraph-bulk-loader for the python way...
 
-//#region Cheatsheet
 /*
 CREATE a RELATIONSHIP between MATCHed nodes:
 MATCH (a:visitor), (b:room) WHERE (a.name = "" AND b.name="" ) CREATE (a)-[:visited]->(b)
@@ -384,7 +423,8 @@ MATCH (v:visitor{ name: 'dciFoyle', userID: 'dab6b36ae9a3b438'})-[r:visited{star
 DELETE 
 relationship:
 MATCH ()-[v:visited]->() WHERE id(v)=0 DELETE v
-
+all relationships:
+MATCH ()-[v:visited]->()  DELETE v
 
 
 */

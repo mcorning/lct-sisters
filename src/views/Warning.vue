@@ -1,11 +1,55 @@
 <template>
   <Model @error="onError">
-    <div slot-scope="{ isConnected, hasVisits, state, visitCount }">
+    <div
+      slot-scope="{
+        isConnected,
+        hasVisits,
+        visitCount,
+        hasUnloggedVisits,
+        logVisits,
+      }"
+    >
       <v-sheet class="overflow-auto fill-height">
-        <v-dialog v-model="dialog" persistent min-width="320" max-width="400">
+        <!-- unlogged Visits -->
+        <v-snackbar :value="!hasUnloggedVisits && snackbar"
+          >No unlogged visits
+          <template v-slot:action="{ attrs }">
+            <v-btn color="red" text v-bind="attrs" @click="snackbar = false">
+              Close
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <v-dialog
+          :value="hasUnloggedVisits && dialog"
+          persistent
+          min-width="320"
+          max-width="400"
+        >
+          <v-card dark>
+            <v-card-title>Loged Visits Status</v-card-title>
+            <v-card-subtitle
+              >You have {{ hasUnloggedVisits }} visits to log to the
+              server</v-card-subtitle
+            >
+            <v-card-text>
+              You have missed any <strong>LCT Exposure Alerts</strong> sent by
+              visitors to your unlogged public places. However, if you log these
+              visits now, anbody who shared space with you will get your alerts.
+            </v-card-text>
+            <v-card-actions>
+              <v-btn @click="logVisits">Yes</v-btn>
+              <v-btn @click="dialog = false">No</v-btn>
+            </v-card-actions>
+          </v-card>
         </v-dialog>
-        <!-- "&& isConnected" -->
-        <v-card v-if="hasVisits" color="secondary" class="white--text">
+        <!-- End unlogged Visits -->
+
+        <!-- " -->
+        <v-card
+          v-if="hasVisits && (isConnected || isDebugging)"
+          color="secondary"
+          class="white--text"
+        >
           <v-card-title class="headline">Exposure Warnings</v-card-title>
           <v-card-subtitle class="white--text"
             >Dated: {{ dated }}</v-card-subtitle
@@ -379,6 +423,11 @@ export default {
 
   data() {
     return {
+      // trick when using compound predicate for dialog (note we use :value not v-model when using compound predicates)
+      dialog: true,
+      snackbar: true,
+
+      isDebugging: false,
       alignmentsItems: ['start', 'center', 'end', 'baseline', 'stretch'],
       alignment: 'center',
       dense: false,
@@ -392,7 +441,6 @@ export default {
       menu: false,
       menu2: false,
       vaccinated: false,
-      dialog: false,
       model: [],
       WarningOptions: [
         {
@@ -420,6 +468,11 @@ export default {
     };
   },
   methods: {
+    checkModel(hasUnloggedVisits) {
+      this.dialog = hasUnloggedVisits;
+      return hasUnloggedVisits;
+    },
+
     deleteDate() {
       this.epsilon = 0;
     },

@@ -104,7 +104,7 @@
             <v-btn text color="secondary" @click="update('cache')">
               Update
             </v-btn>
-            <v-btn text color="secondary" @click="update('graph')">
+            <v-btn text color="secondary" @click="promptGraph = true">
               Log
             </v-btn>
           </v-card-actions>
@@ -119,6 +119,46 @@
       >{{ confirmationMessage }}
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+
+    <v-snackbar
+      v-model="promptGraph"
+      centered
+      :color="confirmationColor"
+      timeout="10000"
+      >Current graph: {{ currentGraphName }}.<br />
+      Choose other graph, if necessary.
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color="black"
+          text
+          v-bind="attrs"
+          @click="
+            () => {
+              promptGraph = false;
+              update('graph');
+            }
+          "
+        >
+          {{ $defaultGraphName }}
+        </v-btn>
+        <v-btn
+          color="black"
+          text
+          v-bind="attrs"
+          @click="
+            () => {
+              promptGraph = false;
+              update('graph', 'Sandbox');
+            }
+          "
+        >
+          Sandbox
+        </v-btn>
+        <v-btn color="black" text v-bind="attrs" @click="promptGraph = false">
           Close
         </v-btn>
       </template>
@@ -143,13 +183,16 @@ export default {
     PickersMenu,
   },
   computed: {
+    currentGraphName() {
+      return this.state.currentGraphName;
+    },
+
     // TODO NOTE: Classic ViewModel property here: Model provides primitive values
     // and relevantEvents transforms them for the UI as an array of two entities.
     // further refinement such as events in a date range would be handled as computed property or filter.
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
       try {
-        console.log(this.state.appointments, '.');
         const x = [...this.state.visits, ...this.state.appointments];
         return x;
       } catch (error) {
@@ -170,7 +213,7 @@ export default {
   },
   data() {
     return {
-      tested: this.test,
+      promptGraph: false,
       cal: null,
       value: '',
 
@@ -207,8 +250,8 @@ export default {
     };
   },
   methods: {
-    update(target) {
-      this.onUpdate(target, this.selectedEvent);
+    update(target, graph) {
+      this.onUpdate(target, this.selectedEvent, graph);
       this.selectedOpen = false;
     },
 
@@ -352,6 +395,10 @@ export default {
   },
 
   watch: {
+    ready() {
+      console.log(this.$defaultGraphName, this.state.currentGraphName);
+    },
+
     confirmations(msg) {
       const { logged, confirmationColor, confirmationMessage } = msg;
       this.confirmationColor = confirmationColor;
