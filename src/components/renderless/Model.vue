@@ -205,8 +205,8 @@ export default {
       });
     },
     // called by Calendar when logging a Visit
-    graph(graph) {
-      this.onLogVisitX(this.selectedEvent, graph);
+    graph() {
+      this.onLogVisitX(this.selectedEvent);
     },
 
     logVisits() {
@@ -215,7 +215,7 @@ export default {
       });
     },
 
-    onLogVisitX(visit, graph = this.$defaultGraphName) {
+    onLogVisitX(visit, graph = this.getGraphName()) {
       console.log(
         highlight(
           `Model.js: Visit to process graph ${graph} with: ${printJson(visit)}`
