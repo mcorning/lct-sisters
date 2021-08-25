@@ -12,6 +12,7 @@
         {{ cal.title }}
       </v-toolbar-title>
       <v-spacer></v-spacer>
+
       <v-menu bottom right>
         <template v-slot:activator="{ on, attrs }">
           <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
@@ -37,6 +38,22 @@
           </v-list-item>
         </v-list>
       </v-menu>
+      <v-tooltip left>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            fab
+            text
+            small
+            color="grey darken-2"
+            v-bind="attrs"
+            v-on="on"
+            @click="changeGraph"
+          >
+            <v-icon> mdi-graphql </v-icon>
+          </v-btn>
+        </template>
+        <span>Current default graph: {{ getGraphName() }}</span>
+      </v-tooltip>
     </v-toolbar>
 
     <v-sheet :height="calendarHeight">
@@ -95,7 +112,7 @@
             :selectedEventParsed="selectedEventParsed"
           />
           <v-card-text>
-            <span v-html="eventDetails"></span>
+            Current default graph: <strong>{{ getGraphName() }}</strong>
           </v-card-text>
           <v-card-actions>
             <v-btn text color="secondary" @click="selectedOpen = false">
@@ -104,7 +121,7 @@
             <v-btn text color="secondary" @click="update('cache')">
               Update
             </v-btn>
-            <v-btn text color="secondary" @click="promptGraph = true">
+            <v-btn text color="secondary" @click="update('graph')">
               Log
             </v-btn>
           </v-card-actions>
@@ -123,46 +140,6 @@
         </v-btn>
       </template>
     </v-snackbar>
-
-    <v-snackbar
-      v-model="promptGraph"
-      centered
-      :color="confirmationColor"
-      timeout="10000"
-      >Current graph: {{ currentGraphName }}.<br />
-      Choose other graph, if necessary.
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          color="black"
-          text
-          v-bind="attrs"
-          @click="
-            () => {
-              promptGraph = false;
-              update('graph');
-            }
-          "
-        >
-          {{ $defaultGraphName }}
-        </v-btn>
-        <v-btn
-          color="black"
-          text
-          v-bind="attrs"
-          @click="
-            () => {
-              promptGraph = false;
-              update('graph', 'Sandbox');
-            }
-          "
-        >
-          Sandbox
-        </v-btn>
-        <v-btn color="black" text v-bind="attrs" @click="promptGraph = false">
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
   </div>
 </template>
 
@@ -172,11 +149,14 @@ import { DateTime } from '@/utils/luxonHelpers';
 // import { printJson } from '@/utils/helpers';
 export default {
   name: 'Calendar',
+  // Step 4/4: expose Model's functions and props to component
   props: {
     selectedSpace: Object,
     isConnected: Boolean,
     state: Object,
     onUpdate: Function,
+    changeGraphName: Function,
+    getGraphName: Function,
     confirmations: Object,
   },
   components: {
@@ -250,6 +230,12 @@ export default {
     };
   },
   methods: {
+    changeGraph() {
+      this.changeGraphName(this.toggledName);
+      this.confirmationMessage = `Graph is now ${this.getGraphName()}`;
+      this.snackbar = true;
+    },
+
     update(target, graph) {
       this.onUpdate(target, this.selectedEvent, graph);
       this.selectedOpen = false;
@@ -396,7 +382,7 @@ export default {
 
   watch: {
     ready() {
-      console.log(this.$defaultGraphName, this.state.currentGraphName);
+      console.log(this.$defaultGraphName, '/', this.getGraphName());
     },
 
     confirmations(msg) {

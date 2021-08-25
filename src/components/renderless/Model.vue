@@ -97,8 +97,11 @@ export default {
       console.log('redisResult', redisResult);
       const { id, place, graphName, visitId, logged } = redisResult;
       console.log(id, logged);
-      if (!logged || id<0) {
-        this.$emit('error', new Error(`Redis could not log Visit to  ${place}`));
+      if (!logged || id < 0) {
+        this.$emit(
+          'error',
+          new Error(`Redis could not log Visit to  ${place}`)
+        );
       }
       const data = {
         visitId: visitId,
@@ -319,8 +322,8 @@ export default {
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
-    changeGraph(newGraphName) {
-      this.graphName = newGraphName;
+    changeGraphName() {
+      this.graphName = this.isDefaultGraph ? 'Sandbox' : this.$defaultGraphName;
     },
 
     // why are we passing in a payload when Model gets that itself from the server?
@@ -426,17 +429,17 @@ export default {
       });
       return some;
     },
-    test() {
-      alert('Tested');
-    },
   },
 
   watch: {
     loading() {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
-      console.log(this.getGraphName());
-      this.updateState({ currentGraphName: this.getGraphName() });
+      console.log('Default Graph:', this.getGraphName());
+      // this.updateState({
+      //   currentGraphName: this.getGraphName(),
+      //   changeGraphName: this.changeGraphName,
+      // });
       this.connectMe();
     },
   },
@@ -472,8 +475,9 @@ export default {
     }
 
     // Pass *all* our props and function into our scoped slot
-    // so we can render children with Model data.
-    // Step 1: Expose all data and methods that could be used by dynamic components
+    // so we can render children with Model data and we can expose state changing functions.
+    // Step 1/4: Expose all data and methods that could be used by dynamic components
+    // See Time.vue and Calendar.vue for the other three steps.
     return this.$scopedSlots.default({
       // Global assets
       state: this.state,
@@ -494,7 +498,6 @@ export default {
       onUpdate: this.onUpdate,
       getGraphName: this.getGraphName,
       changeGraphName: this.changeGraphName,
-      test: this.test,
 
       //Warning assets
       visitCount: this.visitCount,

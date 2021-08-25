@@ -1,7 +1,16 @@
 //https://github.com/RedisGraph/redisgraph.js
-
+/**
+ * There are two redis graphs:
+ *    official (with some given name, e.g., 'Sisters')
+ *    Sandbox (with that name)
+ *
+ * In production, we instantiate the official graph by default.
+ *    We will instantiate Sandbox when the query includes that name.
+ *
+ *  In development, Sandbox is default is default graph.
+ */
 const RedisGraph = require('redisgraph.js').Graph;
-require('./src/fp/monads/EitherAsync');
+require('../../src/fp/monads/EitherAsync');
 
 //#region Setup
 const {
@@ -11,9 +20,9 @@ const {
   highlight,
   success,
   special,
-} = require('./src/utils/helpers.js');
+} = require('../../src/utils/helpers');
 
-let options, currentGraphName;
+let options, currentGraphName, defaultGraphName;
 
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -22,18 +31,19 @@ if (process.env.NODE_ENV === 'production') {
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD,
   };
-
-  currentGraphName = process.env.VUE_APP_NAMESPACE;
+  defaultGraphName = process.env.VUE_APP_NAMESPACE;
+  currentGraphName = defaultGraphName;
 } else {
   console.log('Dereferencing redisConfig.js');
-  console.log('Using /srv/.env?', process.env.TEST);
+
   const graphOptions = require('./redisGraph.options.js');
   options = {
     host: graphOptions.redisHost,
     port: graphOptions.redisPort,
     password: graphOptions.redisPassword,
   };
-  currentGraphName = graphOptions.graphName;
+  defaultGraphName = graphOptions.graphName;
+  currentGraphName = defaultGraphName;
 }
 
 const host = options.host;
@@ -43,7 +53,6 @@ console.log(highlight('Redis Options:', printJson(options)));
 let Graph = new RedisGraph(currentGraphName, null, null, options);
 console.log(info(`Redis Graph ${currentGraphName} opened`));
 module.exports = {
-  Graph,
   currentGraphName,
   host,
   deleteVisit,

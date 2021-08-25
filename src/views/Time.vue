@@ -1,12 +1,24 @@
 <template>
   <Model @error="onError" @updatedModel="onUpdatedModel">
-    <div slot-scope="{ isConnected, state, onUpdate }">
+    <!-- Step 2/4: don't forget to ref a Model function next -->
+    <div
+      slot-scope="{
+        isConnected,
+        state,
+        onUpdate,
+        changeGraphName,
+        getGraphName,
+      }"
+    >
       {{ state.visits.length }}
+      <!-- Step 3/4: assign slotted props to component's props -->
       <Calendar
         :isConnected="isConnected"
         :state="state"
         :onUpdate="onUpdate"
         :confirmations="confirmations"
+        :changeGraphName="changeGraphName"
+        :getGraphName="getGraphName"
       />
     </div>
   </Model>

@@ -52,9 +52,9 @@ const {
   changeGraph,
   logVisitX,
   onExposureWarning,
-} = require('../redis');
+} = require('./redis/redis');
 
-const cache = require('../redisJsonCache');
+const cache = require('./redis/redisJsonCache');
 
 // high-order function to handle safe creation of sessions cache
 let setCache = function(key, path, node) {
