@@ -1,8 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
-import '@/fp/monads/EitherAsync';
-import { allOrNone, firstOrNone } from '@/fp/utils';
+
 console.log('Loading Visit entity');
 
 export default class Visit extends Model {
@@ -33,20 +32,6 @@ export default class Visit extends Model {
     };
   }
 
-  static validateVisits() {
-    return new Promise((resolve, reject) => {
-      this.$delete(
-        (visit) =>
-          Number.isNaN(visit.end) ||
-          Number.isNaN(visit.start) ||
-          !visit.id ||
-          visit.id.startsWith('$')
-      )
-        .then((p) => resolve(p))
-        .catch((e) => reject(e));
-    });
-  }
-
   // can't give this static method (called by indirection in Calendar)
   // the same name as the shipping static method, Visit.find()
   static get(id) {
@@ -66,92 +51,25 @@ export default class Visit extends Model {
       .where((visit) => visit.category === 'You')
       .get();
   }
-  // static updateFieldPromise(data) {
-  //   return new Promise((resolve, reject) => {
-  //     const { entity } = data;
-
-  //     // ensure the incoming data is for Visits (not Appointments)
-  //     if (entity.category !== 'You') {
-  //       reject({
-  //         violation: 'contract',
-  //         message: 'Object was not a Visit or Shift',
-  //       });
-  //     }
-  //     this.$update({
-  //       where: entity.id,
-  //       data: entity,
-  //     })
-  //       .then((p) => {
-  //         resolve(p[0]);
-  //       })
-  //       .catch((e) => reject(e));
-  //   });
-  // }
-
-  // Model add/updateVisit() creates the visit (without reference to the exposure graph (see below))
-  // error handling for data handled by client
-  // static updatePromise(data) {
-  //   const { visit } = data;
-  //   console.log(
-  //     `Updated Visit for ${visit.name} with`,
-  //     JSON.stringify(visit, null, 3)
-  //   );
-  //   return this.$create({
-  //     data: visit,
-  //   })
-  //     .then((p) => p[0])
-  //     .catch((e) => e);
-  // }
 
   static update(visit) {
     return this.$create({
       data: visit,
-    })
-      .toEither()
-      .map((visits) =>
-        allOrNone(visits).match({
-          Some: (value) => {
-            console.log(JSON.stringify(value, null, 3));
-            return value;
-          },
-          None: () => console.log(`there is no visit to update `),
-        })
-      )
-      .cata({
-        ok: (v) =>
-          firstOrNone(v).match({
-            Some: (v) => v,
-            None: () => console.log(`NOOP`),
-          }),
-        error: (err) => {
-          // let global error handler take over so we see the error in the snackbar.
-          err.message = +'Visit.update() had issues';
-          throw err;
-        },
-      });
+    });
   }
 
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
-  static updateById(data) {
-    const { visitId, loggedNodeId, graphName } = data;
+  static updateLoggedNodeId(data) {
+    const { visitId, loggedNodeId, graphName, color } = data;
     console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
     return this.$update({
       where: visitId,
       data: {
-        loggedNodeId: loggedNodeId,
-        graphName: graphName,
-        color: 'primary',
+        loggedNodeId,
+        graphName,
+        color,
       },
-    })
-      .toEither()
-      .cata({
-        ok: (v) => v,
-        error: (err) => {
-          // let global error handler take over so we see the error in the snackbar.
-          err.message = +'Visit.updateById() had issues';
-          throw err;
-        },
-      });
+    });
   }
 
   static deletePromise(data) {

@@ -1,5 +1,13 @@
 # Field Notes
 
+## Bootstrap
+
+When Model.js (a renderless component) mounts, it calls connectMe().
+
+To start the handshake with the server, connectMe() needs a username. If there are no settings in the Setting entity, or if the username is empty, connectMe() prompts for a value to send to the server.
+
+## Bundles
+
 File sizes at 6.9.21 before we add any more modules
 
  File | Size | Gzipped

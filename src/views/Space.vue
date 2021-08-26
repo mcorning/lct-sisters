@@ -2,6 +2,8 @@
   <Model @error="onError">
     <div
       slot-scope="{
+        needsUsername,
+        updateUsername,
         isConnected,
         state,
         onMarkerClicked,
@@ -12,6 +14,13 @@
         onDeletePlace,
       }"
     >
+      <prompt-banner
+        :needsUsername="needsUsername"
+        :updateUsername="updateUsername"
+        label="Your nickname"
+        hint="You need some nickname to connect to the server:"
+      />
+
       <Spaces
         :isConnected="isConnected"
         :state="state"
@@ -30,12 +39,14 @@
 import Spaces from '@/components/GoogleMap.vue';
 
 import Model from '@/components/renderless/Model.vue';
+import promptBanner from '../components/prompts/promptBanner.vue';
 
 export default {
   name: `Space`,
   components: {
     Spaces,
     Model,
+    promptBanner,
   },
   props: {
     state: {

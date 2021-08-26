@@ -292,7 +292,7 @@
 <script>
 import Model from '@/components/renderless/Model.vue';
 import { formatTime } from '../utils/luxonHelpers';
-import ConfirmationSnackbar from '../components/snackbars/confirmationSnackbar.vue';
+import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
 
 export default {
   name: 'Warning',
@@ -434,6 +434,7 @@ export default {
 
   data() {
     return {
+      isDebugging: true,
       ready: false,
       confirmationMessage: '',
       confSnackbar: false,
@@ -441,7 +442,6 @@ export default {
       dialog: true,
       snackbar: true,
 
-      isDebugging: false,
       alignmentsItems: ['start', 'center', 'end', 'baseline', 'stretch'],
       alignment: 'center',
       dense: false,

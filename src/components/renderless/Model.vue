@@ -25,6 +25,10 @@ export default {
   mixins: [graphMixin, spaceMixin, timeMixin, warningMixin],
 
   computed: {
+    needsUsername() {
+      return !this.state.settings.username;
+    },
+
     unloggedVisits() {
       return this.visits.filter((v) => !v.loggedNodeId);
     },
@@ -108,9 +112,10 @@ export default {
         visitId: visitId,
         loggedNodeId: id,
         graphName,
+        color: 'primary', // use parameter if we need a different color for Sandbox graph
       };
       console.log('updateVisitOnGraph() data:', data);
-      Visit.updateById(data);
+      this.updateLoggedNodeId(data);
       const msg = {
         logged: true,
         confirmationColor: 'success',
@@ -145,7 +150,8 @@ export default {
       this.updateState({ sessionID, userID, username, graphName });
       const data = { id: 1, sessionID, userID, username };
       // TODO Not good: How do you know the update succeeded?
-      Setting.update(data);
+      // Setting.update(data);
+      this.updateSetting(data);
 
       // attach the session session data to the next reconnection attempts
       console.log(
@@ -197,14 +203,9 @@ export default {
 
     cache() {
       // TODO aren't we using monads now?
-      Visit.update(this.selectedEvent).then((p) => {
-        const msg = {
-          logged: false,
-          confirmationColor: 'success',
-          confirmationMessage: `Updated visit to ${p.name}`,
-        };
-        this.$emit('updatedModel', msg);
-      });
+      this.updateVisit(this.selectedEvent);
+      // TODO isn't updateVisit async
+      // this.$emit('updatedModel', msg);
     },
     // called by Calendar when logging a Visit
     graph() {
@@ -330,10 +331,11 @@ export default {
       if (this.isConnected) {
         return 'Already connected';
       }
-      const settings = Setting.getSettings()
-        ? Setting.getSettings()
-        : { username: prompt('Username?') };
-      const { username, userID, sessionID } = settings;
+      if (this.needsUsername) {
+        return 'Need username';
+      }
+
+      const { username, userID, sessionID } = this.state.settings;
 
       const data = {
         username,
@@ -344,7 +346,8 @@ export default {
       if (this.$DEBUG) {
         console.info(warn('data:', JSON.stringify(data, null, 3)));
       }
-      Setting.update(data);
+      // Setting.update(data);
+      this.updateSetting(data);
 
       this.$socket.client.auth = {
         username,
@@ -427,6 +430,9 @@ export default {
       });
       return some;
     },
+    updateUsername(username) {
+      this.updateSetting({ id: 1, username: username });
+    },
   },
 
   watch: {
@@ -434,19 +440,15 @@ export default {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
-      // this.updateState({
-      //   currentGraphName: this.getGraphName(),
-      //   changeGraphName: this.changeGraphName,
-      // });
       this.connectMe();
     },
     'state.settings.lastVaccinationDate'(n) {
       console.log(n);
-      Setting.update({ id: 1, lastVaccinationDate: n });
+      this.updateSetting({ id: 1, lastVaccinationDate: n });
     },
     'state.settings.lastFluShot'(n) {
       console.log(n);
-      Setting.update({ id: 1, lastFluShot: n });
+      this.updateSetting({ id: 1, lastFluShot: n });
     },
   },
 
@@ -486,6 +488,8 @@ export default {
     // See Time.vue and Calendar.vue for the other three steps.
     return this.$scopedSlots.default({
       // Global assets
+      needsUsername: this.needsUsername,
+      updateUsername: this.updateUsername,
       state: this.state,
       updateState: this.updateState,
       isConnected: this.isConnected,
