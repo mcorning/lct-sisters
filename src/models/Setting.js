@@ -24,6 +24,9 @@ export default class Setting extends Model {
 
       avgStay: this.number(20),
       slotInterval: this.number(30),
+
+      lastVaccinationDate: this.string(),
+      lastFluShot: this.string(),
     };
   }
 
@@ -40,6 +43,7 @@ export default class Setting extends Model {
   }
 
   static update(settings) {
+    console.log(settings);
     this.$create({ data: settings })
       .then((v) => v)
       .toEither()
@@ -47,7 +51,7 @@ export default class Setting extends Model {
         ok: (v) =>
           firstOrNone(v).match({
             Some: (value) => {
-              return value;
+              console.log('Updated Settings with:', value);
             },
             None: () => console.log(`There is no Settings to update `),
           }),

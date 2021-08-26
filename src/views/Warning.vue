@@ -3,6 +3,7 @@
     <div
       slot-scope="{
         isConnected,
+        state,
         hasVisits,
         visitCount,
         hasUnloggedVisits,
@@ -10,15 +11,13 @@
       }"
     >
       <v-sheet class="overflow-auto fill-height">
+        vacc:{{ state.settings.lastVaccinationDate }}
         <!-- unlogged Visits -->
-        <v-snackbar :value="!hasUnloggedVisits && snackbar"
-          >No unlogged visits
-          <template v-slot:action="{ attrs }">
-            <v-btn color="red" text v-bind="attrs" @click="snackbar = false">
-              Close
-            </v-btn>
-          </template>
-        </v-snackbar>
+        <confirmation-snackbar
+          v-if="!hasUnloggedVisits && snackbar"
+          confirmationMessage="No unlogged Visits."
+        />
+
         <v-dialog
           :value="hasUnloggedVisits && dialog"
           persistent
@@ -56,7 +55,7 @@
           <v-card-text class="white--text pb-1">
             <v-row>
               <v-col>
-                {{ visitCount == 1 ? 'Public place' : 'Public places' }}
+                {{ visitCount == 1 ? 'Place' : 'Places' }}
                 at risk: {{ visitCount }}</v-col
               >
               <v-col>Unlogged visits: {{ hasUnloggedVisits }}</v-col>
@@ -69,7 +68,7 @@
                 ref="menu"
                 v-model="menu"
                 :close-on-content-click="false"
-                :return-value.sync="lastVaccinationDate"
+                :return-value.sync="state.settings.lastVaccinationDate"
                 transition="scale-transition"
                 offset-y
                 max-width="290px"
@@ -77,7 +76,7 @@
               >
                 <template v-slot:activator="{ on, attrs }">
                   <v-text-field
-                    :value="lastVaccinationDate | monthYear"
+                    :value="state.settings.lastVaccinationDate | monthYear"
                     label="Vaccinated "
                     prepend-icon="event"
                     readonly
@@ -88,7 +87,7 @@
                   ></v-text-field>
                 </template>
                 <v-date-picker
-                  v-model="lastVaccinationDate"
+                  v-model="state.settings.lastVaccinationDate"
                   type="month"
                   no-title
                   scrollable
@@ -100,7 +99,7 @@
                   <v-btn
                     text
                     color="primary"
-                    @click="$refs.menu.save(lastVaccinationDate)"
+                    @click="$refs.menu.save(state.settings.lastVaccinationDate)"
                     >OK</v-btn
                   >
                 </v-date-picker>
@@ -119,7 +118,7 @@
                 ref="menu2"
                 v-model="menu2"
                 :close-on-content-click="false"
-                :return-value.sync="lastFluShot"
+                :return-value.sync="state.settings.lastFluShot"
                 transition="scale-transition"
                 offset-y
                 max-width="290px"
@@ -127,7 +126,7 @@
               >
                 <template v-slot:activator="{ on, attrs }">
                   <v-text-field
-                    :value="lastFluShot | monthYear"
+                    :value="state.settings.lastFluShot | monthYear"
                     label="Last flu shot "
                     prepend-icon="event"
                     readonly
@@ -137,7 +136,7 @@
                   ></v-text-field>
                 </template>
                 <v-date-picker
-                  v-model="lastFluShot"
+                  v-model="state.settings.lastFluShot"
                   type="month"
                   no-title
                   scrollable
@@ -149,7 +148,7 @@
                   <v-btn
                     text
                     color="primary"
-                    @click="$refs.menu2.save(lastFluShot)"
+                    @click="$refs.menu2.save(state.settings.lastFluShot)"
                     >OK</v-btn
                   >
                 </v-date-picker>
@@ -164,7 +163,7 @@
                     Select one or more reasons for this warning:
                   </v-card-text>
                   <v-list shaped>
-                    <v-list-item-group v-model="model" multiple mandatory>
+                    <v-list-item-group v-model="warnings" multiple mandatory>
                       <template v-for="(option, i) in WarningOptions">
                         <v-divider
                           v-if="!option"
@@ -217,8 +216,8 @@
                       v-model="pctWeight"
                       :color="getWarningColor"
                       height="25"
-                    >
-                      <strong>{{ pctWeight }}%</strong>
+                      >Reliability: &nbsp;
+                      <strong>{{ Math.round(pctWeight) }}%</strong>
                     </v-progress-linear></v-card-text
                   >
                 </v-col>
@@ -233,7 +232,9 @@
 
           <v-card-actions>
             <v-spacer />
-            <v-btn color="red darken-2" text @click="warnThem">Yes</v-btn>
+            <v-btn color="red darken-2" text @click="warnThem(state)"
+              >Yes</v-btn
+            >
             <v-btn color="green darken-2" text @click="returnToSpaces"
               >No</v-btn
             >
@@ -278,19 +279,11 @@
             <v-btn text @click="returnToSpaces">OK</v-btn>
           </v-card-actions>
         </v-card>
-        <v-snackbar v-model="confSnackbar" timeout="5000"
-          >{{ confirmationMessage }}
-          <template v-slot:action="{ attrs }">
-            <v-btn
-              color="red"
-              text
-              v-bind="attrs"
-              @click="confSnackbar = false"
-            >
-              Close
-            </v-btn>
-          </template>
-        </v-snackbar>
+
+        <confirmation-snackbar
+          v-if="confSnackbar"
+          :confirmationMessage="confirmationMessage"
+        />
       </v-sheet>
     </div>
   </Model>
@@ -298,14 +291,15 @@
 
 <script>
 import Model from '@/components/renderless/Model.vue';
-
 import { formatTime } from '../utils/luxonHelpers';
+import ConfirmationSnackbar from '../components/snackbars/confirmationSnackbar.vue';
 
 export default {
   name: 'Warning',
 
   components: {
     Model,
+    ConfirmationSnackbar,
   },
 
   computed: {
@@ -326,7 +320,7 @@ export default {
     },
 
     weight() {
-      return this.model.reduce((a, c) => {
+      return this.warnings.reduce((a, c) => {
         return a + c.weight;
       }, 0);
     },
@@ -334,6 +328,7 @@ export default {
     dated() {
       return formatTime();
     },
+
     score() {
       console.log('Wt:', this.weight, 'e:', this.epsilon);
       return this.weight + this.epsilon;
@@ -439,6 +434,7 @@ export default {
 
   data() {
     return {
+      ready: false,
       confirmationMessage: '',
       confSnackbar: false,
       // trick when using compound predicate for dialog (note we use :value not v-model when using compound predicates)
@@ -454,12 +450,12 @@ export default {
 
       wearsMask: true,
       epsilon: 0,
-      lastFluShot: null,
-      lastVaccinationDate: null,
+      // lastFluShot: null,
+      // lastVaccinationDate: null,
       menu: false,
       menu2: false,
       vaccinated: false,
-      model: [],
+      warnings: [],
       WarningOptions: [
         {
           icon: 'mdi-alert',
@@ -516,11 +512,15 @@ export default {
       });
     },
 
-    warnThem() {
+    warnThem(state) {
+      console.log(state.lastVaccinationDate, state.lastFluShot);
       this.dialog = true;
-      const reason = this.WarningOptions[this.model].text;
-      console.log(reason);
-      this.$emit('exposureWarning', reason);
+      console.log(this.score, this.pctWeight);
+      // updateState({lastVaccinationDate:this.lastVaccinationDate, lastFluShot:this.lastFluShot})
+      this.$emit('exposureWarning', {
+        score: this.score,
+        reliability: this.pctWeight,
+      });
     },
   },
 
@@ -535,6 +535,9 @@ export default {
   },
 
   watch: {
+    ready() {
+      console.log('Ready');
+    },
     lastVaccinationDate() {
       console.log(this.lastVaccinationDate);
       this.epsilon = this.lastVaccinationDate ? 1 : 0;
@@ -546,7 +549,7 @@ export default {
   },
 
   mounted() {
-    console.log('\tWarning.vue mounted');
+    this.ready = true;
   },
 };
 </script>

@@ -257,13 +257,14 @@ io.on('connection', (socket) => {
   //  2) redisGraph queries for anyone connected to the positive case (ignoring the immunity some might have)
   //  3) returns the number of possible exposures to positive case
   socket.on('exposureWarning', async (data, ack) => {
-    const { userID, reason } = data;
+    const { score, reliability } = data;
+    const reason=`Warning Score: ${score} Reliability: ${reliability}`
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
     socket.broadcast.emit('alertPending', socket.userID);
 
-    onExposureWarning(userID)
+    onExposureWarning(socket.userID)
       .then((exposed) => {
         exposed.forEach((userID) => {
           console.log(warn('Processing '), userID);

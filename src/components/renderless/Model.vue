@@ -12,6 +12,7 @@ import Appointment from '@/models/Appointment';
 import { timeMixin } from '@/js/time';
 import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
+import { warningMixin } from '@/js/warning';
 
 import { highlight, info, success, warn, printJson } from '../../utils/helpers';
 import { getNow } from '../../utils/luxonHelpers';
@@ -21,7 +22,7 @@ import { Some } from '@/fp/monads/Maybe.js';
 export default {
   props: {},
 
-  mixins: [graphMixin, spaceMixin, timeMixin],
+  mixins: [graphMixin, spaceMixin, timeMixin, warningMixin],
 
   computed: {
     unloggedVisits() {
@@ -140,9 +141,10 @@ export default {
         `Session event missing args: ${sessionID} ${userID} ${username}`
       );
 
+      // TODO Not good: you are updating the state var before you update the entity. what if the entity fails?
       this.updateState({ sessionID, userID, username, graphName });
-
       const data = { id: 1, sessionID, userID, username };
+      // TODO Not good: How do you know the update succeeded?
       Setting.update(data);
 
       // attach the session session data to the next reconnection attempts
@@ -211,10 +213,11 @@ export default {
 
     // called when there are unlogged visits
     logVisits() {
-      this.visits.forEach((visit) => {
+      const x = this.unloggedVisits.length;
+      this.unloggedVisits.forEach((visit) => {
         this.onLogVisit(visit);
       });
-      return `Logged ${this.visits.length} visits.`;
+      return `Logged ${x} visits.`;
     },
 
     onLogVisit(visit) {
@@ -437,6 +440,14 @@ export default {
       // });
       this.connectMe();
     },
+    'state.settings.lastVaccinationDate'(n) {
+      console.log(n);
+      Setting.update({ id: 1, lastVaccinationDate: n });
+    },
+    'state.settings.lastFluShot'(n) {
+      console.log(n);
+      Setting.update({ id: 1, lastFluShot: n });
+    },
   },
 
   mounted() {
@@ -476,6 +487,7 @@ export default {
     return this.$scopedSlots.default({
       // Global assets
       state: this.state,
+      updateState: this.updateState,
       isConnected: this.isConnected,
       onConnectMe: this.onConnectMe,
 
