@@ -83,18 +83,18 @@ export default {
        *   Delete Appointment (category==='Them')
        *   Delete Visit (category==='You')
        */
-      actions: {
-        isDay: {
-          add: (data, f) => Visit.updatePromise(data, f),
-          update: (data, f) => Visit.updateFieldPromise(data, f),
-          delete: (data, f) => Visit.deletePromise(data, f),
-        },
-        isCategory: {
-          add: (data, f) => Appointment.updatePromise(data, f),
-          update: (data, f) => Appointment.updateFieldPromise(data, f),
-          delete: (data, f) => Appointment.deletePromise(data, f),
-        },
-      },
+      // actions: {
+      //   isDay: {
+      //     add: (data, f) => Visit.updatePromise(data, f),
+      //     update: (data, f) => Visit.updateFieldPromise(data, f),
+      //     delete: (data, f) => Visit.deletePromise(data, f),
+      //   },
+      //   isCategory: {
+      //     add: (data, f) => Appointment.updatePromise(data, f),
+      //     update: (data, f) => Appointment.updateFieldPromise(data, f),
+      //     delete: (data, f) => Appointment.deletePromise(data, f),
+      //   },
+      // },
     };
   },
   sockets: {

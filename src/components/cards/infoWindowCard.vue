@@ -66,5 +66,8 @@ export default {
   methods: {},
 
   watch: {},
+  mounted() {
+    console.log();
+  },
 };
 </script>

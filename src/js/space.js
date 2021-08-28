@@ -1,4 +1,6 @@
 import Place from '@/models/Place';
+import '@/fp/monads/EitherAsync';
+import { allOrNone } from '@/fp/utils';
 
 import { roundTime } from '@/utils/helpers';
 import { DateTime, getNow } from '@/utils/luxonHelpers';
@@ -52,12 +54,36 @@ export const spaceMixin = {
       this.updateVisit(visit);
     },
 
-    onMarkerAdded(place) {
-      Place.update(place);
+    onMarkerAdded(markedPlace) {
+      // switch from position to Place's lat and lng
+      const {
+        position: { lat },
+        position: { lng },
+      } = markedPlace;
+      const place = { ...markedPlace, lat, lng };
+      Place.update(place)
+        .toEither()
+        .cata({
+          ok: console.log, // marker rendered (without a label) from inside EitherAsync
+          error: (err) => {
+            // let global error handler take over so we see the error in the snackbar.
+            err.message = +'Place.update() had issues';
+            throw err;
+          },
+        });
     },
 
     onDeletePlace(placeId) {
-      Place.delete(placeId);
+      Place.delete(placeId)
+        .toEither()
+        .cata({
+          ok: console.log,
+          error: (err) => {
+            // let global error handler take over so we see the error in the snackbar.
+            err.message = +'Place.update() had issues';
+            throw err;
+          },
+        });
     },
   },
 };

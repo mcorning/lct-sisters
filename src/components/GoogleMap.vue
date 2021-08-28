@@ -40,7 +40,10 @@
 
 <script>
 import gmapsInit from '../utils/gmaps';
-import { compose, prop, firstOrNone } from '@/fp/utils';
+import { compose, firstOrNone } from '@/fp/utils';
+import { Ok, Err, Just, nullable, head, get, parseDate } from 'pratica';
+import curry from 'curry';
+
 import InfoWindowCard from './cards/infoWindowCard.vue';
 
 export default {
@@ -115,6 +118,20 @@ export default {
   },
   data() {
     return {
+      getDetails: (placeId) => {
+        this.service.getDetails({
+          placeId: placeId,
+          fields: this.options.fields,
+        }),
+          (place, status) => {
+            if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
+              return 'Cannot get Place details from service.';
+            }
+            if (place && place.geometry && place.geometry.location) {
+              return place;
+            }
+          };
+      },
       message: '',
       info: null,
       snackbar: false,
@@ -149,9 +166,115 @@ export default {
     Share
  */
   methods: {
-    //#region Main workhorse functions
-    // clicked POI or anywhere else
     onClickMap(event) {
+      const xMarksTheSpot = event.latLng;
+
+      //#region helpers
+      const buildRequestWith = (placeId) => {
+        return {
+          placeId: placeId,
+          fields: this.options.fields,
+        };
+      };
+
+      const handleDetailsCallback = (place, status, resolve, reject) => {
+        if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
+          reject('Cannot get Place details from service.');
+        }
+        if (place && place.geometry && place.geometry.location) {
+          resolve(place);
+        }
+      };
+
+      // // when POI clicked callback informs getPlaceDetails Promise
+      const getPlaceServiceDetails = ({ placeId, resolve, reject }) => {
+        this.service.getDetails(
+          buildRequestWith(placeId),
+          // handle callback
+          (place, status) =>
+            handleDetailsCallback(place, status, resolve, reject)
+        );
+      };
+
+      const getMarkedPlace = (place) => this.getMarkedPlace(place);
+
+      const makeMarkerFromMarkedPlace = (markedPlace) => {
+        this.makeMarker(markedPlace);
+        return markedPlace;
+      };
+      //#endregion
+
+      const composition = compose(
+        this.onMarkerAdded,
+        makeMarkerFromMarkedPlace,
+        getMarkedPlace
+      );
+
+      //#region Services
+      const callGeoCoder = () => {
+        console.log('calling geocoder with', xMarksTheSpot);
+      };
+
+      const callService = (placeId) =>
+        new Promise((resolve, reject) => {
+          getPlaceServiceDetails({ placeId, resolve, reject });
+        })
+          .toEither()
+          .cata({
+            ok: (details) => details,
+            error: (details) => {
+              console.error(details, 'Issues with service()');
+            },
+          });
+      //#endregion Services
+
+      nullable(event.placeId)
+        .map(callService)
+        // this is another way to get a default value in the pipeline, but that doesn't work for us here.
+        // .alt(event.latLng)
+        .cata({
+          Just: (details) => details.then((place) => composition(place)),
+          Nothing: callGeoCoder,
+        });
+    },
+    getMarkedPlace(place) {
+      const {
+        name,
+        formatted_address,
+        place_id,
+        plus_code,
+        url,
+        geometry,
+      } = place;
+      const position = {
+        lat: geometry.location.lat(),
+        lng: geometry.location.lng(),
+      };
+      const title = `${name}\nLast Visited: add lastVisit to Place type`;
+      const markedPlace = {
+        name,
+        formatted_address,
+        place_id,
+        plus_code,
+        url,
+        position,
+        title,
+      };
+      return markedPlace;
+    },
+    makeMarker(markedPlace) {
+      const { position, name: title, placeId } = markedPlace;
+      let marker = new window.google.maps.Marker({ title, position, placeId });
+      marker.setMap(this.map);
+      marker.addListener(`click`, (event) => {
+        event.stop();
+        this.showInfoWindow({ markedPlace, marker });
+      });
+      marker.addListener(`rightclick`, () => this.promptMarkerDeletion(marker));
+      return marker;
+    },
+    // clicked POI or anywhere else
+    onClickMapOrig(event) {
       this.getPlaceDetails(event)
         .then((place) => this.getInfo(place))
         .then((info) => this.showInfoWindow(info))
@@ -160,7 +283,7 @@ export default {
     //#region PlacesService
     getPlaceDetails(event) {
       const { placeId, latLng } = event;
-
+      // this.test2(placeId);
       return new Promise((resolve, reject) => {
         // clicked POI
         if (placeId) {
@@ -195,17 +318,10 @@ export default {
       );
     },
     //#endregion PlacesService
+    //#region Main workhorse functions
 
     getInfo(place) {
-      const getGeometry = prop('geometry');
-      const getLocation = prop('location');
-      const getPosition = (latLng) => {
-        return { position: { lat: latLng.lat(), lng: latLng.lng() } };
-      };
-      const reduced = compose(getPosition, getLocation, getGeometry);
-      const latLng = reduced(place);
-      place.name = place.name || 'A Gathering';
-      const markedPlace = { ...place, ...latLng };
+      const markedPlace = this.getMarkedPlace(place);
       const info = this.makeMarkerFromMarkedPlace({
         google: window.google,
         map: this.map,
@@ -219,6 +335,7 @@ export default {
       this.marker = marker;
       this.infowindow.open(this.map, marker);
       this.info = markedPlace;
+
       return markedPlace;
     },
 
@@ -226,6 +343,7 @@ export default {
       this.onMarkerAdded(markedPlace);
     },
     //#endregion Main workhorse functions
+    //#region hide
 
     //#region Autocomplete
     setupAutocomplete({ google, map }) {
@@ -271,42 +389,10 @@ export default {
     //#endregion Autocomplete
 
     //#region Marker code
-    // Adds a marker to the map.
-    makeMarkerFromMarkedPlace({ google, map, markedPlace }) {
-      const strokeColor = 'purple';
-      const marker = new google.maps.Marker({
-        map: map,
-        position: markedPlace.position,
-        // label: this.labels[this.labelIndex++ % this.labels.length],
-        // TODO change this to add Last Visited text only if lastVisit is not null
-        title: `${markedPlace.name}\nLast Visited: ${markedPlace.lastVisit ||
-          'add lastVisit to Place type'}`,
-        place_id: markedPlace.place_id, // so we can delete the marker's corresponding Place element
-        // icon: this.svgMarker,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          strokeColor: strokeColor,
-          strokeWeight: 12,
-          scale: 10,
-        },
-      });
-      marker.addListener('click', (event) => {
-        event.stop();
-        this.showInfoWindow({ markedPlace, marker });
-      });
-
-      marker.addListener(`rightclick`, () => this.promptMarkerDeletion(marker));
-      return { marker, markedPlace };
-    },
 
     makeMarkersFromCache({ google, map }) {
       const markers = this.cachedPlaces.map((cachedPlace) => {
-        // this is the only call to addMarkersPlus that is not using a googlemaps Place
-        this.makeMarkerFromMarkedPlace({
-          google,
-          map,
-          markedPlace: cachedPlace,
-        });
+        this.makeMarker(cachedPlace);
       });
       console.log(`Rendered ${markers.length} markers`);
       return { google, map, markers };
@@ -360,6 +446,54 @@ export default {
       return { google, map };
     },
     //#endregion mounted() helpers
+    //#endregion
+
+    //#region lab tests
+    testcurry() {
+      var objects = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+      var get = curry((property, object) => object[property]);
+      var map = curry((fn, value) => value.map(fn));
+      var getIDs = map(get('id'));
+
+      console.log(getIDs(objects));
+    },
+
+    testgetP() {
+      const data = {
+        name: 'jason',
+        children: [
+          {
+            name: 'bob',
+          },
+          {
+            name: 'blanche',
+            children: [
+              {
+                name: 'lera',
+              },
+            ],
+          },
+        ],
+      };
+
+      get(['children', 1, 'children', 0, 'name'])(data).cata({
+        Just: (name) => console.log(name),
+        Nothing: () => console.log('no name'), // doesn't run
+      });
+    },
+
+    testget() {
+      var ids = { ids: [{ id: 1 }, { id: 2 }, { id: 3 }] };
+
+      // pratica get only works with object (not array) selectors
+      // and only with indexes (not strings) as the even arg
+      get(['ids', 2])(ids).cata({
+        Just: (id) => console.log(id), //
+        Nothing: () => console.log('no ID'),
+      });
+    },
+    //#endregion lab tests
   },
 
   watch: {
@@ -369,6 +503,7 @@ export default {
   },
 
   mounted() {
+    // this.testget();
     const self = this;
     console.time('Mounted GoogleMaps');
     gmapsInit()
