@@ -124,9 +124,6 @@ export default {
       timeout: 10000,
       selectedMarker: null,
       ready: false,
-
-      // place: null,
-      // marker: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
     };
@@ -203,17 +200,16 @@ export default {
       // markedPlace -> marker
       // transforms the marked place into a marker object for infowindow's marker arg
       const makeMarkerFromMarkedPlace = (markedPlace) => {
-        const { position, name: title, placeId } = markedPlace;
+        const { position, name: title, place_id } = markedPlace;
         let marker = new window.google.maps.Marker({
           title,
           position,
-          placeId,
+          place_id,
         });
         marker.setMap(map);
         marker.addListener(`click`, (event) => {
           event.stop();
           setInfo(markedPlace);
-
           showInfoWindow(marker);
         });
         marker.addListener(`rightclick`, () =>
@@ -305,8 +301,8 @@ export default {
     },
 
     makeMarker({ map, infowindow, markedPlace }) {
-      const { position, name: title, placeId } = markedPlace;
-      let marker = new window.google.maps.Marker({ title, position, placeId });
+      const { position, name: title, place_id } = markedPlace;
+      let marker = new window.google.maps.Marker({ title, position, place_id });
       marker.setMap(map);
       marker.addListener(`click`, (event) => {
         event.stop();
@@ -423,8 +419,10 @@ export default {
       const geocoder = new google.maps.Geocoder();
       const service = new google.maps.places.PlacesService(map);
 
-      const infowindow = new google.maps.InfoWindow();
-      infowindow.setContent(document.getElementById('infowin'));
+      const infowindow = new google.maps.InfoWindow({
+        content: document.getElementById('infowin'),
+        shouldFocus: true,
+      });
 
       const onMarkerAdded = this.onMarkerAdded;
       const fields = this.options.fields;
