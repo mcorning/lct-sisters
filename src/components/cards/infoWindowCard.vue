@@ -9,8 +9,8 @@
           <v-col>
             <small>
               {{ position | latLng }}<br />
-              PlusCode: {{ plusCode }}<br />
-              PlaceID: {{ placeId }}
+              PlaceID: {{ placeId }}<br />
+              GlobalCode: {{ globalCode }}
             </small></v-col
           >
         </v-row>
@@ -52,8 +52,9 @@ export default {
     placeId() {
       return this.info.place_id;
     },
-    plusCode() {
-      return this.info.plus_code?.global_code;
+    globalCode() {
+      // TODO make globalCode the primary index in graph for space nodes
+      return this.info.global_code;
     },
     placeLink() {
       return `<a href="${this.info.url}">Show place details on Googlemap</a>`;

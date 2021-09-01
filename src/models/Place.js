@@ -15,7 +15,7 @@ export default class Place extends Model {
       name: this.string(''), // POI or "Gathering"
       formatted_address: this.string(''), // Street address (if available)
       place_id: this.string(''), // Unique ID of space or place
-      plus_code: this.string(''), // Global address string
+      global_code: this.string(''), // Global address string
       lat: this.number(), // Latitude of visited space/place
       lng: this.number(), // Longitude of visited space/place
       url: this.string(), // google link to location

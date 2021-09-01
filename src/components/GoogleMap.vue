@@ -41,7 +41,7 @@
 <script>
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
-import { Ok, Err, Just, nullable, head, get, parseDate } from 'pratica';
+import { nullable, get } from 'pratica';
 import curry from 'curry';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
@@ -118,20 +118,6 @@ export default {
   },
   data() {
     return {
-      getDetails: (placeId) => {
-        this.service.getDetails({
-          placeId: placeId,
-          fields: this.options.fields,
-        }),
-          (place, status) => {
-            if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
-              return 'Cannot get Place details from service.';
-            }
-            if (place && place.geometry && place.geometry.location) {
-              return place;
-            }
-          };
-      },
       message: '',
       info: null,
       snackbar: false,
@@ -146,8 +132,6 @@ export default {
       marker: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
-      labels: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-      labelIndex: 0,
     };
   },
 
@@ -166,17 +150,104 @@ export default {
     Share
  */
   methods: {
-    onClickMap(event) {
+    onClickMap(
+      event,
+      { map, service, geocoder, infowindow, onMarkerAdded, fields }
+    ) {
+      //#region supporting code (beginning with Google Services calls)
       const xMarksTheSpot = event.latLng;
+      infowindow.setContent(document.getElementById('infowin'));
 
-      //#region helpers
       const buildRequestWith = (placeId) => {
         return {
           placeId: placeId,
-          fields: this.options.fields,
+          fields: fields,
         };
       };
 
+      //#region Composition functions
+      //////////////////////////////////////////////////////////////////
+      // place -> markedPlace
+      // first step in rendering the infowindow after clicking the map
+      const getMarkedPlace = (place) => {
+        const {
+          name,
+          formatted_address,
+          place_id,
+          plus_code,
+          url,
+          geometry,
+        } = place;
+        const position = {
+          lat: geometry.location.lat(),
+          lng: geometry.location.lng(),
+        };
+        const title = `${name}\nLast Visited: add lastVisit to Place type`;
+        const markedPlace = {
+          name,
+          formatted_address,
+          place_id,
+          plus_code,
+          url,
+          position,
+          title,
+        };
+        return markedPlace;
+      };
+
+      // markedPlace -> markedPlace
+      // call the async Place entity update function
+      // and continue, immediately, on toward rendering the infowindow
+      const updatePlace = (markedPlace) => {
+        onMarkerAdded(markedPlace);
+        return markedPlace;
+      };
+
+      // markedPlace -> markedPlace
+      //this sets state side-effect for the InfoWindow component's prop
+      const getInfo = (markedPlace) => {
+        this.info = markedPlace;
+        return markedPlace;
+      };
+
+      // markedPlace -> marker
+      // transforms the marked place into a marker object for infowindow's marker arg
+      const makeMarkerFromMarkedPlace = (markedPlace) => {
+        const { position, name: title, placeId } = markedPlace;
+        let marker = new window.google.maps.Marker({
+          title,
+          position,
+          placeId,
+        });
+        marker.setMap(this.map);
+        marker.addListener(`click`, (event) => {
+          event.stop();
+          showInfoWindow(marker);
+        });
+        marker.addListener(`rightclick`, () =>
+          this.promptMarkerDeletion(marker)
+        );
+        return marker;
+      };
+
+      // marker -> string
+      // final step in the UX after clicking map
+      const showInfoWindow = (marker) => {
+        infowindow.open(map, marker);
+        console.log('Rendered infowindow');
+      };
+
+      const composition = compose(
+        showInfoWindow, // marker -> string
+        makeMarkerFromMarkedPlace, // markedPlace -> marker
+        getInfo, // markedPlace -> markedPlace
+        updatePlace, // markedPlace -> markedPlace
+        getMarkedPlace // place => markedPlace
+      );
+      //////////////////////////////////////////////////////////////////
+      //#endregion Composition functions
+
+      //#region Googlemap Services
       const handleDetailsCallback = (place, status, resolve, reject) => {
         if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
           reject('Cannot get Place details from service.');
@@ -186,9 +257,9 @@ export default {
         }
       };
 
-      // // when POI clicked callback informs getPlaceDetails Promise
+      // // when POI clicked callback informs getPlaceServiceDetails Promise
       const getPlaceServiceDetails = ({ placeId, resolve, reject }) => {
-        this.service.getDetails(
+        service.getDetails(
           buildRequestWith(placeId),
           // handle callback
           (place, status) =>
@@ -196,23 +267,13 @@ export default {
         );
       };
 
-      const getMarkedPlace = (place) => this.getMarkedPlace(place);
-
-      const makeMarkerFromMarkedPlace = (markedPlace) => {
-        this.makeMarker(markedPlace);
-        return markedPlace;
-      };
-      //#endregion
-
-      const composition = compose(
-        this.onMarkerAdded,
-        makeMarkerFromMarkedPlace,
-        getMarkedPlace
-      );
-
-      //#region Services
       const callGeoCoder = () => {
-        console.log('calling geocoder with', xMarksTheSpot);
+        geocoder.geocode({ location: xMarksTheSpot }).then((place) => {
+          firstOrNone(place.results).match({
+            Some: (place) => composition(place),
+            None: () => console.log,
+          });
+        });
       };
 
       const callService = (placeId) =>
@@ -226,17 +287,20 @@ export default {
               console.error(details, 'Issues with service()');
             },
           });
-      //#endregion Services
+      //#endregion Googlemap Services
+      //#endregion supporting code
 
+      // make Google Service call depending on presence of placeID (assumes LatLng is not nullable)
       nullable(event.placeId)
         .map(callService)
-        // this is another way to get a default value in the pipeline, but that doesn't work for us here.
-        // .alt(event.latLng)
         .cata({
           Just: (details) => details.then((place) => composition(place)),
           Nothing: callGeoCoder,
         });
     },
+
+    // old code:
+
     getMarkedPlace(place) {
       const {
         name,
@@ -262,17 +326,18 @@ export default {
       };
       return markedPlace;
     },
-    makeMarker(markedPlace) {
+    makeMarker(markedPlace, infowindow) {
       const { position, name: title, placeId } = markedPlace;
       let marker = new window.google.maps.Marker({ title, position, placeId });
       marker.setMap(this.map);
       marker.addListener(`click`, (event) => {
         event.stop();
-        this.showInfoWindow({ markedPlace, marker });
+        this.showInfoWindow({ markedPlace, marker, infowindow });
       });
       marker.addListener(`rightclick`, () => this.promptMarkerDeletion(marker));
       return marker;
     },
+    //#region Old code
     // clicked POI or anywhere else
     onClickMapOrig(event) {
       this.getPlaceDetails(event)
@@ -320,24 +385,26 @@ export default {
     //#endregion PlacesService
     //#region Main workhorse functions
 
-    getInfo(place) {
-      const markedPlace = this.getMarkedPlace(place);
-      const info = this.makeMarkerFromMarkedPlace({
-        google: window.google,
-        map: this.map,
-        markedPlace,
-      });
+    // getInfo(place) {
+    //   const markedPlace = this.getMarkedPlace(place);
+    //   const info = this.makeMarkerFromMarkedPlace({
+    //     google: window.google,
+    //     map: this.map,
+    //     markedPlace,
+    //   });
 
-      return info;
-    },
+    //   return info;
+    // },
 
-    showInfoWindow({ markedPlace, marker }) {
+    showInfoWindow({ markedPlace, marker, infowindow }) {
       this.marker = marker;
-      this.infowindow.open(this.map, marker);
       this.info = markedPlace;
+
+      infowindow.open(this.map, marker);
 
       return markedPlace;
     },
+    //#endregion
 
     updatePlace(markedPlace) {
       this.onMarkerAdded(markedPlace);
@@ -390,9 +457,9 @@ export default {
 
     //#region Marker code
 
-    makeMarkersFromCache({ google, map }) {
+    makeMarkersFromCache({ google, map, infowindow }) {
       const markers = this.cachedPlaces.map((cachedPlace) => {
-        this.makeMarker(cachedPlace);
+        this.makeMarker(cachedPlace, infowindow);
       });
       console.log(`Rendered ${markers.length} markers`);
       return { google, map, markers };
@@ -406,6 +473,7 @@ export default {
     deleteMarker() {
       this.selectedMarker.setMap(null);
       // see space.js
+      // TODO delete is not working
       this.onDeletePlace(this.selectedMarker.place_id);
       this.cancelDelete();
     },
@@ -436,13 +504,27 @@ export default {
     },
 
     initAssets({ google, map }) {
+      this.map = map;
+      const geocoder = new google.maps.Geocoder();
+      const service = new google.maps.places.PlacesService(map);
+
+      const infowindow = new google.maps.InfoWindow();
+      infowindow.setContent(document.getElementById('infowin'));
+
+      const onMarkerAdded = this.onMarkerAdded;
+      const fields = this.options.fields;
+      this.makeMarkersFromCache({ google, map, infowindow });
       map.addListener(`click`, (event) => {
         event.stop();
-        this.onClickMap(event);
+        this.onClickMap(event, {
+          map,
+          service,
+          geocoder,
+          infowindow,
+          onMarkerAdded,
+          fields,
+        });
       });
-      this.map = map;
-      this.service = new google.maps.places.PlacesService(map);
-      this.infowindow = new google.maps.InfoWindow();
       return { google, map };
     },
     //#endregion mounted() helpers
@@ -498,7 +580,7 @@ export default {
 
   watch: {
     ready() {
-      this.infowindow.setContent(document.getElementById('infowin'));
+      // this.infowindow.setContent(document.getElementById('infowin'));
     },
   },
 
@@ -518,7 +600,6 @@ export default {
         return { google, map };
       })
       .then(({ google, map }) => this.initAssets({ google, map }))
-      .then(({ google, map }) => this.makeMarkersFromCache({ google, map }))
       .then(({ google, map, markers }) =>
         this.setupAutocomplete({ google, map, markers })
       )
