@@ -89,7 +89,7 @@ export default {
             formatted_address: v.formatted_address,
             position: { lat: v.lat, lng: v.lng },
             place_id: v.place_id,
-            plus_code: v.plus_code,
+            global_code: v.global_code,
             url: v.url,
           };
         }) || []
@@ -124,12 +124,9 @@ export default {
       timeout: 10000,
       selectedMarker: null,
       ready: false,
-      map: null,
-      geocoder: null,
-      service: null,
-      infowindow: null,
-      place: null,
-      marker: null,
+
+      // place: null,
+      // marker: null,
       defaultZoom: 15,
       defaultPoi: 'Sisters City Hall',
     };
@@ -150,20 +147,12 @@ export default {
     Share
  */
   methods: {
+    // almost self-contained code (no this)
     onClickMap(
       event,
       { map, service, geocoder, infowindow, onMarkerAdded, fields }
     ) {
-      //#region supporting code (beginning with Google Services calls)
       const xMarksTheSpot = event.latLng;
-      infowindow.setContent(document.getElementById('infowin'));
-
-      const buildRequestWith = (placeId) => {
-        return {
-          placeId: placeId,
-          fields: fields,
-        };
-      };
 
       //#region Composition functions
       //////////////////////////////////////////////////////////////////
@@ -171,10 +160,10 @@ export default {
       // first step in rendering the infowindow after clicking the map
       const getMarkedPlace = (place) => {
         const {
-          name,
+          name = 'Gathering',
           formatted_address,
           place_id,
-          plus_code,
+          plus_code: { global_code },
           url,
           geometry,
         } = place;
@@ -182,12 +171,13 @@ export default {
           lat: geometry.location.lat(),
           lng: geometry.location.lng(),
         };
+
         const title = `${name}\nLast Visited: add lastVisit to Place type`;
         const markedPlace = {
           name,
           formatted_address,
           place_id,
-          plus_code,
+          global_code,
           url,
           position,
           title,
@@ -205,7 +195,7 @@ export default {
 
       // markedPlace -> markedPlace
       //this sets state side-effect for the InfoWindow component's prop
-      const getInfo = (markedPlace) => {
+      const setInfo = (markedPlace) => {
         this.info = markedPlace;
         return markedPlace;
       };
@@ -219,9 +209,11 @@ export default {
           position,
           placeId,
         });
-        marker.setMap(this.map);
+        marker.setMap(map);
         marker.addListener(`click`, (event) => {
           event.stop();
+          setInfo(markedPlace);
+
           showInfoWindow(marker);
         });
         marker.addListener(`rightclick`, () =>
@@ -234,13 +226,13 @@ export default {
       // final step in the UX after clicking map
       const showInfoWindow = (marker) => {
         infowindow.open(map, marker);
-        console.log('Rendered infowindow');
+        return `Rendered infowindow for ${marker.title}`;
       };
 
       const composition = compose(
         showInfoWindow, // marker -> string
         makeMarkerFromMarkedPlace, // markedPlace -> marker
-        getInfo, // markedPlace -> markedPlace
+        setInfo, // markedPlace -> markedPlace
         updatePlace, // markedPlace -> markedPlace
         getMarkedPlace // place => markedPlace
       );
@@ -257,6 +249,12 @@ export default {
         }
       };
 
+      const buildRequestWith = (placeId) => {
+        return {
+          placeId: placeId,
+          fields: fields,
+        };
+      };
       // // when POI clicked callback informs getPlaceServiceDetails Promise
       const getPlaceServiceDetails = ({ placeId, resolve, reject }) => {
         service.getDetails(
@@ -265,15 +263,6 @@ export default {
           (place, status) =>
             handleDetailsCallback(place, status, resolve, reject)
         );
-      };
-
-      const callGeoCoder = () => {
-        geocoder.geocode({ location: xMarksTheSpot }).then((place) => {
-          firstOrNone(place.results).match({
-            Some: (place) => composition(place),
-            None: () => console.log,
-          });
-        });
       };
 
       const callService = (placeId) =>
@@ -287,8 +276,16 @@ export default {
               console.error(details, 'Issues with service()');
             },
           });
+
+      const callGeoCoder = () => {
+        geocoder.geocode({ location: xMarksTheSpot }).then((place) => {
+          firstOrNone(place.results).match({
+            Some: (place) => composition(place),
+            None: () => console.log,
+          });
+        });
+      };
       //#endregion Googlemap Services
-      //#endregion supporting code
 
       // make Google Service call depending on presence of placeID (assumes LatLng is not nullable)
       nullable(event.placeId)
@@ -299,167 +296,29 @@ export default {
         });
     },
 
-    // old code:
-
-    getMarkedPlace(place) {
-      const {
-        name,
-        formatted_address,
-        place_id,
-        plus_code,
-        url,
-        geometry,
-      } = place;
-      const position = {
-        lat: geometry.location.lat(),
-        lng: geometry.location.lng(),
-      };
-      const title = `${name}\nLast Visited: add lastVisit to Place type`;
-      const markedPlace = {
-        name,
-        formatted_address,
-        place_id,
-        plus_code,
-        url,
-        position,
-        title,
-      };
+    //#region Marker code
+    showInfoWindow({ map, markedPlace, marker, infowindow }) {
+      // this.marker = marker;
+      this.info = markedPlace;
+      infowindow.open(map, marker);
       return markedPlace;
     },
-    makeMarker(markedPlace, infowindow) {
+
+    makeMarker({ map, infowindow, markedPlace }) {
       const { position, name: title, placeId } = markedPlace;
       let marker = new window.google.maps.Marker({ title, position, placeId });
-      marker.setMap(this.map);
+      marker.setMap(map);
       marker.addListener(`click`, (event) => {
         event.stop();
-        this.showInfoWindow({ markedPlace, marker, infowindow });
+        this.showInfoWindow({ map, markedPlace, marker, infowindow });
       });
       marker.addListener(`rightclick`, () => this.promptMarkerDeletion(marker));
       return marker;
     },
-    //#region Old code
-    // clicked POI or anywhere else
-    onClickMapOrig(event) {
-      this.getPlaceDetails(event)
-        .then((place) => this.getInfo(place))
-        .then((info) => this.showInfoWindow(info))
-        .then((markedPlace) => this.updatePlace(markedPlace));
-    },
-    //#region PlacesService
-    getPlaceDetails(event) {
-      const { placeId, latLng } = event;
-      // this.test2(placeId);
-      return new Promise((resolve, reject) => {
-        // clicked POI
-        if (placeId) {
-          this.getPlaceServiceDetails({ placeId, resolve, reject });
-        } else {
-          // clicked anywhere else
-          this.geocoder.geocode({ location: latLng }).then((place) => {
-            firstOrNone(place.results).match({
-              Some: (value) => resolve(value),
-              None: () => reject('Cannot geocode', latLng),
-            });
-          });
-        }
-      });
-    },
-
-    // when POI clicked callback informs getPlaceDetails Promise
-    getPlaceServiceDetails({ placeId, resolve, reject }) {
-      this.service.getDetails(
-        {
-          placeId: placeId,
-          fields: this.options.fields,
-        },
-        (place, status) => {
-          if (status !== window.google.maps.places.PlacesServiceStatus.OK) {
-            reject('Cannot get Place details from service.');
-          }
-          if (place && place.geometry && place.geometry.location) {
-            resolve(place);
-          }
-        }
-      );
-    },
-    //#endregion PlacesService
-    //#region Main workhorse functions
-
-    // getInfo(place) {
-    //   const markedPlace = this.getMarkedPlace(place);
-    //   const info = this.makeMarkerFromMarkedPlace({
-    //     google: window.google,
-    //     map: this.map,
-    //     markedPlace,
-    //   });
-
-    //   return info;
-    // },
-
-    showInfoWindow({ markedPlace, marker, infowindow }) {
-      this.marker = marker;
-      this.info = markedPlace;
-
-      infowindow.open(this.map, marker);
-
-      return markedPlace;
-    },
-    //#endregion
-
-    updatePlace(markedPlace) {
-      this.onMarkerAdded(markedPlace);
-    },
-    //#endregion Main workhorse functions
-    //#region hide
-
-    //#region Autocomplete
-    setupAutocomplete({ google, map }) {
-      const input = document.getElementById('autoCompleteInput');
-      const searchBox = new google.maps.places.SearchBox(input);
-      map.addListener('bounds_changed', () => {
-        searchBox.setBounds(map.getBounds());
-      });
-      searchBox.addListener('places_changed', () => {
-        const places = searchBox.getPlaces();
-        this.getAutocompleteResults({ google, map, places });
-      });
-      return { google, map };
-    },
-
-    getAutocompleteResults({ google, map, places }) {
-      {
-        // TODO this is a Maybe
-        if (places.length == 0) {
-          return;
-        }
-
-        // For each place, get the icon, name and location.
-        const bounds = new google.maps.LatLngBounds();
-        places.forEach((place) => {
-          // TODO this is a Maybe
-          if (!place.geometry || !place.geometry.location) {
-            console.log('Returned place contains no geometry');
-            return;
-          }
-          this.getInfo(place);
-          if (place.geometry.viewport) {
-            // Only geocodes have viewport.
-            bounds.union(place.geometry.viewport);
-          } else {
-            bounds.extend(place.geometry.location);
-          }
-          this.updatePlace(place);
-        });
-        map.fitBounds(bounds);
-      }
-    },
-    //#endregion Autocomplete
-
-    //#region Marker code
 
     makeMarkersFromCache({ google, map, infowindow }) {
-      const markers = this.cachedPlaces.map((cachedPlace) => {
-        this.makeMarker(cachedPlace, infowindow);
+      const markers = this.cachedPlaces.map((markedPlace) => {
+        this.makeMarker({ map, infowindow, markedPlace });
       });
       console.log(`Rendered ${markers.length} markers`);
       return { google, map, markers };
@@ -483,8 +342,111 @@ export default {
     },
     //#endregion Marker code
 
-    //#region mounted() helpers
-    setupGeocoder({ google, map }) {
+    //#region Autocomplete
+
+    getAutocompleteResults({ google, map, infowindow, places }) {
+      {
+        // TODO this is a Maybe
+        if (places.length == 0) {
+          return;
+        }
+        const getMarkedPlace = (place) => {
+          const {
+            name = 'Gathering',
+            formatted_address,
+            place_id,
+            plus_code: { global_code },
+            url,
+            geometry,
+          } = place;
+          const position = {
+            lat: geometry.location.lat(),
+            lng: geometry.location.lng(),
+          };
+
+          const title = `${name}\nLast Visited: add lastVisit to Place type`;
+          const markedPlace = {
+            name,
+            formatted_address,
+            place_id,
+            global_code,
+            url,
+            position,
+            title,
+          };
+          return markedPlace;
+        };
+        // For each place, get the icon, name and location.
+        const bounds = new google.maps.LatLngBounds();
+        places.forEach((place) => {
+          // TODO this is a Maybe
+          if (!place.geometry || !place.geometry.location) {
+            console.log('Returned place contains no geometry');
+            return;
+          }
+          if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+          const markedPlace = getMarkedPlace(place);
+          this.onMarkerAdded(markedPlace);
+          const marker = this.makeMarker({
+            google,
+            map,
+            infowindow,
+            markedPlace,
+          });
+
+          this.showInfoWindow({ map, markedPlace, marker, infowindow });
+        });
+        map.fitBounds(bounds);
+      }
+    },
+
+    setupAutocomplete({ google, map, infowindow }) {
+      const input = document.getElementById('autoCompleteInput');
+      const searchBox = new google.maps.places.SearchBox(input);
+      map.addListener('bounds_changed', () => {
+        searchBox.setBounds(map.getBounds());
+      });
+      searchBox.addListener('places_changed', () => {
+        const places = searchBox.getPlaces();
+        this.getAutocompleteResults({ google, map, infowindow, places });
+      });
+      return { google, map };
+    },
+    //#endregion Autocomplete
+
+    initAssets({ google, map }) {
+      const geocoder = new google.maps.Geocoder();
+      const service = new google.maps.places.PlacesService(map);
+
+      const infowindow = new google.maps.InfoWindow();
+      infowindow.setContent(document.getElementById('infowin'));
+
+      const onMarkerAdded = this.onMarkerAdded;
+      const fields = this.options.fields;
+
+      map.addListener(`click`, (event) => {
+        event.stop();
+        this.onClickMap(event, {
+          map,
+          service,
+          geocoder,
+          infowindow,
+          onMarkerAdded,
+          fields,
+        });
+      });
+      this.makeMarkersFromCache({ google, map, infowindow });
+      this.setupAutocomplete({ google, map, infowindow });
+
+      return { google, map, geocoder };
+    },
+
+    showMap({ google, map }) {
       const geocoder = new google.maps.Geocoder();
       this.geocoder = geocoder;
       return geocoder
@@ -502,34 +464,6 @@ export default {
           },
         });
     },
-
-    initAssets({ google, map }) {
-      this.map = map;
-      const geocoder = new google.maps.Geocoder();
-      const service = new google.maps.places.PlacesService(map);
-
-      const infowindow = new google.maps.InfoWindow();
-      infowindow.setContent(document.getElementById('infowin'));
-
-      const onMarkerAdded = this.onMarkerAdded;
-      const fields = this.options.fields;
-      this.makeMarkersFromCache({ google, map, infowindow });
-      map.addListener(`click`, (event) => {
-        event.stop();
-        this.onClickMap(event, {
-          map,
-          service,
-          geocoder,
-          infowindow,
-          onMarkerAdded,
-          fields,
-        });
-      });
-      return { google, map };
-    },
-    //#endregion mounted() helpers
-    //#endregion
-
     //#region lab tests
     testcurry() {
       var objects = [{ id: 1 }, { id: 2 }, { id: 3 }];
@@ -579,9 +513,7 @@ export default {
   },
 
   watch: {
-    ready() {
-      // this.infowindow.setContent(document.getElementById('infowin'));
-    },
+    ready() {},
   },
 
   mounted() {
@@ -600,10 +532,9 @@ export default {
         return { google, map };
       })
       .then(({ google, map }) => this.initAssets({ google, map }))
-      .then(({ google, map, markers }) =>
-        this.setupAutocomplete({ google, map, markers })
+      .then(
+        ({ google, map, geocoder }) => this.showMap({ google, map, geocoder }) // showMap is asycn and returns nothing
       )
-      .then(({ google, map }) => this.setupGeocoder({ google, map }))
       .then(() => (self.ready = true))
       .catch((error) => console.log(error))
       .finally(() => console.timeEnd('Mounted GoogleMaps'));
