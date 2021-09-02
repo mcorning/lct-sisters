@@ -24,8 +24,12 @@
         :onVisitPlace="onVisitPlace"
       ></info-window-card>
     </div>
-    <v-snackbar v-model="snackbar" color="orange" centered
-      >{{ message }}
+    <v-snackbar v-model="snackbar" color="orange" centered>
+      <v-card color="orange" flat>
+        <v-card-title>Delete Marker/Place</v-card-title>
+        <v-card-text class="white--text" v-html="message" />
+      </v-card>
+
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="deleteMarker()">
           Yes
@@ -41,8 +45,7 @@
 <script>
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
-import { nullable, get } from 'pratica';
-import curry from 'curry';
+import { nullable } from 'pratica';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
 
@@ -144,7 +147,6 @@ export default {
     Share
  */
   methods: {
-    // almost self-contained code (no this)
     onClickMap(
       event,
       { map, service, geocoder, infowindow, onMarkerAdded, fields }
@@ -292,130 +294,7 @@ export default {
         });
     },
 
-    //#region Marker code
-    showInfoWindow({ map, markedPlace, marker, infowindow }) {
-      // this.marker = marker;
-      this.info = markedPlace;
-      infowindow.open(map, marker);
-      return markedPlace;
-    },
-
-    makeMarker({ map, infowindow, markedPlace }) {
-      const { position, name: title, place_id } = markedPlace;
-      let marker = new window.google.maps.Marker({ title, position, place_id });
-      marker.setMap(map);
-      marker.addListener(`click`, (event) => {
-        event.stop();
-        this.showInfoWindow({ map, markedPlace, marker, infowindow });
-      });
-      marker.addListener(`rightclick`, () => this.promptMarkerDeletion(marker));
-      return marker;
-    },
-
-    makeMarkersFromCache({ google, map, infowindow }) {
-      const markers = this.cachedPlaces.map((markedPlace) => {
-        this.makeMarker({ map, infowindow, markedPlace });
-      });
-      console.log(`Rendered ${markers.length} markers`);
-      return { google, map, markers };
-    },
-
-    promptMarkerDeletion(marker) {
-      this.selectedMarker = marker;
-      this.message = `Delete marker for ${marker.name} from the map?`;
-      this.snackbar = true;
-    },
-    deleteMarker() {
-      this.selectedMarker.setMap(null);
-      // see space.js
-      // TODO delete is not working
-      this.onDeletePlace(this.selectedMarker.place_id);
-      this.cancelDelete();
-    },
-    cancelDelete() {
-      this.selectedMarker = null;
-      this.snackbar = false;
-    },
-    //#endregion Marker code
-
-    //#region Autocomplete
-
-    getAutocompleteResults({ google, map, infowindow, places }) {
-      {
-        // TODO this is a Maybe
-        if (places.length == 0) {
-          return;
-        }
-        const getMarkedPlace = (place) => {
-          const {
-            name = 'Gathering',
-            formatted_address,
-            place_id,
-            plus_code: { global_code },
-            url,
-            geometry,
-          } = place;
-          const position = {
-            lat: geometry.location.lat(),
-            lng: geometry.location.lng(),
-          };
-
-          const title = `${name}\nLast Visited: add lastVisit to Place type`;
-          const markedPlace = {
-            name,
-            formatted_address,
-            place_id,
-            global_code,
-            url,
-            position,
-            title,
-          };
-          return markedPlace;
-        };
-        // For each place, get the icon, name and location.
-        const bounds = new google.maps.LatLngBounds();
-        places.forEach((place) => {
-          // TODO this is a Maybe
-          if (!place.geometry || !place.geometry.location) {
-            console.log('Returned place contains no geometry');
-            return;
-          }
-          if (place.geometry.viewport) {
-            // Only geocodes have viewport.
-            bounds.union(place.geometry.viewport);
-          } else {
-            bounds.extend(place.geometry.location);
-          }
-          const markedPlace = getMarkedPlace(place);
-          this.onMarkerAdded(markedPlace);
-          const marker = this.makeMarker({
-            google,
-            map,
-            infowindow,
-            markedPlace,
-          });
-
-          this.showInfoWindow({ map, markedPlace, marker, infowindow });
-        });
-        map.fitBounds(bounds);
-      }
-    },
-
-    setupAutocomplete({ google, map, infowindow }) {
-      const input = document.getElementById('autoCompleteInput');
-      const searchBox = new google.maps.places.SearchBox(input);
-      map.addListener('bounds_changed', () => {
-        searchBox.setBounds(map.getBounds());
-      });
-      searchBox.addListener('places_changed', () => {
-        const places = searchBox.getPlaces();
-        this.getAutocompleteResults({ google, map, infowindow, places });
-      });
-      return { google, map };
-    },
-    //#endregion Autocomplete
-
-    initAssets({ google, map }) {
+    onMounted({ google, map }) {
       const geocoder = new google.maps.Geocoder();
       const service = new google.maps.places.PlacesService(map);
 
@@ -438,86 +317,164 @@ export default {
           fields,
         });
       });
-      this.makeMarkersFromCache({ google, map, infowindow });
-      this.setupAutocomplete({ google, map, infowindow });
 
-      return { google, map, geocoder };
-    },
-
-    showMap({ google, map }) {
-      const geocoder = new google.maps.Geocoder();
-      this.geocoder = geocoder;
-      return geocoder
-        .geocode({ address: this.defaultPoi })
-        .toEither()
-        .map(({ results }) => {
-          map.setCenter(results[0].geometry.location);
-          map.fitBounds(results[0].geometry.viewport);
-          map.setZoom(this.defaultZoom);
-        })
-        .cata({
-          ok: (map) => map,
-          error: (results) => {
-            console.log(results, 'Issues in setupGeocoder()');
-          },
+      const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
+        this.info = markedPlace;
+        infowindow.open(map, marker);
+        return markedPlace;
+      };
+      const makeMarker = ({ map, infowindow, markedPlace }) => {
+        const { position, name: title, place_id } = markedPlace;
+        let marker = new window.google.maps.Marker({
+          title,
+          position,
+          place_id,
         });
-    },
-    //#region lab tests
-    testcurry() {
-      var objects = [{ id: 1 }, { id: 2 }, { id: 3 }];
-
-      var get = curry((property, object) => object[property]);
-      var map = curry((fn, value) => value.map(fn));
-      var getIDs = map(get('id'));
-
-      console.log(getIDs(objects));
-    },
-
-    testgetP() {
-      const data = {
-        name: 'jason',
-        children: [
-          {
-            name: 'bob',
-          },
-          {
-            name: 'blanche',
-            children: [
-              {
-                name: 'lera',
-              },
-            ],
-          },
-        ],
+        marker.setMap(map);
+        marker.addListener(`click`, (event) => {
+          event.stop();
+          showInfoWindow({ map, markedPlace, marker, infowindow });
+        });
+        marker.addListener(`rightclick`, () =>
+          this.promptMarkerDeletion(marker)
+        );
+        return marker;
       };
 
-      get(['children', 1, 'children', 0, 'name'])(data).cata({
-        Just: (name) => console.log(name),
-        Nothing: () => console.log('no name'), // doesn't run
-      });
+      const makeMarkersFromCache = ({ google, map, infowindow }) => {
+        const markers = this.cachedPlaces.map((markedPlace) => {
+          makeMarker({ map, infowindow, markedPlace });
+        });
+        console.log(`Rendered ${markers.length} markers`);
+        return { google, map, markers };
+      };
+
+      makeMarkersFromCache({ google, map, infowindow });
+
+      const getAutocompleteResults = ({ google, map, infowindow, places }) => {
+        {
+          // TODO this is a Maybe
+          if (places.length == 0) {
+            return;
+          }
+          const getMarkedPlace = (place) => {
+            const {
+              name = 'Gathering',
+              formatted_address,
+              place_id,
+              plus_code: { global_code },
+              url,
+              geometry,
+            } = place;
+            const position = {
+              lat: geometry.location.lat(),
+              lng: geometry.location.lng(),
+            };
+
+            const title = `${name}\nLast Visited: add lastVisit to Place type`;
+            const markedPlace = {
+              name,
+              formatted_address,
+              place_id,
+              global_code,
+              url,
+              position,
+              title,
+            };
+            return markedPlace;
+          };
+          // For each place, get the icon, name and location.
+          const bounds = new google.maps.LatLngBounds();
+          places.forEach((place) => {
+            // TODO this is a Maybe
+            if (!place.geometry || !place.geometry.location) {
+              console.log('Returned place contains no geometry');
+              return;
+            }
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+            const markedPlace = getMarkedPlace(place);
+            this.onMarkerAdded(markedPlace);
+            const marker = makeMarker({
+              google,
+              map,
+              infowindow,
+              markedPlace,
+            });
+
+            showInfoWindow({ map, markedPlace, marker, infowindow });
+          });
+          map.fitBounds(bounds);
+        }
+      };
+
+      const setupAutocomplete = ({ google, map, infowindow }) => {
+        const input = document.getElementById('autoCompleteInput');
+        const searchBox = new google.maps.places.SearchBox(input);
+        map.addListener('bounds_changed', () => {
+          searchBox.setBounds(map.getBounds());
+        });
+        searchBox.addListener('places_changed', () => {
+          const places = searchBox.getPlaces();
+          getAutocompleteResults({ google, map, infowindow, places });
+        });
+        return { google, map };
+      };
+      setupAutocomplete({ google, map, infowindow });
+
+      const showMap = ({ map, geocoder }) => {
+        geocoder
+          .geocode({ address: this.defaultPoi })
+          .toEither()
+          .map(({ results }) => {
+            map.setCenter(results[0].geometry.location);
+            map.fitBounds(results[0].geometry.viewport);
+            map.setZoom(this.defaultZoom);
+          })
+          .cata({
+            ok: (map) => map,
+            error: (results) => {
+              console.log(results, 'Issues in setupGeocoder()');
+            },
+          });
+      };
+
+      // last steps in bootstrap
+      showMap({ map, geocoder });
+      this.ready = true;
     },
 
-    testget() {
-      var ids = { ids: [{ id: 1 }, { id: 2 }, { id: 3 }] };
-
-      // pratica get only works with object (not array) selectors
-      // and only with indexes (not strings) as the even arg
-      get(['ids', 2])(ids).cata({
-        Just: (id) => console.log(id), //
-        Nothing: () => console.log('no ID'),
-      });
+    //#region Delete Marker code called by template
+    promptMarkerDeletion(marker) {
+      this.selectedMarker = marker;
+      this.message = `Delete marker for <strong>${marker.title}</strong> from the map?`;
+      this.snackbar = true;
     },
-    //#endregion lab tests
+    deleteMarker() {
+      this.selectedMarker.setMap(null);
+      this.onDeletePlace(this.selectedMarker.place_id);
+      this.cancelDelete();
+    },
+    cancelDelete() {
+      this.selectedMarker = null;
+      this.snackbar = false;
+    },
+    //#endregion Delete Marker code
   },
 
   watch: {
-    ready() {},
+    ready() {
+      console.log('Map component ready');
+    },
   },
 
   mounted() {
-    // this.testget();
-    const self = this;
     console.time('Mounted GoogleMaps');
+    // TODO this is an EitherAsync
     gmapsInit()
       .then((google) => {
         const map = new google.maps.Map(this.$refs.map, {
@@ -529,11 +486,7 @@ export default {
         });
         return { google, map };
       })
-      .then(({ google, map }) => this.initAssets({ google, map }))
-      .then(
-        ({ google, map, geocoder }) => this.showMap({ google, map, geocoder }) // showMap is asycn and returns nothing
-      )
-      .then(() => (self.ready = true))
+      .then(({ google, map }) => this.onMounted({ google, map }))
       .catch((error) => console.log(error))
       .finally(() => console.timeEnd('Mounted GoogleMaps'));
   },
