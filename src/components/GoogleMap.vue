@@ -7,6 +7,7 @@
       <v-row>
         <v-col>
           <v-text-field
+            class="ml-3"
             dense
             id="autoCompleteInput"
             hint="Enter place search terms here"

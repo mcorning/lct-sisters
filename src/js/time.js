@@ -6,21 +6,33 @@ import { allOrNone, firstOrNone } from '@/fp/utils';
 export const timeMixin = {
   name: 'timeMixin',
   methods: {
-    updateloggedNodeId(data) {
+    updateLoggedNodeId({ redisResult, resolve, reject }) {
+      console.log('redisResult', redisResult);
+      const { id, place, logged } = redisResult;
+
+      // this is the Promisified/EitherAsync version with a single resolve() condition and two reject() opportunities
+      if (!logged || id < 0) {
+        reject(`Redis could not log Visit to  ${place}`);
+      }
+      const { graphName, visitId } = redisResult;
+      const data = {
+        visitId: visitId,
+        loggedNodeId: id,
+        graphName,
+        color: 'primary', // use parameter if we need a different color for Sandbox graph
+      };
+      console.log('updateVisitOnGraph() data:', data);
+
+      // this is the original EitherAsync used by the pre refactored Model.visitLogged()
       Visit.updateLoggedNodeId(data)
         .toEither()
         .cata({
-          ok: (results) => {
-            const msg = {
-              logged: true,
-              confirmationColor: 'success',
-              confirmationMessage: `${results.visitId} logged to ${results.graphName} on node ${data.loggedNodeId}`,
-            };
-            this.$emit('updatedModel', msg);
-          },
-          error: (results) => {
-            console.log(results, 'Issues in setupGeocoder()');
-          },
+          ok: (results) => resolve(results),
+          error: (results) =>
+            reject({
+              results,
+              isConnected: this.isConnected,
+            }),
         });
     },
 

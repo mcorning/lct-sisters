@@ -384,7 +384,10 @@ function deleteExpiredVisits() {
 }
 //#endregion DELETE Graph Nodes
 
+///////////////////////////////////////////////////////////////////////////////////////////////
 //#region Cheatsheet
+///////////////////////////////////////////////////////////////////////////////////////////////
+
 // if we store these output Cypher commands in a text file, we can bulk import them into Redis
 // run this command in the terminal (outside of redis-cli)
 // cat sistersCommands.txt | redis-cli --pipe

@@ -30,7 +30,8 @@
     <v-main>
       <!-- NOTE: ApplyLayout is configured in main.js -->
       <AppLayout>
-        <router-view @exposureWarning="onExposureWarning" />
+        <!-- <router-view @exposureWarning="onExposureWarning" /> -->
+        <router-view  />
       </AppLayout>
     </v-main>
   </v-app>
@@ -66,7 +67,7 @@ export default {
 
   methods: {
     onExposureWarning(reason) {
-      alert('success' + reason);
+      alert('success' + JSON.stringify(reason, null, 3));
     },
     showRefreshUI(e) {
       // TODO add back a generic <snackBar> component (see line 140 of AppOrig.js)
@@ -82,6 +83,10 @@ export default {
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
       console.log('Rendering Refesh snackbar');
+      this.$router.push({
+        name: 'Space',
+      });
+      console.log('Pushed router to Space.vue');
     },
     showOfflineUI() {
       this.snackBtnText = 'Offline';

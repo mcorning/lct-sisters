@@ -160,11 +160,12 @@ function findExposedVisitors(userID, subject = false) {
 
 // find any visitor who's start time is between the carrier's start and end times
 function onExposureWarning(userID) {
+  console.log(currentGraphName);
   return new Promise((resolve, reject) => {
     const q = `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
     WHERE (e.end>=c.start OR e.start>= c.end) 
-    AND exposed.name <> carrier.name    
-    RETURN exposed.userID, exposed.name, id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
     console.log(highlight(q));
     // be sure we have only valid visits to query
     deleteExpiredVisits().then(() =>
@@ -199,13 +200,13 @@ function onExposureWarning(userID) {
       let startE = new Date(record.get('e.start') / 1).toLocaleString();
       let endE = new Date(record.get('e.end') / 1).toLocaleString();
 
-      let name = record.get('exposed.name');
+      let userID = record.get('exposed.userID');
       let exposedId = record.get('id(exposed)');
       let eid = record.get('id(e)');
       let sid = record.get('id(s)');
 
       console.log(
-        name,
+        userID,
         'left',
         record.get('e.end') >= record.get('c.start') ? 'after' : 'before',
         'carrier arrived'
@@ -213,14 +214,24 @@ function onExposureWarning(userID) {
       console.log(endE, startC);
 
       console.log(
-        name,
+        userID,
         'arrived',
         record.get('e.start') <= record.get('c.end') ? 'before' : 'after',
         'carrier left'
       );
       console.log(startE, endC);
       console.log(' ');
-      printTable(exposedId, eid, sid, name, record, startC, endC, startE, endE);
+      printTable(
+        exposedId,
+        eid,
+        sid,
+        userID,
+        record,
+        startC,
+        endC,
+        startE,
+        endE
+      );
     }
   }
 
@@ -228,7 +239,7 @@ function onExposureWarning(userID) {
     exposedId,
     eid,
     sid,
-    name,
+    userID,
     record,
     startC,
     endC,
@@ -239,8 +250,8 @@ function onExposureWarning(userID) {
       exposedId < 10 ? ' ' : '',
       exposedId,
 
-      name,
-      ' '.repeat(15 - name.length),
+      userID,
+      ' '.repeat(20 - userID.length),
 
       eid < 10 ? ' ' : '',
       eid,
@@ -404,6 +415,9 @@ function deleteExpiredVisits() {
 CREATE a RELATIONSHIP between MATCHed nodes:
 MATCH (a:visitor), (b:room) WHERE (a.name = "" AND b.name="" ) CREATE (a)-[:visited]->(b)
 
+READ visitors for a given space
+MATCH p=()-[*]->(:space{name:'Fika Sisters Coffeehouse'}) RETURN p
+
 READ all expired RELATIONSHIPs:
 MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
 
@@ -414,7 +428,12 @@ READ all RELATIONSHIPs:
 MATCH p=()-[*]->() RETURN p
 
 READ Exposed Visitors:
-MATCH  (:visitor{name:'Phone'})-[v:visited]->(s:space) RETURN  s.name, id(s), v.start
+MATCH (carrier:visitor{userID:'a6d5d013e9c5858b'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+    WHERE (e.end>=c.start OR e.start>= c.end) 
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)
+old:
+MATCH  (:visitor{userID:'03390bd5fc1a7e1b'})-[v:visited]->(s:space) RETURN  s.name, id(s), v.start
 
 FIND a user:
 MATCH p=(:visitor{userID:'27bb5febacb30911'})-[v:visited]->(s:space) RETURN p

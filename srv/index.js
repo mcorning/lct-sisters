@@ -258,11 +258,12 @@ io.on('connection', (socket) => {
   //  3) returns the number of possible exposures to positive case
   socket.on('exposureWarning', async (data, ack) => {
     const { score, reliability } = data;
-    const reason=`Warning Score: ${score} Reliability: ${reliability}`
+    const reason = `Warning Score: ${score} Reliability: ${reliability}`;
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
-    socket.broadcast.emit('alertPending', socket.userID);
+    // do all connected visitors handle this event? i find no alertPending event handlers
+    socket.broadcast.emit('alertPending', reason);
 
     onExposureWarning(socket.userID)
       .then((exposed) => {
@@ -287,7 +288,7 @@ io.on('connection', (socket) => {
     // call the graph
     console.log(getNow());
     console.log(highlight('Visit to log:', printJson(data)));
-
+    // delegate to redis/redis.js
     logVisitX(data)
       .toEither()
       // TODO all inspect() to either-async
@@ -412,17 +413,18 @@ io.on('connection', (socket) => {
 });
 
 // alerts is an array of userIDs
-const alertOthers = (socket, alerts, reason, ack) => {
+// const alertOthers = (socket, alerts, reason, ack) => {
+const alertOthers = (socket, alerts, reason) => {
   const msPerDay = 1000 * 60 * 60 * 24;
 
   const sendExposureAlert = (to, msg) => {
     console.log('Alerting:', to); // to is a userID (of the exposed visitor)
-    socket.in(to).emit(
+    socket.to(to).emit(
       'exposureAlert',
-      msg,
-      ack((socketID) => {
-        console.log(success(socketID, 'confirms'));
-      })
+      msg //,
+      // ack((socketID) => {
+      //   console.log(success(socketID, 'confirms'));
+      // })
     );
   };
 

@@ -18,6 +18,7 @@ import { highlight, info, success, warn, printJson } from '../../utils/helpers';
 import { getNow } from '../../utils/luxonHelpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
+import { head } from 'pratica';
 
 export default {
   props: {},
@@ -98,31 +99,53 @@ export default {
     };
   },
   sockets: {
+    // emitted by server with status of update (success or failure)
+    // TODO NOTE: this is one other use case where we wrap a function in a Promise as an EitherAsync
     visitLogged(redisResult) {
-      console.log('redisResult', redisResult);
-      const { id, place, graphName, visitId, logged } = redisResult;
-      console.log(id, logged);
-      if (!logged || id < 0) {
-        this.$emit(
-          'error',
-          new Error(`Redis could not log Visit to  ${place}`)
-        );
-      }
-      const data = {
-        visitId: visitId,
-        loggedNodeId: id,
-        graphName,
-        color: 'primary', // use parameter if we need a different color for Sandbox graph
+      const getahead = (updateResults) => {
+        head(updateResults).cata({
+          Just: (updateResult) => this.$emit('updatedModel', updateResult),
+          Nothing: (updateResult) => this.$emit('updatedModel', updateResult),
+        });
       };
-      console.log('updateVisitOnGraph() data:', data);
-      this.updateLoggedNodeId(data);
-      const msg = {
-        logged: true,
-        confirmationColor: 'success',
-        confirmationMessage: `${place} logged to ${data.graphName} on node ${data.loggedNodeId}`,
-      };
-      this.$emit('updatedModel', msg);
+
+      new Promise((resolve, reject) => {
+        this.updateLoggedNodeId({ redisResult, resolve, reject });
+      })
+        .toEither()
+        .cata({
+          ok: (updateResults) => getahead(updateResults),
+          error: (err) => {
+            console.log(err, 'Issues in logging visit to graph()');
+          },
+        });
     },
+    // visitLoggedPreFp(redisResult) {
+    //   console.log('redisResult', redisResult);
+    //   const { id, place, graphName, visitId, logged } = redisResult;
+    //   console.log(id, logged);
+    //   if (!logged || id < 0) {
+    //     this.$emit(
+    //       'error',
+    //       new Error(`Redis could not log Visit to  ${place}`)
+    //     );
+    //   }
+    //   const data = {
+    //     visitId: visitId,
+    //     loggedNodeId: id,
+    //     graphName,
+    //     color: 'primary', // use parameter if we need a different color for Sandbox graph
+    //   };
+    //   console.log('updateVisitOnGraph() data:', data);
+    //   this.updateLoggedNodeId(data);
+    //   const msg = {
+    //     logged: true,
+    //     confirmationColor: 'success',
+    //     confirmationMessage: `${place} logged to ${data.graphName} graph on node ${data.loggedNodeId}`,
+    //   };
+    //   console.log('emitting updatedModel with:', msg);
+    //   this.$emit('updatedModel', msg);
+    // },
 
     /*
      * 👂 Listen to socket events emitted from the socket server
@@ -182,6 +205,7 @@ export default {
       console.log(success('graphName used by redis', graphName));
       console.log('Entire Model:', this.state);
       console.groupEnd();
+      // TODO Are we still using pendingVisits here? or are we doing that in Warning.vue?
       this.pendingVisits.forEach((value, key) => {
         console.log('Logging pending visit:', key);
         this.emitFromClient('logVisit', value);
@@ -189,11 +213,15 @@ export default {
     },
 
     exposureAlert(msg) {
-      alert(msg);
+      alert(msg + '\nWorking on snackbar or banner');
     },
   },
 
   methods: {
+    onExposureWarning(reason) {
+      this.emitFromClient('exposureWarning', reason);
+    },
+
     // TODO has this abstract approach been superseded by time.js and space.js?
     onUpdate(target, selectedEvent) {
       this.selectedEvent = selectedEvent;
@@ -221,6 +249,8 @@ export default {
       return `Logged ${x} visits.`;
     },
 
+    // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable
+    // and far easier to reason over and maintain
     onLogVisit(visit) {
       const { id, name, start, end } = visit;
       const query = {
@@ -515,6 +545,7 @@ export default {
       hasVisits: this.hasVisits,
       hasUnloggedVisits: this.hasUnloggedVisits,
       logVisits: this.logVisits, // takes an array of visits as input
+      onExposureWarning: this.onExposureWarning,
     });
   },
 };

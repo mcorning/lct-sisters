@@ -10,7 +10,6 @@
         getGraphName,
       }"
     >
-      {{ state.visits.length }}
       <!-- Step 3/4: assign slotted props to component's props -->
       <Calendar
         :isConnected="isConnected"
@@ -44,8 +43,23 @@ export default {
       error.message = `Time.vue error message: ${error.message}`;
       throw error;
     },
-    onUpdatedModel(msg) {
-      this.confirmations = msg;
+
+    // updatedModel emitted by Model's visitLogged() and emitFromClient() as a guard against offline state
+    // so updateResults can have the update details or a preset message, respectively
+    // TODO this design might smell off, just a bit...
+    onUpdatedModel(updateResults) {
+      const getMsg = (updateResults) => {
+        const { name, graphName, loggedNodeId } = updateResults;
+        const msg = {
+          logged: true,
+          confirmationColor: 'success',
+          confirmationMessage: `${name} logged to ${graphName} graph on node ${loggedNodeId}`,
+        };
+        console.log('emitting updatedModel with:', msg);
+        return msg;
+      };
+      this.confirmations =
+        updateResults.logged > -1 ? updateResults : getMsg(updateResults);
     },
   },
 
