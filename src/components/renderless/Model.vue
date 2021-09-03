@@ -476,6 +476,7 @@ export default {
     },
     updateUsername(username) {
       this.updateSetting({ id: 1, username: username });
+      this.updateState({ settings: { username: username } });
     },
   },
 
@@ -529,6 +530,11 @@ export default {
     // Pass *all* our props and function into our scoped slot
     // so we can render children with Model data and we can expose state changing functions.
     // Step 1/4: Expose all data and methods that could be used by dynamic components
+    //    In views/*.vue files:
+    //    Step 2/4: don't forget to ref a Model function next
+    //    Step 3/4: assign slotted props to component's props
+    //    in component/*.vue files:
+    //    Step 4/4: expose Model's functions and props to component
     // See Time.vue and Calendar.vue for the other three steps.
     return this.$scopedSlots.default({
       // Global assets
@@ -538,7 +544,7 @@ export default {
       updateState: this.updateState,
       isConnected: this.isConnected,
       isDefaultGraph: this.isDefaultGraph,
-      onConnectMe: this.onConnectMe,
+      connectMe: this.connectMe,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

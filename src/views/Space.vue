@@ -12,11 +12,13 @@
         onVisitPlace,
         onShareGathering,
         onDeletePlace,
+        connectMe,
       }"
     >
       <prompt-banner
         :needsUsername="needsUsername"
         :updateUsername="updateUsername"
+        :connectMe="connectMe"
         label="Your nickname"
         hint="You need some nickname to connect to the server:"
       />

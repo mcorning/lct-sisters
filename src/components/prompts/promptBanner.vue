@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Used in Space.vue -->
     <v-banner v-model="banner">
       <v-text-field
         v-model="model"
@@ -23,6 +24,7 @@ export default {
   props: {
     needsUsername: Boolean,
     updateUsername: Function,
+    connectMe: Function,
     label: String,
     hint: String,
   },
@@ -33,6 +35,9 @@ export default {
     updateSetting() {
       this.updateUsername(this.model);
       this.banner = false;
+      //call into Model here:
+      const msg = this.connectMe({ username: this.model });
+      console.log(msg);
     },
   },
   mounted() {
