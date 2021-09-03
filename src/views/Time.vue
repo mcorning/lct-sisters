@@ -4,19 +4,23 @@
     <div
       slot-scope="{
         isConnected,
+        isDefaultGraph,
         state,
         onUpdate,
         changeGraphName,
+        setDefaultGraphName,
         getGraphName,
       }"
     >
       <!-- Step 3/4: assign slotted props to component's props -->
       <Calendar
         :isConnected="isConnected"
+        :isDefaultGraph="isDefaultGraph"
         :state="state"
         :onUpdate="onUpdate"
         :confirmations="confirmations"
         :changeGraphName="changeGraphName"
+        :setDefaultGraphName="setDefaultGraphName"
         :getGraphName="getGraphName"
       />
     </div>

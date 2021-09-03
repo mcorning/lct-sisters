@@ -92,27 +92,40 @@
         :close-on-content-click="false"
         :activator="selectedElement"
         offset-x
+        max-width="400"
       >
         <v-card color="grey lighten-4" min-width="350px" flat>
           <v-toolbar :color="selectedEvent.color" dark>
-            <v-btn icon>
-              <v-icon>mdi-pencil</v-icon>
-            </v-btn>
             <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn icon>
-              <v-icon>mdi-heart</v-icon>
-            </v-btn>
-            <v-btn icon>
-              <v-icon>mdi-dots-vertical</v-icon>
-            </v-btn>
           </v-toolbar>
-          <PickersMenu
-            :changeEvent="changeEvent"
-            :selectedEventParsed="selectedEventParsed"
-          />
           <v-card-text>
-            Current default graph: <strong>{{ getGraphName() }}</strong>
+            <PickersMenu
+              :changeEvent="changeEvent"
+              :selectedEventParsed="selectedEventParsed"
+          /></v-card-text>
+          <v-card-text>
+            <v-row align="center">
+              <v-col>
+                Current default graph:
+                <v-select
+                  v-model="selectedGraph"
+                  :items="graphs"
+                  prepend-outer-icon="mdi-graphql"
+                  menu-props="auto"
+                  label="Exposure Graphs"
+                  single-line
+                  width="50"
+                ></v-select>
+              </v-col>
+              <v-col>
+                <!-- <v-checkbox
+                  :value="selectedGraphIsDefault"
+                  @input="setDefaultGraphName"
+                  label="Make graph default"
+                ></v-checkbox> -->
+              </v-col>
+            </v-row>
           </v-card-text>
           <v-card-actions>
             <v-btn text color="secondary" @click="selectedOpen = false">
@@ -153,9 +166,11 @@ export default {
   props: {
     selectedSpace: Object,
     isConnected: Boolean,
+    isDefaultGraph: Boolean,
     state: Object,
     onUpdate: Function,
     changeGraphName: Function,
+    setDefaultGraphName: Function,
     getGraphName: Function,
     confirmations: Object,
   },
@@ -163,6 +178,13 @@ export default {
     PickersMenu,
   },
   computed: {
+    // selectedGraphIsDefault() {
+    //   return this.selectedGraph === this.$defaultGraphName;
+    // },
+    // changingDefault() {
+    //   const x = this.$defaultGraphName !== this.selectedGraph;
+    //   return x;
+    // },
     currentGraphName() {
       return this.state.currentGraphName;
     },
@@ -193,6 +215,9 @@ export default {
   },
   data() {
     return {
+      graphChanged: false,
+      selectedGraph: this.getGraphName(),
+      graphs: [this.$defaultGraphName, 'Sandbox'],
       promptGraph: false,
       cal: null,
       value: '',
@@ -231,9 +256,7 @@ export default {
   },
   methods: {
     changeGraph() {
-      this.changeGraphName(this.toggledName);
-      this.confirmationMessage = `Graph is now ${this.getGraphName()}`;
-      this.snackbar = true;
+      this.selectedGraph = this.changeGraphName();
     },
 
     update(target, graph) {
@@ -383,6 +406,11 @@ export default {
   watch: {
     ready() {
       console.log(this.$defaultGraphName, '/', this.getGraphName());
+    },
+    selectedGraph() {
+      this.changeGraphName(this.selectedGraph);
+      this.confirmationMessage = `Graph is now ${this.selectedGraph}`;
+      this.snackbar = true;
     },
 
     confirmations(msg) {

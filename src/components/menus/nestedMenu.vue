@@ -66,7 +66,7 @@ import { getRandomIntInclusive } from '../../utils/helpers';
 
 export default {
   name: 'nestedMenu',
-
+  // TODO is there a reason for a custom component when there is a vuetify Nested List component?
   components: {
     nestedMenuCard: () => import('./nestedMenu.vue'),
   },

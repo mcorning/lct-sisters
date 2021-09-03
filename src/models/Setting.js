@@ -25,6 +25,8 @@ export default class Setting extends Model {
 
       lastVaccinationDate: this.string(),
       lastFluShot: this.string(),
+
+      preferredGraph: this.string(this.$defaultGraphName),
     };
   }
 

@@ -26,6 +26,10 @@ export default {
   mixins: [graphMixin, spaceMixin, timeMixin, warningMixin],
 
   computed: {
+    // preferredGraphName() {
+    //   return this.state.settings.preferredGraph;
+    // },
+
     needsUsername() {
       return !this.state.settings.username;
     },
@@ -74,7 +78,7 @@ export default {
       selectedEvent: null,
       pendingVisits: new Map(),
       loading: true,
-      graphName: this.$defaultGraphName,
+      graphName: '',
       // TODO send this data down to Calendar
       /* combinations of update
        *   Add Visit (category==='You')
@@ -351,8 +355,16 @@ export default {
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
-    changeGraphName() {
-      this.graphName = this.isDefaultGraph ? 'Sandbox' : this.$defaultGraphName;
+    changeGraphName(name) {
+      const newName = name
+        ? name
+        : this.graphName === '' || this.graphName === 'Sandbox'
+        ? this.$namespace
+        : 'Sandbox';
+      this.graphName = newName;
+      this.$defaultGraphName = this.graphName;
+      this.updateSetting({ id: 1, preferredGraph: this.graphName });
+      return newName;
     },
 
     // why are we passing in a payload when Model gets that itself from the server?
@@ -440,6 +452,8 @@ export default {
 
       const settings = this.getFirstEntityData(allSettings.settings);
 
+      this.$defaultGraphName =
+        settings.preferredGraph || this.$defaultGraphName;
       const places = this.filterSomeEntityData(
         this.filterFunctionForNamedPlaces,
         allPlaces.places
@@ -523,6 +537,7 @@ export default {
       state: this.state,
       updateState: this.updateState,
       isConnected: this.isConnected,
+      isDefaultGraph: this.isDefaultGraph,
       onConnectMe: this.onConnectMe,
 
       // Space assets
@@ -539,6 +554,7 @@ export default {
       onUpdate: this.onUpdate,
       getGraphName: this.getGraphName,
       changeGraphName: this.changeGraphName,
+      setDefaultGraphName: this.setDefaultGraphName,
 
       //Warning assets
       visitCount: this.visitCount,
