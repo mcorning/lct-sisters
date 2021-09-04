@@ -160,125 +160,133 @@ function findExposedVisitors(userID, subject = false) {
 
 // find any visitor who's start time is between the carrier's start and end times
 function onExposureWarning(userID) {
-  console.log(currentGraphName);
-  return new Promise((resolve, reject) => {
-    const q = `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+  console.log(info('Current graph name:', currentGraphName));
+
+  const getQuery = (userID) => {
+    return `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
     WHERE (e.end>=c.start OR e.start>= c.end) 
     AND exposed.userID <> carrier.userID    
     RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
-    console.log(highlight(q));
-    // be sure we have only valid visits to query
-    deleteExpiredVisits().then(() =>
-      Graph.query(q)
-        .then((res) => {
-          printExposureWarnings(res);
-          const visitors = [
-            ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
-          ];
-          printJson(visitors);
-          resolve(visitors);
-        })
-        .catch((error) => {
-          reject(error);
-        })
-    );
-  });
+  };
+  const getUserIDs = (results, fnc) => [...new Set(results.map(fnc))];
 
-  function printExposureWarnings(res) {
-    console.log(
-      warn(`
-      Visits on or after exposure by ${userID}:
-      `)
-    );
-    // console.log(
-    //   '123456791123456789212345679012345678931234567901234567894123456795123456789612345678981234567899123456789100'
-    // );
-    while (res.hasNext()) {
-      let record = res.next();
-      let startC = new Date(record.get('c.start') / 1).toLocaleString();
-      let endC = new Date(record.get('c.end') / 1).toLocaleString();
-      let startE = new Date(record.get('e.start') / 1).toLocaleString();
-      let endE = new Date(record.get('e.end') / 1).toLocaleString();
+  console.log(highlight(getQuery(userID)));
 
-      let userID = record.get('exposed.userID');
-      let exposedId = record.get('id(exposed)');
-      let eid = record.get('id(e)');
-      let sid = record.get('id(s)');
+  const updateGraph = () => {
+    return Graph.query(getQuery(userID))
+      .toEither()
+      .cata({
+        // ok: (userIDs) => userIDs,
+        ok: (res) => getUserIDs(res._results, (v) => v._values[0]),
+        error: (error) => {
+          console.log(error, 'ignored by Either');
+        },
+      });
+  };
 
-      console.log(
-        userID,
-        'left',
-        record.get('e.end') >= record.get('c.start') ? 'after' : 'before',
-        'carrier arrived'
-      );
-      console.log(endE, startC);
-
-      console.log(
-        userID,
-        'arrived',
-        record.get('e.start') <= record.get('c.end') ? 'before' : 'after',
-        'carrier left'
-      );
-      console.log(startE, endC);
-      console.log(' ');
-      printTable(
-        exposedId,
-        eid,
-        sid,
-        userID,
-        record,
-        startC,
-        endC,
-        startE,
-        endE
-      );
-    }
-  }
-
-  function printTable(
-    exposedId,
-    eid,
-    sid,
-    userID,
-    record,
-    startC,
-    endC,
-    startE,
-    endE
-  ) {
-    console.log(
-      exposedId < 10 ? ' ' : '',
-      exposedId,
-
-      userID,
-      ' '.repeat(20 - userID.length),
-
-      eid < 10 ? ' ' : '',
-      eid,
-      record.get('c.start'),
-      '=',
-      startC,
-      ' '.repeat(25 - startC.length),
-      record.get('c.end'),
-      '=',
-      endC,
-      ' '.repeat(25 - endC.length),
-
-      record.get('e.start'),
-      '=',
-      startE,
-      ' '.repeat(25 - startE.length),
-      record.get('e.end'),
-      '=',
-      endE,
-      ' '.repeat(25 - endE.length),
-
-      sid < 10 ? ' ' : '',
-      sid,
-      record.get('s.name')
-    );
-  }
+  // be sure we have only valid visits to query
+  // return the Promise so index.onExposureWarning() can run its thenable
+  return deleteExpiredVisits()
+    .then(updateGraph)
+    .then((userIDs) => userIDs);
 }
+
+// TODO refactor using cli table
+// function printExposureWarnings(res) {
+//   console.log(
+//     warn(`
+//     Visits on or after exposure by ${userID}:
+//     `)
+//   );
+//   // console.log(
+//   //   '123456791123456789212345679012345678931234567901234567894123456795123456789612345678981234567899123456789100'
+//   // );
+//   while (res.hasNext()) {
+//     let record = res.next();
+//     let startC = new Date(record.get('c.start') / 1).toLocaleString();
+//     let endC = new Date(record.get('c.end') / 1).toLocaleString();
+//     let startE = new Date(record.get('e.start') / 1).toLocaleString();
+//     let endE = new Date(record.get('e.end') / 1).toLocaleString();
+
+//     let userID = record.get('exposed.userID');
+//     let exposedId = record.get('id(exposed)');
+//     let eid = record.get('id(e)');
+//     let sid = record.get('id(s)');
+
+//     console.log(
+//       userID,
+//       'left',
+//       record.get('e.end') >= record.get('c.start') ? 'after' : 'before',
+//       'carrier arrived'
+//     );
+//     console.log(endE, startC);
+
+//     console.log(
+//       userID,
+//       'arrived',
+//       record.get('e.start') <= record.get('c.end') ? 'before' : 'after',
+//       'carrier left'
+//     );
+//     console.log(startE, endC);
+//     console.log(' ');
+//     printTable(
+//       exposedId,
+//       eid,
+//       sid,
+//       userID,
+//       record,
+//       startC,
+//       endC,
+//       startE,
+//       endE
+//     );
+//   }
+// }
+
+// function printTable(
+//   exposedId,
+//   eid,
+//   sid,
+//   userID,
+//   record,
+//   startC,
+//   endC,
+//   startE,
+//   endE
+// ) {
+//   console.log(
+//     exposedId < 10 ? ' ' : '',
+//     exposedId,
+
+//     userID,
+//     ' '.repeat(20 - userID.length),
+
+//     eid < 10 ? ' ' : '',
+//     eid,
+//     record.get('c.start'),
+//     '=',
+//     startC,
+//     ' '.repeat(25 - startC.length),
+//     record.get('c.end'),
+//     '=',
+//     endC,
+//     ' '.repeat(25 - endC.length),
+
+//     record.get('e.start'),
+//     '=',
+//     startE,
+//     ' '.repeat(25 - startE.length),
+//     record.get('e.end'),
+//     '=',
+//     endE,
+//     ' '.repeat(25 - endE.length),
+
+//     sid < 10 ? ' ' : '',
+//     sid,
+//     record.get('s.name')
+//   );
+// }
+// }
 //#endregion Read Graph
 
 //#region UPDATE Graph
