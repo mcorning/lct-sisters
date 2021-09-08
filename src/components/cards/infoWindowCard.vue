@@ -19,7 +19,6 @@
 
       <v-btn @click="onVisitPlace(placeId)">Visit</v-btn>
       <v-btn @click="onToWork(placeId)">Work</v-btn>
-      <v-btn @click="onShareGathering(placeId)">Share</v-btn>
     </v-card>
   </div>
 </template>

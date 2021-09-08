@@ -33,8 +33,11 @@ export const spaceMixin = {
       const place_id = this.$route.query.place_id;
       const start = Number(this.$route.query.start);
       const end = Number(this.$route.query.end);
-      debugger;
-      const name = this.$route.query.name.replace(/_/g, ' '); // replace the "escaped" underscores with spaces
+      // replace the "escaped" underscores with spaces and distinguish this event as a Gathering
+      const name = `Gathering at:  ${this.$route.query.name.replace(
+        /_/g,
+        ' '
+      )}`;
       let visit = {
         id: randomId(),
         name: name,

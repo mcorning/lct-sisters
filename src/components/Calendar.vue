@@ -106,7 +106,7 @@
           />
           <!-- </v-card-text> -->
           <!-- <v-card-text> -->
-          <v-row class="ml-5" align="center" no-gutters>
+          <v-row v-if="dev" class="ml-5" align="center" no-gutters>
             <v-col cols="8">
               <v-select
                 v-model="selectedGraph"
@@ -124,9 +124,6 @@
             <v-btn text color="secondary" @click="selectedOpen = false">
               Cancel
             </v-btn>
-            <v-btn text color="secondary" @click="delete 'cache'">
-              Delete
-            </v-btn>
             <v-btn text color="secondary" @click="update('cache')">
               Update
             </v-btn>
@@ -135,15 +132,50 @@
             </v-btn>
             <v-btn text color="secondary" @click="banner = true">Share </v-btn>
           </v-card-actions>
+          <v-divider />
           <v-banner v-model="banner">
-            <v-text-field v-model="alias" label="Email alias:"></v-text-field>
-            <v-text-field v-model="toName" label="Email name:"></v-text-field>
-            <template v-slot:actions="{ dismiss }">
+            <v-card-title>Share a Gathering</v-card-title>
+            <v-card-subtitle
+              >Send event link to others who will join you</v-card-subtitle
+            >
+            <v-text-field
+              v-model="room"
+              label="Room (optional)"
+              hint="If your gathering is indoors, add a Room ID, if necessary"
+            ></v-text-field>
+
+            <v-row no-gutters>
+              <v-col cols="7">
+                <v-text-field
+                  v-model="alias"
+                  label="Email alias:"
+                  hint="Email a person directly or send to yourself and forward"
+                ></v-text-field
+              ></v-col>
+              <v-spacer />
+              <v-col cols="4">
+                <v-text-field
+                  v-model="toName"
+                  hint="Name used at the end of your invitation "
+                  label="Your name:"
+                ></v-text-field></v-col
+            ></v-row>
+            <v-card-actions>
+              <v-btn color="green" text input-value @click="emailEvent">
+                Email
+              </v-btn>
+              <v-spacer />
+              <v-btn color="red" text @click="banner = false"
+                >Dismiss
+              </v-btn></v-card-actions
+            >
+
+            <!-- <template v-slot:actions="{ dismiss }">
               <v-btn color="green" text input-value @click="emailEvent">
                 Email
               </v-btn>
               <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
-            </template>
+            </template> -->
           </v-banner>
         </v-card>
       </v-menu>
@@ -222,7 +254,8 @@ export default {
         return '';
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
-      const escapedName = name.replace(/ /g, '_'); // urls need space escaped to %25
+      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
+      const escapedName = printedName.replace(/ /g, '_'); // we will reverse this edit in space.js
       console.log(escapedName);
       // do normal url encoding for the rest of the args
       const uri = encodeURIComponent(
@@ -232,12 +265,12 @@ export default {
 
       return `mailto:${
         this.alias
-      }?subject=Join me at ${name} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+      }?subject=Join me at ${printedName} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
         this.newLine
       } ${this.origin}/?${uri}  ${this.newLine}
       ${this.newLine}  ${
         this.newLine
-      }      Name/Place-id: ${name}/${place_id} ${
+      }      Name/Place-id: ${printedName}/${place_id} ${
         this.newLine
       }      Start time: ${new Date(start)}${
         this.newLine
@@ -283,6 +316,8 @@ export default {
   },
   data() {
     return {
+      room: '',
+      dev: false,
       origin: window.location.origin,
       banner: false,
       alias: null,
