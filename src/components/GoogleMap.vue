@@ -64,6 +64,7 @@ export default {
     onMarkerAdded: Function,
     onMarkerClicked: Function,
     onDeletePlace: Function,
+    query: Object,
   },
   components: {
     InfoWindowCard,
@@ -475,6 +476,10 @@ export default {
 
   mounted() {
     console.time('Mounted GoogleMaps');
+    const { name, place_id, start, end } = this.$route.query;
+    if (name) {
+      this.onVisitPlace();
+    }
     // TODO this is an EitherAsync
     gmapsInit()
       .then((google) => {

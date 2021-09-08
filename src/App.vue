@@ -31,7 +31,7 @@
       <!-- NOTE: ApplyLayout is configured in main.js -->
       <AppLayout>
         <!-- <router-view @exposureWarning="onExposureWarning" /> -->
-        <router-view  />
+        <router-view />
       </AppLayout>
     </v-main>
   </v-app>
@@ -139,6 +139,8 @@ export default {
   },
 
   mounted() {
+    console.log('Querystring:', this.$route.query);
+
     console.log('\tAPP mounted');
   },
 

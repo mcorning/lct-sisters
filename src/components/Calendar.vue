@@ -137,6 +137,10 @@
             <v-btn text color="secondary" @click="update('graph')">
               Log
             </v-btn>
+            <v-btn v-if="!alias" text color="secondary" @click="onGetAlias"
+              >Get alias
+            </v-btn>
+            <v-btn v-else v-html="msg">{{ msg }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-menu>
@@ -159,7 +163,7 @@
 <script>
 import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime } from '@/utils/luxonHelpers';
-// import { printJson } from '@/utils/helpers';
+
 export default {
   name: 'Calendar',
   // Step 4/4: expose Model's functions and props to component
@@ -178,6 +182,26 @@ export default {
     PickersMenu,
   },
   computed: {
+    msg() {
+      if (!this.alias) {
+        return '';
+      }
+      const { place_id, name, date, start, end } = this.selectedEvent;
+      const uri = encodeURIComponent(
+        `place_id=${place_id}&name=${name}&date=${date}&start=${start}&end=${end}`
+      );
+      console.log(uri);
+      return `<a href=
+  "mailto:${
+    this.alias
+  }?subject=Join me at ${name} on ${date}&body=Click link to add event to your LCT app: http://localhost:8080/?${uri}
+  ${this.newLine}${this.newLine}
+      Name/Place-id: ${name}/${place_id} ${this.newLine}
+      Start time: ${new Date(start)}${this.newLine}
+      End time: ${new Date(end)}${this.newLine}${this.newLine}See you then...">
+Share Email</a>`;
+    },
+
     // selectedGraphIsDefault() {
     //   return this.selectedGraph === this.$defaultGraphName;
     // },
@@ -215,6 +239,9 @@ export default {
   },
   data() {
     return {
+      alias: null,
+      newLine: '%0a',
+      updateTimeInterval: null,
       graphChanged: false,
       selectedGraph: this.getGraphName(),
       graphs: [this.$defaultGraphName, 'Sandbox'],
@@ -254,7 +281,16 @@ export default {
       confirmationMessage: '',
     };
   },
+
   methods: {
+    onGetAlias() {
+      this.alias = prompt(
+        'Enter your email address:',
+        'mcorning@soteriaInstitute.org'
+      );
+      // window.location = this.msg;
+    },
+
     changeGraph() {
       this.selectedGraph = this.changeGraphName();
     },
@@ -380,7 +416,10 @@ export default {
         : time + (roundDownTime - (time % roundDownTime));
     },
     updateTime() {
-      setInterval(() => this.cal.updateTimes(), 60 * 1000);
+      this.updateTimeInterval = setInterval(
+        () => this.cal.updateTimes(),
+        60 * 1000
+      );
     },
 
     getMillis(ts) {
@@ -404,6 +443,9 @@ export default {
   },
 
   watch: {
+    msg(val) {
+      console.log(val);
+    },
     ready() {
       console.log(this.$defaultGraphName, '/', this.getGraphName());
     },
@@ -421,12 +463,21 @@ export default {
       this.snackbar = true;
     },
   },
+  //   created(){
+  //   this.$socket.$subscribe('exposureAlert');
+
+  // },
 
   mounted() {
     this.ready = true;
     this.configureCalendar();
     this.updateTime();
   },
+  // beforeDestroy() {
+  //   debugger
+  //   clearInterval(this.updateTimeInterval);
+  //   this.$socket.$unsubscribe('exposureAlert');
+  // },
 };
 </script>
 

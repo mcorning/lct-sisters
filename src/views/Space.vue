@@ -66,6 +66,7 @@ export default {
       message: '',
     };
   },
+
   methods: {
     onError(error) {
       // let the global error handler pick up and display this error

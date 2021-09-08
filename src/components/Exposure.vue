@@ -1,6 +1,5 @@
 <template>
   <v-sheet class="overflow-auto fill-height">
-    vacc:{{ state.settings.lastVaccinationDate }}
     <!-- unlogged Visits -->
     <confirmation-snackbar
       v-if="!hasUnloggedVisits && snackbar"

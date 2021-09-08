@@ -28,16 +28,15 @@ export const spaceMixin = {
     },
 
     onVisitPlace(placeId) {
+      const { name, place_id, start, end } = this.$route.query;
+
       const currentPlace = Place.getPlace(placeId);
       const starttime = roundTime(Date.now());
       const endtime = starttime + this.avgStay;
-      const visit = {
+      let visit = {
         id: randomId(),
-        name: currentPlace.name,
         // TODO is this the only way to get the place_id? if so, we need the markerClicked event handlers after all
-        place_id: currentPlace.place_id,
-        start: starttime,
-        end: endtime,
+
         date: DateTime.fromMillis(starttime).toISODate(),
         category: 'You',
 
@@ -49,6 +48,19 @@ export const spaceMixin = {
         // TODO setup isDefaultGraph
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };
+      if (placeId) {
+        visit.name = currentPlace.name;
+        visit.place_id = currentPlace.place_id;
+        visit.start = starttime;
+        visit.end = endtime;
+      }
+      // override visit if querystring present
+      else if (name) {
+        visit.name = name;
+        visit.start = start;
+        visit.end = end;
+        visit.place_id = place_id;
+      }
       // see time.js
       this.updateVisit(visit);
     },
