@@ -1,6 +1,6 @@
 <template>
   <v-row dense no-gutters>
-    <v-col cols="12" sm="4">
+    <v-col cols="4" sm="4">
       <v-menu
         v-model="menu"
         :close-on-content-click="false"
@@ -23,7 +23,7 @@
       </v-menu>
     </v-col>
 
-    <v-col cols="12" sm="4">
+    <v-col cols="3" sm="4">
       <v-menu
         ref="menuStartTime"
         v-model="menuStartTime"
@@ -38,7 +38,7 @@
         <template v-slot:activator="{ on, attrs }">
           <v-text-field
             v-model="startTime"
-            label="Visit Started:"
+            label="Visit Starts:"
             prepend-icon="mdi-clock-time-four-outline"
             readonly
             v-bind="attrs"
@@ -53,7 +53,7 @@
         ></v-time-picker>
       </v-menu>
     </v-col>
-    <v-col cols="12" sm="4">
+    <v-col cols="3" sm="4">
       <v-menu
         ref="menuEndTime"
         v-model="menuEndTime"
@@ -68,7 +68,7 @@
         <template v-slot:activator="{ on, attrs }">
           <v-text-field
             v-model="endTime"
-            label="Visit Ended:"
+            label="Visit Ends:"
             prepend-icon="mdi-clock-time-four-outline"
             readonly
             v-bind="attrs"

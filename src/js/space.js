@@ -27,40 +27,61 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
-    onVisitPlace(placeId) {
-      const { name, place_id, start, end } = this.$route.query;
+    // TODO NOTE: be sure any method in this mixin is included in the render() function in Model.
+    // and that the method is included in the scoped-slot and props of dependent components; e.g., GoogleMaps
+    onSharePlace() {
+      const place_id = this.$route.query.place_id;
+      const start = Number(this.$route.query.start);
+      const end = Number(this.$route.query.end);
+      debugger;
+      const name = this.$route.query.name.replace(/_/g, ' '); // replace the "escaped" underscores with spaces
+      let visit = {
+        id: randomId(),
+        name: name,
+        place_id: place_id,
 
+        date: DateTime.fromMillis(start).toISODate(),
+        start: start,
+        end: end,
+
+        category: 'You',
+        timed: true,
+        marked: getNow(),
+        graphName: '', // set at Log time
+        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+
+        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+      };
+
+      // see time.js
+      this.updateVisit(visit);
+    },
+
+    onVisitPlace(placeId) {
       const currentPlace = Place.getPlace(placeId);
       const starttime = roundTime(Date.now());
       const endtime = starttime + this.avgStay;
+
       let visit = {
         id: randomId(),
         // TODO is this the only way to get the place_id? if so, we need the markerClicked event handlers after all
+        name: currentPlace.name,
+        place_id: currentPlace.place_id,
+        start: starttime,
+        end: endtime,
 
         date: DateTime.fromMillis(starttime).toISODate(),
         category: 'You',
 
         timed: true,
         marked: getNow(),
-        graphName: this.graphname,
+        graphName: '',
         loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
 
         // TODO setup isDefaultGraph
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };
-      if (placeId) {
-        visit.name = currentPlace.name;
-        visit.place_id = currentPlace.place_id;
-        visit.start = starttime;
-        visit.end = endtime;
-      }
-      // override visit if querystring present
-      else if (name) {
-        visit.name = name;
-        visit.start = start;
-        visit.end = end;
-        visit.place_id = place_id;
-      }
+
       // see time.js
       this.updateVisit(visit);
     },

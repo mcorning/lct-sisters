@@ -10,6 +10,7 @@
         onMarkerAdded,
         onToWork,
         onVisitPlace,
+        onSharePlace,
         onShareGathering,
         onDeletePlace,
         connectMe,
@@ -28,6 +29,7 @@
         :state="state"
         :onToWork="onToWork"
         :onVisitPlace="onVisitPlace"
+        :onSharePlace="onSharePlace"
         :onShareGathering="onShareGathering"
         :onMarkerAdded="onMarkerAdded"
         :onMarkerClicked="onMarkerClicked"

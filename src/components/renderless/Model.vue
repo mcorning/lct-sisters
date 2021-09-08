@@ -551,6 +551,7 @@ export default {
       onMarkerAdded: this.onMarkerAdded,
       onToWork: this.onToWork,
       onVisitPlace: this.onVisitPlace,
+      onSharePlace: this.onSharePlace,
       onMakeAppointment: this.onMakeAppointment,
       onShareGathering: this.onShareGathering,
       onDeletePlace: this.onDeletePlace,

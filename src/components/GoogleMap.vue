@@ -61,6 +61,7 @@ export default {
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,
+    onSharePlace: Function,
     onMarkerAdded: Function,
     onMarkerClicked: Function,
     onDeletePlace: Function,
@@ -471,15 +472,17 @@ export default {
   watch: {
     ready() {
       console.log('Map component ready');
+      if (this.$route.query.place_id) {
+        console.log('Detected a shared event');
+        // in space.js
+        this.onSharePlace();
+      }
     },
   },
 
   mounted() {
     console.time('Mounted GoogleMaps');
-    const { name, place_id, start, end } = this.$route.query;
-    if (name) {
-      this.onVisitPlace();
-    }
+
     // TODO this is an EitherAsync
     gmapsInit()
       .then((google) => {

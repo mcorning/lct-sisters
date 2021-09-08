@@ -99,37 +99,33 @@
             <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
-          <v-card-text>
-            <PickersMenu
-              :changeEvent="changeEvent"
-              :selectedEventParsed="selectedEventParsed"
-          /></v-card-text>
-          <v-card-text>
-            <v-row align="center">
-              <v-col>
-                Current default graph:
-                <v-select
-                  v-model="selectedGraph"
-                  :items="graphs"
-                  prepend-outer-icon="mdi-graphql"
-                  menu-props="auto"
-                  label="Exposure Graphs"
-                  single-line
-                  width="50"
-                ></v-select>
-              </v-col>
-              <v-col>
-                <!-- <v-checkbox
-                  :value="selectedGraphIsDefault"
-                  @input="setDefaultGraphName"
-                  label="Make graph default"
-                ></v-checkbox> -->
-              </v-col>
-            </v-row>
-          </v-card-text>
+          <!-- <v-card-text> -->
+          <PickersMenu
+            :changeEvent="changeEvent"
+            :selectedEventParsed="selectedEventParsed"
+          />
+          <!-- </v-card-text> -->
+          <!-- <v-card-text> -->
+          <v-row class="ml-5" align="center" no-gutters>
+            <v-col cols="8">
+              <v-select
+                v-model="selectedGraph"
+                :items="graphs"
+                prepend-icon="mdi-graphql"
+                menu-props="auto"
+                :label="graphSelectLabel"
+                single-line
+                dense
+              ></v-select>
+            </v-col>
+          </v-row>
+          <!-- </v-card-text> -->
           <v-card-actions>
             <v-btn text color="secondary" @click="selectedOpen = false">
               Cancel
+            </v-btn>
+            <v-btn text color="secondary" @click="delete 'cache'">
+              Delete
             </v-btn>
             <v-btn text color="secondary" @click="update('cache')">
               Update
@@ -137,11 +133,18 @@
             <v-btn text color="secondary" @click="update('graph')">
               Log
             </v-btn>
-            <v-btn v-if="!alias" text color="secondary" @click="onGetAlias"
-              >Get alias
-            </v-btn>
-            <v-btn v-else v-html="msg">{{ msg }}</v-btn>
+            <v-btn text color="secondary" @click="banner = true">Share </v-btn>
           </v-card-actions>
+          <v-banner v-model="banner">
+            <v-text-field v-model="alias" label="Email alias:"></v-text-field>
+            <v-text-field v-model="toName" label="Email name:"></v-text-field>
+            <template v-slot:actions="{ dismiss }">
+              <v-btn color="green" text input-value @click="emailEvent">
+                Email
+              </v-btn>
+              <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
+            </template>
+          </v-banner>
         </v-card>
       </v-menu>
     </v-sheet>
@@ -182,24 +185,65 @@ export default {
     PickersMenu,
   },
   computed: {
-    msg() {
+    graphSelectLabel() {
+      return `Exposure Graphs (${this.getGraphName()})`;
+    },
+
+    mailToTag() {
       if (!this.alias) {
         return '';
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
+      const escapedName = name.replace(/ /g, '_'); // urls need space escaped to %25
+      console.log(escapedName);
+      // do normal url encoding for the rest of the args
       const uri = encodeURIComponent(
-        `place_id=${place_id}&name=${name}&date=${date}&start=${start}&end=${end}`
+        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
       );
       console.log(uri);
-      return `<a href=
-  "mailto:${
-    this.alias
-  }?subject=Join me at ${name} on ${date}&body=Click link to add event to your LCT app: http://localhost:8080/?${uri}
-  ${this.newLine}${this.newLine}
-      Name/Place-id: ${name}/${place_id} ${this.newLine}
-      Start time: ${new Date(start)}${this.newLine}
-      End time: ${new Date(end)}${this.newLine}${this.newLine}See you then...">
-Share Email</a>`;
+
+      return `<a href=  "mailto:${
+        this.alias
+      }?subject=Join me at ${name} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+        this.newLine
+      } ${this.origin}/?${uri}  ${this.newLine}
+      ${this.newLine}  ${
+        this.newLine
+      }      Name/Place-id: ${name}/${place_id} ${
+        this.newLine
+      }      Start time: ${new Date(start)}${
+        this.newLine
+      }      End time: ${new Date(end)}${this.newLine}${
+        this.newLine
+      }See you then...">Share Email</a>`;
+    },
+    mailToString() {
+      if (!this.alias) {
+        return '';
+      }
+      const { place_id, name, date, start, end } = this.selectedEvent;
+      const escapedName = name.replace(/ /g, '_'); // urls need space escaped to %25
+      console.log(escapedName);
+      // do normal url encoding for the rest of the args
+      const uri = encodeURIComponent(
+        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
+      );
+      console.log(uri);
+
+      return `mailto:${
+        this.alias
+      }?subject=Join me at ${name} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+        this.newLine
+      } ${this.origin}/?${uri}  ${this.newLine}
+      ${this.newLine}  ${
+        this.newLine
+      }      Name/Place-id: ${name}/${place_id} ${
+        this.newLine
+      }      Start time: ${new Date(start)}${
+        this.newLine
+      }      End time: ${new Date(end)}${this.newLine}${
+        this.newLine
+      }See you then...${this.newLine}${this.toName}`;
     },
 
     // selectedGraphIsDefault() {
@@ -239,11 +283,14 @@ Share Email</a>`;
   },
   data() {
     return {
+      origin: window.location.origin,
+      banner: false,
       alias: null,
+      toName: '',
       newLine: '%0a',
       updateTimeInterval: null,
       graphChanged: false,
-      selectedGraph: this.getGraphName(),
+      selectedGraph: '', //this.getGraphName(),
       graphs: [this.$defaultGraphName, 'Sandbox'],
       promptGraph: false,
       cal: null,
@@ -283,18 +330,26 @@ Share Email</a>`;
   },
 
   methods: {
-    onGetAlias() {
-      this.alias = prompt(
-        'Enter your email address:',
-        'mcorning@soteriaInstitute.org'
-      );
-      // window.location = this.msg;
+    emailEvent() {
+      if (this.mailToString) {
+        console.log('setting window.location to:', this.mailToString);
+        window.location = this.mailToString;
+      } else {
+        this.status = 'No email address entered. No mail sent.';
+      }
+      this.banner = false;
     },
 
     changeGraph() {
       this.selectedGraph = this.changeGraphName();
     },
 
+    delete(target, graph) {
+      const deleteVisit = true;
+      // TODO implement this in Model
+      this.onUpdate(target, this.selectedEvent, graph, deleteVisit);
+      this.selectedOpen = false;
+    },
     update(target, graph) {
       this.onUpdate(target, this.selectedEvent, graph);
       this.selectedOpen = false;
@@ -443,9 +498,6 @@ Share Email</a>`;
   },
 
   watch: {
-    msg(val) {
-      console.log(val);
-    },
     ready() {
       console.log(this.$defaultGraphName, '/', this.getGraphName());
     },
