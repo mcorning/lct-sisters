@@ -140,8 +140,8 @@
             >
             <v-text-field
               v-model="room"
-              label="Room (optional)"
-              hint="If your gathering is indoors, add a Room ID, if necessary"
+              :label="gatheringLabel"
+              :hint="gatheringHint"
             ></v-text-field>
 
             <v-row no-gutters>
@@ -217,6 +217,17 @@ export default {
     PickersMenu,
   },
   computed: {
+    gatheringLabel() {
+      return this.selectedEvent.name === 'Gathering'
+        ? 'Description (Optional)'
+        : 'Room (Optional)';
+    },
+    gatheringHint() {
+      return this.selectedEvent.name === 'Gathering'
+        ? 'Outdoor events may need a description'
+        : 'Indoor events may need a room ID';
+    },
+
     graphSelectLabel() {
       return `Exposure Graphs (${this.getGraphName()})`;
     },

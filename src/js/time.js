@@ -37,7 +37,14 @@ export const timeMixin = {
         });
     },
 
+    deleteVisit(id) {
+      return Visit.delete(id);
+    },
+
     updateVisit(visit) {
+      if (visit.start === visit.end) {
+        return this.deleteVisit(visit.id);
+      }
       // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
       Visit.update(visit)
         .toEither()

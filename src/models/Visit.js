@@ -58,6 +58,10 @@ export default class Visit extends Model {
     });
   }
 
+  static delete(id) {
+    return this.$delete(id);
+  }
+
   // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
   static updateLoggedNodeId(data) {
     const { visitId, loggedNodeId, graphName, color } = data;
