@@ -234,9 +234,10 @@ export default {
       );
       console.log(uri);
 
-      return `<a href=  "mailto:${
-        this.alias
-      }?subject=Join me at ${name} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+      return `<a href=  "mailto:${this.alias}?subject=Join me at ${name.replace(
+        /&/g,
+        'and'
+      )} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
         this.newLine
       } ${this.origin}/?${uri}  ${this.newLine}
       ${this.newLine}  ${
@@ -255,7 +256,7 @@ export default {
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
       const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
-      const escapedName = printedName.replace(/ /g, '_'); // we will reverse this edit in space.js
+      const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); // we will reverse this edit in space.js
       console.log(escapedName);
       // do normal url encoding for the rest of the args
       const uri = encodeURIComponent(
@@ -263,9 +264,10 @@ export default {
       );
       console.log(uri);
 
-      return `mailto:${
-        this.alias
-      }?subject=Join me at ${printedName} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+      return `mailto:${this.alias}?subject=Join me at ${printedName.replace(
+        /&/g,
+        'and'
+      )} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
         this.newLine
       } ${this.origin}/?${uri}  ${this.newLine}
       ${this.newLine}  ${
