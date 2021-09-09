@@ -38,6 +38,10 @@ export const spaceMixin = {
         /_/g,
         ' '
       )}`;
+      this.callVisitUpdate({ place_id, start, end, name });
+    },
+
+    callVisitUpdate({ place_id, start, end, name }) {
       let visit = {
         id: randomId(),
         name: name,
@@ -62,31 +66,10 @@ export const spaceMixin = {
 
     onVisitPlace(placeId) {
       const currentPlace = Place.getPlace(placeId);
-      const starttime = roundTime(Date.now());
-      const endtime = starttime + this.avgStay;
-
-      let visit = {
-        id: randomId(),
-        // TODO is this the only way to get the place_id? if so, we need the markerClicked event handlers after all
-        name: currentPlace.name,
-        place_id: currentPlace.place_id,
-        start: starttime,
-        end: endtime,
-
-        date: DateTime.fromMillis(starttime).toISODate(),
-        category: 'You',
-
-        timed: true,
-        marked: getNow(),
-        graphName: '',
-        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
-
-        // TODO setup isDefaultGraph
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
-      };
-
-      // see time.js
-      this.updateVisit(visit);
+      const { name, place_id } = currentPlace;
+      const start = roundTime(Date.now());
+      const end = start + this.avgStay;
+      this.callVisitUpdate({ place_id, start, end, name });
     },
 
     onMarkerAdded(markedPlace) {
