@@ -18,10 +18,10 @@
         :isDefaultGraph="isDefaultGraph"
         :state="state"
         :onUpdate="onUpdate"
-        :confirmations="confirmations"
         :changeGraphName="changeGraphName"
         :setDefaultGraphName="setDefaultGraphName"
         :getGraphName="getGraphName"
+        :confirmations="confirmations"
       />
     </div>
   </Model>
@@ -48,22 +48,20 @@ export default {
       throw error;
     },
 
-    // updatedModel emitted by Model's visitLogged() and emitFromClient() as a guard against offline state
-    // so updateResults can have the update details or a preset message, respectively
-    // TODO this design might smell off, just a bit...
     onUpdatedModel(updateResults) {
+      console.log(JSON.stringify(updateResults, null, 3));
       const getMsg = (updateResults) => {
-        const { name, graphName, loggedNodeId } = updateResults;
+        const { place, graphName, id } = updateResults;
         const msg = {
           logged: true,
           confirmationColor: 'success',
-          confirmationMessage: `${name} logged to ${graphName} graph on node ${loggedNodeId}`,
+          confirmationMessage: `${place} logged to ${graphName} graph on visit relationship ID ${id}`,
         };
-        console.log('emitting updatedModel with:', msg);
+        console.log('sending message to Calendar:', msg);
         return msg;
       };
-      this.confirmations =
-        updateResults.logged > -1 ? updateResults : getMsg(updateResults);
+      this.confirmations = getMsg(updateResults);
+      // updateResults.logged > -1 ? updateResults : getMsg(updateResults);
     },
   },
 

@@ -55,7 +55,7 @@ export const spaceMixin = {
         timed: true,
         marked: getNow(),
         graphName: '', // set at Log time
-        loggedNodeId: '', // this will contain the internal id of the relationship in redisGraph
+        loggedVisitId: '', // this will contain the internal id of the relationship in redisGraph
 
         color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
       };

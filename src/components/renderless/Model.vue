@@ -14,11 +14,9 @@ import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 
-import { highlight, info, success, warn, printJson } from '../../utils/helpers';
-import { getNow } from '../../utils/luxonHelpers';
+import { highlight, success, printJson } from '../../utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
-import { head } from 'pratica';
 
 export default {
   props: {},
@@ -35,7 +33,7 @@ export default {
     },
 
     unloggedVisits() {
-      return this.visits.filter((v) => !v.loggedNodeId);
+      return this.visits.filter((v) => !v.loggedVisitId);
     },
 
     hasUnloggedVisits() {
@@ -72,8 +70,9 @@ export default {
 
   data() {
     return {
-      avgStay: 1000 * 60 * 30,
+      test: null,
       state: {},
+      avgStay: 1000 * 60 * 30,
       selectedMarker: null,
       selectedEvent: null,
       pendingVisits: new Map(),
@@ -101,124 +100,6 @@ export default {
       //   },
       // },
     };
-  },
-  sockets: {
-    // emitted by server with status of update (success or failure)
-    // TODO NOTE: this is one other use case where we wrap a function in a Promise as an EitherAsync
-    visitLogged(redisResult) {
-      const getahead = (updateResults) => {
-        head(updateResults).cata({
-          Just: (updateResult) => this.$emit('updatedModel', updateResult),
-          Nothing: (updateResult) => this.$emit('updatedModel', updateResult),
-        });
-      };
-
-      new Promise((resolve, reject) => {
-        this.updateLoggedNodeId({ redisResult, resolve, reject });
-      })
-        .toEither()
-        .cata({
-          ok: (updateResults) => getahead(updateResults),
-          error: (err) => {
-            console.log(err, 'Issues in logging visit to graph()');
-          },
-        });
-    },
-    // visitLoggedPreFp(redisResult) {
-    //   console.log('redisResult', redisResult);
-    //   const { id, place, graphName, visitId, logged } = redisResult;
-    //   console.log(id, logged);
-    //   if (!logged || id < 0) {
-    //     this.$emit(
-    //       'error',
-    //       new Error(`Redis could not log Visit to  ${place}`)
-    //     );
-    //   }
-    //   const data = {
-    //     visitId: visitId,
-    //     loggedNodeId: id,
-    //     graphName,
-    //     color: 'primary', // use parameter if we need a different color for Sandbox graph
-    //   };
-    //   console.log('updateVisitOnGraph() data:', data);
-    //   this.updateLoggedNodeId(data);
-    //   const msg = {
-    //     logged: true,
-    //     confirmationColor: 'success',
-    //     confirmationMessage: `${place} logged to ${data.graphName} graph on node ${data.loggedNodeId}`,
-    //   };
-    //   console.log('emitting updatedModel with:', msg);
-    //   this.$emit('updatedModel', msg);
-    // },
-
-    /*
-     * 👂 Listen to socket events emitted from the socket server
-     */
-    connect() {
-      console.log(getNow());
-      console.log(success('Connected to the socket server.\n'));
-    },
-
-    // sent from Server after Server has all the data it needs to register the Visitor
-    // TODO better style uses a single object as arg. function deconstructs vars.
-    //    socket.emit('session', {
-    //        sessionID,
-    //        userID,
-    //        username,
-    //        graphName,
-    //    });
-    session({ sessionID, userID, username, graphName }) {
-      console.assert(
-        sessionID && userID && username,
-        `Session event missing args: ${sessionID} ${userID} ${username}`
-      );
-
-      // TODO Not good: you are updating the state var before you update the entity. what if the entity fails?
-      this.updateState({ sessionID, userID, username, graphName });
-      const data = { id: 1, sessionID, userID, username };
-      // TODO Not good: How do you know the update succeeded?
-      // Setting.update(data);
-      this.updateSetting(data);
-
-      // attach the session session data to the next reconnection attempts
-      console.log(
-        info(
-          'Socket auth before update in session():',
-          printJson(this.$socket.client.auth)
-        )
-      );
-      this.$socket.client.auth = {
-        username,
-        userID,
-        sessionID,
-      };
-      console.log(
-        info(
-          'Socket auth after update in session():',
-          printJson(this.$socket.client.auth)
-        )
-      );
-
-      // attach the userID to the client object for easy reference on server
-      this.$socket.client.userID = userID;
-
-      console.group(info('Step 2:Handling Session event from Server: >'));
-      console.log(success('Session ID', sessionID));
-      console.log(success('User Name:', username));
-      console.log(success('User ID:', userID));
-      console.log(success('graphName used by redis', graphName));
-      console.log('Entire Model:', this.state);
-      console.groupEnd();
-      // TODO Are we still using pendingVisits here? or are we doing that in Warning.vue?
-      this.pendingVisits.forEach((value, key) => {
-        console.log('Logging pending visit:', key);
-        this.emitFromClient('logVisit', value);
-      });
-    },
-
-    exposureAlert(msg) {
-      alert(msg + '\nWorking on snackbar or banner');
-    },
   },
 
   methods: {
@@ -256,9 +137,25 @@ export default {
     // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable
     // and far easier to reason over and maintain
     onLogVisit(visit) {
-      const { id, name, start, end } = visit;
+      const { id: visitId, name, start, end } = visit;
+      // get ref to vue model (to avoid this as Window and buffer below)
+      const vm = this;
+
+      function redisGraphCallback(results) {
+        const { id, place, graphName, logged } = results;
+        console.log(
+          success(
+            'redisGraphCallback:updateVisitOnGraph results:',
+            printJson(results)
+          )
+        );
+        vm.$emit('updatedModel', { place, graphName, id, logged });
+        // now update Visit entity (picking up the visitId from the closure)
+        vm.updateLoggedVisitId({ visitId, place, graphName, id, logged });
+      }
+
       const query = {
-        visitId: id,
+        visitId,
         place: name,
         start: start,
         end: end,
@@ -266,77 +163,7 @@ export default {
         userID: this.$socket.client.userID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
-      this.emitFromClient('logVisit', query);
-    },
-
-    // onLogVisitOrig(visit) {
-    //   console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
-
-    //   const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
-    //   const query = {
-    //     username: this.username,
-    //     userID: this.$socket.client.userID,
-    //     selectedSpace: name,
-    //     start: start,
-    //     end: end,
-    //     date: new Date(start).toDateString(),
-    //     interval: interval,
-    //     loggedNodeId,
-    //     graphName,
-    //   };
-    //   console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
-
-    //   // send the visit to the server
-    //   this.updateVisitOnGraph(query)
-    //     .then((redisResult) => {
-    //       if (!redisResult.logged || !redisResult.id) {
-    //         this.$emit('error', new Error(`Redis could not log Visit to  ${name}`));
-    //       }
-    //       const data = {
-    //         visitId: id,
-    //         loggedNodeId: redisResult.id,
-    //         graphName: redisResult.graph,
-    //       };
-    //       console.log('updateVisitOnGraph() data:', data);
-    //       Visit.updateById(data);
-    //       const msg = {
-    //         logged: true,
-    //         confirmationColor: 'success',
-    //         confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedNodeId}`,
-    //       };
-    //       this.$emit('updatedModel', msg);
-    //     })
-    //     .catch((err) => {
-    //       console.log(err);
-    //       this.$emit('error', err);
-    //     });
-    // },
-
-    // updateVisitOnGraph(query) {
-    //   console.log('query to update graph:', printJson(query));
-    //   return new Promise((resolve, reject) => {
-    //     // send message to server
-    //     try {
-    //       this.emitFromClient(
-    //         'logVisit',
-    //         query,
-    //         // and handle the callback
-    //         (results) => {
-    //           console.log(
-    //             success('updateVisitOnGraph results:', printJson(results))
-    //           );
-    //           resolve(results);
-    //         }
-    //       );
-    //     } catch (error) {
-    //       reject(error);
-    //     }
-    //   });
-    // },
-
-    redisGraphCallback: (results) => {
-      console.log(success('updateVisitOnGraph results:', printJson(results)));
-      return results;
+      this.emitFromClient('logVisit', query, redisGraphCallback);
     },
 
     emitFromClient(eventName, data, ack) {
@@ -365,42 +192,6 @@ export default {
       this.$defaultGraphName = this.graphName;
       this.updateSetting({ id: 1, preferredGraph: this.graphName });
       return newName;
-    },
-
-    // why are we passing in a payload when Model gets that itself from the server?
-    // const { username, userID, sessionID } = payload;    // connectMe(payload) {
-    connectMe() {
-      if (this.isConnected) {
-        return 'Already connected';
-      }
-      if (this.needsUsername) {
-        return 'Need username';
-      }
-
-      const { username, userID, sessionID } = this.state.settings;
-
-      const data = {
-        username,
-        userID,
-        sessionID,
-        id: 1,
-      };
-      if (this.$DEBUG) {
-        console.info(warn('data:', JSON.stringify(data, null, 3)));
-      }
-      // Setting.update(data);
-      this.updateSetting(data);
-
-      this.$socket.client.auth = {
-        username,
-        userID,
-        sessionID,
-      };
-      const msg = sessionID
-        ? `${username} connected to server with session ${sessionID}`
-        : `Step 1: first server contact with ${username}. Awaiting reply in session event for sessionID and userID.`;
-      this.$socket.client.open();
-      return msg;
     },
 
     updateState(newState) {
@@ -481,11 +272,13 @@ export default {
   },
 
   watch: {
+    test(val) {
+      console.log(val);
+    },
     loading() {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
-      this.connectMe();
     },
     'state.settings.lastVaccinationDate'(n) {
       console.log(n);
@@ -562,6 +355,7 @@ export default {
       getGraphName: this.getGraphName,
       changeGraphName: this.changeGraphName,
       setDefaultGraphName: this.setDefaultGraphName,
+      updateLoggedVisitId: this.updateLoggedVisitId,
 
       //Warning assets
       visitCount: this.visitCount,

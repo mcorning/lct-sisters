@@ -27,7 +27,7 @@ export default class Visit extends Model {
       category: this.string(), // used for COVID-safe appointments
 
       // From the graph component
-      loggedNodeId: this.string(''), // ID of the graph node for this Visit
+      loggedVisitId: this.string(''), // ID of the graph Visit relationship
       graphName: this.string(''), // graphname may be 'Sand box' for users' playground
     };
   }
@@ -62,14 +62,14 @@ export default class Visit extends Model {
     return this.$delete(id);
   }
 
-  // App.js onLogVisit() used this function to update the visit with loggedNodeId and graphName
-  static updateLoggedNodeId(data) {
-    const { visitId, loggedNodeId, graphName, color } = data;
+  // App.js onLogVisit() used this function to update the visit with loggedVisitId and graphName
+  static updateLoggedVisitId(data) {
+    const { visitId, loggedVisitId, graphName, color } = data;
     console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
     return this.$update({
       where: visitId,
       data: {
-        loggedNodeId,
+        loggedVisitId,
         graphName,
         color,
       },

@@ -284,10 +284,22 @@ io.on('connection', (socket) => {
   });
 
   // socket.on('logVisit', (data, ack) => {
-  socket.on('logVisit', (data) => {
+  socket.on('logVisit', (data, ack) => {
     // call the graph
     console.log(getNow());
+    console.log(ack);
     console.log(highlight('Visit to log:', printJson(data)));
+
+    function handleAck(results) {
+      if (ack) {
+        const x = results || 'no results';
+        console.log(highlight('acknowledging client', x));
+        ack(results);
+        return;
+      }
+      console.log('No ack()');
+    }
+
     // delegate to redis/redis.js
     logVisitX(data)
       .toEither()
@@ -297,18 +309,12 @@ io.on('connection', (socket) => {
         return x;
       })
       .cata({
-        ok: (results) => socket.emit('visitLogged', results),
+        // ok: (results) => socket.emit('visitLogged', results),
+        ok: (results) => handleAck(results),
         error: (results) => {
           console.log(results, 'Issues calling redis.logVisit()');
         },
       });
-
-    // logVisit(data)
-    //   .then((res) => {
-    //     console.log(res);
-    //     ack(res);
-    //   })
-    //   .catch((err) => ack(err));
   });
 
   socket.on('deleteVisit', (data, ack) => {

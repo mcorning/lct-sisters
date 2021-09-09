@@ -39,6 +39,7 @@
 
 <script>
 //thanks to danvega: https://youtu.be/JwccQYpsE2Q for tip on router events
+
 export default {
   name: 'App',
   components: {},
@@ -139,7 +140,7 @@ export default {
   },
 
   mounted() {
-    console.log('Querystring:', this.$route.query);
+    console.log('Incoming querystring:', this.$route.query);
 
     console.log('\tAPP mounted');
   },

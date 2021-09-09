@@ -6,7 +6,15 @@ export const graphMixin = {
     onLogVisit(visit) {
       console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
 
-      const { id, name, start, end, loggedNodeId, graphName, interval } = visit;
+      const {
+        id,
+        name,
+        start,
+        end,
+        loggedVisitId,
+        graphName,
+        interval,
+      } = visit;
       const query = {
         username: this.username,
         userID: this.$socket.client.userID,
@@ -15,7 +23,7 @@ export const graphMixin = {
         end: end,
         date: new Date(start).toDateString(),
         interval: interval,
-        loggedNodeId,
+        loggedVisitId,
         graphName,
       };
       console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
@@ -28,7 +36,7 @@ export const graphMixin = {
           }
           const data = {
             visitId: id,
-            loggedNodeId: redisResult.id,
+            loggedVisitId: redisResult.id,
             graphName: redisResult.graph,
           };
           console.log('updateVisitOnGraph() data:', data);
@@ -38,7 +46,7 @@ export const graphMixin = {
           // const msg = {
           //   logged: true,
           //   confirmationColor: 'success',
-          //   confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedNodeId}`,
+          //   confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedVisitId}`,
           // };
           // this.$emit('updatedModel', msg);
         })

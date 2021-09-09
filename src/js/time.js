@@ -7,7 +7,43 @@ import { allOrNone, firstOrNone } from '@/fp/utils';
 export const timeMixin = {
   name: 'timeMixin',
   methods: {
-    updateLoggedNodeId({ redisResult, resolve, reject }) {
+    // called by RedisGraph callback
+    updateLoggedVisitId({ visitId, place, graphName, id, logged }) {
+      // console.log('redisResult', redisResult);
+      // const { id, place, logged } = redisResult;
+
+      // this is the Promisified/EitherAsync version with a single resolve() condition and two reject() opportunities
+      if (!logged || id < 0) {
+        alert(`Redis could not log Visit to  ${place}`);
+        return;
+      }
+
+      // const { graphName, visitId } = redisResult;
+      const data = {
+        visitId,
+        loggedVisitId: id,
+        graphName,
+        color: 'primary', // use parameter if we need a different color for Sandbox graph
+      };
+      console.log('updateVisitOnGraph() data:', data);
+
+      // this is the original EitherAsync used by the pre refactored Model.visitLogged()
+      Visit.updateLoggedVisitId(data)
+        .toEither()
+        .cata({
+          ok: console.log,
+          error: (results) =>
+            console.log(
+              'error updating Visit entity',
+              JSON.stringify({
+                results,
+                isConnected: this.isConnected,
+              })
+            ),
+        });
+    },
+
+    updateLoggedVisitIdOld({ redisResult, resolve, reject }) {
       console.log('redisResult', redisResult);
       const { id, place, logged } = redisResult;
 
@@ -18,14 +54,14 @@ export const timeMixin = {
       const { graphName, visitId } = redisResult;
       const data = {
         visitId: visitId,
-        loggedNodeId: id,
+        loggedVisitId: id,
         graphName,
         color: 'primary', // use parameter if we need a different color for Sandbox graph
       };
       console.log('updateVisitOnGraph() data:', data);
 
       // this is the original EitherAsync used by the pre refactored Model.visitLogged()
-      Visit.updateLoggedNodeId(data)
+      Visit.updateLoggedVisitId(data)
         .toEither()
         .cata({
           ok: (results) => resolve(results),

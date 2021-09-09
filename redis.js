@@ -276,19 +276,19 @@ function logVisit(data) {
       end,
       date,
       interval,
-      loggedNodeId,
+      loggedVisitId,
       graphName,
     } = data;
     if (graphName && graphName !== graphName) {
       changeGraph(graphName);
     }
 
-    // update visit with loggedNodeId
+    // update visit with loggedVisitId
     // or add a new visit
     // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
     // (otherwise, an apostrophe will throw an exception)
-    let query = loggedNodeId
-      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId} 
+    let query = loggedVisitId
+      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId} 
       SET 
       v.start=${start}, 
       v.end=${end}, 
@@ -336,18 +336,18 @@ function logVisit(data) {
 // MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
 function deleteVisit(data) {
   return new Promise((resolve, reject) => {
-    const { loggedNodeId, graphName } = data;
-    if (!loggedNodeId) {
+    const { loggedVisitId, graphName } = data;
+    if (!loggedVisitId) {
       reject({
         deleted: false,
-        reason: 'No loggedNodeId available for deletion.',
+        reason: 'No loggedVisitId available for deletion.',
       });
       return;
     }
     if (graphName !== currentGraphName) {
       changeGraph(graphName);
     }
-    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedNodeId}  DELETE v`;
+    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
     console.log(warn('DELETE Visit query:', query));
     Graph.query(query)
       .then((results) => {

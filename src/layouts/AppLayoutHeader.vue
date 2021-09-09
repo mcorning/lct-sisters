@@ -1,38 +1,39 @@
 <template>
-  <Model @welcome="onWelcome">
-    <v-app-bar slot-scope="{ isConnected }" color="primary" app dark>
-      <v-toolbar-title
-        >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
-      >
+  <v-app-bar color="primary" app dark>
+    <v-toolbar-title
+      >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
+    >
 
-      <v-spacer></v-spacer>
-      {{ $version }}
-      <v-icon right class="pl-3"
-        >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-      </v-icon>
+    <v-spacer></v-spacer>
+    {{ $version }}
+    <v-icon right class="pl-3"
+      >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+    </v-icon>
 
-      <!-- Begin Options Menu-->
-      <nestedMenu
-        :menu-items="fileMenuItems"
-        @nestedMenu-click="onMenuItemClick"
-      />
-      <!-- End Options Menu-->
-    </v-app-bar>
-  </Model>
+    <!-- Begin Options Menu-->
+    <nestedMenu
+      :menu-items="fileMenuItems"
+      @nestedMenu-click="onMenuItemClick"
+    />
+    <!-- End Options Menu-->
+  </v-app-bar>
 </template>
 
 <script>
-import Model from '../components/renderless/Model.vue';
+import { getNow } from '@/utils/luxonHelpers';
+import { info, success, warn, printJson } from '@/utils/helpers';
 
 export default {
   name: 'AppLayoutHeader',
   props: {
-    namespace: {
-      type: String,
-    },
+    namespace: String,
+    isConnected: Boolean,
+    needsUsername: Boolean,
+    state: Object,
+    updateSetting: Function,
+    updateLoggedVisitId: Function,
   },
   components: {
-    Model,
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
   },
   computed: {
@@ -123,8 +124,111 @@ export default {
       feedbackDialog: false,
     };
   },
+  sockets: {
+    /*
+     * 👂 Listen to socket events emitted from the socket server
+     */
+    connect() {
+      console.log(getNow());
+      console.log(success('Connected to the socket server.\n'));
+    },
+
+    // sent from Server after Server has all the data it needs to register the Visitor
+    // TODO better style uses a single object as arg. function deconstructs vars.
+    //    socket.emit('session', {
+    //        sessionID,
+    //        userID,
+    //        username,
+    //        graphName,
+    //    });
+    session({ sessionID, userID, username, graphName }) {
+      console.assert(
+        sessionID && userID && username,
+        `Session event missing args: ${sessionID} ${userID} ${username}`
+      );
+
+      // TODO Refactor this next block
+      // TODO Not good: you are updating the state var before you update the entity. what if the entity fails?
+      // this.updateState({ sessionID, userID, username, graphName });
+      // const data = { id: 1, sessionID, userID, username };
+      // // TODO Not good: How do you know the update succeeded?
+      // // Setting.update(data);
+      // this.updateSetting(data);
+
+      // attach the session session data to the next reconnection attempts
+      console.log(
+        info(
+          'Socket auth before update in session():',
+          printJson(this.$socket.client.auth)
+        )
+      );
+      this.$socket.client.auth = {
+        username,
+        userID,
+        sessionID,
+      };
+      console.log(
+        info(
+          'Socket auth after update in session():',
+          printJson(this.$socket.client.auth)
+        )
+      );
+
+      // attach the userID to the client object for easy reference on server
+      this.$socket.client.userID = userID;
+
+      console.group(info('Step 2:Handling Session event from Server: >'));
+      console.log(success('Session ID', sessionID));
+      console.log(success('User Name:', username));
+      console.log(success('User ID:', userID));
+      console.log(success('graphName used by redis', graphName));
+      console.log('Entire Model:', this.state);
+      console.groupEnd();
+    },
+
+    exposureAlert(msg) {
+      alert(msg + '\nWorking on snackbar or banner');
+    },
+  },
 
   methods: {
+    // why are we passing in a payload when Model gets that itself from the server?
+    // const { username, userID, sessionID } = payload;    // connectMe(payload) {
+    connectMe() {
+      if (this.isConnected) {
+        return 'Already connected';
+      }
+      if (this.needsUsername) {
+        return 'Need username';
+      }
+
+      const { username, userID, sessionID } = this.state.settings;
+
+      const data = {
+        username,
+        userID,
+        sessionID,
+        id: 1,
+      };
+      if (this.$DEBUG) {
+        console.info(warn('data:', JSON.stringify(data, null, 3)));
+      }
+      // Setting.update(data);
+      // why are we updating the entity with something we just took from the entity?
+      // this.updateSetting(data);
+
+      this.$socket.client.auth = {
+        username,
+        userID,
+        sessionID,
+      };
+      const msg = sessionID
+        ? `${username} connected to server with session ${sessionID}`
+        : `Step 1: first server contact with ${username}. Awaiting reply in session event for sessionID and userID.`;
+      this.$socket.client.open();
+      return msg;
+    },
+
     onWelcome() {
       alert('Welcome');
       this.$router.push({
@@ -177,6 +281,8 @@ export default {
     },
   },
   mounted() {
+    console.log('Attempting to connect to server...');
+    this.connectMe();
     console.log('\tAppLayoutHeader mounted');
   },
 };
