@@ -130,9 +130,10 @@ function getSession(data) {
 function createSession(data) {
   // otherwise, setup the new user...
   const { socket, next, username } = data;
+  const { sessionID, userID } = socket.handshake.auth;
 
   // do we need to create a new session
-  if (socket.sessionID && socket.userID) {
+  if ((socket.sessionID || sessionID) && (socket.userID || userID)) {
     // not if we have IDs
     return next();
   }
@@ -182,7 +183,12 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  const { id: socketID, sessionID, userID, username } = socket;
+  // 9/9/21 using auth instead of socket for constant data
+  // const { id: socketID, sessionID, userID, username } = socket;
+  const { id: socketID } = socket;
+  const { sessionID, userID, username } = socket.handshake.auth;
+
+  // ha! updating code on 9/9/21 helped me fix this surprise by adding the line above
   if (!userID) {
     console.log(err('NO USERID! How did the code get this far?'));
     return;
@@ -190,8 +196,8 @@ io.on('connection', (socket) => {
   //#region Handling socket connection
   console.log('Client connected on socket ', socketID);
   const session = {
-    userID: userID,
-    username: username,
+    userID,
+    username,
     lastInteraction: new Date().toLocaleString(),
     connected: true,
   };

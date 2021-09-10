@@ -489,10 +489,11 @@ export default {
     },
 
     warnThem(state) {
-      console.log(state.lastVaccinationDate, state.lastFluShot);
+      console.log(state.lastVaccinationDate || 'no vaccination date', state.lastFluShot||'no flu shot date');
+      // updateState({lastVaccinationDate:this.lastVaccinationDate, lastFluShot:this.lastFluShot})
+
       this.dialog = true;
       console.log(this.score, this.pctWeight);
-      // updateState({lastVaccinationDate:this.lastVaccinationDate, lastFluShot:this.lastFluShot})
       this.onExposureWarning({
         score: this.score,
         reliability: this.pctWeight,
