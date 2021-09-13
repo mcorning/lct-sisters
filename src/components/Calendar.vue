@@ -148,7 +148,7 @@
               <v-col cols="7">
                 <v-text-field
                   v-model="alias"
-                  label="Email alias:"
+                  label="Email address:"
                   hint="Email a person directly or send to yourself and forward"
                 ></v-text-field
               ></v-col>
@@ -160,6 +160,19 @@
                   label="Your name:"
                 ></v-text-field></v-col
             ></v-row>
+            <v-row
+              ><v-col
+                ><VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="mailToUri"
+                  :size="150"
+                >
+                </VueQRCodeComponent> </v-col
+              ><v-col
+                ><small>{{ mailToUri }}</small></v-col
+              ></v-row
+            >
             <v-card-actions>
               <v-btn color="green" text input-value @click="emailEvent">
                 Email
@@ -181,9 +194,6 @@
       </v-menu>
     </v-sheet>
 
-    <div class="mt-5 mb-0 ml-15">
-      <small>{{ status }}</small>
-    </div>
     <v-snackbar v-model="snackbar" :color="confirmationColor"
       >{{ confirmationMessage }}
       <template v-slot:action="{ attrs }">
@@ -196,6 +206,8 @@
 </template>
 
 <script>
+import VueQRCodeComponent from 'vue-qr-generator';
+
 import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime } from '@/utils/luxonHelpers';
 
@@ -204,7 +216,6 @@ export default {
   // Step 4/4: expose Model's functions and props to component
   props: {
     selectedSpace: Object,
-    isConnected: Boolean,
     isDefaultGraph: Boolean,
     state: Object,
     onUpdate: Function,
@@ -215,6 +226,7 @@ export default {
   },
   components: {
     PickersMenu,
+    VueQRCodeComponent,
   },
   computed: {
     gatheringLabel() {
@@ -232,39 +244,7 @@ export default {
       return `Exposure Graphs (${this.getGraphName()})`;
     },
 
-    mailToTag() {
-      if (!this.alias) {
-        return '';
-      }
-      const { place_id, name, date, start, end } = this.selectedEvent;
-      const escapedName = name.replace(/ /g, '_'); // urls need space escaped to %25
-      console.log(escapedName);
-      // do normal url encoding for the rest of the args
-      const uri = encodeURIComponent(
-        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
-      );
-      console.log(uri);
-
-      return `<a href=  "mailto:${this.alias}?subject=Join me at ${name.replace(
-        /&/g,
-        'and'
-      )} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
-        this.newLine
-      } ${this.origin}/?${uri}  ${this.newLine}
-      ${this.newLine}  ${
-        this.newLine
-      }      Name/Place-id: ${name}/${place_id} ${
-        this.newLine
-      }      Start time: ${new Date(start)}${
-        this.newLine
-      }      End time: ${new Date(end)}${this.newLine}${
-        this.newLine
-      }See you then...">Share Email</a>`;
-    },
-    mailToString() {
-      if (!this.alias) {
-        return '';
-      }
+    mailToUri() {
       const { place_id, name, date, start, end } = this.selectedEvent;
       const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
       const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); // we will reverse this edit in space.js
@@ -273,15 +253,25 @@ export default {
       const uri = encodeURIComponent(
         `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
       );
-      console.log(uri);
+      return `${this.origin}/?${uri}`;
+    },
+
+    mailToString() {
+      if (!this.alias) {
+        return '';
+      }
+      const { place_id, name, date, start, end } = this.selectedEvent;
+      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
 
       return `mailto:${this.alias}?subject=Join me at ${printedName.replace(
         /&/g,
         'and'
       )} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
         this.newLine
-      } ${this.origin}/?${uri}  ${this.newLine}
-      ${this.newLine}  ${
+      } ${this.mailToUri}  ${
+        this.newLine
+      }     QR Code: copy the QR code in LCT and paste it here
+            ${this.newLine}  ${
         this.newLine
       }      Name/Place-id: ${printedName}/${place_id} ${
         this.newLine
@@ -329,6 +319,7 @@ export default {
   },
   data() {
     return {
+      showQR: false,
       room: '',
       dev: false,
       origin: window.location.origin,
@@ -543,9 +534,29 @@ export default {
       this.selectedEvent.end = this.changeTimeStamp(end);
       this.selectedEvent.date = start.date;
     },
+    logSharedVisit() {
+      // TODO
+      // this is an advanced use of router (researching now).
+      // so this guard will fail because GoogleMaps sees the querystring
+      // but that string gets lost when GoogleMaps pushes the Time path
+      if (this.$route.query.name) {
+        const { name, date } = this.$route.query;
+        const msg = `Log shared event (${name} on ${date})?`;
+        const ok = prompt(msg);
+        if (ok) {
+          this.selectedEvent = this.$route.query;
+          this.update('graph');
+        }
+        console.log(ok);
+      }
+    },
   },
 
   watch: {
+    mailToString(val) {
+      console.log(val);
+    },
+
     ready() {
       console.log(this.$defaultGraphName, '/', this.getGraphName());
     },
@@ -563,21 +574,14 @@ export default {
       this.snackbar = true;
     },
   },
-  //   created(){
-  //   this.$socket.$subscribe('exposureAlert');
-
-  // },
 
   mounted() {
     this.ready = true;
     this.configureCalendar();
     this.updateTime();
+    // log a shared visit (if data was in the route querystring)
+    this.logSharedVisit();
   },
-  // beforeDestroy() {
-  //   debugger
-  //   clearInterval(this.updateTimeInterval);
-  //   this.$socket.$unsubscribe('exposureAlert');
-  // },
 };
 </script>
 

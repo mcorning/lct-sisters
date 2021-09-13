@@ -28,10 +28,12 @@ jsonCache
     console.log(options, '\n');
 
     jsonCache.get('sessions', '.').then((node) => {
-      console.log(getNow());
-      console.groupCollapsed('Past Sessions (including unconnected):');
-      asTable(node);
-      console.groupEnd();
+      if (Object.keys(node) > 0) {
+        console.log(getNow());
+        console.groupCollapsed('Past Sessions (including unconnected):');
+        asTable(node);
+        console.groupEnd();
+      }
     });
   })
   .catch((e) => console.log('error connecting to rejson', e));

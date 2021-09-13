@@ -8,7 +8,7 @@
           <v-col cols="3">Postion Data</v-col>
           <v-col>
             <small>
-              {{ position | latLng }}<br />
+              {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }} <br />
               PlaceID: {{ placeId }}<br />
               GlobalCode: {{ globalCode }}
             </small></v-col
@@ -17,8 +17,7 @@
       </v-card-text>
       <p v-if="info.url" v-html="placeLink"></p>
 
-      <v-btn @click="onVisitPlace(placeId)">Visit</v-btn>
-      <v-btn @click="onToWork(placeId)">Work</v-btn>
+      <v-btn @click="onVisitPlace(placeId)">Mark Your Calendar</v-btn>
     </v-card>
   </div>
 </template>
@@ -31,16 +30,15 @@ export default {
       require: true,
     },
     onVisitPlace: Function,
-    onToWork: Function,
-    onShareGathering: Function,
   },
-  filters: {
-    latLng: (val) => {
-      return `Lat: ${val.lat} Lng:  ${val.lng}`;
-    },
-  },
+  filters: {},
 
   computed: {
+    latLng: () => {
+      return this.info
+        ? `Lat: ${this.info.position.lat} Lng:  ${this.info.position.lng}`
+        : '';
+    },
     name() {
       return this.info.name;
     },

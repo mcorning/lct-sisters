@@ -1,3 +1,5 @@
+//  ngrok http 3003 -host-header="localhost:3003"
+
 /**
  * This server connects Visitors with the Virus Exposure Graph hosted on RedisGraph.
  * Firsttime handshake protocol follows:
@@ -99,6 +101,7 @@ function report(sessionID, userID, username) {
 //#endregion
 
 function getSession(data) {
+  console.log(data);
   const { sessionID, socket, session } = data;
   if (!session) {
     // so we can create a session
@@ -154,7 +157,8 @@ function createSession(data) {
 }
 
 io.use((socket, next) => {
-  const { sessionID, userID, username } = socket.handshake.auth;
+  console.log(socket.handshake.auth);
+  const { sessionID, userID, usernumber: username } = socket.handshake.auth;
   // if first connection, prompt client for a username
   if (!username) {
     return next(new Error('No username'));
@@ -183,12 +187,8 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  // 9/9/21 using auth instead of socket for constant data
-  // const { id: socketID, sessionID, userID, username } = socket;
-  const { id: socketID } = socket;
-  const { sessionID, userID, username } = socket.handshake.auth;
+  const { id: socketID, sessionID, userID, username } = socket;
 
-  // ha! updating code on 9/9/21 helped me fix this surprise by adding the line above
   if (!userID) {
     console.log(err('NO USERID! How did the code get this far?'));
     return;
@@ -212,6 +212,8 @@ io.on('connection', (socket) => {
     userID: userID,
     username: username,
   });
+      socket.emit('connected');
+
   // TODO restore
   // console.log(
   //   success(
@@ -362,6 +364,7 @@ io.on('connection', (socket) => {
     const matchingSockets = await io.in(socket.userID).allSockets();
     const isDisconnected = matchingSockets.size === 0;
     if (isDisconnected) {
+      socket.emit('disconnected')
       // notify other users
       socket.broadcast.emit('user disconnected', socket.userID);
       // update the connection status of the session
@@ -394,6 +397,8 @@ io.on('connection', (socket) => {
       .then((matchingSockets) => {
         const isDisconnected = matchingSockets.size === 0;
         if (isDisconnected) {
+      socket.emit('disconnected');
+
           // notify other users
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session

@@ -20,8 +20,6 @@
         ref="infowin"
         id="infowin"
         :info="info"
-        :onToWork="onToWork"
-        :onShareGethering="onShareGethering"
         :onVisitPlace="onVisitPlace"
       ></info-window-card>
     </div>
@@ -57,7 +55,6 @@ export default {
       type: Object,
       required: true,
     },
-    isConnected: Boolean,
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,

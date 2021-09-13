@@ -22,11 +22,7 @@
 export default {
   name: 'AppLayoutFooter',
   components: {},
-  computed: {
-    connection() {
-      return this.userID ? 'mdi-lan-connect' : 'mdi-lan-disconnect';
-    },
-  },
+  computed: {},
   methods: {
     // TODO NOTE: an alternative design uses Model here and passes data and functions to props.
     // At this writing, we have Space and Time vue files that wrap the map and calendars in their own Model reference

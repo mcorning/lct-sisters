@@ -27,11 +27,10 @@ export default {
   name: 'AppLayoutHeader',
   props: {
     namespace: String,
-    isConnected: Boolean,
-    needsUsername: Boolean,
     state: Object,
-    updateSetting: Function,
+    updateSession: Function,
     updateLoggedVisitId: Function,
+    isConnected: Boolean,
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
@@ -120,6 +119,7 @@ export default {
 
   data() {
     return {
+      handledSessionEvent: false,
       graphName: '',
       feedbackDialog: false,
     };
@@ -130,7 +130,15 @@ export default {
      */
     connect() {
       console.log(getNow());
-      console.log(success('Connected to the socket server.\n'));
+      console.log(
+        success(`Connected to the server on socket ${this.$socket.id}.\n`)
+      );
+    },
+    disconnect() {
+      console.log(getNow());
+      console.log(
+        warn(`The server just disconnected socket ${this.$socket.id}.\n`)
+      );
     },
 
     // sent from Server after Server has all the data it needs to register the Visitor
@@ -147,13 +155,8 @@ export default {
         `Session event missing args: ${sessionID} ${userID} ${username}`
       );
 
-      // TODO Refactor this next block
-      // TODO Not good: you are updating the state var before you update the entity. what if the entity fails?
-      // this.updateState({ sessionID, userID, username, graphName });
-      // const data = { id: 1, sessionID, userID, username };
-      // // TODO Not good: How do you know the update succeeded?
-      // // Setting.update(data);
-      // this.updateSetting(data);
+      const data = { id: 1, sessionID, userID, username };
+      this.updateSession(data);
 
       // attach the session session data to the next reconnection attempts
       console.log(
@@ -184,6 +187,7 @@ export default {
       console.log(success('graphName used by redis', graphName));
       console.log('Entire Model:', this.state);
       console.groupEnd();
+      this.handledSessionEvent = true;
     },
 
     exposureAlert(msg) {
@@ -198,14 +202,11 @@ export default {
       if (this.isConnected) {
         return 'Already connected';
       }
-      if (this.needsUsername) {
-        return 'Need username';
-      }
 
-      const { username, userID, sessionID } = this.state.settings;
+      const { usernumber, userID, sessionID } = this.state.settings;
 
       const data = {
-        username,
+        usernumber,
         userID,
         sessionID,
         id: 1,
@@ -218,13 +219,14 @@ export default {
       // this.updateSetting(data);
 
       this.$socket.client.auth = {
-        username,
+        usernumber,
         userID,
         sessionID,
       };
       const msg = sessionID
-        ? `${username} connected to server with session ${sessionID}`
-        : `Step 1: first server contact with ${username}. Awaiting reply in session event for sessionID and userID.`;
+        ? `${usernumber} connected to server with session ${sessionID}`
+        : `Step 1: first server contact with ${usernumber}. Awaiting reply in session event for sessionID and userID.`;
+      console.log(this.$socket.client.auth);
       this.$socket.client.open();
       return msg;
     },
@@ -280,9 +282,12 @@ export default {
       }
     },
   },
+
+  watch: {},
+
   mounted() {
     console.log('Attempting to connect to server...');
-    this.connectMe();
+    console.log(this.connectMe());
     console.log('\tAppLayoutHeader mounted');
   },
 };

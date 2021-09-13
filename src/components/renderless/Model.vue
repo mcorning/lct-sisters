@@ -27,9 +27,8 @@ export default {
     // preferredGraphName() {
     //   return this.state.settings.preferredGraph;
     // },
-
-    needsUsername() {
-      return !this.state.settings.username;
+    isConnected() {
+      return !!this.$socket.connected;
     },
 
     unloggedVisits() {
@@ -42,10 +41,6 @@ export default {
 
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
-    },
-
-    isConnected() {
-      return !!this.$socket.connected;
     },
 
     hasVisits() {
@@ -63,8 +58,11 @@ export default {
     sessionID() {
       return this.settings.sessionID;
     },
-    username() {
-      return this.settings.username || prompt('User name?');
+    needsUsername() {
+      return !this.settings.username;
+    },
+    usernumber() {
+      return this.settings.usernumber;
     },
   },
 
@@ -242,6 +240,9 @@ export default {
       const [allSettings, allPlaces, allVisits, allAppointments] = entities;
 
       const settings = this.getFirstEntityData(allSettings.settings);
+      if (!settings.usernumber) {
+        this.updateUsernumber();
+      }
 
       this.$defaultGraphName =
         settings.preferredGraph || this.$defaultGraphName;
@@ -265,9 +266,14 @@ export default {
       });
       return some;
     },
-    updateUsername(username) {
-      this.updateSetting({ id: 1, username: username });
-      this.updateState({ settings: { username: username } });
+    updateUsernumber() {
+      const userNumber = Date.now();
+      this.updateSetting({ id: 1, usernumber: userNumber });
+      this.updateState({ settings: { usernumber: userNumber } });
+    },
+    updateSession(data) {
+      console.log('Model passing', data, 'to Setting');
+      this.updateSetting({ id: 1, ...data });
     },
   },
 
@@ -331,14 +337,15 @@ export default {
     // See Time.vue and Calendar.vue for the other three steps.
     return this.$scopedSlots.default({
       // Global assets
-      needsUsername: this.needsUsername,
-      updateUsername: this.updateUsername,
+      usernumber: this.usernumber,
+      updateUsernumber: this.updateUsernumber,
+      updateSession: this.updateSession,
       state: this.state,
       updateState: this.updateState,
-      isConnected: this.isConnected,
       isDefaultGraph: this.isDefaultGraph,
       connectMe: this.connectMe,
-
+      isConnected: this.isConnected,
+      needsUsername: this.needsUsername,
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
       onMarkerAdded: this.onMarkerAdded,

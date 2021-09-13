@@ -12,6 +12,7 @@ export default class Setting extends Model {
       id: this.number(1),
       sessionID: this.string(''),
       username: this.string(''),
+      usernumber: this.number(),
       userID: this.string(''),
       people: this.string(''),
       business: this.string(''),
