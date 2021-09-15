@@ -1,27 +1,31 @@
 <template>
-  <v-app-bar color="primary" app dark>
-    <v-toolbar-title
-      >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
-    >
+  <div>
+    <v-app-bar color="primary" app dark>
+      <v-toolbar-title
+        >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
+      >
 
-    <v-spacer></v-spacer>
-    {{ $version }}
-    <v-icon right class="pl-3"
-      >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-    </v-icon>
+      <v-spacer></v-spacer>
+      {{ $version }}
+      <v-icon right class="pl-3"
+        >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+      </v-icon>
 
-    <!-- Begin Options Menu-->
-    <nestedMenu
-      :menu-items="fileMenuItems"
-      @nestedMenu-click="onMenuItemClick"
-    />
-    <!-- End Options Menu-->
-  </v-app-bar>
+      <!-- Begin Options Menu-->
+      <nestedMenu
+        :menu-items="fileMenuItems"
+        @nestedMenu-click="onMenuItemClick"
+      />
+      <!-- End Options Menu-->
+    </v-app-bar>
+    <prompt-banner :riskScore="riskScore"></prompt-banner>
+  </div>
 </template>
 
 <script>
 import { getNow } from '@/utils/luxonHelpers';
 import { info, success, warn, printJson } from '@/utils/helpers';
+import PromptBanner from '../components/prompts/promptBanner.vue';
 
 export default {
   name: 'AppLayoutHeader',
@@ -34,6 +38,7 @@ export default {
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
+    PromptBanner,
   },
   computed: {
     fileMenuItems() {
@@ -122,9 +127,15 @@ export default {
       handledSessionEvent: false,
       graphName: '',
       feedbackDialog: false,
+      riskScore: null,
+      showBanner: false,
     };
   },
   sockets: {
+    exposureAlert(riskScore) {
+      this.riskScore = riskScore;
+      this.showBanner = true;
+    },
     /*
      * 👂 Listen to socket events emitted from the socket server
      */
@@ -136,9 +147,7 @@ export default {
     },
     disconnect() {
       console.log(getNow());
-      console.log(
-        warn(`The server just disconnected socket ${this.$socket.id}.\n`)
-      );
+      console.log(warn(`The server just disconnected the socket.\n`));
     },
 
     // sent from Server after Server has all the data it needs to register the Visitor
@@ -188,10 +197,6 @@ export default {
       console.log('Entire Model:', this.state);
       console.groupEnd();
       this.handledSessionEvent = true;
-    },
-
-    exposureAlert(msg) {
-      alert(msg + '\nWorking on snackbar or banner');
     },
   },
 

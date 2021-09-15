@@ -1,19 +1,9 @@
 <template>
   <div>
-    <!-- Used in Space.vue -->
-    <v-banner v-model="banner">
-      <v-text-field
-        value="model"
-        @input="updateSetting"
-        :label="label"
-        :hint="hint"
-        persistent-hint
-      />
+    <v-banner v-if="riskScore" :color="getAlertColor">
+      {{ alertMessage }}
       <template v-slot:actions="{ dismiss }">
-        <!-- <v-btn color="green" text input-value @click="updateSetting">
-          Save
-        </v-btn> -->
-        <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
+        <v-btn text @click="dismiss">Dismiss </v-btn>
       </template>
     </v-banner>
   </div>
@@ -23,28 +13,47 @@
 export default {
   name: 'promptBanner',
   props: {
-    needsUsername: Boolean,
-    updateUsernumber: Function,
-    connectMe: Function,
-    label: String,
-    hint: String,
+    riskScore: Object,
+    showBanner:Boolean,
   },
-  data() {
-    return { banner: this.needsUsername, model: '', ready: false };
-  },
-  methods: {
-    updateSetting() {
-      this.updateUsernumber(this.model);
-      this.banner = false;
-      // Model doesn't handle connectMe() anymore (it's in AppLayoutHeader.vue)
-      //call into Model here:
-      // const msg = this.connectMe({ username: this.model });
-      // console.log(msg);
+  computed: {
+    getAlertColor() {
+      const { reliability: relativeRisk } = this.riskScore;
+      if (relativeRisk < 25) return 'amber';
+      if (relativeRisk < 75) return 'orange';
+      return 'red';
+    },
+
+    alertMessage() {
+      const { score, reliability } = this.riskScore;
+      const msg = `A fellow visitor warns of possible COVID-19 exposure.
+       Self-reported risk value: ${score}. Relative Risk ${Math.round(
+        reliability,
+        0
+      )}% of total risk.
+      
+  For this reason, please get tested.
+  Quarantine and warn others, if necessary.`;
+      return msg;
     },
   },
+  data() {
+    return { ready: false,  };
+  },
+  methods: {},
   watch: {
     ready() {
-      console.log();
+      console.log(this.riskScore);
+    },
+    showBanner(n, o) {
+      console.log(n, o);
+    },
+    riskScore() {
+      console.log(
+        'RISK SCORE:',
+        this.riskScore,
+        Object.keys(this.riskScore).length
+      );
     },
   },
 

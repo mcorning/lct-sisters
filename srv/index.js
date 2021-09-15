@@ -212,7 +212,7 @@ io.on('connection', (socket) => {
     userID: userID,
     username: username,
   });
-      socket.emit('connected');
+  socket.emit('connected');
 
   // TODO restore
   // console.log(
@@ -264,21 +264,19 @@ io.on('connection', (socket) => {
   //  1) broadcasts message to all users (online only?) when a case of covid is found in the community
   //  2) redisGraph queries for anyone connected to the positive case (ignoring the immunity some might have)
   //  3) returns the number of possible exposures to positive case
-  socket.on('exposureWarning', async (data, ack) => {
-    const { score, reliability } = data;
-    const reason = `Warning Score: ${score} Reliability: ${reliability}`;
+  socket.on('exposureWarning', async (riskScore, ack) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
     // do all connected visitors handle this event? i find no alertPending event handlers
-    socket.broadcast.emit('alertPending', reason);
+    // socket.broadcast.emit('alertPending', riskScore);
 
     onExposureWarning(socket.userID)
       .then((exposed) => {
         exposed.forEach((userID) => {
           console.log(warn('Processing '), userID);
           findExposedVisitors(userID).then((userIDs) =>
-            alertOthers(socket, userIDs, reason, ack)
+            alertOthers(socket, userIDs, riskScore, ack)
           );
         });
       })
@@ -364,7 +362,7 @@ io.on('connection', (socket) => {
     const matchingSockets = await io.in(socket.userID).allSockets();
     const isDisconnected = matchingSockets.size === 0;
     if (isDisconnected) {
-      socket.emit('disconnected')
+      socket.emit('disconnected');
       // notify other users
       socket.broadcast.emit('user disconnected', socket.userID);
       // update the connection status of the session
@@ -397,7 +395,7 @@ io.on('connection', (socket) => {
       .then((matchingSockets) => {
         const isDisconnected = matchingSockets.size === 0;
         if (isDisconnected) {
-      socket.emit('disconnected');
+          socket.emit('disconnected');
 
           // notify other users
           socket.broadcast.emit('user disconnected', socket.userID);
@@ -431,24 +429,23 @@ io.on('connection', (socket) => {
 
 // alerts is an array of userIDs
 // const alertOthers = (socket, alerts, reason, ack) => {
-const alertOthers = (socket, alerts, reason) => {
+const alertOthers = (socket, alerts, riskScore) => {
   const msPerDay = 1000 * 60 * 60 * 24;
 
-  const sendExposureAlert = (to, msg) => {
+  const sendExposureAlert = (to, riskScore) => {
     console.log('Alerting:', to); // to is a userID (of the exposed visitor)
     socket.to(to).emit(
       'exposureAlert',
-      msg //,
+      riskScore //,
       // ack((socketID) => {
       //   console.log(success(socketID, 'confirms'));
       // })
     );
   };
 
-  const msg = `A fellow visitor warns, '${reason}.' For this reason, please get tested. Quarantine and warn others, if necessary.`;
   alerts.forEach((to) => {
     if (io.sockets.adapter.rooms.has(to)) {
-      sendExposureAlert(to, msg);
+      sendExposureAlert(to, riskScore);
       alertsCache.delete(to);
     } else {
       alertsCache.set(to, { cached: new Date() });

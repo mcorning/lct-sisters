@@ -97,9 +97,12 @@ export const timeMixin = {
           ok: (v) =>
             firstOrNone(v).match({
               Some: (v) => {
-                console.log('updateVisit().cata:', v);
+                console.log('updateVisit().cata:');
+                const query={...v}
+                console.log(query);
                 this.$router.push({
                   name: 'Time',
+                  params:query,
                 });
               },
               None: () => console.log(`NOOP`),

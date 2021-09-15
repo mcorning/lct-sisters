@@ -5,7 +5,6 @@
       v-if="!hasUnloggedVisits && snackbar"
       confirmationMessage="No unlogged Visits."
     />
-
     <v-dialog
       :value="hasUnloggedVisits && dialog"
       persistent
@@ -19,13 +18,13 @@
           server</v-card-subtitle
         >
         <v-card-text>
-          You have missed any <strong>LCT Exposure Alerts</strong> sent by
-          visitors to your unlogged public places. However, if you log these
-          visits now, anbody who shared space with you will get your alerts.
+          Log all your visits to the server now?
         </v-card-text>
         <v-card-actions>
           <v-btn @click="logVisitsX(logVisits)">Yes</v-btn>
-          <v-btn @click="dialog = false">No</v-btn>
+          <v-btn icon class="ml-4" @click="dialog = false">
+            <v-icon>close</v-icon>
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -48,95 +47,7 @@
         </v-row>
       </v-card-text>
       <v-divider />
-      <v-row no-gutters>
-        <v-col>
-          <v-menu
-            ref="menu"
-            v-model="menu"
-            :close-on-content-click="false"
-            :return-value.sync="state.settings.lastVaccinationDate"
-            transition="scale-transition"
-            offset-y
-            max-width="290px"
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                :value="state.settings.lastVaccinationDate | monthYear"
-                label="Vaccinated "
-                prepend-icon="event"
-                readonly
-                clearable
-                v-bind="attrs"
-                v-on="on"
-                @click:clear="deleteDate"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="lastVaccinationDate"
-              type="month"
-              no-title
-              scrollable
-            >
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.menu.save(state.settings.lastVaccinationDate)"
-                >OK</v-btn
-              >
-            </v-date-picker>
-          </v-menu></v-col
-        >
-        <v-col cols="auto">
-          <v-checkbox
-            v-model="wearsMask"
-            color="deep-purple accent-4"
-            label="Masks"
-            hide-details="auto"
-          ></v-checkbox
-        ></v-col>
-        <v-col>
-          <v-menu
-            ref="menu2"
-            v-model="menu2"
-            :close-on-content-click="false"
-            :return-value.sync="state.settings.lastFluShot"
-            transition="scale-transition"
-            offset-y
-            max-width="290px"
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                :value="state.settings.lastFluShot | monthYear"
-                label="Last flu shot "
-                prepend-icon="event"
-                readonly
-                clearable
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="lastFluShot"
-              type="month"
-              no-title
-              scrollable
-            >
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="menu2 = false">Cancel</v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.menu2.save(state.settings.lastFluShot)"
-                >OK</v-btn
-              >
-            </v-date-picker>
-          </v-menu></v-col
-        >
-      </v-row>
+
       <v-row no-gutters>
         <v-col>
           <v-row no-gutters>
@@ -147,7 +58,10 @@
               <v-list shaped>
                 <v-list-item-group v-model="warnings" multiple mandatory>
                   <template v-for="(option, i) in WarningOptions">
-                    <v-divider v-if="!option" :key="`divider-${i}`"></v-divider>
+                    <v-divider
+                      v-if="!option.text"
+                      :key="`divider-${i}`"
+                    ></v-divider>
 
                     <v-list-item
                       v-else
@@ -167,6 +81,7 @@
 
                         <v-list-item-action>
                           <v-checkbox
+                            v-if="option.text"
                             :input-value="active"
                             color="deep-purple accent-4"
                           ></v-checkbox>
@@ -192,7 +107,7 @@
                   v-model="pctWeight"
                   :color="getWarningColor"
                   height="25"
-                  >Reliability: &nbsp;
+                  >Relative Risk: &nbsp;
                   <strong>{{ Math.round(pctWeight) }}%</strong>
                 </v-progress-linear></v-card-text
               >
@@ -200,14 +115,74 @@
           </v-row>
         </v-col>
       </v-row>
-
+      <v-row no-gutters>
+        <v-col>
+          <v-menu
+            ref="menu"
+            v-model="menu"
+            :close-on-content-click="false"
+            :return-value.sync="lastVaccinationDate"
+            transition="scale-transition"
+            offset-y
+            max-width="290px"
+            min-width="290px"
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-text-field
+                :value="lastVaccinationDate | monthYear"
+                label="Vaccinated "
+                prepend-icon="event"
+                readonly
+                clearable
+                v-bind="attrs"
+                v-on="on"
+                @click:clear="deleteDate"
+              ></v-text-field>
+            </template>
+            <v-date-picker
+              v-model="lastVaccinationDate"
+              type="month"
+              no-title
+              scrollable
+            >
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
+              <v-btn
+                text
+                color="primary"
+                @click="$refs.menu.save(lastVaccinationDate)"
+                >OK</v-btn
+              >
+            </v-date-picker>
+          </v-menu></v-col
+        >
+        <v-col cols="auto">
+          <v-checkbox
+            v-model="wearsMask"
+            color="deep-purple accent-4"
+            label="Wears Mask?"
+            hide-details="auto"
+          ></v-checkbox
+        ></v-col>
+        <v-col cols="auto">
+          <v-checkbox
+            v-model="recentFluShot"
+            color="deep-purple accent-4"
+            label="Recent FluShot?"
+            hide-details="auto"
+          ></v-checkbox
+        ></v-col>
+      </v-row>
       <v-divider />
-      <v-card-title class="justify-end pb-0 pt-1">Send warning?</v-card-title>
+      <v-card-title class="justify-center pb-0 pt-1"
+        >Send warning?</v-card-title
+      >
 
       <v-card-actions>
         <v-spacer />
         <v-btn color="red darken-2" text @click="warnThem(state)">Yes</v-btn>
         <v-btn color="green darken-2" text @click="returnToSpaces">No</v-btn>
+        <v-spacer />
       </v-card-actions>
     </v-card>
 
@@ -261,6 +236,8 @@
 import { formatTime } from '../utils/luxonHelpers';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 
+// import tooltip from './misc/tooltip.vue';
+
 export default {
   name: 'Warning',
   props: {
@@ -274,6 +251,8 @@ export default {
   },
   components: {
     ConfirmationSnackbar,
+
+    // tooltip,
   },
 
   computed: {
@@ -288,14 +267,14 @@ export default {
     },
 
     totalWeight() {
-      return this.WarningOptions.reduce((a, c) => {
+      return this.WarningOptions.filter((v) => v.weight).reduce((a, c) => {
         return a + c.weight;
       }, 0);
     },
 
     weight() {
       return this.warnings.reduce((a, c) => {
-        return a + c.weight;
+        return a + c.weight || 0;
       }, 0);
     },
 
@@ -327,7 +306,7 @@ export default {
         case 6:
         case 7:
           msg = `Showing COVID symptoms is strong evidence of infection, ${
-            this.lastFluShot
+            this.recentFluShot
               ? 'especially since your recent flu shot'
               : 'unless the same symptoms come from a different disease like the flu'
           }.`;
@@ -370,7 +349,7 @@ export default {
           break;
         case 16:
           msg = `You are more likely to have COVID if you test positive AND show symptoms. <br/>${
-            this.lastFluShot
+            this.recentFluShot
               ? 'Since you had a flu shot recently, your symptoms are less likely from the flu and more likely from COVID'
               : 'However, without a recent flu shot, your symptoms might not be due to COVID (especially if the COVID test had a high False Positive rate)'
           }.`;
@@ -408,7 +387,6 @@ export default {
 
   data() {
     return {
-      lastFluShot: null,
       lastVaccinationDate: null,
       isDebugging: true,
       ready: false,
@@ -423,10 +401,9 @@ export default {
       dense: false,
       justifyItems: ['start', 'center', 'end', 'space-around', 'space-between'],
       justify: 'center',
-
+      recentFluShot: true,
       wearsMask: true,
       epsilon: 0,
-      // lastFluShot: null,
       // lastVaccinationDate: null,
       menu: false,
       menu2: false,
@@ -434,34 +411,43 @@ export default {
       warnings: [],
       WarningOptions: [
         {
-          icon: 'mdi-alert',
+          icon: 'mdi-biohazard',
           text: 'I tested positive for COVID-19',
           weight: 10,
+          type: 'primary',
         },
         {
-          icon: 'mdi-medical-bag',
+          icon: 'mdi-biohazard',
           text: 'I present COVID symptoms',
+          type: 'primary',
           weight: 6,
         },
+        { text: '' },
         {
-          icon: 'mdi-account-group',
+          icon: 'mdi-medical-bag',
           text: 'I was near a COVID carrier',
+          type: 'secondary',
           weight: 3,
         },
 
         {
-          icon: 'mdi-account-alert',
+          icon: 'mdi-medical-bag',
           text: 'LCT warned me of exposure',
+          type: 'secondary',
           weight: 2,
         },
       ],
     };
   },
+
   methods: {
     logVisitsX(logVisits) {
       this.dialog = false;
-      this.confirmationMessage = logVisits();
-      this.confSnackbar = true;
+      const vm = this;
+      this.confirmationMessage = logVisits().then((results) => {
+        vm.confirmationMessage = results;
+        vm.confSnackbar = true;
+      });
     },
 
     checkModel(hasUnloggedVisits) {
@@ -489,8 +475,11 @@ export default {
     },
 
     warnThem(state) {
-      console.log(state.lastVaccinationDate || 'no vaccination date', state.lastFluShot||'no flu shot date');
-      // updateState({lastVaccinationDate:this.lastVaccinationDate, lastFluShot:this.lastFluShot})
+      console.log(
+        state.lastVaccinationDate || 'no vaccination date',
+        state.recentFluShot || 'no flu shot date'
+      );
+      // updateState({lastVaccinationDate:this.lastVaccinationDate, recentFluShot:this.recentFluShot})
 
       this.dialog = true;
       console.log(this.score, this.pctWeight);

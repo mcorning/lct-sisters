@@ -470,7 +470,7 @@ export default {
     ready() {
       console.log('Map component ready');
       if (this.$route.query.place_id) {
-        console.log('Detected a shared event');
+        console.log('Detected a shared event:',this.$route.query.place_id);
         // in space.js
         this.onSharePlace();
       }

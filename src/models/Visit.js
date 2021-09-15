@@ -29,6 +29,8 @@ export default class Visit extends Model {
       // From the graph component
       loggedVisitId: this.string(''), // ID of the graph Visit relationship
       graphName: this.string(''), // graphname may be 'Sand box' for users' playground
+
+      shared:this.boolean(false) // set true when someone shares an event
     };
   }
 

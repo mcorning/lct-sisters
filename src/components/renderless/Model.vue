@@ -125,11 +125,13 @@ export default {
 
     // called when there are unlogged visits
     logVisits() {
-      const x = this.unloggedVisits.length;
-      this.unloggedVisits.forEach((visit) => {
-        this.onLogVisit(visit);
+      return new Promise((resolve) => {
+        const x = this.unloggedVisits.length;
+        this.unloggedVisits.forEach((visit) => {
+          this.onLogVisit(visit);
+        });
+        resolve(`Logged ${x} visits.`);
       });
-      return `Logged ${x} visits.`;
     },
 
     // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable

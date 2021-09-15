@@ -51,13 +51,11 @@ export default {
   },
   computed: {
     status() {
-      return `${this.usernumber || 'You'} ${this.connectionStatus} [${
-        this.$socket.connected
-      } ]`;
+      return `${this.usernumber || 'You'} ${this.connectionStatus}`;
     },
     connectionStatus() {
-      return this.inSession
-        ? `in session with ${this.inSession} `
+      return this.$socket.connected
+        ? `in session with ${this.$socket.client.userID} `
         : 'are not yet connected to server';
     },
   },

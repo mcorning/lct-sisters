@@ -202,6 +202,24 @@
         </v-btn>
       </template>
     </v-snackbar>
+
+    <v-snackbar
+      v-model="snackbarPrompt"
+      centered
+      vertical
+      height="100px"
+      color="primary"
+    >
+      {{ prompt }}
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click.stop="updateSharedVisit">
+          <v-icon>check</v-icon>
+        </v-btn>
+        <v-btn icon class="ml-4" @click="snackbarPrompt = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -365,6 +383,9 @@ export default {
       snackbar: false,
       confirmationColor: 'success',
       confirmationMessage: '',
+
+      snackbarPrompt: false,
+      prompt: '',
     };
   },
 
@@ -534,20 +555,18 @@ export default {
       this.selectedEvent.end = this.changeTimeStamp(end);
       this.selectedEvent.date = start.date;
     },
-    logSharedVisit() {
-      // TODO
-      // this is an advanced use of router (researching now).
-      // so this guard will fail because GoogleMaps sees the querystring
-      // but that string gets lost when GoogleMaps pushes the Time path
-      if (this.$route.query.name) {
-        const { name, date } = this.$route.query;
-        const msg = `Log shared event (${name} on ${date})?`;
-        const ok = prompt(msg);
-        if (ok) {
-          this.selectedEvent = this.$route.query;
-          this.update('graph');
-        }
-        console.log(ok);
+
+    updateSharedVisit() {
+      this.selectedEvent = this.$route.params;
+      this.update('graph');
+      this.snackbarPrompt = false;
+    },
+
+    logSharedVisit(query) {
+      if (query && query.shared) {
+        const { name, date } = query;
+        this.prompt = `Log shared event (${name} on ${date})?`;
+        this.snackbarPrompt = true;
       }
     },
   },
@@ -580,7 +599,7 @@ export default {
     this.configureCalendar();
     this.updateTime();
     // log a shared visit (if data was in the route querystring)
-    this.logSharedVisit();
+    this.logSharedVisit(this.$route.params);
   },
 };
 </script>
