@@ -2,6 +2,7 @@
 
 const RedisGraph = require('redisgraph.js').Graph;
 require('./src/fp/monads/EitherAsync');
+require('either-async');
 
 //#region Setup
 const {

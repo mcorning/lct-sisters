@@ -1,7 +1,9 @@
 // import { highlight, success, printJson } from '@/utils/helpers';
 import Visit from '@/models/Visit';
 
-import '@/fp/monads/EitherAsync';
+// import '@/fp/monads/EitherAsync';
+import 'either-async';
+
 import { allOrNone, firstOrNone } from '@/fp/utils';
 
 export const timeMixin = {

@@ -1,6 +1,7 @@
 // import { highlight, success, printJson } from '@/utils/helpers';
 import Setting from '@/models/Setting';
-import '@/fp/monads/EitherAsync';
+// import '@/fp/monads/EitherAsync';
+import 'either-async';
 import { firstOrNone } from '@/fp/utils';
 
 export const warningMixin = {

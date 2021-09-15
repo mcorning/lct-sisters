@@ -15,7 +15,8 @@
  */
 
 //#region Setup
-require('../src/fp/monads/EitherAsync');
+// require('../src/fp/monads/EitherAsync');
+require('either-async');
 
 const path = require('path');
 const express = require('express');

@@ -2,7 +2,9 @@
 
 import { Model } from '@vuex-orm/core';
 import { DateTime } from '../utils/luxonHelpers';
-import '@/fp/monads/EitherAsync';
+// import '@/fp/monads/EitherAsync';
+import 'either-async';
+
 import { allOrNone } from '@/fp/utils';
 console.log('Loading Appointment entity');
 

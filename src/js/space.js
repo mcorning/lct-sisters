@@ -1,5 +1,6 @@
 import Place from '@/models/Place';
-import '@/fp/monads/EitherAsync';
+// import '@/fp/monads/EitherAsync';
+import 'either-async';
 
 import { roundTime } from '@/utils/helpers';
 import { DateTime, getNow } from '@/utils/luxonHelpers';
