@@ -8,13 +8,24 @@ const {
   columns,
 } = require('../../src/utils/helpers.js');
 
-const cacheOptions = require('./redisCache.options.js');
-const options = {
-  host: cacheOptions.redisCacheHost,
-  port: cacheOptions.redisCachePort,
-  password: cacheOptions.redisCachePassword,
-};
+let options;
 
+if (process.env.NODE_ENV === 'production') {
+  console.log('Dereferencing process.env');
+  options = {
+    host: process.env.REDIS_CACHE_HOST,
+    port: process.env.REDIS_CACHE_PORT,
+    password: process.env.REDIS_CACHE_PASSWORD,
+  };
+} else {
+  console.log('Dereferencing redisConfig.js');
+  const cacheOptions = require('./redisCache.options.js');
+  options = {
+    host: cacheOptions.redisCacheHost,
+    port: cacheOptions.redisCachePort,
+    password: cacheOptions.redisCachePassword,
+  };
+}
 const Rejson = require('iorejson');
 
 Rejson.defaultOptions = options;
