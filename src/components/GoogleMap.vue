@@ -129,7 +129,7 @@ export default {
       timeout: 10000,
       selectedMarker: null,
       ready: false,
-      defaultZoom: 15,
+      defaultZoom: 16,
     };
   },
 
@@ -321,26 +321,30 @@ export default {
 
       const showCity = (city) => {
         const { location, viewport } = city;
-        map.setCenter(JSON.parse(location));
-        map.fitBounds(JSON.parse(viewport));
-        map.setZoom(this.defaultZoom);
+        console.log('showCity():', location, viewport);
+        if (location) {
+          map.setCenter(JSON.parse(location));
+          map.fitBounds(JSON.parse(viewport));
+          map.setZoom(this.defaultZoom);
+          return;
+        }
+
+        geocoder
+          .geocode({ address: city.namespace })
+          .toEither()
+          .map(({ results }) => {
+            map.setCenter(results[0].geometry.location);
+            map.fitBounds(results[0].geometry.viewport);
+            map.setZoom(this.defaultZoom);
+          })
+          .cata({
+            ok: (map) => map,
+            error: (results) => {
+              console.log(results, 'Issues in setupGeocoder()');
+            },
+          });
       };
-      // const showCityX = (city) => {
-      //   geocoder
-      //     .geocode({ address: city })
-      //     .toEither()
-      //     .map(({ results }) => {
-      //       map.setCenter(results[0].geometry.location);
-      //       map.fitBounds(results[0].geometry.viewport);
-      //       map.setZoom(this.defaultZoom);
-      //     })
-      //     .cata({
-      //       ok: (map) => map,
-      //       error: (results) => {
-      //         console.log(results, 'Issues in setupGeocoder()');
-      //       },
-      //     });
-      // };
+
       const showPosition = (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
