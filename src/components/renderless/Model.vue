@@ -194,6 +194,18 @@ export default {
       return newName;
     },
 
+    setPoi(namespace, location, viewport) {
+      this.updateSetting({ id: 1, namespace, location, viewport });
+      this.updateState({ settings: { namespace, location, viewport } });
+    },
+    getPoi() {
+      return {
+        namespace: this.state.settings.namespace,
+        location: this.state.settings.location,
+        viewport: this.state.settings.viewport,
+      };
+    },
+
     updateState(newState) {
       // Copy all properties from newState on to
       // this.state, overriding anything on this.state
@@ -357,6 +369,8 @@ export default {
       onMakeAppointment: this.onMakeAppointment,
       onShareGathering: this.onShareGathering,
       onDeletePlace: this.onDeletePlace,
+      setPoi: this.setPoi,
+      getPoi: this.getPoi,
 
       // Time assets
       changeEvent: this.changeEvent,

@@ -1,5 +1,9 @@
 <template>
   <v-footer app color="primary" class="white--text">
+    <!-- status bar -->
+    <div class="center mx-0 my-0">{{ status }}</div>
+
+    <!-- View buttons -->
     <v-bottom-navigation color="secondary" background-color="primary" dark grow>
       <v-btn @click="open('Space')">
         <span>Space</span>
@@ -22,7 +26,14 @@
 export default {
   name: 'AppLayoutFooter',
   components: {},
-  computed: {},
+  computed: {
+    status() {
+      const phrase = this.$socket.client.userID
+        ? `You (${'...' + this.$socket.client.userID.slice(12)}) are `
+        : 'You are';
+      return `${phrase} ${this.$socket.connected ? 'connected' : 'offline'}`;
+    },
+  },
   methods: {
     // TODO NOTE: an alternative design uses Model here and passes data and functions to props.
     // At this writing, we have Space and Time vue files that wrap the map and calendars in their own Model reference
@@ -43,6 +54,12 @@ export default {
 </script>
 
 <style scoped>
+.center {
+  width: 100%;
+  font-size: 0.7em;
+  text-align: center;
+}
+
 #nav {
   padding: 30px;
 }

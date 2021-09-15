@@ -63,6 +63,8 @@ export default {
     onMarkerClicked: Function,
     onDeletePlace: Function,
     query: Object,
+    setPoi: Function,
+    getPoi: Function,
   },
   components: {
     InfoWindowCard,
@@ -128,7 +130,6 @@ export default {
       selectedMarker: null,
       ready: false,
       defaultZoom: 15,
-      defaultPoi: 'Sisters City Hall',
     };
   },
 
@@ -318,6 +319,61 @@ export default {
         });
       });
 
+      const showCity = (city) => {
+        const { location, viewport } = city;
+        map.setCenter(JSON.parse(location));
+        map.fitBounds(JSON.parse(viewport));
+        map.setZoom(this.defaultZoom);
+      };
+      // const showCityX = (city) => {
+      //   geocoder
+      //     .geocode({ address: city })
+      //     .toEither()
+      //     .map(({ results }) => {
+      //       map.setCenter(results[0].geometry.location);
+      //       map.fitBounds(results[0].geometry.viewport);
+      //       map.setZoom(this.defaultZoom);
+      //     })
+      //     .cata({
+      //       ok: (map) => map,
+      //       error: (results) => {
+      //         console.log(results, 'Issues in setupGeocoder()');
+      //       },
+      //     });
+      // };
+      const showPosition = (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        geocoder
+          .geocode({ location: { lat, lng } })
+          .toEither()
+          .map(({ results }) => {
+            geocoder
+              .geocode({
+                address:
+                  results[0].address_components[2].short_name +
+                  ',' +
+                  results[0].address_components[4].short_name,
+              })
+              .then((city) => {
+                map.setCenter(city.results[0].geometry.location);
+                map.fitBounds(city.results[0].geometry.viewport);
+                map.setZoom(this.defaultZoom);
+                this.setPoi(
+                  results[0].address_components[2].short_name,
+                  JSON.stringify(city.results[0].geometry.location),
+                  JSON.stringify(city.results[0].geometry.viewport)
+                );
+              });
+          })
+          .cata({
+            ok: (map) => map,
+            error: (results) => {
+              console.log(results, 'Issues in setupGeocoder()');
+            },
+          });
+      };
+
       const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
         this.info = markedPlace;
         infowindow.open(map, marker);
@@ -426,21 +482,15 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
-      const showMap = ({ map, geocoder }) => {
-        geocoder
-          .geocode({ address: this.defaultPoi })
-          .toEither()
-          .map(({ results }) => {
-            map.setCenter(results[0].geometry.location);
-            map.fitBounds(results[0].geometry.viewport);
-            map.setZoom(this.defaultZoom);
-          })
-          .cata({
-            ok: (map) => map,
-            error: (results) => {
-              console.log(results, 'Issues in setupGeocoder()');
-            },
-          });
+      const showMap = () => {
+        const defaultPoi = this.getPoi();
+        if (defaultPoi) {
+          showCity(defaultPoi);
+        } else if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+          alert('Geolocation is not supported by this browser.');
+        }
       };
 
       // last steps in bootstrap
@@ -470,7 +520,7 @@ export default {
     ready() {
       console.log('Map component ready');
       if (this.$route.query.place_id) {
-        console.log('Detected a shared event:',this.$route.query.place_id);
+        console.log('Detected a shared event:', this.$route.query.place_id);
         // in space.js
         this.onSharePlace();
       }

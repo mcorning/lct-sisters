@@ -53,7 +53,6 @@ export default {
   data() {
     return {
       userID: 'mpc',
-      namespace: 'Sisters',
 
       snackBtnText: '',
       snackWithButtons: false,
@@ -112,8 +111,6 @@ export default {
 
   created() {
     console.time('Created PWA:');
-
-    console.log('Namespace', process.env.VUE_APP_NAMESPACE);
 
     //#region PWA
     // Listen for swUpdated event and display refresh snackbar as required.

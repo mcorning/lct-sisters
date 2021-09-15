@@ -52,7 +52,10 @@
             <v-icon> mdi-graphql </v-icon>
           </v-btn>
         </template>
-        <span>Current default graph: {{ getGraphName() }}</span>
+        <span
+          >During acceptance testing default graph is fixed:
+          {{ getGraphName() }}</span
+        >
       </v-tooltip>
     </v-toolbar>
 
@@ -401,7 +404,9 @@ export default {
     },
 
     changeGraph() {
-      this.selectedGraph = this.changeGraphName();
+      // TODO reset changeGraph() before we ship
+      //NOOP during acceptance testing
+      //this.changeGraphName();
     },
 
     delete(target, graph) {

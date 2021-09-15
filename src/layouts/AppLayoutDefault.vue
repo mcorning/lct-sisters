@@ -3,7 +3,14 @@
     <!-- the header disappears if the slot-scope is inside AppLayoutHeadr -->
     <!-- can we move slot-scope object values up to AppLayout.vue? -->
     <div
-      slot-scope="{ isConnected, state, updateLoggedVisitId, updateSession }"
+      slot-scope="{
+        isConnected,
+        state,
+        updateLoggedVisitId,
+        updateSession,
+        usernumber,
+        getPoi,
+      }"
     >
       <AppLayoutHeader
         :namespace="namespace"
@@ -11,16 +18,18 @@
         :state="state"
         :updateLoggedVisitId="updateLoggedVisitId"
         :updateSession="updateSession"
+        :usernumber="usernumber"
+        :getPoi="getPoi"
       />
       <CaptureErrorSnackbar>
         <slot />
 
         <!-- status bar -->
-        <v-row no-gutters justify="space-around"
+        <!-- <v-row no-gutters justify="space-around"
           ><v-spacer /><v-col cols="auto" class="text-center"
             ><small class="mt-5 mb-0 ml-3 ">{{ status }}</small></v-col
           ><v-spacer
-        /></v-row>
+        /></v-row> -->
       </CaptureErrorSnackbar>
 
       <AppLayoutFooter /></div
@@ -48,6 +57,7 @@ export default {
       required: true,
     },
     isConnected: Boolean,
+    getPoi: Function,
   },
   computed: {
     status() {

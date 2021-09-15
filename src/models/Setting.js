@@ -28,6 +28,9 @@ export default class Setting extends Model {
       lastFluShot: this.string(),
 
       preferredGraph: this.string(this.$defaultGraphName),
+      namespace: this.string(),
+      location: this.string(),
+      viewport: this.string(),
     };
   }
 

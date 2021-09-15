@@ -30,17 +30,21 @@ import PromptBanner from '../components/prompts/promptBanner.vue';
 export default {
   name: 'AppLayoutHeader',
   props: {
-    namespace: String,
     state: Object,
     updateSession: Function,
     updateLoggedVisitId: Function,
     isConnected: Boolean,
+    getPoi: Function,
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
     PromptBanner,
   },
   computed: {
+    namespace() {
+      return this.getPoi().namespace;
+    },
+
     fileMenuItems() {
       const x = [
         { isDivider: true },

@@ -47,7 +47,8 @@ Vue.use(VueSocketIOExt, socket);
 import { version } from '../package.json';
 Vue.prototype.$version = version;
 Vue.prototype.$namespace = process.env.VUE_APP_NAMESPACE;
-Vue.prototype.$defaultGraphName = process.env.VUE_APP_NAMESPACE;
+// TODO work on default graph after acceptance testing
+Vue.prototype.$defaultGraphName = 'sandbox'; // process.env.VUE_APP_NAMESPACE;
 Vue.prototype.$DEBUG = false;
 
 Vue.config.productionTip = false;

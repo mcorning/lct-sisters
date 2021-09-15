@@ -11,6 +11,8 @@
         onSharePlace,
         onShareGathering,
         onDeletePlace,
+        setPoi,
+        getPoi,
       }"
     >
       <Spaces
@@ -23,6 +25,8 @@
         :onMarkerAdded="onMarkerAdded"
         :onMarkerClicked="onMarkerClicked"
         :onDeletePlace="onDeletePlace"
+        :setPoi="setPoi"
+        :getPoi="getPoi"
       />
     </div>
   </Model>
