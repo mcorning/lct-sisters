@@ -1,5 +1,6 @@
 // https://app.redislabs.com/#/bdb/tabs/conf/10283899
 // lctgraph
+// removing from repo
 
 module.exports = {
   graphName: process.env.NODE_ENV == 'production' ? 'Sisters' : 'Sandbox',
