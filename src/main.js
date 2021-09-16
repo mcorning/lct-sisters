@@ -27,11 +27,7 @@ import App from './App.vue';
 //   },
 // });
 
-console.log(
-  process.env.VUE_APP_NAMESPACE,
-  process.env.VUE_APP_LAT,
-  process.env.VUE_APP_LNG
-);
+console.log(process.env.VUE_APP_LAT, process.env.VUE_APP_LNG);
 
 // Socket.io
 import io from 'socket.io-client';
@@ -46,9 +42,10 @@ Vue.use(VueSocketIOExt, socket);
 
 import { version } from '../package.json';
 Vue.prototype.$version = version;
-Vue.prototype.$namespace = process.env.VUE_APP_NAMESPACE;
+// 9.16 opting out of global namespace in favor of dynamic namespace based on Map component
+// Vue.prototype.$namespace = process.env.VUE_APP_NAMESPACE;
 // TODO work on default graph after acceptance testing
-Vue.prototype.$defaultGraphName = 'sandbox'; // process.env.VUE_APP_NAMESPACE;
+Vue.prototype.$defaultGraphName = 'Sandbox'; // process.env.VUE_APP_NAMESPACE;
 Vue.prototype.$DEBUG = false;
 
 Vue.config.productionTip = false;
