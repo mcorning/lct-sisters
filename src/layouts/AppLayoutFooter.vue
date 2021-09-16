@@ -28,8 +28,8 @@ export default {
   components: {},
   computed: {
     status() {
-      const phrase = this.$socket.client.userID
-        ? `You (${'...' + this.$socket.client.userID.slice(12)}) are `
+      const phrase = this.$socket.connected
+        ? `You (${'...' + this.$socket.client.auth.userID.slice(12)}) are `
         : 'You are';
       return `${phrase} ${this.$socket.connected ? 'connected' : 'offline'}`;
     },

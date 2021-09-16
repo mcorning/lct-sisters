@@ -26,7 +26,7 @@ const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
 const {
   printJson,
-  err,
+  // err,
   warn,
   highlight,
   info,
@@ -83,88 +83,88 @@ const server = express()
   });
 const io = socketIO(server);
 
-function report(sessionID, userID, username) {
-  console.log(info('2) Middleware handling socket:'));
-  console.log(
-    info(
-      'sessionID:',
-      sessionID || 'No stored session',
-      '\t',
-      'userID:',
-      userID || 'No userID',
-      '\t',
-      'username:',
-      username || 'No username'
-    )
-  );
-}
+// function report(sessionID, userID, username) {
+//   console.log(info('2) Middleware handling socket:'));
+//   console.log(
+//     info(
+//       'sessionID:',
+//       sessionID || 'No stored session',
+//       '\t',
+//       'userID:',
+//       userID || 'No userID',
+//       '\t',
+//       'username:',
+//       username || 'No username'
+//     )
+//   );
+// }
 //#endregion
 
-function getSession(data) {
-  const { sessionID, socket, session, next } = data;
-  console.groupCollapsed(info('3) getSession(): data:', sessionID));
-  if (!session) {
-    // so we can create a session
-    console.log('\t Going to create a session now...');
-    console.groupEnd;
-    //return;
-    next();
-  }
+// function getSession(data) {
+//   const { sessionID, socket, session, next } = data;
+//   console.groupCollapsed(info('3) getSession(): data:', sessionID));
+//   if (!session) {
+//     // so we can create a session
+//     console.log('\t Going to create a session now...');
+//     console.groupEnd;
+//     //return;
+//     next();
+//   }
 
-  const { userID, username } = session;
+//   const { userID, username } = session;
 
-  // TODO what if this isn't true?
-  if (session && userID && sessionID) {
-    console.log(getNow());
-    console.log(info(`4) Handshake: Known party: ${username}`));
-    // if we have seen this session before, ensure the client uses the same
-    // userID and username used in the last session
-    console.log(info(printJson(session)));
-    console.groupEnd;
+//   // TODO what if this isn't true?
+//   if (session && userID && sessionID) {
+//     console.log(getNow());
+//     console.log(info(`4) Handshake: Known party: ${username}`));
+//     // if we have seen this session before, ensure the client uses the same
+//     // userID and username used in the last session
+//     console.log(info(printJson(session)));
+//     console.groupEnd;
 
-    socket.sessionID = sessionID;
-    socket.userID = userID;
-    socket.username = username;
+//     socket.sessionID = sessionID;
+//     socket.userID = userID;
+//     socket.username = username;
 
-    console.log(
-      success(`5) LEAVING io.use() with  ${sessionID}'s session data.`)
-    );
-    return;
-  }
-}
+//     console.log(
+//       success(`5) LEAVING io.use() with  ${sessionID}'s session data.`)
+//     );
+//     return;
+//   }
+// }
 
-function createSession(data) {
-  // otherwise, setup the new user...
-  const { socket, next, username } = data;
-  const { sessionID, userID } = socket.handshake.auth;
-  console.groupCollapsed(
-    '4) createSession(): username/auth',
-    data.unsername,
-    printJson(socket.handshake.auth)
-  );
+// function createSession(data) {
+//   // otherwise, setup the new user...
+//   const { socket, next, username } = data;
+//   const { sessionID, userID } = socket.handshake.auth;
+//   console.groupCollapsed(
+//     '4) createSession(): username/auth',
+//     data.unsername,
+//     printJson(socket.handshake.auth)
+//   );
 
-  // do we need to create a new session?
-  if ((socket.sessionID || sessionID) && (socket.userID || userID)) {
-    // not if we have IDs
-    console.groupEnd;
-    return next();
-  }
+//   // do we need to create a new session?
+//   if ((socket.sessionID || sessionID) && (socket.userID || userID)) {
+//     // not if we have IDs
+//     console.groupEnd;
+//     return next();
+//   }
 
-  console.log('\n', info(new Date().toLocaleString()));
-  console.log(warn('5) Handshake: Unknown party'));
-  console.log(warn(`\tAssigning new sessionID and userID for ${username}`));
+//   console.log('\n', info(new Date().toLocaleString()));
+//   console.log(warn('5) Handshake: Unknown party'));
+//   console.log(warn(`\tAssigning new sessionID and userID for ${username}`));
 
-  //...with a userID, and a sessionID
-  socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
-  socket.userID = randomId();
-  socket.username = username; // username is fixed by client
+//   //...with a userID, and a sessionID
+//   socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
+//   socket.userID = randomId();
+//   socket.username = username; // username is fixed by client
 
-  console.log(success('Leaving io.use()'));
-  // handle the connection where we cache and return the session data to client for local storage.
-  console.groupEnd;
+//   console.log(success('Leaving io.use()'));
+//   // handle the connection where we cache and return the session data to client for local storage.
+//   console.groupEnd;
 
-  return next();
-}
+//   return next();
+// }
 
 // io.use((socket, next) => {
 //   console.log('1) Entering getSession middleware');
@@ -237,7 +237,7 @@ io.on('connection', (socket) => {
   //#region Handling socket connection
   console.log(success('Client connected on socket ', socketID));
   const session = {
-    newUserID,
+    userID: newUserID,
     username,
     lastInteraction: new Date().toLocaleString(),
     connected: true,
@@ -307,8 +307,8 @@ io.on('connection', (socket) => {
 
     // do all connected visitors handle this event? i find no alertPending event handlers
     // socket.broadcast.emit('alertPending', riskScore);
-
-    onExposureWarning(socket.userID)
+    const userID = socket.handshake.auth.userID;
+    onExposureWarning(userID)
       .then((exposed) => {
         exposed.forEach((userID) => {
           console.log(warn('Processing '), userID);
@@ -336,7 +336,7 @@ io.on('connection', (socket) => {
     function handleAck(results) {
       if (ack) {
         const x = results || 'no results';
-        console.log(highlight('acknowledging client', x));
+        console.log(highlight('acknowledging client', printJson(x)));
         ack(results);
         return;
       }
@@ -417,7 +417,7 @@ io.on('connection', (socket) => {
             console.log(getNow());
             console.log(
               warn(
-                `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
+                `There are ${online.length} online sessions after disconnecting ${socket.id}:`
               )
             );
             console.log(printJson(online));
@@ -453,7 +453,7 @@ io.on('connection', (socket) => {
 
                 console.log(
                   warn(
-                    `There are ${online.length} online sessions after disconnecting ${socket.sessionID}:`
+                    `There are ${online.length} online sessions after disconnecting ${socket.id}:`
                   )
                 );
                 console.log(printJson(online));

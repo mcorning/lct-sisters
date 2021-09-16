@@ -161,6 +161,7 @@ function findExposedVisitors(userID, subject = false) {
 
 // find any visitor who's start time is between the carrier's start and end times
 function onExposureWarning(userID) {
+  console.log('Searching graph with', userID);
   console.log(info('Current graph name:', currentGraphName));
 
   const getQuery = (userID) => {

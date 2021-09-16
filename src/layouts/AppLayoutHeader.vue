@@ -191,7 +191,7 @@ export default {
       );
 
       // attach the userID to the client object for easy reference on server
-      this.$socket.client.userID = userID;
+      this.$socket.client.auth.userID = userID;
 
       console.group(info('Step 2:Handling Session event from Server: >'));
       console.log(success('Session ID', sessionID));

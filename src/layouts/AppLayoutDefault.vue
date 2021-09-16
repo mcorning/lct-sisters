@@ -65,7 +65,7 @@ export default {
     },
     connectionStatus() {
       return this.$socket.connected
-        ? `in session with ${this.$socket.client.userID} `
+        ? `in session with ${this.$socket.client.auth.userID} `
         : 'are not yet connected to server';
     },
   },

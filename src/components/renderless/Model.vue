@@ -160,7 +160,7 @@ export default {
         start: start,
         end: end,
         graphName: this.getGraphName(),
-        userID: this.$socket.client.userID,
+        userID: this.$socket.client.auth.userID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
       this.emitFromClient('logVisit', query, redisGraphCallback);

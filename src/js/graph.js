@@ -17,7 +17,7 @@ export const graphMixin = {
       } = visit;
       const query = {
         username: this.username,
-        userID: this.$socket.client.userID,
+        userID: this.$socket.client.auth.userID,
         selectedSpace: name,
         start: start,
         end: end,
