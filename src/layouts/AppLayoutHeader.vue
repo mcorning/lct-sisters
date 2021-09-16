@@ -228,6 +228,7 @@ export default {
       // this.updateSetting(data);
 
       this.$socket.client.auth = {
+        username:usernumber,
         usernumber,
         userID,
         sessionID,

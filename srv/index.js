@@ -104,6 +104,7 @@ function report(sessionID, userID, username) {
 function getSession(data) {
   console.log(data);
   const { sessionID, socket, session } = data;
+  console.log(session ? session : 'getSession(): No cached session ');
   if (!session) {
     // so we can create a session
     return;
@@ -135,6 +136,11 @@ function createSession(data) {
   // otherwise, setup the new user...
   const { socket, next, username } = data;
   const { sessionID, userID } = socket.handshake.auth;
+  console.log(
+    'createSession(): username/auth',
+    data.unsername,
+    printJson(socket.handshake.auth)
+  );
 
   // do we need to create a new session
   if ((socket.sessionID || sessionID) && (socket.userID || userID)) {
@@ -158,8 +164,9 @@ function createSession(data) {
 }
 
 io.use((socket, next) => {
-  console.log(socket.handshake.auth);
-  const { sessionID, userID, usernumber: username } = socket.handshake.auth;
+  console.log('io.use(): auth:',socket.handshake.auth);
+  const { sessionID, userID, username } = socket.handshake.auth;
+  console.assert(username, 'Expected a username (or usernumber). Got null.');
   // if first connection, prompt client for a username
   if (!username) {
     return next(new Error('No username'));

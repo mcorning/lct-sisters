@@ -1,4 +1,4 @@
-import { Some, None, Maybe } from './monads/Maybe.js';
+import { Some, None } from './monads/Maybe.js';
 import { info, printJson } from '../utils/helpers';
 
 export const firstOrNone = function(array) {
@@ -137,9 +137,9 @@ export const testPlace = {
   utc_offset_minutes: -420,
 };
 
-const filter = curry((f, xs) => xs.filter(f));
+// const filter = curry((f, xs) => xs.filter(f));
 
-const map = curry((f, xs) => xs.map(f));
+// const map = curry((f, xs) => xs.map(f));
 // const y = this.compose(this.test2, this.test1);
 // console.log(y(1));
 // console.log(this.match(/r/g, 'hello world'));
