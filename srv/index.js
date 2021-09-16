@@ -102,11 +102,14 @@ function report(sessionID, userID, username) {
 //#endregion
 
 function getSession(data) {
-  console.log(data);
+  console.log(('getSession(): data:', data));
   const { sessionID, socket, session } = data;
-  console.log(session ? session : 'getSession(): No cached session ');
+  console.log(
+    session ? 'session: ' + session : 'getSession(): No cached session '
+  );
   if (!session) {
     // so we can create a session
+    console.log('Going to create a session now...');
     return;
   }
 
