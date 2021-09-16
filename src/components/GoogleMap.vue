@@ -320,32 +320,19 @@ export default {
       });
 
       const showCity = (city) => {
+        const vm = this;
         const { location, viewport } = city;
         console.log('showCity():', location, viewport);
         if (location) {
           map.setCenter(JSON.parse(location));
           map.fitBounds(JSON.parse(viewport));
-          map.setZoom(this.defaultZoom);
-          return;
+          map.setZoom(vm.defaultZoom);
         }
-
-        geocoder
-          .geocode({ address: city.namespace })
-          .toEither()
-          .map(({ results }) => {
-            map.setCenter(results[0].geometry.location);
-            map.fitBounds(results[0].geometry.viewport);
-            map.setZoom(this.defaultZoom);
-          })
-          .cata({
-            ok: (map) => map,
-            error: (results) => {
-              console.log(results, 'Issues in setupGeocoder()');
-            },
-          });
       };
 
       const showPosition = (position) => {
+        const vm = this;
+
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         geocoder
@@ -360,13 +347,14 @@ export default {
                   results[0].address_components[4].short_name,
               })
               .then((city) => {
-                map.setCenter(city.results[0].geometry.location);
-                map.fitBounds(city.results[0].geometry.viewport);
-                map.setZoom(this.defaultZoom);
-                this.setPoi(
+                const geometry = city.results[0].geometry;
+                map.setCenter(geometry.location);
+                map.fitBounds(geometry.viewport);
+                map.setZoom(vm.defaultZoom - 3);
+                vm.setPoi(
                   results[0].address_components[2].short_name,
-                  JSON.stringify(city.results[0].geometry.location),
-                  JSON.stringify(city.results[0].geometry.viewport)
+                  JSON.stringify(geometry.location),
+                  JSON.stringify(geometry.viewport)
                 );
               });
           })
@@ -488,7 +476,7 @@ export default {
 
       const showMap = () => {
         const defaultPoi = this.getPoi();
-        if (defaultPoi) {
+        if (defaultPoi.namespace) {
           showCity(defaultPoi);
         } else if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(showPosition);
