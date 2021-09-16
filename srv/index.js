@@ -164,7 +164,7 @@ function createSession(data) {
 }
 
 io.use((socket, next) => {
-  console.log('io.use(): auth:',socket.handshake.auth);
+  console.log('io.use(): auth:', socket.handshake.auth);
   const { sessionID, userID, username } = socket.handshake.auth;
   console.assert(username, 'Expected a username (or usernumber). Got null.');
   // if first connection, prompt client for a username
@@ -175,6 +175,7 @@ io.use((socket, next) => {
   report(sessionID, userID, username);
 
   // see if we have a session for the username
+  console.log('IO.USE: cache type', typeof cache);
   cache
     .get('sessions', '_' + sessionID)
     .then((session) =>
@@ -191,7 +192,8 @@ io.use((socket, next) => {
         next,
         username,
       })
-    );
+    )
+    .catch((e) => console.log('Error in cache:', e));
 });
 
 io.on('connection', (socket) => {
