@@ -79,15 +79,14 @@ const server = express()
   .listen(PORT, () => {
     printNow();
     console.log('Listening on:');
-    console.log('\t\t', url(`http://localhost:${PORT}`, '\t\n'));
+    console.log(url(`http://localhost:${PORT}`, '\n\n'));
   });
 const io = socketIO(server);
 
 function report(sessionID, userID, username) {
-  console.log(getNow());
-  console.log(warn('Middleware handling socket:'));
+  console.log(info('2) Middleware handling socket:'));
   console.log(
-    warn(
+    info(
       'sessionID:',
       sessionID || 'No stored session',
       '\t',
@@ -102,36 +101,35 @@ function report(sessionID, userID, username) {
 //#endregion
 
 function getSession(data) {
-  console.log(('getSession(): data:', data));
-  const { sessionID, socket, session } = data;
-  console.log(
-    session ? 'session: ' + session : 'getSession(): No cached session '
-  );
+  const { sessionID, socket, session, next } = data;
+  console.groupCollapsed(info('3) getSession(): data:', sessionID));
   if (!session) {
     // so we can create a session
-    console.log('Going to create a session now...');
-    return;
+    console.log('\t Going to create a session now...');
+    console.groupEnd;
+    //return;
+    next();
   }
 
   const { userID, username } = session;
 
+  // TODO what if this isn't true?
   if (session && userID && sessionID) {
     console.log(getNow());
-    console.group(`Handshake: Known party: ${username}`);
+    console.log(info(`4) Handshake: Known party: ${username}`));
     // if we have seen this session before, ensure the client uses the same
     // userID and username used in the last session
-    if (session) {
-      console.log(`Data for session ${sessionID}`);
-      console.log(printJson(session));
-      cache.printCache('sessions', '_' + sessionID);
+    console.log(info(printJson(session)));
+    console.groupEnd;
 
-      socket.sessionID = sessionID;
-      socket.userID = userID;
-      socket.username = username;
-      console.log(
-        highlight(`LEAVING io.use() with  ${sessionID}'s session data.`)
-      );
-    }
+    socket.sessionID = sessionID;
+    socket.userID = userID;
+    socket.username = username;
+
+    console.log(
+      success(`5) LEAVING io.use() with  ${sessionID}'s session data.`)
+    );
+    return;
   }
 }
 
@@ -139,111 +137,135 @@ function createSession(data) {
   // otherwise, setup the new user...
   const { socket, next, username } = data;
   const { sessionID, userID } = socket.handshake.auth;
-  console.log(
-    'createSession(): username/auth',
+  console.groupCollapsed(
+    '4) createSession(): username/auth',
     data.unsername,
     printJson(socket.handshake.auth)
   );
 
-  // do we need to create a new session
+  // do we need to create a new session?
   if ((socket.sessionID || sessionID) && (socket.userID || userID)) {
     // not if we have IDs
+    console.groupEnd;
     return next();
   }
 
   console.log('\n', info(new Date().toLocaleString()));
-  console.log(warn('Handshake: Unknown party'));
-  console.log(warn(`Assigning new sessionID and userID for ${username}`));
+  console.log(warn('5) Handshake: Unknown party'));
+  console.log(warn(`\tAssigning new sessionID and userID for ${username}`));
 
   //...with a userID, and a sessionID
   socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
   socket.userID = randomId();
-
   socket.username = username; // username is fixed by client
 
   console.log(success('Leaving io.use()'));
-  // handle the connection, storing and returning the session data to client for storage.
-  next();
+  // handle the connection where we cache and return the session data to client for local storage.
+  console.groupEnd;
+
+  return next();
 }
 
-io.use((socket, next) => {
-  console.log('io.use(): auth:', socket.handshake.auth);
-  const { sessionID, userID, username } = socket.handshake.auth;
-  console.assert(username, 'Expected a username (or usernumber). Got null.');
-  // if first connection, prompt client for a username
-  if (!username) {
-    return next(new Error('No username'));
-  }
+// io.use((socket, next) => {
+//   console.log('1) Entering getSession middleware');
+//   const { sessionID } = socket.handshake.auth;
+//   cache.get('sessions', '_' + sessionID).then((session) => {
+//     if (!session) {
+//       console.log('Creating session');
+//       socket.sessionID = randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
+//       socket.userID = randomId();
+//     }
+//     next();
+//   });
+// });
 
-  report(sessionID, userID, username);
+// io.use((socket, next) => {
+//   console.log(
+//     '========================== io.use ==================================='
+//   );
+//   console.log('1) Entering io.use()');
+//   const { sessionID, userID, username } = socket.handshake.auth;
+//   console.assert(username, 'Expected a username (or usernumber). Got null.');
+//   // if first connection, prompt client for a username
+//   if (!username) {
+//     return next(new Error('No username'));
+//   }
 
-  // see if we have a session for the username
-  console.log('IO.USE: cache type', typeof cache);
-  cache
-    .get('sessions', '_' + sessionID)
-    .then((session) =>
-      getSession({
-        sessionID,
-        socket,
-        session,
-        next,
-      })
-    )
-    .then(() =>
-      createSession({
-        socket,
-        next,
-        username,
-      })
-    )
-    .catch((e) => console.log('Error in cache:', e));
-});
+//   report(sessionID, userID, username);
+
+//   // see if we have a session for the username
+//   // cache
+//   //   .get('sessions', '_' + sessionID)
+//   //   .then((session) =>
+//   //     getSession({
+//   //       sessionID,
+//   //       socket,
+//   //       session,
+//   //       next,
+//   //     })
+//   //   )
+//   //   .then(() =>
+//   //     createSession({
+//   //       socket,
+//   //       username,
+//   //       next,
+//   //     })
+//   //   )
+//   //   .catch((e) => console.log(err('Error in cache:', e)));
+// });
 
 io.on('connection', (socket) => {
-  const { id: socketID, sessionID, userID, username } = socket;
-
-  if (!userID) {
-    console.log(err('NO USERID! How did the code get this far?'));
-    return;
-  }
-  //#region Handling socket connection
-  console.log('Client connected on socket ', socketID);
-  const session = {
+  const {
+    socketID,
+    sessionID,
     userID,
+    username,
+    usernumber,
+  } = socket.handshake.auth;
+  // if (!userID) {
+  //   console.log(err('NO USERID! How did the code get this far?'));
+  //   return;
+  // }  // const { id: socketID, sessionID, userID } = socket;
+  // const username = socket.handshake.username;
+  console.log(sessionID, userID, username, usernumber);
+  const newSessionID = sessionID || randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
+  const newUserID = userID || randomId();
+
+  console.log(
+    '============================ io.on(connection) ================================='
+  );
+  //#region Handling socket connection
+  console.log(success('Client connected on socket ', socketID));
+  const session = {
+    newUserID,
     username,
     lastInteraction: new Date().toLocaleString(),
     connected: true,
   };
 
-  setCache('sessions', sessionID, session);
+  setCache('sessions', newSessionID, session);
 
-  // TODO restore
-  // console.log('Returning session data to client');
-  // emit session details so the client can store the session in localStorage
-  socket.emit('session', {
-    sessionID: sessionID,
-    userID: userID,
-    username: username,
-  });
-  socket.emit('connected');
+  if (!sessionID) {
+    console.log('Returning session data to client', newSessionID, newUserID);
 
-  // TODO restore
-  // console.log(
-  //   success(
-  //     `socket ${socketID} joining ${username}'s room with userID ${userID}`
-  //   )
-  // );
+    // emit new session details so the client can store the session in localStorage
+    socket.emit('newSession', {
+      sessionID: newSessionID,
+      userID: newUserID,
+      username,
+    });
+  }
 
   // join the "userID" room
   // we send alerts using the userID stored in redisGraph for visitors
-  socket.join(userID);
+  socket.join(newUserID);
 
   // check for pending alerts
-  if (alertsCache.has(userID)) {
+  if (alertsCache.has(newUserID)) {
     const msg = 'Your warning was cached, and now you have it.';
     // sending to individual socketid (private message)
     io.to(socketID).emit('exposureAlert', msg);
-    alertsCache.delete(userID);
+    alertsCache.delete(newUserID);
     alertsCache.print();
   }
 
@@ -268,7 +290,9 @@ io.on('connection', (socket) => {
     connected: true,
   });
   console.log('Leaving io.on(connect)');
-  console.groupEnd();
+  console.log(
+    '============================ io.on(connection) ================================='
+  );
   //#endregion Handling Users
 
   //#region Visit API
@@ -413,6 +437,7 @@ io.on('connection', (socket) => {
           // notify other users
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session
+          console.group(`${socket.id} disconnecting`);
           cache.printCache('sessions');
 
           setCache('sessions', socket.sessionID, {
@@ -434,6 +459,7 @@ io.on('connection', (socket) => {
                 console.log(printJson(online));
               })
           );
+          console.groupEnd();
         }
       });
   });

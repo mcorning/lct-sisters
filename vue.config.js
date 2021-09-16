@@ -16,7 +16,7 @@ module.exports = {
       swSrc: './src/sw.js',
       swDest: 'service-worker.js',
     },
-    name: 'LCT-Sisters',
+    name: 'LCT',
     short_name: 'LCT',
     themeColor: '#673AB7',
     msTileColor: '#673AB7',

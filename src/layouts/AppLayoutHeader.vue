@@ -146,7 +146,7 @@ export default {
     connect() {
       console.log(getNow());
       console.log(
-        success(`Connected to the server on socket ${this.$socket.id}.\n`)
+        success(`Connected to the server on socket ${this.$socket.client.id}.\n`)
       );
     },
     disconnect() {
@@ -162,7 +162,7 @@ export default {
     //        username,
     //        graphName,
     //    });
-    session({ sessionID, userID, username, graphName }) {
+    newSession({ sessionID, userID, username, graphName }) {
       console.assert(
         sessionID && userID && username,
         `Session event missing args: ${sessionID} ${userID} ${username}`
@@ -228,7 +228,7 @@ export default {
       // this.updateSetting(data);
 
       this.$socket.client.auth = {
-        username:usernumber,
+        username: usernumber,
         usernumber,
         userID,
         sessionID,

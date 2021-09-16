@@ -77,7 +77,7 @@ export default {
     };
   },
   sockets: {
-    session({ sessionID }) {
+    newSession({ sessionID }) {
       this.inSession = sessionID;
     },
   },

@@ -34,18 +34,26 @@ const jsonCache = new Rejson();
 jsonCache
   .connect()
   .then(() => {
-    console.log(getNow());
-    console.log('Connected to RedisJSON using:');
-    console.log(options, '\n');
+    console.log('....................... RedisJSON .........................');
+    console.groupCollapsed('\tConnected to RedisJSON using:');
+    console.log(printJson(options), '\n');
 
     jsonCache.get('sessions', '.').then((node) => {
-      if (Object.keys(node) > 0) {
+      if (Object.keys(node).length > 0) {
         console.log(getNow());
-        console.groupCollapsed('Past Sessions (including unconnected):');
+        console.log(
+          '....................... RedisJSON .........................'
+        );
+        console.groupCollapsed('\tPast Sessions (including unconnected):');
         asTable(node);
         console.groupEnd();
+        console.log(
+          '.........................................................'
+        );
       }
     });
+    console.groupEnd();
+    console.log('.........................................................');
   })
   .catch((e) => console.log('error connecting to rejson', e));
 
