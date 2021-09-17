@@ -3,7 +3,10 @@
     <v-card v-if="info">
       <v-card-title>{{ name }}</v-card-title>
       <v-card-subtitle>{{ address }}</v-card-subtitle>
+
       <v-card-text>
+        <p v-if="info.url" v-html="placeLink"></p>
+
         <v-row no-gutters>
           <v-col cols="3">Postion Data</v-col>
           <v-col>
@@ -15,9 +18,10 @@
           >
         </v-row>
       </v-card-text>
-      <p v-if="info.url" v-html="placeLink"></p>
 
-      <v-btn @click="onVisitPlace(placeId)">Mark Your Calendar</v-btn>
+      <v-btn block color="primary" @click="onVisitPlace(placeId)"
+        >Mark Your Calendar</v-btn
+      >
     </v-card>
   </div>
 </template>

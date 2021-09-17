@@ -197,7 +197,7 @@
       </v-menu>
     </v-sheet>
 
-    <v-snackbar v-model="snackbar" :color="confirmationColor"
+    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="-1"
       >{{ confirmationMessage }}
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
@@ -582,7 +582,13 @@ export default {
     },
 
     ready() {
-      console.log(this.$defaultGraphName, '/', this.getGraphName());
+      this.selectedEvent = this.relevantEvents.filter(
+        (v) => !v.loggedVisitId
+      )[0];
+      const ok = confirm('Log event? ' + this.selectedEvent.name);
+      if (ok) {
+        this.update('graph');
+      }
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);

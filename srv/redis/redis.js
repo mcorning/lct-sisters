@@ -425,8 +425,13 @@ function deleteExpiredVisits() {
 CREATE a RELATIONSHIP between MATCHed nodes:
 MATCH (a:visitor), (b:room) WHERE (a.name = "" AND b.name="" ) CREATE (a)-[:visited]->(b)
 
-READ visitors for a given space
+READ visitors 
+  for a given space
 MATCH p=()-[*]->(:space{name:'Fika Sisters Coffeehouse'}) RETURN p
+
+with a given visitor
+  MATCH p=(carrier:visitor{userID:'4505a807b136df46'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) RETURN p
+
 
 READ all expired RELATIONSHIPs:
 MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
