@@ -201,7 +201,7 @@
       >{{ confirmationMessage }}
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
-          Close
+          Thanks
         </v-btn>
       </template>
     </v-snackbar>
@@ -562,17 +562,25 @@ export default {
     },
 
     updateSharedVisit() {
-      this.selectedEvent = this.$route.params;
       this.update('graph');
       this.snackbarPrompt = false;
     },
 
     logSharedVisit(query) {
       if (query && query.shared) {
+        this.selectedEvent = this.$route.params;
+
         const { name, date } = query;
         this.prompt = `Log shared event (${name} on ${date})?`;
         this.snackbarPrompt = true;
       }
+    },
+    logVisitNow() {
+      this.selectedEvent = this.relevantEvents.filter(
+        (v) => !v.loggedVisitId
+      )[0];
+      this.prompt = `Log event?  ${this.selectedEvent.name} ${this.selectedEvent.date}`;
+      this.snackbarPrompt = true;
     },
   },
 
@@ -582,13 +590,7 @@ export default {
     },
 
     ready() {
-      this.selectedEvent = this.relevantEvents.filter(
-        (v) => !v.loggedVisitId
-      )[0];
-      const ok = confirm('Log event? ' + this.selectedEvent.name);
-      if (ok) {
-        this.update('graph');
-      }
+      this.logVisitNow();
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);

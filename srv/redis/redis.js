@@ -20,7 +20,6 @@ const {
   info,
   highlight,
   success,
-  special,
 } = require('../../src/utils/helpers');
 
 let options, currentGraphName, defaultGraphName;
@@ -59,7 +58,6 @@ module.exports = {
   deleteVisit,
   findExposedVisitors,
   changeGraph,
-  logVisit,
   logVisitX,
   onExposureWarning,
   options,
@@ -75,12 +73,29 @@ function changeGraph(graphName) {
 //#region LAB
 function logVisitX(visit) {
   const { visitId, userID, place, start, end, graphName } = visit;
-
+  // TODO can we use the entityMap to escape html elsewhere (e.g., warning email)
+  // and you should probably move this code to utils.js
+  // var entityMap = {
+  //   '&': '&amp;',
+  //   '<': '&lt;',
+  //   '>': '&gt;',
+  //   '"': '&quot;',
+  //   "'": '&#39;',
+  //   '/': '&#x2F;',
+  // };
+  function escapeHtml(string) {
+    return String(string).replace(/[&<>"'/]/g, function(s) {
+      // here we just escape strings characters
+      return `\\${s}`;
+      // this is how you escape HTML
+      // return entityMap[s];
+    });
+  }
   if (graphName && graphName !== currentGraphName) {
     changeGraph(graphName);
   }
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 
-      MERGE (s:space{ name: '${place}'}) 
+      MERGE (s:space{ name: '${escapeHtml(place)}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
   function returnResults(results) {
@@ -192,6 +207,61 @@ function onExposureWarning(userID) {
     .then(updateGraph)
     .then((userIDs) => userIDs);
 }
+//#region DELETE Graph Nodes
+// delegated in index.js to handle socket.on('deleteVisit')
+// Example query:
+// MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
+function deleteVisit(data) {
+  return new Promise((resolve, reject) => {
+    const { loggedVisitId, graphName } = data;
+    if (!loggedVisitId) {
+      reject({
+        deleted: false,
+        reason: 'No loggedVisitId available for deletion.',
+      });
+      return;
+    }
+    if (graphName !== currentGraphName) {
+      changeGraph(graphName);
+    }
+    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
+    console.log(warn('DELETE Visit query:', query));
+    Graph.query(query)
+      .then((results) => {
+        const stats = results._statistics._raw;
+        console.log(`stats: ${printJson(stats)}`);
+        resolve({ deleted: true });
+      })
+      .then(() => deleteExpiredVisits())
+      .catch((error) => {
+        console.log(error);
+        reject({ deleted: false, error: error });
+      });
+  });
+}
+// handled internally each time the graph gets called
+// Example query:
+// MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
+function deleteExpiredVisits() {
+  return new Promise((resolve, reject) => {
+    const expiry = Date.now() - 86400000 * 14;
+    let query = `MATCH ()-[v:visited]->() WHERE (v.start<=${expiry})  DELETE v`;
+    console.log(warn('DELETE Expired Visits query:', query));
+    Graph.query(query)
+      .then((results) => {
+        const stats = results._statistics._raw;
+        console.log(`stats: ${printJson(stats)}`);
+        resolve({ deleted: true });
+      })
+      .catch((error) => {
+        console.log(error);
+        reject({ deleted: false, error: error });
+      });
+  });
+}
+//#endregion DELETE Graph Nodes
+
+//#region Old code -- delete or refactor soon
 
 // TODO refactor using cli table
 // function printExposureWarnings(res) {
@@ -289,130 +359,75 @@ function onExposureWarning(userID) {
 //   );
 // }
 // }
-//#endregion Read Graph
 
-//#region UPDATE Graph
 // delegated in index.js to handle socket.on('logVisit')
 // Can add a visit to the graph or can edit the time(s) of a logged visit [when the data includes the logged field (which is the id of the Relationship)]
 // Example query:
 // MERGE (v:visitor{ name: 'hero', userID: '439ae5f4946d2d5d'}) MERGE (s:space{ name: 'Fika Sisters Coffeehouse'}) MERGE (v)-[:visited{start:'1615856400000'}]->(s)
-function logVisit(data) {
-  return new Promise((resolve, reject) => {
-    const {
-      username,
-      userID,
-      selectedSpace,
-      start,
-      end,
-      date,
-      interval,
-      loggedVisitId,
-      graphName,
-    } = data;
-    if (graphName && graphName !== graphName) {
-      changeGraph(graphName);
-    }
+// function logVisit(data) {
+//   return new Promise((resolve, reject) => {
+//     const {
+//       username,
+//       userID,
+//       selectedSpace,
+//       start,
+//       end,
+//       date,
+//       interval,
+//       loggedVisitId,
+//       graphName,
+//     } = data;
+//     if (graphName && graphName !== graphName) {
+//       changeGraph(graphName);
+//     }
 
-    // update visit with loggedVisitId
-    // or add a new visit
-    // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
-    // (otherwise, an apostrophe will throw an exception)
-    let query = loggedVisitId
-      ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId} 
-      SET 
-      v.start=${start}, 
-      v.end=${end}, 
-      v.date='${date}', 
-      v.interval='${interval}' 
-      RETURN id(v)`
-      : `MERGE (v:visitor{ name: "${username}", userID: '${userID}'}) 
-      MERGE (s:space{ name: "${selectedSpace}"}) 
-      MERGE (v)-[r:visited{start:${start}, end:${end}, date: '${date}', interval: '${interval}'}]->(s)
-        RETURN id(r)`;
+//     // update visit with loggedVisitId
+//     // or add a new visit
+//     // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
+//     // (otherwise, an apostrophe will throw an exception)
+//     let query = loggedVisitId
+//       ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}
+//       SET
+//       v.start=${start},
+//       v.end=${end},
+//       v.date='${date}',
+//       v.interval='${interval}'
+//       RETURN id(v)`
+//       : `MERGE (v:visitor{ name: "${username}", userID: '${userID}'})
+//       MERGE (s:space{ name: "${selectedSpace}"})
+//       MERGE (v)-[r:visited{start:${start}, end:${end}, date: '${date}', interval: '${interval}'}]->(s)
+//         RETURN id(r)`;
 
-    console.log(warn(`${graphName} visit query: ${query}`));
-    Graph.query(query)
-      .then((results) => {
-        let x = results.next();
-        let id = x.get('id(r)');
-        if (!id) {
-          throw `${graphName} returned unexpected null id after update.`;
-        }
+//     console.log(warn(`${graphName} visit query: ${query}`));
+//     Graph.query(query)
+//       .then((results) => {
+//         let x = results.next();
+//         let id = x.get('id(r)');
+//         if (!id) {
+//           throw `${graphName} returned unexpected null id after update.`;
+//         }
 
-        const stats = results._statistics._raw;
-        console.log(special(`Logged visit stats: ${printJson(stats)}`));
-        console.log(special(`New Visit graph ID: ${printJson(id)}`));
-        resolve({
-          graph: graphName,
-          logged: true,
-          id: id,
-        });
-      })
-      .then(() => deleteExpiredVisits())
-      .catch((error) => {
-        console.log(error);
-        reject({
-          logged: false,
-          error: error,
-        });
-      });
-  });
-}
+//         const stats = results._statistics._raw;
+//         console.log(special(`Logged visit stats: ${printJson(stats)}`));
+//         console.log(special(`New Visit graph ID: ${printJson(id)}`));
+//         resolve({
+//           graph: graphName,
+//           logged: true,
+//           id: id,
+//         });
+//       })
+//       .then(() => deleteExpiredVisits())
+//       .catch((error) => {
+//         console.log(error);
+//         reject({
+//           logged: false,
+//           error: error,
+//         });
+//       });
+//   });
+// }
 //#endregion Update Graph
-
-//#region DELETE Graph Nodes
-// delegated in index.js to handle socket.on('deleteVisit')
-// Example query:
-// MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
-function deleteVisit(data) {
-  return new Promise((resolve, reject) => {
-    const { loggedVisitId, graphName } = data;
-    if (!loggedVisitId) {
-      reject({
-        deleted: false,
-        reason: 'No loggedVisitId available for deletion.',
-      });
-      return;
-    }
-    if (graphName !== currentGraphName) {
-      changeGraph(graphName);
-    }
-    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
-    console.log(warn('DELETE Visit query:', query));
-    Graph.query(query)
-      .then((results) => {
-        const stats = results._statistics._raw;
-        console.log(`stats: ${printJson(stats)}`);
-        resolve({ deleted: true });
-      })
-      .then(() => deleteExpiredVisits())
-      .catch((error) => {
-        console.log(error);
-        reject({ deleted: false, error: error });
-      });
-  });
-}
-// handled internally each time the graph gets called
-// Example query:
-// MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p
-function deleteExpiredVisits() {
-  return new Promise((resolve, reject) => {
-    const expiry = Date.now() - 86400000 * 14;
-    let query = `MATCH ()-[v:visited]->() WHERE (v.start<=${expiry})  DELETE v`;
-    console.log(warn('DELETE Expired Visits query:', query));
-    Graph.query(query)
-      .then((results) => {
-        const stats = results._statistics._raw;
-        console.log(`stats: ${printJson(stats)}`);
-        resolve({ deleted: true });
-      })
-      .catch((error) => {
-        console.log(error);
-        reject({ deleted: false, error: error });
-      });
-  });
-}
-//#endregion DELETE Graph Nodes
+//#endregion
 
 //#region Cheatsheet
 // if we store these output Cypher commands in a text file, we can bulk import them into Redis
@@ -423,8 +438,10 @@ function deleteExpiredVisits() {
 
 /*
 CREATE a RELATIONSHIP between MATCHed nodes:
-MATCH (a:visitor), (b:room) WHERE (a.name = "" AND b.name="" ) CREATE (a)-[:visited]->(b)
-
+MERGE (v:visitor{  userID: '476d58a6686e556c'}) 
+      MERGE (s:space{ name: 'Fika Sisters Coffeehouse'}) 
+      MERGE (v)-[r:visited{start:1631904300000, end:1631906100000}]->(s)
+      RETURN id(r)
 READ visitors 
   for a given space
 MATCH p=()-[*]->(:space{name:'Fika Sisters Coffeehouse'}) RETURN p
