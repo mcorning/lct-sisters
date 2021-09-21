@@ -1,7 +1,10 @@
 <template>
   <div>
-    <v-banner v-if="riskScore" :color="getAlertColor">
-      {{ alertMessage }}
+    <v-banner v-if="riskScore" :key="refresh" :color="getAlertColor">
+      <v-card :color="getAlertColor">
+        <v-card-title>COVID Exposure Early Warning System</v-card-title>
+        <v-card-text tile v-html="alertMessage" />
+      </v-card>
       <template v-slot:actions="{ dismiss }">
         <v-btn text @click="dismiss">Dismiss </v-btn>
       </template>
@@ -14,7 +17,8 @@ export default {
   name: 'promptBanner',
   props: {
     riskScore: Object,
-    showBanner:Boolean,
+    refresh: Number,
+    showBanner: Boolean,
   },
   computed: {
     getAlertColor() {
@@ -27,18 +31,19 @@ export default {
     alertMessage() {
       const { score, reliability } = this.riskScore;
       const msg = `A fellow visitor warns of possible COVID-19 exposure.
-       Self-reported risk value: ${score}. Relative Risk ${Math.round(
+      <p>
+       Their self-reported risk value: <strong>${score}</strong>. Relative Risk ${Math.round(
         reliability,
         0
       )}% of total risk.
-      
-  For this reason, please get tested.
+      </p>
+  For this reason, please get tested.<br/>
   Quarantine and warn others, if necessary.`;
       return msg;
     },
   },
   data() {
-    return { ready: false,  };
+    return { ready: false };
   },
   methods: {},
   watch: {

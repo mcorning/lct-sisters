@@ -1,5 +1,8 @@
 <template>
   <div>
+    <v-overlay :value="overlay">
+      <v-progress-circular indeterminate size="64"></v-progress-circular>
+    </v-overlay>
     <div>
       <!-- Map container -->
       <div class="Map" ref="map"></div>
@@ -123,6 +126,7 @@ export default {
   },
   data() {
     return {
+      overlay: true,
       message: '',
       info: null,
       snackbar: false,
@@ -536,7 +540,9 @@ export default {
       })
       .then(({ google, map }) => this.onMounted({ google, map }))
       .catch((error) => console.log(error))
-      .finally(() => console.timeEnd('Mounted GoogleMaps'));
+      .finally(() => {
+        console.timeEnd('Mounted GoogleMaps'), (this.overlay = false);
+      });
   },
 };
 </script>

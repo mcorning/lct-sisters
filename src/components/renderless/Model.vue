@@ -300,9 +300,9 @@ export default {
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
     },
-    'state.settings.lastVaccinationDate'(n) {
+    'state.settings.vaccinationStatus'(n) {
       console.log(n);
-      this.updateSetting({ id: 1, lastVaccinationDate: n });
+      this.updateSetting({ id: 1, vaccinationStatus: n });
     },
     'state.settings.lastFluShot'(n) {
       console.log(n);

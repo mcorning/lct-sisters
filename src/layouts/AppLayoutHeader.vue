@@ -1,9 +1,7 @@
 <template>
   <div>
     <v-app-bar color="primary" app dark>
-      <v-toolbar-title
-        >{{ 'Local Contact Tracing' }} - {{ namespace }}</v-toolbar-title
-      >
+      <v-toolbar-title>{{ toolbarTitle }} </v-toolbar-title>
 
       <v-spacer></v-spacer>
       {{ $version }}
@@ -18,7 +16,7 @@
       />
       <!-- End Options Menu-->
     </v-app-bar>
-    <prompt-banner :riskScore="riskScore"></prompt-banner>
+    <prompt-banner :riskScore="riskScore" :refresh="refresh"></prompt-banner>
   </div>
 </template>
 
@@ -41,6 +39,13 @@ export default {
     PromptBanner,
   },
   computed: {
+    toolbarTitle() {
+      const t = this.$vuetify.breakpoint.xsOnly
+        ? 'LCT'
+        : 'Local Contact Tracing';
+      return `${t}-${this.namespace}`;
+    },
+
     namespace() {
       return this.getPoi().namespace;
     },
@@ -133,11 +138,13 @@ export default {
       feedbackDialog: false,
       riskScore: null,
       showBanner: false,
+      refresh: 0,
     };
   },
   sockets: {
     exposureAlert(riskScore) {
       this.riskScore = riskScore;
+      this.refresh++;
       this.showBanner = true;
     },
     /*
@@ -146,7 +153,9 @@ export default {
     connect() {
       console.log(getNow());
       console.log(
-        success(`Connected to the server on socket ${this.$socket.client.id}.\n`)
+        success(
+          `Connected to the server on socket ${this.$socket.client.id}.\n`
+        )
       );
     },
     disconnect() {

@@ -1,5 +1,5 @@
 <template>
-  <div id="calendarDiv" class="fill-height">
+  <div id="calendarDiv" class="fill-height" width="100%">
     <v-toolbar flat>
       <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
       <v-btn fab text small color="grey darken-2" @click="prev">
@@ -90,7 +90,7 @@
           ></div>
         </template>
       </v-calendar>
-      <v-menu
+      <!-- <v-menu
         v-model="selectedOpen"
         :close-on-content-click="false"
         :activator="selectedElement"
@@ -101,15 +101,11 @@
           <v-toolbar :color="selectedEvent.color" dark>
             <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
             <v-spacer></v-spacer>
-          </v-toolbar>
-          <!-- <v-card-text> -->
-          <PickersMenu
-            :changeEvent="changeEvent"
-            :selectedEventParsed="selectedEventParsed"
-          />
-          <!-- </v-card-text> -->
-          <!-- <v-card-text> -->
-          <v-row v-if="dev" class="ml-5" align="center" no-gutters>
+          </v-toolbar> -->
+      <!-- <v-card-text> -->
+      <!-- </v-card-text> -->
+      <!-- <v-card-text> -->
+      <!-- <v-row v-if="dev" class="ml-5" align="center" no-gutters>
             <v-col cols="8">
               <v-select
                 v-model="selectedGraph"
@@ -121,9 +117,9 @@
                 dense
               ></v-select>
             </v-col>
-          </v-row>
-          <!-- </v-card-text> -->
-          <v-card-actions>
+          </v-row> -->
+      <!-- </v-card-text> -->
+      <!-- <v-card-actions>
             <v-btn text color="secondary" @click="selectedOpen = false">
               Cancel
             </v-btn>
@@ -135,67 +131,79 @@
             </v-btn>
             <v-btn text color="secondary" @click="banner = true">Share </v-btn>
           </v-card-actions>
-          <v-divider />
-          <v-banner v-model="banner">
-            <v-card-title>Share a Gathering</v-card-title>
-            <v-card-subtitle
-              >Send event link to others who will join you</v-card-subtitle
-            >
-            <v-text-field
-              v-model="room"
-              :label="gatheringLabel"
-              :hint="gatheringHint"
-            ></v-text-field>
+          <v-divider />-->
 
-            <v-row no-gutters>
-              <v-col cols="7">
-                <v-text-field
-                  v-model="alias"
-                  label="Email address:"
-                  hint="Email a person directly or send to yourself and forward"
-                ></v-text-field
-              ></v-col>
-              <v-spacer />
-              <v-col cols="4">
-                <v-text-field
-                  v-model="toName"
-                  hint="Name used at the end of your invitation "
-                  label="Your name:"
-                ></v-text-field></v-col
-            ></v-row>
-            <v-row
-              ><v-col
-                ><VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="mailToUri"
-                  :size="150"
-                >
-                </VueQRCodeComponent> </v-col
-              ><v-col
-                ><small>{{ mailToUri }}</small></v-col
-              ></v-row
-            >
-            <v-card-actions>
-              <v-btn color="green" text input-value @click="emailEvent">
-                Email
-              </v-btn>
-              <v-spacer />
-              <v-btn color="red" text @click="banner = false"
-                >Dismiss
-              </v-btn></v-card-actions
-            >
-
-            <!-- <template v-slot:actions="{ dismiss }">
-              <v-btn color="green" text input-value @click="emailEvent">
-                Email
-              </v-btn>
-              <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
-            </template> -->
-          </v-banner>
-        </v-card>
-      </v-menu>
+      <!-- </v-card> -->
+      <!-- </v-menu> -->
     </v-sheet>
+    <v-bottom-sheet v-model="seePickers" inset>
+      <v-sheet>
+        <PickersMenu
+          :selectedEventParsed="selectedEventParsed"
+          @newDateTime="onNewDateTime"
+          @noDateTime="seePickers = false"
+          @logEvent="onLogEvent"
+          @share="banner = true"
+        />
+        <v-banner v-model="banner">
+          <v-card-title>Share a Gathering</v-card-title>
+          <v-card-subtitle
+            >Send event link to others who will join you</v-card-subtitle
+          >
+          <v-text-field
+            v-model="room"
+            :label="gatheringLabel"
+            :hint="gatheringHint"
+          ></v-text-field>
+
+          <v-row no-gutters>
+            <v-col cols="7">
+              <v-text-field
+                v-model="alias"
+                label="Email address:"
+                hint="Email a person directly or send to yourself and forward"
+              ></v-text-field
+            ></v-col>
+            <v-spacer />
+            <v-col cols="4">
+              <v-text-field
+                v-model="toName"
+                hint="Name used at the end of your invitation "
+                label="Your name:"
+              ></v-text-field></v-col
+          ></v-row>
+          <v-row
+            ><v-col
+              ><VueQRCodeComponent
+                id="qr"
+                ref="qr"
+                :text="mailToUri"
+                :size="150"
+              >
+              </VueQRCodeComponent> </v-col
+            ><v-col
+              ><small>{{ mailToUri }}</small></v-col
+            ></v-row
+          >
+          <!-- <v-card-actions>
+            <v-btn color="green" text input-value @click="emailEvent">
+              Email
+            </v-btn>
+            <v-spacer />
+            <v-btn color="red" text @click="banner = false"
+              >Dismiss
+            </v-btn></v-card-actions
+          > -->
+
+          <template v-slot:actions="{ dismiss }">
+            <v-btn color="green" text input-value @click="emailEvent">
+              Email
+            </v-btn>
+            <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
+          </template>
+        </v-banner>
+      </v-sheet>
+    </v-bottom-sheet>
 
     <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="-1"
       >{{ confirmationMessage }}
@@ -230,7 +238,8 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import PickersMenu from '@/components/menus/pickersMenu.vue';
-import { DateTime } from '@/utils/luxonHelpers';
+import { DateTime, inFuture } from '@/utils/luxonHelpers';
+import { head } from 'pratica';
 
 export default {
   name: 'Calendar',
@@ -340,6 +349,7 @@ export default {
   },
   data() {
     return {
+      seePickers: false,
       showQR: false,
       room: '',
       dev: false,
@@ -393,6 +403,23 @@ export default {
   },
 
   methods: {
+    onLogEvent(newDateTimes) {
+      const { date, start, end } = newDateTimes;
+
+      this.seePickers = false;
+      this.selectedEvent.date = date;
+      this.selectedEvent.start = start;
+      this.selectedEvent.end = end;
+      this.update('graph');
+    },
+    onNewDateTime(newDateTimes) {
+      const { date, start, end } = newDateTimes;
+      this.seePickers = false;
+      this.selectedEvent.date = date;
+      this.selectedEvent.start = start;
+      this.selectedEvent.end = end;
+      this.update('cache');
+    },
     emailEvent() {
       if (this.mailToString) {
         console.log('setting window.location to:', this.mailToString);
@@ -401,6 +428,7 @@ export default {
         this.status = 'No email address entered. No mail sent.';
       }
       this.banner = false;
+      this.seePickers = false;
     },
 
     changeGraph() {
@@ -489,7 +517,7 @@ export default {
       const open = () => {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
-
+        this.seePickers = true;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
       };
@@ -548,19 +576,6 @@ export default {
         .toMillis();
     },
 
-    changeTimeStamp(cts) {
-      const { year, month, day, hour, minute } = cts;
-      let dt = DateTime.local(year, month, day, hour, minute);
-      return this.roundTime(dt.toMillis());
-    },
-
-    changeEvent(cts) {
-      const { start, end } = cts;
-      this.selectedEvent.start = this.changeTimeStamp(start);
-      this.selectedEvent.end = this.changeTimeStamp(end);
-      this.selectedEvent.date = start.date;
-    },
-
     updateSharedVisit() {
       this.update('graph');
       this.snackbarPrompt = false;
@@ -575,10 +590,20 @@ export default {
         this.snackbarPrompt = true;
       }
     },
-    logVisitNow() {
-      this.selectedEvent = this.relevantEvents.filter(
-        (v) => !v.loggedVisitId
-      )[0];
+    findUnloggedVisits() {
+      head(
+        this.relevantEvents.filter(
+          (v) => !v.loggedVisitId && !inFuture(v.start)
+        )
+      ).cata({
+        Just: (unlogged) => this.logVisitNow(unlogged),
+        Nothing: (err) => {
+          console.log(err ? err : 'No unlogged visits');
+        },
+      });
+    },
+    logVisitNow(unlogged) {
+      this.selectedEvent = unlogged;
       this.prompt = `Log event?  ${this.selectedEvent.name} ${this.selectedEvent.date}`;
       this.snackbarPrompt = true;
     },
@@ -590,7 +615,7 @@ export default {
     },
 
     ready() {
-      this.logVisitNow();
+      this.findUnloggedVisits();
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);

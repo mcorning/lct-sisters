@@ -1,4 +1,6 @@
 const { DateTime, Interval } = require('luxon');
+const { parseDate } = require('pratica');
+
 const visitFormat = 'HH:mm ccc, DD';
 const calendarFormat = 'yyyy-LL-dd hh:mm';
 
@@ -91,11 +93,28 @@ const updateTime = (time, newVal, oldVal) => {
 
   return newTime;
 };
-
+const inFuture = (date) => {
+  const x = (date) => {
+    const dateType = typeof date;
+    switch (dateType) {
+      case 'Number':
+        return date > DateTime.now();
+      case 'String':
+        return DateTime.fromISO(date) > DateTime.now();
+    }
+  };
+  parseDate(date).cata({
+    Just: (date) => x(date),
+    Nothing: (results) => {
+      console.log(results, 'No date to parse');
+    },
+  });
+};
 module.exports = {
   DateTime,
   getNow,
   getNowAsIso,
+  inFuture,
   isToday,
   isBetween,
   formatSmallTime,

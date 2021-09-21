@@ -1,144 +1,148 @@
 <template>
-  <v-row dense no-gutters>
-    <v-col cols="4" sm="4">
-      <v-menu
-        v-model="menu"
-        :close-on-content-click="false"
-        :nudge-right="40"
-        transition="scale-transition"
-        offset-y
-        min-width="auto"
-      >
-        <template v-slot:activator="{ on, attrs }">
+  <div>
+    <v-card>
+      <v-row justify="space-around" align="center" no-gutters>
+        <v-col cols="4">
           <v-text-field
-            v-model="date"
-            label="Visit Date"
+            v-model="pickedDate"
+            label="Date"
             prepend-icon="event"
             readonly
-            v-bind="attrs"
-            v-on="on"
+            @click="pick(1, true, false)"
           ></v-text-field>
-        </template>
-        <v-date-picker v-model="date" @input="menu = false"></v-date-picker>
-      </v-menu>
-    </v-col>
-
-    <v-col cols="3" sm="4">
-      <v-menu
-        ref="menuStartTime"
-        v-model="menuStartTime"
-        :close-on-content-click="false"
-        :nudge-right="40"
-        :return-value.sync="startTime"
-        transition="scale-transition"
-        offset-y
-        max-width="290px"
-        min-width="290px"
-      >
-        <template v-slot:activator="{ on, attrs }">
+        </v-col>
+        <v-col cols="3">
           <v-text-field
-            v-model="startTime"
-            label="Visit Starts:"
+            v-model="pickedStartTime"
+            label="Starting"
+            prepend-icon="mdi-clock-time-on-outline"
+            readonly
+            @click="pick(2, true, false)"
+          ></v-text-field>
+        </v-col>
+        <v-col cols="3">
+          <v-text-field
+            v-model="pickedEndTime"
+            label="Ending"
             prepend-icon="mdi-clock-time-four-outline"
             readonly
-            v-bind="attrs"
-            v-on="on"
+            @click="pick(3, true, false)"
           ></v-text-field>
-        </template>
+        </v-col>
+        <v-date-picker v-if="picked == 1" v-model="pickedDate">
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="pick(0, false, false)">
+            Cancel
+          </v-btn>
+          <v-btn text color="primary" @click="pick(0, false, true)">
+            OK
+          </v-btn></v-date-picker
+        >
         <v-time-picker
-          v-if="menuStartTime"
-          v-model="startTime"
-          full-width
-          @click:minute="$refs.menuStartTime.save(startTime)"
-        ></v-time-picker>
-      </v-menu>
-    </v-col>
-    <v-col cols="3" sm="4">
-      <v-menu
-        ref="menuEndTime"
-        v-model="menuEndTime"
-        :close-on-content-click="false"
-        :nudge-right="40"
-        :return-value.sync="endTime"
-        transition="scale-transition"
-        offset-y
-        max-width="290px"
-        min-width="290px"
-      >
-        <template v-slot:activator="{ on, attrs }">
-          <v-text-field
-            v-model="endTime"
-            label="Visit Ends:"
-            prepend-icon="mdi-clock-time-four-outline"
-            readonly
-            v-bind="attrs"
-            v-on="on"
-          ></v-text-field>
-        </template>
+          v-if="picked == 2"
+          v-model="pickedStartTime"
+          :max="pickedEndTime"
+        >
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="pick(0, false, false)">
+            Cancel
+          </v-btn>
+          <v-btn text color="primary" @click="pick(0, false, true)">
+            OK
+          </v-btn></v-time-picker
+        >
         <v-time-picker
-          v-if="menuEndTime"
-          v-model="endTime"
-          full-width
-          @click:minute="$refs.menuEndTime.save(endTime)"
-        ></v-time-picker>
-      </v-menu>
-    </v-col>
-  </v-row>
+          v-if="picked == 3"
+          v-model="pickedEndTime"
+          :min="pickedStartTime"
+        >
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="pick(0, false, false)">
+            Cancel
+          </v-btn>
+          <v-btn text color="primary" @click="pick(0, false, true)">
+            OK
+          </v-btn></v-time-picker
+        >
+      </v-row>
+      <v-card-actions v-if="!editing">
+        <v-btn dark @click="noDateTime"> Cancel </v-btn>
+        <v-btn v-if="dirty" color="primary" @click="newDateTime">
+          Update
+        </v-btn>
+        <v-btn dark color="secondary" @click="logEvent">
+          Log
+        </v-btn>
+        <v-btn dark color="secondary" @click="share">
+          Share
+        </v-btn>
+      </v-card-actions></v-card
+    >
+  </div>
 </template>
 
 <script>
 export default {
   name: 'pickersMenu',
   props: {
-    changeEvent: Function,
     selectedEventParsed: Object,
   },
   data() {
     return {
-      date: null,
-      startTime: '',
-      endTime: '',
-      menu: false,
-      menuStartTime: false,
-      menuEndTime: false,
+      banner: false,
+      editing: false,
+      dirty: false,
+      picked: 0,
+      pickDate: false,
+      pickStartTime: false,
+      pickedDate: null,
+      pickedStartTime: null,
+      pickedEndTime: null,
     };
   },
-  watch: {
-    date(n, o) {
-      if (o) {
-        console.log('new date', n, o);
-        this.start.date = this.date;
-        this.end.date = this.date;
-        this.changeEvent({ start: this.start, end: this.end });
-      }
+  methods: {
+    pick(index, editing, dirty) {
+      this.editing = editing;
+      this.picked = index;
+      this.dirty = dirty;
     },
-    startTime(n, o) {
-      if (o) {
-        console.log('startTime [new and old]', n, o);
-        this.start.time = this.startTime;
-        this.start.hour = Number(this.startTime.slice(0, 2));
-        this.start.minute = Number(this.startTime.slice(3, 5));
-        this.changeEvent({ start: this.start, end: this.end });
-      }
+
+    newDateTime() {
+      const start = new Date(
+        this.pickedDate + ' ' + this.pickedStartTime
+      ).getTime();
+      const end = new Date(
+        this.pickedDate + ' ' + this.pickedEndTime
+      ).getTime();
+      this.dirty = false;
+      this.$emit('newDateTime', { date: this.pickedDate, start, end });
     },
-    endTime(n, o) {
-      if (o) {
-        console.log('endTime [new and old]', n, o);
-        this.end.time = this.endTime;
-        this.end.hour = Number(this.endTime.slice(0, 2));
-        this.end.minute = Number(this.endTime.slice(3, 5));
-        this.changeEvent({ start: this.start, end: this.end });
-      }
+    noDateTime() {
+      this.dirty = false;
+      this.$emit('noDateTime');
+    },
+    share() {
+      this.dirty = false;
+      this.$emit('share');
+    },
+    logEvent() {
+      const start = new Date(
+        this.pickedDate + ' ' + this.pickedStartTime
+      ).getTime();
+      const end = new Date(
+        this.pickedDate + ' ' + this.pickedEndTime
+      ).getTime();
+      this.dirty = false;
+      this.$emit('logEvent', { date: this.pickedDate, start, end });
     },
   },
+  watch: {},
   mounted() {
-    const self = this;
-    self.start = self.selectedEventParsed.start;
-    self.end = self.selectedEventParsed.end;
-    self.date = self.start.date;
+    const vm = this;
+    vm.pickedDate = vm.selectedEventParsed.start.date;
 
-    self.startTime = self.start.time;
-    self.endTime = self.end.time;
+    vm.pickedStartTime = vm.selectedEventParsed.start.time;
+    vm.pickedEndTime = vm.selectedEventParsed.end.time;
   },
 };
 </script>

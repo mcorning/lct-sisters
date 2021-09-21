@@ -24,8 +24,8 @@ export default class Setting extends Model {
       avgStay: this.number(20),
       slotInterval: this.number(30),
 
-      lastVaccinationDate: this.string(),
-      lastFluShot: this.string(),
+      vaccinationStatus: this.number(0),
+      recentFluShot: this.boolean(),
 
       preferredGraph: this.string(this.$defaultGraphName),
       namespace: this.string(),

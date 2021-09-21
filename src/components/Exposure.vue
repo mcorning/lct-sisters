@@ -48,28 +48,28 @@
       </v-card-text>
       <v-divider />
 
-      <v-row no-gutters>
-        <v-col>
-          <v-row no-gutters>
-            <v-col>
-              <v-card-text class="pb-1">
-                Select one or more reasons for this warning:
-              </v-card-text>
-              <v-list shaped>
-                <v-list-item-group v-model="warnings" multiple mandatory>
-                  <template v-for="(option, i) in WarningOptions">
-                    <v-divider
-                      v-if="!option.text"
-                      :key="`divider-${i}`"
-                    ></v-divider>
+      <v-card-text>
+        <v-row no-gutters>
+          <v-col cols="auto" sm="6">
+            <v-row no-gutters>
+              <v-col cols="auto">
+                <v-card-text class="pb-1">
+                  Select one or more reasons for this warning:
+                </v-card-text>
+                <v-list shaped>
+                  <v-list-item-group v-model="warnings" multiple mandatory>
+                    <template v-for="(option, i) in WarningOptions">
+                      <v-divider
+                        v-if="!option.text"
+                        :key="`divider-${i}`"
+                      ></v-divider>
 
-                    <v-list-item
-                      v-else
-                      :key="`option-${i}`"
-                      :value="option"
-                      active-class="deep-purple--text text--accent-4"
-                    >
-                      <template v-slot:default="{ active }">
+                      <v-list-item
+                        v-else
+                        :key="`option-${i}`"
+                        :value="option"
+                        active-class="deep-purple--text text--accent-4"
+                      >
                         <v-list-item-icon>
                           <v-icon v-text="option.icon"></v-icon>
                         </v-list-item-icon>
@@ -78,101 +78,65 @@
                             v-text="option.text"
                           ></v-list-item-title>
                         </v-list-item-content>
+                      </v-list-item>
+                    </template>
+                  </v-list-item-group>
+                </v-list>
+              </v-col>
+            </v-row>
+            <v-row no-gutters>
+              <v-col cols="4">
+                <v-select
+                  v-model="vaccinationStatus"
+                  :items="numberOfShots"
+                  label="Shot [poke] count:"
+                >
+                </v-select>
+              </v-col>
+              <v-col sm="4">
+                <v-checkbox
+                  v-model="wearsMask"
+                  color="deep-purple accent-4"
+                  label="Wears Mask?"
+                  hide-details="auto"
+                ></v-checkbox
+              ></v-col>
+              <v-col sm="4">
+                <v-checkbox
+                  v-model="recentFluShot"
+                  color="deep-purple accent-4"
+                  label="Recent FluShot?"
+                  hide-details="auto"
+                ></v-checkbox
+              ></v-col>
+            </v-row>
+          </v-col>
 
-                        <v-list-item-action>
-                          <v-checkbox
-                            v-if="option.text"
-                            :input-value="active"
-                            color="deep-purple accent-4"
-                          ></v-checkbox>
-                        </v-list-item-action>
-                      </template>
-                    </v-list-item>
-                  </template>
-                </v-list-item-group>
-              </v-list>
-            </v-col>
-          </v-row>
-        </v-col>
-        <v-col>
-          <v-row>
-            <v-col>
-              <v-card-text class="mt-5" v-html="message"></v-card-text> </v-col
-          ></v-row>
-          <v-row>
-            <v-col>
-              <v-card-text class="white--text"
-                >Warning weight: <strong>{{ score }}</strong> dBs
-                <v-progress-linear
-                  v-model="pctWeight"
-                  :color="getWarningColor"
-                  height="25"
-                  >Relative Risk: &nbsp;
-                  <strong>{{ Math.round(pctWeight) }}%</strong>
-                </v-progress-linear></v-card-text
-              >
-            </v-col>
-          </v-row>
-        </v-col>
-      </v-row>
-      <v-row no-gutters>
-        <v-col>
-          <v-menu
-            ref="menu"
-            v-model="menu"
-            :close-on-content-click="false"
-            :return-value.sync="lastVaccinationDate"
-            transition="scale-transition"
-            offset-y
-            max-width="290px"
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                :value="lastVaccinationDate | monthYear"
-                label="Vaccinated "
-                prepend-icon="event"
-                readonly
-                clearable
-                v-bind="attrs"
-                v-on="on"
-                @click:clear="deleteDate"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              v-model="lastVaccinationDate"
-              type="month"
-              no-title
-              scrollable
-            >
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="menu = false">Cancel</v-btn>
-              <v-btn
-                text
-                color="primary"
-                @click="$refs.menu.save(lastVaccinationDate)"
-                >OK</v-btn
-              >
-            </v-date-picker>
-          </v-menu></v-col
-        >
-        <v-col cols="auto">
-          <v-checkbox
-            v-model="wearsMask"
-            color="deep-purple accent-4"
-            label="Wears Mask?"
-            hide-details="auto"
-          ></v-checkbox
-        ></v-col>
-        <v-col cols="auto">
-          <v-checkbox
-            v-model="recentFluShot"
-            color="deep-purple accent-4"
-            label="Recent FluShot?"
-            hide-details="auto"
-          ></v-checkbox
-        ></v-col>
-      </v-row>
+          <v-col cols="auto" sm="6">
+            <v-row>
+              <v-col>
+                <v-card-text
+                  class="mt-5"
+                  v-html="message"
+                ></v-card-text> </v-col
+            ></v-row>
+            <v-row>
+              <v-col>
+                <v-card-text class="white--text"
+                  >Warning weight: <strong>{{ score }}</strong> dBs
+                  <v-progress-linear
+                    v-model="pctWeight"
+                    :color="getWarningColor"
+                    height="25"
+                    >Relative Risk: &nbsp;
+                    <strong>{{ Math.round(pctWeight) }}%</strong>
+                  </v-progress-linear></v-card-text
+                >
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+      </v-card-text>
       <v-divider />
       <v-card-title class="justify-center pb-0 pt-1"
         >Send warning?</v-card-title
@@ -316,7 +280,7 @@ export default {
           break;
         case 9: // either 3+6 or 2+6+1
           msg = `${
-            this.lastVaccinationDate
+            this.vaccinationStatus
               ? 'You are vaccinated, but it looks like you live in an active COVID zone. Get tested to ensure you are a breakthrough case, and warn others if true'
               : "Testing positive after contact with a carrier is a reliable signal of exposure (inspite of the test's non-zero False Positive rate)"
           }.`;
@@ -342,7 +306,7 @@ export default {
           break;
         case 15:
           msg = `You have almost checked all the boxes. Since you are not showing symptoms, yourself,  ${
-            this.lastVaccinationDate
+            this.vaccinationStatus
               ? 'you may be an asymptomatic carrier -- espcially since you are vaccinated.'
               : 'you may be an asymptomatic carrier.'
           }`;
@@ -375,7 +339,7 @@ export default {
           break;
         default:
           msg = `You have checked all the boxes: Your exposure warning couldn't be more reliable. <br/> You MUST hit the <strong>Warn</strong> button, and then take care of yourself. ${
-            this.lastVaccinationDate
+            this.vaccinationStatus
               ? '<br/>As a <strong>breakthrough</strong> case, we hope your illness is mild and your recovery is quick.'
               : ''
           }`;
@@ -387,7 +351,8 @@ export default {
 
   data() {
     return {
-      lastVaccinationDate: null,
+      numberOfShots: [0, 1, 2, 3],
+      vaccinationStatus: null,
       isDebugging: true,
       ready: false,
       confirmationMessage: '',
@@ -404,10 +369,8 @@ export default {
       recentFluShot: true,
       wearsMask: true,
       epsilon: 0,
-      // lastVaccinationDate: null,
       menu: false,
       menu2: false,
-      vaccinated: false,
       warnings: [],
       WarningOptions: [
         {
@@ -476,10 +439,9 @@ export default {
 
     warnThem(state) {
       console.log(
-        state.lastVaccinationDate || 'no vaccination date',
+        state.vaccinationStatus || 'no vaccination date',
         state.recentFluShot || 'no flu shot date'
       );
-      // updateState({lastVaccinationDate:this.lastVaccinationDate, recentFluShot:this.recentFluShot})
 
       this.dialog = true;
       console.log(this.score, this.pctWeight);
@@ -504,9 +466,9 @@ export default {
     ready() {
       console.log('Ready');
     },
-    lastVaccinationDate() {
-      console.log(this.lastVaccinationDate);
-      this.epsilon = this.lastVaccinationDate ? 1 : 0;
+    vaccinationStatus() {
+      console.log(this.vaccinationStatus);
+      this.epsilon = this.vaccinationStatus ? 1 : 0;
       console.log('score:', this.score);
     },
     score() {

@@ -2,6 +2,11 @@
   <!-- the new layouts strategy https://itnext.io/vue-tricks-smart-layouts-for-vuejs-5c61a472b69b
   still requires the v-app wrapper for vuetify to work properly -->
   <v-app>
+    <v-overlay :value="overlay">
+      <v-progress-circular indeterminate size="64"
+        >Starting LCT</v-progress-circular
+      >
+    </v-overlay>
     <!-- PWA snackbar -->
     <v-snackbar
       v-model="snackWithButtons"
@@ -52,8 +57,7 @@ export default {
 
   data() {
     return {
-      userID: 'mpc',
-
+      overlay: true,
       snackBtnText: '',
       snackWithButtons: false,
       snackWithBtnText: '',
@@ -138,7 +142,7 @@ export default {
 
   mounted() {
     console.log('Incoming querystring:', this.$route.query);
-
+    this.overlay = false;
     console.log('\tAPP mounted');
   },
 
