@@ -1,6 +1,12 @@
 <template>
   <div>
     <v-card>
+      <v-toolbar :color="selectedEventParsed.input.color" dark>
+        <v-toolbar-title
+          v-html="selectedEventParsed.input.name"
+        ></v-toolbar-title>
+        <v-spacer></v-spacer>
+      </v-toolbar>
       <v-row justify="space-around" align="center" no-gutters>
         <v-col cols="4">
           <v-text-field
