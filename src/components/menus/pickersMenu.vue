@@ -7,6 +7,10 @@
         ></v-toolbar-title>
         <v-spacer></v-spacer>
       </v-toolbar>
+      <v-card-subtitle
+        >Click the Date, Starting, or Ending fields to edit date
+        times.</v-card-subtitle
+      >
       <v-row justify="space-around" align="center" no-gutters>
         <v-col cols="4">
           <v-text-field
@@ -71,12 +75,20 @@
           </v-btn></v-time-picker
         >
       </v-row>
+      <v-divider/>
       <v-card-actions v-if="!editing">
         <v-btn dark @click="noDateTime"> Cancel </v-btn>
+        <v-btn dark @click="deleteEvent"> Delete </v-btn>
+        <v-spacer />
         <v-btn v-if="dirty" color="primary" @click="newDateTime">
           Update
         </v-btn>
-        <v-btn dark color="secondary" @click="logEvent">
+        <v-btn
+          v-if="!selectedEventParsed.input.loggedVisitId"
+          dark
+          color="secondary"
+          @click="logEvent"
+        >
           Log
         </v-btn>
         <v-btn dark color="secondary" @click="share">
@@ -107,6 +119,13 @@ export default {
     };
   },
   methods: {
+    deleteEvent(){
+      this.dirty = false;
+      this.$emit('deleteEvent');
+      // this.$emit('noDateTime');
+
+    },
+
     pick(index, editing, dirty) {
       this.editing = editing;
       this.picked = index;
@@ -142,7 +161,12 @@ export default {
       this.$emit('logEvent', { date: this.pickedDate, start, end });
     },
   },
-  watch: {},
+  watch: {
+    selectedEventParsed() {
+      console.log('pickersMenu.selectedEventParsed:');
+      console.log(JSON.stringify(this.selectedEventParsed.input, null, 3));
+    },
+  },
   mounted() {
     const vm = this;
     vm.pickedDate = vm.selectedEventParsed.start.date;

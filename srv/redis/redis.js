@@ -58,11 +58,22 @@ module.exports = {
   deleteVisit,
   findExposedVisitors,
   changeGraph,
-  logVisitX,
+  logVisit,
   onExposureWarning,
   options,
 };
 //#endregion Setup
+
+// TODO can we use the entityMap to escape html elsewhere (e.g., warning email)
+// and you should probably move this code to utils.js
+// var entityMap = {
+//   '&': '&amp;',
+//   '<': '&lt;',
+//   '>': '&gt;',
+//   '"': '&quot;',
+//   "'": '&#39;',
+//   '/': '&#x2F;',
+// };
 
 function changeGraph(graphName) {
   currentGraphName = graphName;
@@ -71,18 +82,9 @@ function changeGraph(graphName) {
 }
 
 //#region LAB
-function logVisitX(visit) {
+function logVisit(visit) {
   const { visitId, userID, place, start, end, graphName } = visit;
-  // TODO can we use the entityMap to escape html elsewhere (e.g., warning email)
-  // and you should probably move this code to utils.js
-  // var entityMap = {
-  //   '&': '&amp;',
-  //   '<': '&lt;',
-  //   '>': '&gt;',
-  //   '"': '&quot;',
-  //   "'": '&#39;',
-  //   '/': '&#x2F;',
-  // };
+
   function escapeHtml(string) {
     return String(string).replace(/[&<>"'/]/g, function(s) {
       // here we just escape strings characters
@@ -94,15 +96,20 @@ function logVisitX(visit) {
   if (graphName && graphName !== currentGraphName) {
     changeGraph(graphName);
   }
+
+  // Graph.query() arg
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 
       MERGE (s:space{ name: '${escapeHtml(place)}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
+
+  // OK event handler that converts redis results into lct object
   function returnResults(results) {
     const id = results.next().get('id(r)');
-
     return { id, place, graphName, visitId, logged: true };
   }
+
+  // return this either-async to client
   return Graph.query(query)
     .toEither()
     .cata({
@@ -113,7 +120,8 @@ function logVisitX(visit) {
       },
     });
 }
-//#endregion
+
+//#endregion LAB
 
 //#region READ Graph
 // see if an alerted visitor has potential alerts to share
@@ -207,38 +215,31 @@ function onExposureWarning(userID) {
     .then(updateGraph)
     .then((userIDs) => userIDs);
 }
+//#endregion READ Graph
+
 //#region DELETE Graph Nodes
 // delegated in index.js to handle socket.on('deleteVisit')
-// Example query:
-// MATCH  (:visitor{name:"Tab hunter"})-[v:visited{start:1616455800000, end:1616459400000}]->(:space{name:'Sisters Coffee Company'}) DELETE v
 function deleteVisit(data) {
-  return new Promise((resolve, reject) => {
-    const { loggedVisitId, graphName } = data;
-    if (!loggedVisitId) {
-      reject({
-        deleted: false,
-        reason: 'No loggedVisitId available for deletion.',
-      });
-      return;
-    }
-    if (graphName !== currentGraphName) {
-      changeGraph(graphName);
-    }
-    let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
-    console.log(warn('DELETE Visit query:', query));
-    Graph.query(query)
-      .then((results) => {
-        const stats = results._statistics._raw;
-        console.log(`stats: ${printJson(stats)}`);
-        resolve({ deleted: true });
-      })
-      .then(() => deleteExpiredVisits())
-      .catch((error) => {
-        console.log(error);
-        reject({ deleted: false, error: error });
-      });
-  });
+  const { loggedVisitId, graphName } = data;
+
+  if (graphName && graphName !== currentGraphName) {
+    changeGraph(graphName);
+  }
+
+  // Graph.query() arg
+  let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
+
+  // return this either-async to client
+  return Graph.query(query)
+    .toEither()
+    .cata({
+      ok: (results) => results._statistics._raw[0],
+      error: (results) => {
+        console.log(results, 'Issues when deleting node on graph()');
+      },
+    });
 }
+
 // handled internally each time the graph gets called
 // Example query:
 // MATCH p=()-[v:visited]->() where (v.start<=1623628800000) RETURN p

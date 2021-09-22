@@ -53,7 +53,7 @@ const {
   deleteVisit,
   findExposedVisitors,
   changeGraph,
-  logVisitX,
+  logVisit,
   onExposureWarning,
 } = require('./redis/redis');
 
@@ -344,11 +344,11 @@ io.on('connection', (socket) => {
     }
 
     // delegate to redis/redis.js
-    logVisitX(data)
+    logVisit(data)
       .toEither()
       // TODO all inspect() to either-async
       .map((x) => {
-        console.log(info('logVisitX.map():', JSON.stringify(data, null, 3)));
+        console.log(info('logVisit.map():', JSON.stringify(data, null, 3)));
         return x;
       })
       .cata({
@@ -365,7 +365,7 @@ io.on('connection', (socket) => {
     console.log(printJson(data));
     deleteVisit(data)
       .then((res) => {
-        console.log(res);
+        console.log('Results of delete:', res);
         ack(res);
       })
       .catch((error) => ack(error));

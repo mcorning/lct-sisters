@@ -10,6 +10,7 @@
         changeGraphName,
         setDefaultGraphName,
         getGraphName,
+        usernumber,
       }"
     >
       <!-- Step 3/4: assign slotted props to component's props -->
@@ -22,6 +23,7 @@
         :setDefaultGraphName="setDefaultGraphName"
         :getGraphName="getGraphName"
         :confirmations="confirmations"
+        :usernumber=usernumber
       />
     </div>
   </Model>
@@ -50,18 +52,30 @@ export default {
 
     onUpdatedModel(updateResults) {
       console.log(JSON.stringify(updateResults, null, 3));
+
+      // interpret update results function
       const getMsg = (updateResults) => {
-        const { place, graphName, id } = updateResults;
-        const msg = {
-          logged: true,
-          confirmationColor: 'success',
-          confirmationMessage: `${place} logged to ${graphName} graph on visit relationship ID ${id}`,
-        };
+        const { place, graphName, id, logged, deleted } = updateResults;
+        const msg = logged
+          ? {
+              logged: true,
+              loggedVisitId: id,
+              confirmationColor: 'success',
+              confirmationMessage: `${place} logged to ${graphName} graph on visit relationship ID ${id}`,
+            }
+          : deleted
+          ? {
+              deleted: true,
+              confirmationColor: 'success',
+              confirmationMessage: `Visit ID ${place} deleted from ${graphName} graph`,
+            }
+          : 'Neither log nor delete operation results available';
         console.log('sending message to Calendar:', msg);
         return msg;
       };
+
+      // use update results function to set the Calendar prop to display results of log/delete operation
       this.confirmations = getMsg(updateResults);
-      // updateResults.logged > -1 ? updateResults : getMsg(updateResults);
     },
   },
 

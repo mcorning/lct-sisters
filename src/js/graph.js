@@ -3,6 +3,30 @@ export const graphMixin = {
   name: 'graphHelpers',
 
   methods: {
+    onDeleteNode(loggedVisitId, graphName) {
+      const query = {
+        loggedVisitId,
+        graphName,
+      };
+      console.log('query to delete node on graph:', printJson(query));
+      // send message to server
+      this.emitFromClient(
+        'deleteVisit',
+        query,
+        // and handle the callback
+        (results) => {
+          console.log(
+            success('deleteVisitOnGraph results:', printJson(results))
+          );
+          this.$emit('updatedModel', {
+            place: loggedVisitId,
+            graphName,
+            deleted: true,
+          });
+        }
+      );
+    },
+
     onLogVisit(visit) {
       console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
 

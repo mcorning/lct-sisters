@@ -30,7 +30,7 @@ export default class Visit extends Model {
       loggedVisitId: this.string(''), // ID of the graph Visit relationship
       graphName: this.string(''), // graphname may be 'Sand box' for users' playground
 
-      shared:this.boolean(false) // set true when someone shares an event
+      shared: this.boolean(false), // set true when someone shares an event
     };
   }
 
@@ -67,6 +67,7 @@ export default class Visit extends Model {
   // App.js onLogVisit() used this function to update the visit with loggedVisitId and graphName
   static updateLoggedVisitId(data) {
     const { visitId, loggedVisitId, graphName, color } = data;
+
     console.log(`Updated Visit with`, JSON.stringify(data, null, 3));
     return this.$update({
       where: visitId,

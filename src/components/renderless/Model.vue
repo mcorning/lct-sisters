@@ -106,20 +106,36 @@ export default {
     },
 
     // TODO has this abstract approach been superseded by time.js and space.js?
-    onUpdate(target, selectedEvent) {
+    onUpdate(target, selectedEvent, deleteVisit = false) {
       this.selectedEvent = selectedEvent;
       const f = this[target];
-      f();
+      f(deleteVisit);
     },
 
-    cache() {
-      // TODO aren't we using monads now?
+    cache(deleteVisit) {
+      if (deleteVisit) {
+        const id = this.selectedEvent.id;
+        this.deleteVisit(id);
+        this.$emit('updatedModel', { id, deleted: true });
+
+        return;
+      }
       this.updateVisit(this.selectedEvent);
-      // TODO isn't updateVisit async
-      // this.$emit('updatedModel', msg);
     },
-    // called by Calendar when logging a Visit
-    graph() {
+
+    // called by Calendar when logging or deleting a Visit
+    graph(deleteVisit) {
+      if (deleteVisit) {
+        this.onDeleteNode(
+          this.selectedEvent.loggedVisitId,
+          this.getGraphName()
+        );
+        // if we deleted the graph node, then we should delete the cache entry, too
+        // but we assume the node delete operation succeeds. what if it doesn't?
+        this.cache(true);
+        return;
+      }
+      // TODO actually, this poor man's polymorphism here feels like it needs a functional approach
       this.onLogVisit(this.selectedEvent);
     },
 
@@ -167,14 +183,6 @@ export default {
     },
 
     emitFromClient(eventName, data, ack) {
-      if (!this.isConnected) {
-        this.$emit('updatedModel', {
-          logged: false,
-          confirmationColor: 'orange',
-          confirmationMessage: 'Model not updated. Graph not connected.',
-        });
-        return;
-      }
       this.$socket.client.emit(eventName, data, ack);
     },
 
@@ -281,7 +289,9 @@ export default {
       return some;
     },
     updateUsernumber() {
+      // as a date, this permits us to use the usernumber to see how long they've been using LCT
       const userNumber = Date.now();
+
       this.updateSetting({ id: 1, usernumber: userNumber });
       this.updateState({ settings: { usernumber: userNumber } });
     },

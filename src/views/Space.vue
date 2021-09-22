@@ -13,8 +13,10 @@
         onDeletePlace,
         setPoi,
         getPoi,
+        usernumber,
       }"
     >
+      {{ usernumber }}
       <Spaces
         :isConnected="isConnected"
         :state="state"
@@ -27,6 +29,7 @@
         :onDeletePlace="onDeletePlace"
         :setPoi="setPoi"
         :getPoi="getPoi"
+        :usernumber="usernumber"
       />
     </div>
   </Model>

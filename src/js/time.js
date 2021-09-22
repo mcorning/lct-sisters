@@ -80,9 +80,6 @@ export const timeMixin = {
     },
 
     updateVisit(visit) {
-      if (visit.start === visit.end) {
-        return this.deleteVisit(visit.id);
-      }
       // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
       Visit.update(visit)
         .toEither()
@@ -100,11 +97,11 @@ export const timeMixin = {
             firstOrNone(v).match({
               Some: (v) => {
                 console.log('updateVisit().cata:');
-                const query={...v}
+                const query = { ...v };
                 console.log(query);
                 this.$router.push({
                   name: 'Time',
-                  params:query,
+                  params: query,
                 });
               },
               None: () => console.log(`NOOP`),

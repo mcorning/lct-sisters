@@ -90,52 +90,8 @@
           ></div>
         </template>
       </v-calendar>
-      <!-- <v-menu
-        v-model="selectedOpen"
-        :close-on-content-click="false"
-        :activator="selectedElement"
-        offset-x
-        max-width="400"
-      >
-        <v-card color="grey lighten-4" min-width="350px" flat>
-          <v-toolbar :color="selectedEvent.color" dark>
-            <v-toolbar-title v-html="selectedEvent.name"></v-toolbar-title>
-            <v-spacer></v-spacer>
-          </v-toolbar> -->
-      <!-- <v-card-text> -->
-      <!-- </v-card-text> -->
-      <!-- <v-card-text> -->
-      <!-- <v-row v-if="dev" class="ml-5" align="center" no-gutters>
-            <v-col cols="8">
-              <v-select
-                v-model="selectedGraph"
-                :items="graphs"
-                prepend-icon="mdi-graphql"
-                menu-props="auto"
-                :label="graphSelectLabel"
-                single-line
-                dense
-              ></v-select>
-            </v-col>
-          </v-row> -->
-      <!-- </v-card-text> -->
-      <!-- <v-card-actions>
-            <v-btn text color="secondary" @click="selectedOpen = false">
-              Cancel
-            </v-btn>
-            <v-btn text color="secondary" @click="update('cache')">
-              Update
-            </v-btn>
-            <v-btn text color="secondary" @click="update('graph')">
-              Log
-            </v-btn>
-            <v-btn text color="secondary" @click="banner = true">Share </v-btn>
-          </v-card-actions>
-          <v-divider />-->
-
-      <!-- </v-card> -->
-      <!-- </v-menu> -->
     </v-sheet>
+
     <v-bottom-sheet v-model="seePickers" inset>
       <v-sheet>
         <PickersMenu
@@ -144,6 +100,7 @@
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
           @share="banner = true"
+          @deleteEvent="onDeleteEvent"
         />
         <v-banner v-model="banner">
           <v-card-title>Share a Gathering</v-card-title>
@@ -185,15 +142,6 @@
               ><small>{{ mailToUri }}</small></v-col
             ></v-row
           >
-          <!-- <v-card-actions>
-            <v-btn color="green" text input-value @click="emailEvent">
-              Email
-            </v-btn>
-            <v-spacer />
-            <v-btn color="red" text @click="banner = false"
-              >Dismiss
-            </v-btn></v-card-actions
-          > -->
 
           <template v-slot:actions="{ dismiss }">
             <v-btn color="green" text input-value @click="emailEvent">
@@ -205,7 +153,7 @@
       </v-sheet>
     </v-bottom-sheet>
 
-    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="-1"
+    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="4000"
       >{{ confirmationMessage }}
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
@@ -238,7 +186,7 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import PickersMenu from '@/components/menus/pickersMenu.vue';
-import { DateTime, inFuture } from '@/utils/luxonHelpers';
+import { DateTime,  inFuture, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 
 export default {
@@ -253,6 +201,7 @@ export default {
     setDefaultGraphName: Function,
     getGraphName: Function,
     confirmations: Object,
+    usernumber:Number,
   },
   components: {
     PickersMenu,
@@ -260,12 +209,13 @@ export default {
   },
   computed: {
     gatheringLabel() {
-      return this.selectedEvent.name === 'Gathering'
+      return this.selectedEvent && this.selectedEvent.name === 'Gathering'
         ? 'Description (Optional)'
         : 'Room (Optional)';
     },
     gatheringHint() {
-      return this.selectedEvent.name === 'Gathering'
+      // TODO this and label above need Maybe treatment
+      return this.selectedEvent && this.selectedEvent.name === 'Gathering'
         ? 'Outdoor events may need a description'
         : 'Indoor events may need a room ID';
     },
@@ -275,6 +225,10 @@ export default {
     },
 
     mailToUri() {
+      // TODO we shouldn't need this guard
+      if (!this.selectedEvent) {
+        return;
+      }
       const { place_id, name, date, start, end } = this.selectedEvent;
       const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
       const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); // we will reverse this edit in space.js
@@ -403,6 +357,18 @@ export default {
   },
 
   methods: {
+    onDeleteEvent() {
+      if (!this.selectedEvent.loggedVisitId) {
+        // if unlogged, just delete cache
+        this.delete('cache');
+      } else {
+        // delete graph will also delete cache
+        this.delete('graph');
+      }
+
+      this.seePickers = false;
+
+    },
     onLogEvent(newDateTimes) {
       const { date, start, end } = newDateTimes;
 
@@ -437,14 +403,13 @@ export default {
       //this.changeGraphName();
     },
 
-    delete(target, graph) {
+    delete(target) {
       const deleteVisit = true;
-      // TODO implement this in Model
-      this.onUpdate(target, this.selectedEvent, graph, deleteVisit);
+      this.onUpdate(target, this.selectedEvent, deleteVisit);
       this.selectedOpen = false;
     },
-    update(target, graph) {
-      this.onUpdate(target, this.selectedEvent, graph);
+    update(target) {
+      this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
     },
 
@@ -624,10 +589,28 @@ export default {
     },
 
     confirmations(msg) {
-      const { logged, confirmationColor, confirmationMessage } = msg;
+      const {
+        deleted,
+        logged,
+        loggedVisitId,
+        confirmationColor,
+        confirmationMessage,
+      } = msg;
       this.confirmationColor = confirmationColor;
       this.confirmationMessage = confirmationMessage;
-      this.selectedEvent.color = logged ? 'primary' : 'secondary';
+      if (deleted) {
+        // TODO get a better way to refresh state to relevantEvents loses the deleted record
+        console.log('Deleted visit to',this.selectedEvent.name)
+      } else {
+        this.selectedEvent.color = logged ? 'primary' : 'secondary';
+        this.selectedEvent.loggedVisitId = loggedVisitId;
+        const then =DateTime.fromMillis(this.usernumber)
+        const age=userSince(then)
+        if (age<2) {
+        alert('Congratulations in adopting LCT. Stay safe out there.')
+          
+        }
+      }
       this.snackbar = true;
     },
   },
