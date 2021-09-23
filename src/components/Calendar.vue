@@ -216,6 +216,7 @@ export default {
     getGraphName: Function,
     confirmations: Object,
     usernumber: Number,
+    getVisits: Function,
   },
   components: {
     PickersMenu,
@@ -297,7 +298,11 @@ export default {
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
       try {
-        const x = [...this.state.visits, ...this.state.appointments];
+        const cutoffDateTime = DateTime.now()
+          .minus({ days: 10 })
+          .toMillis();
+        // const x = [...this.state.visits, ...this.state.appointments];
+        const x = this.getVisits().filter((v) => v.start > cutoffDateTime);
         return x;
       } catch (error) {
         return [];
@@ -671,6 +676,8 @@ export default {
 
     ready() {
       this.findUnloggedVisits();
+      let x = userSince(new Date('2021-09-13'));
+      console.log(x);
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);
@@ -696,7 +703,7 @@ export default {
         this.selectedEvent.loggedVisitId = loggedVisitId;
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);
-        if (age < 2) {
+        if (age < 22) {
           alert('Congratulations for adopting LCT. Stay safe out there.');
         }
       }

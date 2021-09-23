@@ -21,7 +21,7 @@
           Log all your visits to the server now?
         </v-card-text>
         <v-card-actions>
-          <v-btn @click="logVisitsX(logVisits)">Yes</v-btn>
+          <v-btn @click="logVisitsX(logVisits)"><v-icon>check</v-icon></v-btn>
           <v-btn icon class="ml-4" @click="dialog = false">
             <v-icon>close</v-icon>
           </v-btn>
@@ -83,17 +83,21 @@
                 </v-list-item-group>
               </v-list>
             </v-col>
-            <span
-              >Warning weight: <strong>{{ score }}</strong> dBs</span
-            >
-            <v-progress-linear
-              v-model="pctWeight"
-              :color="getWarningColor"
-              height="25"
-              >Relative Risk: &nbsp;
-              <strong>{{ pctWeightString }}</strong>
-            </v-progress-linear>
           </v-row>
+          <v-row no-gutters
+            ><v-col>
+              <span
+                >Warning weight: <strong>{{ score }}</strong> dBs</span
+              >
+              <v-progress-linear
+                v-model="pctWeight"
+                :color="getWarningColor"
+                height="25"
+                >Relative Risk: &nbsp;
+                <strong>{{ pctWeightString }}</strong>
+              </v-progress-linear>
+            </v-col></v-row
+          >
           <v-row no-gutters>
             <v-col cols="4">
               <v-select
@@ -196,9 +200,9 @@ export default {
     state: Object,
     hasVisits: Boolean,
     visitCount: Number,
-    hasUnloggedVisits: Number,
     logVisits: Function,
     onExposureWarning: Function,
+    getUnloggedVisits: Function,
   },
   components: {
     ConfirmationSnackbar,
@@ -207,6 +211,10 @@ export default {
   },
 
   computed: {
+    hasUnloggedVisits() {
+      const x = this.getUnloggedVisits().length;
+      return x;
+    },
     getWarningColor() {
       if (this.pctWeight < 25) return 'amber';
       if (this.pctWeight < 75) return 'orange';

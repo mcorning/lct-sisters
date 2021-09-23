@@ -26,10 +26,10 @@ const isToday = (date) => {
   return dt1.toLocaleString() === DateTime.now().toLocaleString();
 };
 
-const userSince=( then)=>{
+const userSince = (then) => {
   const i = Interval.fromDateTimes(then, DateTime.now());
-return i.length('days');
-}
+  return i.length('days');
+};
 
 const isBetween = (date, daysBack) => {
   let past = DateTime.now().minus({ day: daysBack });

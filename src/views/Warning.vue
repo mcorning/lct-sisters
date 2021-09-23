@@ -6,9 +6,9 @@
         state,
         hasVisits,
         visitCount,
-        hasUnloggedVisits,
         logVisits,
         onExposureWarning,
+        getUnloggedVisits,
       }"
     >
       <exposure
@@ -16,9 +16,9 @@
         :state="state"
         :hasVisits="hasVisits"
         :visitCount="visitCount"
-        :hasUnloggedVisits="hasUnloggedVisits"
         :logVisits="logVisits"
         :onExposureWarning="onExposureWarning"
+        :getUnloggedVisits="getUnloggedVisits"
       />
     </div>
   </Model>

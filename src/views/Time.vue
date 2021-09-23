@@ -11,6 +11,7 @@
         setDefaultGraphName,
         getGraphName,
         usernumber,
+        getVisits,
       }"
     >
       <!-- Step 3/4: assign slotted props to component's props -->
@@ -23,7 +24,8 @@
         :setDefaultGraphName="setDefaultGraphName"
         :getGraphName="getGraphName"
         :confirmations="confirmations"
-        :usernumber=usernumber
+        :usernumber="usernumber"
+        :getVisits="getVisits"
       />
     </div>
   </Model>

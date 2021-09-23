@@ -17,7 +17,7 @@ import { warningMixin } from '@/js/warning';
 import { highlight, success, printJson } from '../../utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
-
+import { userSince } from '@/utils/luxonHelpers';
 export default {
   props: {},
 
@@ -101,6 +101,18 @@ export default {
   },
 
   methods: {
+    getVisits() {
+      // return this.visits.filter((v) => !v.loggedVisitId);
+      const x = Visit.query().get();
+      return x;
+    },
+    getUnloggedVisits() {
+      // return this.visits.filter((v) => !v.loggedVisitId);
+      const x = Visit.query()
+        .where('loggedVisitId', '')
+        .get();
+      return x;
+    },
     onExposureWarning(reason) {
       this.emitFromClient('exposureWarning', reason);
     },
@@ -389,6 +401,7 @@ export default {
       changeGraphName: this.changeGraphName,
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
+      getVisits: this.getVisits,
 
       //Warning assets
       visitCount: this.visitCount,
@@ -396,6 +409,7 @@ export default {
       hasUnloggedVisits: this.hasUnloggedVisits,
       logVisits: this.logVisits, // takes an array of visits as input
       onExposureWarning: this.onExposureWarning,
+      getUnloggedVisits: this.getUnloggedVisits,
     });
   },
 };
