@@ -91,64 +91,85 @@
         </template>
       </v-calendar>
     </v-sheet>
+    <div v-if="mailToUri" @click="copyUrl">Copy URL</div>
 
-    <v-bottom-sheet v-model="seePickers" inset>
+    <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
         <PickersMenu
           :selectedEventParsed="selectedEventParsed"
           @newDateTime="onNewDateTime"
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
-          @share="banner = true"
+          @share="openBanner"
           @deleteEvent="onDeleteEvent"
         />
         <v-banner v-model="banner">
-          <v-card-title>Share a Gathering</v-card-title>
-          <v-card-subtitle
-            >Send event link to others who will join you</v-card-subtitle
-          >
-          <v-text-field
-            v-model="room"
-            :label="gatheringLabel"
-            :hint="gatheringHint"
-          ></v-text-field>
-
           <v-row no-gutters>
-            <v-col cols="7">
+            <v-col cols="12">
               <v-text-field
                 v-model="alias"
-                label="Email address:"
+                :rules="[rules.required, rules.email]"
+                clearable
+                label="Email address*"
                 hint="Email a person directly or send to yourself and forward"
-              ></v-text-field
-            ></v-col>
-            <v-spacer />
-            <v-col cols="4">
+              ></v-text-field>
+
               <v-text-field
                 v-model="toName"
+                dense
+                clearable
                 hint="Name used at the end of your invitation "
                 label="Your name:"
-              ></v-text-field></v-col
+              ></v-text-field>
+              <v-text-field
+                v-model="room"
+                dense
+                clearable
+                :label="gatheringLabel"
+                :hint="gatheringHint"
+              ></v-text-field> </v-col
           ></v-row>
-          <v-row
-            ><v-col
-              ><VueQRCodeComponent
-                id="qr"
-                ref="qr"
-                :text="mailToUri"
-                :size="150"
-              >
-              </VueQRCodeComponent> </v-col
+          <v-row>
+            <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
+            <v-spacer />
+            <v-btn
+              color="green"
+              v-show="alias"
+              text
+              input-value
+              @click="emailEvent"
+            >
+              Email
+            </v-btn>
+          </v-row>
+          <v-row>
+            <v-hover v-slot="{ hover }">
+              <v-col cols="4">
+                <v-expand-transition>
+                  <div
+                    v-if="hover"
+                    class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-3 pa-3"
+                  >
+                    To use QR code elsewhere, copy it with context menu
+                    (right-click). Paste as necessary.
+                  </div>
+                </v-expand-transition>
+
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="mailToUri"
+                  :size="110"
+                >
+                </VueQRCodeComponent>
+              </v-col>
+            </v-hover>
+          </v-row>
+          <!-- <v-row
             ><v-col
               ><small>{{ mailToUri }}</small></v-col
             ></v-row
-          >
-
-          <template v-slot:actions="{ dismiss }">
-            <v-btn color="green" text input-value @click="emailEvent">
-              Email
-            </v-btn>
-            <v-btn color="red" text @click="dismiss">Dismiss </v-btn>
-          </template>
+          > -->
         </v-banner>
       </v-sheet>
     </v-bottom-sheet>
@@ -186,7 +207,7 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import PickersMenu from '@/components/menus/pickersMenu.vue';
-import { DateTime,  inFuture, userSince } from '@/utils/luxonHelpers';
+import { DateTime, inFuture, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 
 export default {
@@ -201,7 +222,7 @@ export default {
     setDefaultGraphName: Function,
     getGraphName: Function,
     confirmations: Object,
-    usernumber:Number,
+    usernumber: Number,
   },
   components: {
     PickersMenu,
@@ -210,8 +231,8 @@ export default {
   computed: {
     gatheringLabel() {
       return this.selectedEvent && this.selectedEvent.name === 'Gathering'
-        ? 'Description (Optional)'
-        : 'Room (Optional)';
+        ? 'Description '
+        : 'Room ';
     },
     gatheringHint() {
       // TODO this and label above need Maybe treatment
@@ -224,8 +245,8 @@ export default {
       return `Exposure Graphs (${this.getGraphName()})`;
     },
 
+    // TODO we shouldn't need this guard
     mailToUri() {
-      // TODO we shouldn't need this guard
       if (!this.selectedEvent) {
         return;
       }
@@ -303,6 +324,15 @@ export default {
   },
   data() {
     return {
+      qrText: '',
+      clipboard: null,
+      rules: {
+        required: (value) => !!value || 'Required.',
+        email: (value) => {
+          const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          return pattern.test(value) || 'Invalid e-mail.';
+        },
+      },
       seePickers: false,
       showQR: false,
       room: '',
@@ -323,8 +353,8 @@ export default {
       ready: false,
       focus: '',
       type: 'day',
-      calendarHeight: 730,
 
+      calendarHeight: 730,
       typeToLabel: {
         category: 'Work',
         month: 'Month',
@@ -357,6 +387,74 @@ export default {
   },
 
   methods: {
+    copyUrl() {
+      // const html = this.qrText.firstChild.nextElementSibling.outerHTML;
+      // const dataUrl = this.qrText.firstChild.toDataURL();
+      // // this.$clipboard({ html, dataUrl }); // this.$clipboard copy any String/Array/Object you want
+      console.log(this.$clipboard(this.mailToUri)); // this.$clipboard copy any String/Array/Object you want
+      // this.confirmationMessage = success
+      //   ? 'Copied to clipboard'
+      //   : "Oops, couldn't copy";
+      // this.snackbar = true;
+    },
+
+    // copyQr() {
+    //   navigator.permissions
+    //     .query({ name: 'clipboard-write' })
+    //     .then((result) => {
+    //       if (result.state == 'granted' || result.state == 'prompt') {
+    //         /* write to the clipboard now */
+    //         var e = document.getElementById('canvas');
+    //         var canvasDataUrl = e.toDataURL('image/png');
+    //         const data = [new ClipboardItem({ [blob.type]: canvasDataUrl })];
+    //         return navigator.clipboard.write(data);
+    //       }
+    //     });
+    // },
+    // copyQrBad() {
+    //   var e = document.getElementById('canvas');
+    //   var canvasDataUrl = e.toDataURL('image/png');
+    //   //canvasDataUrl.select();
+    //   const selectedDataUrl = document.createElement('textarea');
+    //   document.body.appendChild(selectedDataUrl);
+    //   selectedDataUrl.value = canvasDataUrl;
+    //   selectedDataUrl.select();
+    //   try {
+    //     var successful = document.execCommand('copy');
+    //     var msg = successful ? 'successful' : 'unsuccessful';
+    //     console.log('Copying Chart to Clipboard was ' + msg);
+    //   } catch (err) {
+    //     console.log('Oops, unable to copy');
+    //   }
+    //   document.body.removeChild(selectedDataUrl);
+    // },
+    openBanner() {
+      this.banner = true;
+      this.qrText = document.getElementById('qr');
+      // this.getClipboard();
+    },
+    // getClipboard() {
+    //   var btn = document.getElementById('copyBtn');
+    //   var clipboard = new ClipboardJS(btn, {
+    //     text: function(trigger) {
+    //       return trigger.getAttribute('aria-label');
+    //     },
+    //   });
+
+    //   clipboard.on('success', function(e) {
+    //     console.log(e);
+    //   });
+
+    //   clipboard.on('error', function(e) {
+    //     console.log(e);
+    //   });
+    // },
+    copy: (e) => {
+      alert('You just copied: ' + e.text);
+    },
+    onError: function() {
+      alert('Failed to copy texts');
+    },
     onDeleteEvent() {
       if (!this.selectedEvent.loggedVisitId) {
         // if unlogged, just delete cache
@@ -367,7 +465,6 @@ export default {
       }
 
       this.seePickers = false;
-
     },
     onLogEvent(newDateTimes) {
       const { date, start, end } = newDateTimes;
@@ -600,15 +697,14 @@ export default {
       this.confirmationMessage = confirmationMessage;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
-        console.log('Deleted visit to',this.selectedEvent.name)
+        console.log('Deleted visit to', this.selectedEvent.name);
       } else {
         this.selectedEvent.color = logged ? 'primary' : 'secondary';
         this.selectedEvent.loggedVisitId = loggedVisitId;
-        const then =DateTime.fromMillis(this.usernumber)
-        const age=userSince(then)
-        if (age<2) {
-        alert('Congratulations in adopting LCT. Stay safe out there.')
-          
+        const then = DateTime.fromMillis(this.usernumber);
+        const age = userSince(then);
+        if (age < 2) {
+          alert('Congratulations for adopting LCT. Stay safe out there.');
         }
       }
       this.snackbar = true;
@@ -683,5 +779,15 @@ export default {
     touch-action: none;
     overflow-y: hidden;
   }
+}
+
+.v-card--reveal {
+  align-items: center;
+  bottom: 0;
+  justify-content: center;
+  opacity: 1;
+  position: absolute;
+  width: 300;
+  font-size: 15px;
 }
 </style>
