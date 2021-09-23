@@ -97,6 +97,7 @@
       <v-sheet>
         <PickersMenu
           :selectedEventParsed="selectedEventParsed"
+          :mailToUri="mailToUri"
           @newDateTime="onNewDateTime"
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
@@ -129,6 +130,26 @@
                 :hint="gatheringHint"
               ></v-text-field> </v-col
           ></v-row>
+          <v-row no-gutters
+            ><v-col>
+              <VueQRCodeComponent
+                id="qr"
+                ref="qr"
+                :text="mailToUri"
+                :size="200"
+              >
+              </VueQRCodeComponent></v-col
+            ><v-col>
+              <div class="ml-4">
+                <p>Scan QR with phone or copy/paste to email or printer.</p>
+
+                <p>
+                  Hover over the QR code, and you can copy the event's URL, as
+                  well.
+                </p>
+              </div></v-col
+            ></v-row
+          >
           <v-row>
             <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
             <v-spacer />
@@ -142,34 +163,6 @@
               Email
             </v-btn>
           </v-row>
-          <v-row>
-            <v-hover v-slot="{ hover }">
-              <v-col cols="4">
-                <v-expand-transition>
-                  <div
-                    v-if="hover"
-                    class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-3 pa-3"
-                  >
-                    To use QR code elsewhere, copy it with context menu
-                    (right-click). Paste as necessary.
-                  </div>
-                </v-expand-transition>
-
-                <VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="mailToUri"
-                  :size="110"
-                >
-                </VueQRCodeComponent>
-              </v-col>
-            </v-hover>
-          </v-row>
-          <!-- <v-row
-            ><v-col
-              ><small>{{ mailToUri }}</small></v-col
-            ></v-row
-          > -->
         </v-banner>
       </v-sheet>
     </v-bottom-sheet>

@@ -1,12 +1,28 @@
 <template>
   <div>
     <v-card>
-      <v-toolbar :color="selectedEventParsed.input.color" dark>
-        <v-toolbar-title v-html="selectedEventParsed.input.name">
-        </v-toolbar-title>
-        <v-spacer></v-spacer>
-      </v-toolbar>
-      <v-card-subtitle>You can edit the Date and Time fields</v-card-subtitle>
+      <v-hover v-slot="{ hover }">
+        <v-toolbar :color="selectedEventParsed.input.color" dark dense>
+          <v-toolbar-title v-html="selectedEventParsed.input.name" />
+          <v-spacer />
+          <v-expand-transition>
+            <div
+              v-if="hover"
+              class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-3 pa-3"
+            >
+              To share this event, click the QR code.
+            </div>
+          </v-expand-transition>
+
+          <div @click="share">
+            <VueQRCodeComponent id="qr" ref="qr" :text="mailToUri" :size="36">
+            </VueQRCodeComponent>
+          </div>
+        </v-toolbar>
+      </v-hover>
+      <v-card-subtitle class="pb-1"
+        >You can edit the Date and Time fields</v-card-subtitle
+      >
       <!-- Pickers row -->
       <v-row justify="space-around" align="center" no-gutters>
         <v-col cols="4">
@@ -78,6 +94,7 @@
       <v-card-actions v-if="!editing">
         <v-btn dark @click="noDateTime"> Cancel </v-btn>
         <v-btn dark @click="deleteEvent"> Delete </v-btn>
+        <v-spacer />
         <v-btn v-show="dirty" color="primary" @click="newDateTime">
           Update
         </v-btn>
@@ -89,19 +106,22 @@
         >
           Log
         </v-btn>
-        <v-btn dark color="secondary" @click="share">
-          Share
-        </v-btn>
       </v-card-actions></v-card
     >
   </div>
 </template>
 
 <script>
+import VueQRCodeComponent from 'vue-qr-generator';
+
 export default {
   name: 'pickersMenu',
   props: {
     selectedEventParsed: Object,
+    mailToUri: String,
+  },
+  components: {
+    VueQRCodeComponent,
   },
   data() {
     return {
@@ -117,6 +137,10 @@ export default {
     };
   },
   methods: {
+    getmailToUri() {
+      console.log(this.mailToUri);
+      return this.mailToUri;
+    },
     deleteEvent() {
       this.dirty = false;
       this.$emit('deleteEvent');
