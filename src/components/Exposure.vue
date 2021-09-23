@@ -30,126 +30,113 @@
     </v-dialog>
     <!-- End unlogged Visits -->
 
-    <v-card
+    <v-container
+      fluid
+      class="fill-height"
       v-if="hasVisits && (isConnected || isDebugging)"
-      color="secondary"
-      class="white--text"
     >
-      <v-card-title class="headline">Exposure Warnings</v-card-title>
-      <v-card-subtitle class="white--text">Dated: {{ dated }}</v-card-subtitle>
-      <v-card-text class="white--text pb-1">
-        <v-row>
-          <v-col>
-            {{ visitCount == 1 ? 'Place' : 'Places' }}
-            at risk: {{ visitCount }}</v-col
-          >
-          <v-col>Unlogged visits: {{ hasUnloggedVisits }}</v-col>
-        </v-row>
-      </v-card-text>
-      <v-divider />
+      <v-card color="secondary" class="white--text">
+        <v-card-title class="headline">Exposure Warnings</v-card-title>
+        <v-card-subtitle class="white--text"
+          >Dated: {{ dated }}</v-card-subtitle
+        >
+        <v-card-text class="white--text mb-1 pb-1">
+          <v-row no-gutters>
+            <v-col>
+              {{ visitCount == 1 ? 'Place' : 'Places' }}
+              at risk: {{ visitCount }}</v-col
+            >
+            <v-col>Unlogged visits: {{ hasUnloggedVisits }}</v-col>
+          </v-row>
+        </v-card-text>
+        <v-divider />
+        <v-card-text class="my-0 pt-1">
+          <v-row no-gutters align="center" justify="center">
+            <v-col cols="auto">
+              <v-card-text class="pb-1">
+                Select one or more reasons for this warning:
+              </v-card-text>
+              <v-list shaped dense>
+                <v-list-item-group v-model="warnings" multiple mandatory>
+                  <template v-for="(option, i) in WarningOptions">
+                    <v-divider
+                      v-if="!option.text"
+                      :key="`divider-${i}`"
+                    ></v-divider>
 
-      <v-card-text>
-        <v-row no-gutters>
-          <v-col cols="auto" sm="6">
-            <v-row no-gutters>
-              <v-col cols="auto">
-                <v-card-text class="pb-1">
-                  Select one or more reasons for this warning:
-                </v-card-text>
-                <v-list shaped>
-                  <v-list-item-group v-model="warnings" multiple mandatory>
-                    <template v-for="(option, i) in WarningOptions">
-                      <v-divider
-                        v-if="!option.text"
-                        :key="`divider-${i}`"
-                      ></v-divider>
-
-                      <v-list-item
-                        v-else
-                        :key="`option-${i}`"
-                        :value="option"
-                        active-class="deep-purple--text text--accent-4"
-                      >
-                        <v-list-item-icon>
-                          <v-icon v-text="option.icon"></v-icon>
-                        </v-list-item-icon>
-                        <v-list-item-content>
-                          <v-list-item-title
-                            v-text="option.text"
-                          ></v-list-item-title>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </template>
-                  </v-list-item-group>
-                </v-list>
-              </v-col>
-            </v-row>
-            <v-row no-gutters>
-              <v-col cols="4">
-                <v-select
-                  v-model="vaccinationStatus"
-                  :items="numberOfShots"
-                  label="Shot [poke] count:"
-                >
-                </v-select>
-              </v-col>
-              <v-col sm="4">
-                <v-checkbox
-                  v-model="wearsMask"
-                  color="deep-purple accent-4"
-                  label="Wears Mask?"
-                  hide-details="auto"
-                ></v-checkbox
-              ></v-col>
-              <v-col sm="4">
-                <v-checkbox
-                  v-model="recentFluShot"
-                  color="deep-purple accent-4"
-                  label="Recent FluShot?"
-                  hide-details="auto"
-                ></v-checkbox
-              ></v-col>
-            </v-row>
-          </v-col>
-
-          <v-col cols="auto" sm="6">
-            <v-row>
-              <v-col>
-                <v-card-text
-                  class="mt-5"
-                  v-html="message"
-                ></v-card-text> </v-col
-            ></v-row>
-            <v-row>
-              <v-col>
-                <v-card-text class="white--text"
-                  >Warning weight: <strong>{{ score }}</strong> dBs
-                  <v-progress-linear
-                    v-model="pctWeight"
-                    :color="getWarningColor"
-                    height="25"
-                    >Relative Risk: &nbsp;
-                    <strong>{{ Math.round(pctWeight) }}%</strong>
-                  </v-progress-linear></v-card-text
-                >
-              </v-col>
-            </v-row>
-          </v-col>
-        </v-row>
-      </v-card-text>
-      <v-divider />
-      <v-card-title class="justify-center pb-0 pt-1"
-        >Send warning?</v-card-title
-      >
-
-      <v-card-actions>
-        <v-spacer />
-        <v-btn color="red darken-2" text @click="warnThem(state)">Yes</v-btn>
-        <v-btn color="green darken-2" text @click="returnToSpaces">No</v-btn>
-        <v-spacer />
-      </v-card-actions>
-    </v-card>
-
+                    <v-list-item
+                      v-else
+                      :key="`option-${i}`"
+                      :value="option"
+                      active-class="deep-purple--text text--accent-4"
+                    >
+                      <v-list-item-icon>
+                        <v-icon v-text="option.icon"></v-icon>
+                      </v-list-item-icon>
+                      <v-list-item-content>
+                        <v-list-item-title
+                          v-text="option.text"
+                        ></v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-list-item-group>
+              </v-list>
+            </v-col>
+            <span
+              >Warning weight: <strong>{{ score }}</strong> dBs</span
+            >
+            <v-progress-linear
+              v-model="pctWeight"
+              :color="getWarningColor"
+              height="25"
+              >Relative Risk: &nbsp;
+              <strong>{{ pctWeightString }}</strong>
+            </v-progress-linear>
+          </v-row>
+          <v-row no-gutters>
+            <v-col cols="4">
+              <v-select
+                v-model="vaccinationStatus"
+                :items="numberOfShots"
+                label="Injections:"
+              >
+              </v-select>
+            </v-col>
+            <v-col sm="4">
+              <v-checkbox
+                v-model="wearsMask"
+                color="deep-purple accent-4"
+                label="Wears Mask?"
+                hide-details="auto"
+              ></v-checkbox
+            ></v-col>
+            <v-col sm="4">
+              <v-checkbox
+                v-model="recentFluShot"
+                color="deep-purple accent-4"
+                label="Recent FluShot?"
+                hide-details="auto"
+              ></v-checkbox
+            ></v-col>
+          </v-row>
+          <v-row no-gutters
+            ><v-col
+              ><v-card-text
+                class="my-0 py-0"
+                v-html="message"
+              ></v-card-text> </v-col
+          ></v-row>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions>
+          Send warning?
+          <v-spacer />
+          <v-btn color="red darken-2" text @click="warnThem(state)">Yes</v-btn>
+          <v-btn color="green darken-2" text @click="returnToSpaces">No</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-container>
     <v-card :color="getColor(isConnected)" v-else>
       <v-card-title class="headline">Exposure Warnings</v-card-title>
       <v-card-subtitle>
@@ -207,7 +194,7 @@ export default {
   props: {
     isConnected: Boolean,
     state: Object,
-    hasVisits: Number,
+    hasVisits: Boolean,
     visitCount: Number,
     hasUnloggedVisits: Number,
     logVisits: Function,
@@ -228,6 +215,9 @@ export default {
 
     pctWeight() {
       return (this.weight / this.totalWeight) * 100;
+    },
+    pctWeightString() {
+      return `${Math.round(this.pctWeight)}%`;
     },
 
     totalWeight() {

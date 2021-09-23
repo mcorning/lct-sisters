@@ -76,6 +76,7 @@ console.log('Node sees Exposure graph:', special(currentGraphName), '\n');
 
 const server = express()
   .use(serveStatic(dirPath))
+  .use('*', (req, res) => res.sendFile(dirPath + '/index.html'))
   .listen(PORT, () => {
     printNow();
     console.log('Listening on:');

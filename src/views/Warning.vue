@@ -35,6 +35,13 @@ export default {
     Model,
     Exposure,
   },
+  methods: {
+    onError(error) {
+      // let the global error handler pick up and display this error
+      error.message = `Time.vue error message: ${error.message}`;
+      throw error;
+    },
+  },
 };
 </script>
 
