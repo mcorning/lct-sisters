@@ -9,6 +9,7 @@ import { allOrNone, firstOrNone } from '@/fp/utils';
 export const timeMixin = {
   name: 'timeMixin',
   methods: {
+    // TODO isn't the only diff between update and updateById is that the latter includes a value for the ID prop
     // called by RedisGraph callback
     updateLoggedVisitId({ visitId, place, graphName, id, logged }) {
       // console.log('redisResult', redisResult);

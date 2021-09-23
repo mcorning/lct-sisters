@@ -16,7 +16,6 @@
         usernumber,
       }"
     >
-      {{ usernumber }}
       <Spaces
         :isConnected="isConnected"
         :state="state"

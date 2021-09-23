@@ -2,6 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
+// import Test from '@/views/Test.vue';
 
 Vue.use(VueRouter);
 

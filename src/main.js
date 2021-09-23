@@ -5,7 +5,9 @@ import 'roboto-fontface/css/roboto/roboto-fontface.css';
 import 'material-design-icons-iconfont/dist/material-design-icons.css';
 import vuetify from './plugins/vuetify';
 import './plugins';
+import VueClipboard from 'vue2-clipboard';
 
+Vue.use(VueClipboard);
 // import for Vuex-ORM
 // see Vuex-ORM section in lct-docs app
 import store from './store';

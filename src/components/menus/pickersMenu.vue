@@ -2,15 +2,12 @@
   <div>
     <v-card>
       <v-toolbar :color="selectedEventParsed.input.color" dark>
-        <v-toolbar-title
-          v-html="selectedEventParsed.input.name"
-        ></v-toolbar-title>
+        <v-toolbar-title v-html="selectedEventParsed.input.name">
+        </v-toolbar-title>
         <v-spacer></v-spacer>
       </v-toolbar>
-      <v-card-subtitle
-        >Click the Date, Starting, or Ending fields to edit date
-        times.</v-card-subtitle
-      >
+      <v-card-subtitle>You can edit the Date and Time fields</v-card-subtitle>
+      <!-- Pickers row -->
       <v-row justify="space-around" align="center" no-gutters>
         <v-col cols="4">
           <v-text-field
@@ -75,12 +72,13 @@
           </v-btn></v-time-picker
         >
       </v-row>
-      <v-divider/>
+
+      <v-divider />
+
       <v-card-actions v-if="!editing">
         <v-btn dark @click="noDateTime"> Cancel </v-btn>
         <v-btn dark @click="deleteEvent"> Delete </v-btn>
-        <v-spacer />
-        <v-btn v-if="dirty" color="primary" @click="newDateTime">
+        <v-btn v-show="dirty" color="primary" @click="newDateTime">
           Update
         </v-btn>
         <v-btn
@@ -119,11 +117,10 @@ export default {
     };
   },
   methods: {
-    deleteEvent(){
+    deleteEvent() {
       this.dirty = false;
       this.$emit('deleteEvent');
       // this.$emit('noDateTime');
-
     },
 
     pick(index, editing, dirty) {

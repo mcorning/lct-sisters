@@ -1,33 +1,53 @@
 <template>
-  <v-row justify="center" no-gutters>
-    Test Val: {{ val }}.
-    <testCard :test="test" />
-  </v-row>
+  <div>
+    <div @click="clickHandler1">Click 1</div>
+    <div
+      @click="clickHandler2"
+      v-clipboard="text"
+      v-clipboard:success="clipboardSuccessHandler"
+      v-clipboard:error="clipboardErrorHandler"
+    >
+      Click 2
+    </div>
+    <v-textarea></v-textarea>
+  </div>
 </template>
 
 <script>
-import testCard from '../components/cards/testCard.vue';
+// import testCard from '../components/cards/testCard.vue';
 
 export default {
   name: 'Test',
-  props: {
-    test: {
-      type: Function,
-    },
-    val: String,
-  },
+  props: {},
 
   components: {
-    testCard,
+    // testCard,
   },
-
+  computed: {
+    test() {
+      return ' success';
+    },
+  },
   data() {
     return {
       ready: false,
+      text:
+        'http://localhost:8080/?place_id%3DChIJFWkctxkxv1QRLhhGQdCn4gE%26date%3D2021-09-22%26start%3D1632351600000%26end%3D1632360600000%26n',
     };
   },
 
-  methods: {},
+  methods: {
+    clickHandler1() {
+      this.$clipboard({ test: this.test, text: this.text }); // this.$clipboard copy any String/Array/Object you want
+    },
+    clickHandler2() {},
+    clipboardSuccessHandler() {
+      console.log('clipboardSuccessHandler');
+    },
+    clipboardErrorHandler() {
+      console.log('clipboardErrorHandler');
+    },
+  },
 
   watch: {
     ready() {
@@ -41,8 +61,6 @@ export default {
   },
 
   // TODO Figure out how to unsub events
-  destroyed() {
-    alert('destroyed Test.vue');
-  },
+  destroyed() {},
 };
 </script>
