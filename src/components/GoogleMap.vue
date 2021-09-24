@@ -325,13 +325,14 @@ export default {
 
       const showCity = (city) => {
         const vm = this;
-        const { plus_code, viewport } = city;
-        this.status += `\nshowCity(): plus_code: ${plus_code}\n ${printJson(
-          viewport
-        )}`;
+        const { plus_code, location, viewport } = city;
+
+        this.status += `\nshowCity(): plus_code: ${plus_code}
+        ${printJson(location)}
+        ${printJson(viewport)}`;
 
         if (location) {
-          // map.setCenter(plus_code);
+          map.setCenter(location);
           map.fitBounds(viewport);
           map.setZoom(vm.defaultZoom);
         }
