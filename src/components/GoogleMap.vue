@@ -494,7 +494,13 @@ export default {
             this.status += `\nThis browser does NOT support geolocation `;
           }
           const defaultPoi = this.getPoi();
-          this.status += `\nDefault POI ${printJson(defaultPoi)}`;
+          // this.status += `\nDefault POI ${printJson(defaultPoi)}`;
+          this.status += `\nDefault POI `;
+          this.status += `\n${defaultPoi.namespace} plus_code: ${defaultPoi.plus_code}`;
+          this.status += `\nlocation: ${defaultPoi.location.lat} X ${defaultPoi.location.lng}`;
+          this.status += `\nviewport s/w: ${defaultPoi.viewport.south} X ${defaultPoi.viewport.west}`;
+          this.status += `\nviewport n/e: ${defaultPoi.viewport.north} X ${defaultPoi.viewport.east}`;
+
           if (defaultPoi.namespace) {
             showCity(defaultPoi);
           } else if (navigator.geolocation) {
@@ -504,7 +510,8 @@ export default {
             );
           }
         } catch (error) {
-          this.status += error;
+          this.status += error.message;
+          this.status += error.stack;
         }
       };
 
