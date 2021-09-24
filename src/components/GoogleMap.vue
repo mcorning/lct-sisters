@@ -487,20 +487,24 @@ export default {
       };
 
       const showMap = () => {
-        if ('geolocation' in navigator) {
-          this.status += `\nThis browser supports geolocation `;
-        } else {
-          this.status += `\nThis browser does NOT support geolocation `;
-        }
-        const defaultPoi = this.getPoi();
-        this.status += `\nDefault POI ${printJson(defaultPoi)}`;
-        if (defaultPoi.namespace) {
-          showCity(defaultPoi);
-        } else if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            showPosition,
-            geolocationErrorHandler
-          );
+        try {
+          if ('geolocation' in navigator) {
+            this.status += `\nThis browser supports geolocation `;
+          } else {
+            this.status += `\nThis browser does NOT support geolocation `;
+          }
+          const defaultPoi = this.getPoi();
+          this.status += `\nDefault POI ${printJson(defaultPoi)}`;
+          if (defaultPoi.namespace) {
+            showCity(defaultPoi);
+          } else if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              showPosition,
+              geolocationErrorHandler
+            );
+          }
+        } catch (error) {
+          this.status += error;
         }
       };
 
