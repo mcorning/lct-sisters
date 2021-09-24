@@ -1,31 +1,27 @@
 <template>
-  <div>
-    <v-overlay :value="overlay">
-      <v-progress-circular indeterminate size="64"></v-progress-circular>
-    </v-overlay>
-    <div>
-      <!-- Map container -->
-      <div class="Map" ref="map"></div>
+  <v-container fluid class="fill-height">
+    <!-- Map container -->
+    <!-- map size set in .Map class below -->
+    <div class="Map" ref="map"></div>
 
-      <v-row>
-        <v-col>
-          <v-text-field
-            class="ml-3"
-            dense
-            id="autoCompleteInput"
-            hint="Enter place search terms here"
-            persistent-hint
-          >
-          </v-text-field>
-        </v-col>
-      </v-row>
-      <info-window-card
-        ref="infowin"
-        id="infowin"
-        :info="info"
-        :onVisitPlace="onVisitPlace"
-      ></info-window-card>
-    </div>
+    <v-row>
+      <v-col>
+        <v-text-field
+          class="ml-3"
+          dense
+          id="autoCompleteInput"
+          hint="Enter place search terms here"
+          persistent-hint
+        >
+        </v-text-field>
+      </v-col>
+    </v-row>
+    <info-window-card
+      ref="infowin"
+      id="infowin"
+      :info="info"
+      :onVisitPlace="onVisitPlace"
+    ></info-window-card>
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card color="orange" flat>
         <v-card-title>Delete Marker/Place</v-card-title>
@@ -41,7 +37,8 @@
         </v-btn>
       </template>
     </v-snackbar>
-  </div>
+    <v-textarea :value="status" />
+  </v-container>
 </template>
 
 <script>
@@ -126,6 +123,7 @@ export default {
   },
   data() {
     return {
+      status: 'Ready',
       overlay: true,
       message: '',
       info: null,
@@ -300,6 +298,7 @@ export default {
     },
 
     onMounted({ google, map }) {
+      this.status = 'mounting map';
       const geocoder = new google.maps.Geocoder();
       const service = new google.maps.places.PlacesService(map);
 
@@ -327,6 +326,8 @@ export default {
         const vm = this;
         const { location, viewport } = city;
         console.log('showCity():', location, viewport);
+        this.status = `showCity(): ${location}, ${viewport}`;
+
         if (location) {
           map.setCenter(JSON.parse(location));
           map.fitBounds(JSON.parse(viewport));
@@ -557,7 +558,7 @@ body {
 }
 
 .Map {
-  width: 98vw;
-  height: 80vh;
+  width: 100vw;
+  height: 70vh;
 }
 </style>
