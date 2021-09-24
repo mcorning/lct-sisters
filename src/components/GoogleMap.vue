@@ -23,8 +23,8 @@
       :onVisitPlace="onVisitPlace"
     ></info-window-card>
     <v-snackbar v-model="snackbar" color="orange" centered>
+      <v-card-title>{{ title }}</v-card-title>
       <v-card color="orange" flat>
-        <v-card-title>Delete Marker/Place</v-card-title>
         <v-card-text class="white--text" v-html="message" />
       </v-card>
 
@@ -34,6 +34,28 @@
         </v-btn>
         <v-btn color="black" text v-bind="attrs" @click="cancelDelete">
           No
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      v-model="snackbarPrompt"
+      centered
+      timeout="-1"
+      multi-line
+      vertical
+    >
+      <v-card-title>{{ title }}</v-card-title>
+      <v-card flat>
+        <v-card-text v-html="message" />
+        <v-text-field v-model="startFrom" :label="prompt"></v-text-field>
+      </v-card>
+
+      <template v-slot:action="{ attrs }">
+        <v-btn dark text v-bind="attrs" @click="goThere">
+          <v-icon>check</v-icon>
+        </v-btn>
+        <v-btn dark text v-bind="attrs" @click="snackbarPrompt = false">
+          <v-icon>close</v-icon>
         </v-btn>
       </template>
     </v-snackbar>
@@ -124,6 +146,10 @@ export default {
   },
   data() {
     return {
+      startFrom: '',
+      prompt: '',
+      snackbarPrompt: false,
+      title: '',
       status: 'Ready',
       overlay: true,
       message: '',
@@ -151,6 +177,15 @@ export default {
     Share
  */
   methods: {
+    setStatus(msg) {
+      this.status += `
+        ${msg}`;
+    },
+
+    goThere() {
+      alert(this.startFrom);
+    },
+
     onClickMap(
       event,
       { map, service, geocoder, infowindow, onMarkerAdded, fields }
@@ -325,11 +360,11 @@ export default {
 
       const showCity = (city) => {
         const vm = this;
-        const { plus_code, location, viewport } = city;
+        const { global_code, location, viewport } = city;
 
-        this.status += `\nshowCity(): plus_code: ${plus_code}
+        this.setStatus(`showCity(): global_code: ${global_code}
         ${printJson(location)}
-        ${printJson(viewport)}`;
+        ${printJson(viewport)}`);
 
         if (location) {
           map.setCenter(location);
@@ -379,6 +414,7 @@ export default {
         infowindow.open(map, marker);
         return markedPlace;
       };
+
       const makeMarker = ({ map, infowindow, markedPlace }) => {
         const { position, name: title, place_id } = markedPlace;
         let marker = new window.google.maps.Marker({
@@ -402,6 +438,7 @@ export default {
           makeMarker({ map, infowindow, markedPlace });
         });
         console.log(`Rendered ${markers.length} markers`);
+        this.setStatus('1) Markers ready');
         return { google, map, markers };
       };
 
@@ -478,40 +515,78 @@ export default {
           const places = searchBox.getPlaces();
           getAutocompleteResults({ google, map, infowindow, places });
         });
+        this.setStatus('2) Autocomplete setup');
         return { google, map };
       };
       setupAutocomplete({ google, map, infowindow });
 
       const geolocationErrorHandler = () => {
-        this.status += '\nUnable to retrieve your location';
+        alert(
+          'unable to find your location. check location settings on your browser.'
+        );
       };
+
+      // const geolocationErrorHandler = (defaultPoi) => {
+      //   if (defaultPoi.namespace) {
+      //     showCity(defaultPoi);
+      //     return;
+      //   }
+      //   this.title = 'Welcome to LCT';
+      //   this.message = 'We are unable to find your location.';
+      //   this.prompt = 'Enter your default city:';
+      //   // this.snackbarPrompt = true;
+      //   const city = prompt('Enter your city');
+      //   const vm = this;
+      //   geocoder
+      //     .geocode({
+      //       address: city,
+      //     })
+      //     .then((city) => {
+      //       const geometry = city.results[0].geometry;
+      //       map.setCenter(geometry.location);
+      //       map.fitBounds(geometry.viewport);
+      //       map.setZoom(vm.defaultZoom - 3);
+      //       vm.setPoi(
+      //         city,
+      //         '',
+      //         JSON.stringify(geometry.location),
+      //         JSON.stringify(geometry.viewport)
+      //       );
+      //     });
+      // };
 
       const showMap = () => {
         try {
           if ('geolocation' in navigator) {
-            this.status += `\nThis browser supports geolocation `;
+            this.setStatus(`This browser supports geolocation `);
           } else {
-            this.status += `\nThis browser does NOT support geolocation `;
+            this.setStatus(`This browser does NOT support geolocation `);
           }
           const defaultPoi = this.getPoi();
-          // this.status += `\nDefault POI ${printJson(defaultPoi)}`;
-          this.status += `\nDefault POI `;
-          this.status += `\n${defaultPoi.namespace} plus_code: ${defaultPoi.plus_code}`;
-          this.status += `\nlocation: ${defaultPoi.location.lat} X ${defaultPoi.location.lng}`;
-          this.status += `\nviewport s/w: ${defaultPoi.viewport.south} X ${defaultPoi.viewport.west}`;
-          this.status += `\nviewport n/e: ${defaultPoi.viewport.north} X ${defaultPoi.viewport.east}`;
+          this.setStatus(`Default POI `);
+          this.setStatus(`${printJson(defaultPoi)})`);
 
-          if (defaultPoi.namespace) {
-            showCity(defaultPoi);
-          } else if (navigator.geolocation) {
+          if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               showPosition,
-              geolocationErrorHandler
+              geolocationErrorHandler(defaultPoi)
             );
+          } else if (defaultPoi.namespace) {
+            showCity(defaultPoi);
           }
+          this.setStatus('3) Ran showMap()');
+
+          // if (defaultPoi.namespace) {
+          //   showCity(defaultPoi);
+          // } else if (navigator.geolocation) {
+          //   navigator.geolocation.getCurrentPosition(
+          //     showPosition,
+          //     geolocationErrorHandler
+          //   );
+          // }
         } catch (error) {
-          this.status += error.message;
-          this.status += error.stack;
+          this.setStatus(error.message);
+          this.setStatus(error.stack);
         }
       };
 
@@ -523,6 +598,7 @@ export default {
     //#region Delete Marker code called by template
     promptMarkerDeletion(marker) {
       this.selectedMarker = marker;
+      this.title = 'Delete Marker/Place';
       this.message = `Delete marker for <strong>${marker.title}</strong> from the map?`;
       this.snackbar = true;
     },
@@ -584,6 +660,6 @@ body {
 
 .Map {
   width: 100vw;
-  height: 70vh;
+  height: 60vh;
 }
 </style>

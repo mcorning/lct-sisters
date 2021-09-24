@@ -41,3 +41,4 @@ src/components/renderless/ModelExperiment.vue
 srv/redis/redisCache.options.js
 srv/redis/redisGraph.options.js
 srv/redis/options.js
+src/Giving Notes.txt
