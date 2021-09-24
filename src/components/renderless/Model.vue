@@ -222,11 +222,13 @@ export default {
       return {
         namespace: this.state.settings.namespace || 'Sisters',
         plus_code: '7FR4+J8 Sisters, Oregon',
-        location: JSON.parse(this.state.settings.location) || {
+        location: (this.state.settings.location &&
+          JSON.parse(this.state.settings.location)) || {
           lat: 44.298087,
           lng: -121.5479629,
         },
-        viewport: JSON.parse(this.state.settings.viewport) || {
+        viewport: (this.state.settings.viewport &&
+          JSON.parse(this.state.settings.viewport)) || {
           south: 44.277691,
           west: -121.5841261,
           north: 44.302512,
