@@ -221,10 +221,7 @@ export default {
     getPoi() {
       return {
         namespace: this.state.settings.namespace || 'Sisters',
-        location: this.state.settings.location || {
-          lat: 44.2909491,
-          lng: -121.5492119,
-        },
+        plus_code:'7FR4+J8 Sisters, Oregon',
         viewport: this.state.settings.viewport || {
           south: 44.277691,
           west: -121.5841261,

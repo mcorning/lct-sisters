@@ -325,14 +325,14 @@ export default {
 
       const showCity = (city) => {
         const vm = this;
-        const { location, viewport } = city;
-        console.log('showCity():', location, viewport);
-        this.status += `\nshowCity(): ${printJson(location)}\n ${printJson(
+        const { plus_code, viewport } = city;
+        console.log('showCity():', plus_code, printJson(JSON.parse(viewport)));
+        this.status += `\nshowCity(): plus_code: ${plus_code}\n ${printJson(
           viewport
         )}`;
 
         if (location) {
-          map.setCenter(JSON.parse(location));
+          // map.setCenter(plus_code);
           map.fitBounds(JSON.parse(viewport));
           map.setZoom(vm.defaultZoom);
         }
@@ -494,13 +494,13 @@ export default {
         }
         const defaultPoi = this.getPoi();
         this.status += `\nDefault POI ${printJson(defaultPoi)}`;
-        if (navigator.geolocation) {
+        if (defaultPoi.namespace) {
+          showCity(defaultPoi);
+        } else if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             showPosition,
             geolocationErrorHandler
           );
-        } else if (defaultPoi.namespace) {
-          showCity(defaultPoi);
         }
       };
 
