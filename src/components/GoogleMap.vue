@@ -520,12 +520,6 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
-      const geolocationErrorHandler = () => {
-        alert(
-          'unable to find your location. check location settings on your browser.'
-        );
-      };
-
       // const geolocationErrorHandler = (defaultPoi) => {
       //   if (defaultPoi.namespace) {
       //     showCity(defaultPoi);
@@ -568,8 +562,8 @@ export default {
 
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-              showPosition,
-              geolocationErrorHandler(defaultPoi)
+              showPosition
+              // geolocationErrorHandler(defaultPoi)
             );
           } else if (defaultPoi.namespace) {
             showCity(defaultPoi);
