@@ -37,7 +37,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <v-textarea :value="status" />
+    <v-textarea :value="status" style="font-size:10pt" />
   </v-container>
 </template>
 
@@ -45,6 +45,7 @@
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
 import { nullable } from 'pratica';
+import { printJson } from '@/utils/helpers';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
 
@@ -298,7 +299,7 @@ export default {
     },
 
     onMounted({ google, map }) {
-      this.status = 'mounting map';
+      this.status = 'Mounting map';
       const geocoder = new google.maps.Geocoder();
       const service = new google.maps.places.PlacesService(map);
 
@@ -326,7 +327,9 @@ export default {
         const vm = this;
         const { location, viewport } = city;
         console.log('showCity():', location, viewport);
-        this.status = `showCity(): ${location}, ${viewport}`;
+        this.status += `\nshowCity(): ${printJson(location)}\n ${printJson(
+          viewport
+        )}`;
 
         if (location) {
           map.setCenter(JSON.parse(location));
@@ -480,26 +483,24 @@ export default {
       setupAutocomplete({ google, map, infowindow });
 
       const geolocationErrorHandler = () => {
-        this.status += 'Unable to retrieve your location';
+        this.status += '\nUnable to retrieve your location';
       };
 
       const showMap = () => {
         if ('geolocation' in navigator) {
-          this.status += `This browser supports geolocation `;
+          this.status += `\nThis browser supports geolocation `;
         } else {
-          this.status += `This browser does NOT support geolocation `;
+          this.status += `\nThis browser does NOT support geolocation `;
         }
         const defaultPoi = this.getPoi();
-        this.status += `Default POI ${JSON.stringify(defaultPoi, null, 3)}`;
-        if (defaultPoi.namespace) {
-          showCity(defaultPoi);
-        } else if (navigator.geolocation) {
+        this.status += `\nDefault POI ${printJson(defaultPoi)}`;
+        if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             showPosition,
             geolocationErrorHandler
           );
-        } else {
-          alert('Geolocation is not supported by this browser.');
+        } else if (defaultPoi.namespace) {
+          showCity(defaultPoi);
         }
       };
 
