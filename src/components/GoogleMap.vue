@@ -166,7 +166,7 @@ export default {
           name = 'Gathering',
           formatted_address,
           place_id,
-          plus_code: { global_code },
+          plus_code,
           url,
           geometry,
         } = place;
@@ -180,7 +180,7 @@ export default {
           name,
           formatted_address,
           place_id,
-          global_code,
+          global_code: plus_code.global_code,
           url,
           position,
           title,
@@ -326,14 +326,13 @@ export default {
       const showCity = (city) => {
         const vm = this;
         const { plus_code, viewport } = city;
-        console.log('showCity():', plus_code, printJson(JSON.parse(viewport)));
         this.status += `\nshowCity(): plus_code: ${plus_code}\n ${printJson(
           viewport
         )}`;
 
         if (location) {
           // map.setCenter(plus_code);
-          map.fitBounds(JSON.parse(viewport));
+          map.fitBounds(viewport);
           map.setZoom(vm.defaultZoom);
         }
       };
