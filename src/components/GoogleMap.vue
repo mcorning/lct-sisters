@@ -480,7 +480,13 @@ export default {
       setupAutocomplete({ google, map, infowindow });
 
       const showMap = () => {
+        if ('geolocation' in navigator) {
+          this.status = `This browser supports geolocation `;
+        } else {
+          this.status = `This browser does NOT support geolocation `;
+        }
         const defaultPoi = this.getPoi();
+        this.status = `Default POI ${defaultPoi}`;
         if (defaultPoi.namespace) {
           showCity(defaultPoi);
         } else if (navigator.geolocation) {
