@@ -479,6 +479,10 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
+      const geolocationErrorHandler = () => {
+        this.status = 'Unable to retrieve your location';
+      };
+
       const showMap = () => {
         if ('geolocation' in navigator) {
           this.status = `This browser supports geolocation `;
@@ -486,11 +490,14 @@ export default {
           this.status = `This browser does NOT support geolocation `;
         }
         const defaultPoi = this.getPoi();
-        this.status = `Default POI ${defaultPoi}`;
+        this.status = `Default POI ${JSON.stringify(defaultPoi, null, 3)}`;
         if (defaultPoi.namespace) {
           showCity(defaultPoi);
         } else if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(showPosition);
+          navigator.geolocation.getCurrentPosition(
+            showPosition,
+            geolocationErrorHandler
+          );
         } else {
           alert('Geolocation is not supported by this browser.');
         }
