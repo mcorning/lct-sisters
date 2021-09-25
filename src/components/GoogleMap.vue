@@ -59,7 +59,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <v-textarea :value="status" style="font-size:10pt" />
+    <v-textarea :value="status" class="text-caption ml-3" />
   </v-container>
 </template>
 

@@ -14,10 +14,9 @@
             </div>
           </v-expand-transition>
 
-          <div @click="share">
-            <VueQRCodeComponent id="qr" ref="qr" :text="mailToUri" :size="36">
-            </VueQRCodeComponent>
-          </div>
+          <v-btn text @click="share">
+            <v-icon>qr_code_2</v-icon>
+          </v-btn>
         </v-toolbar>
       </v-hover>
       <v-card-subtitle class="pb-1"
@@ -92,19 +91,23 @@
       <v-divider />
 
       <v-card-actions v-if="!editing">
-        <v-btn dark @click="noDateTime"> Cancel </v-btn>
-        <v-btn dark @click="deleteEvent"> Delete </v-btn>
+        <v-btn dark @click="noDateTime"> <v-icon>close</v-icon> </v-btn>
+        <v-btn dark @click="deleteEvent"> <v-icon>delete</v-icon> </v-btn>
         <v-spacer />
         <v-btn v-show="dirty" color="primary" @click="newDateTime">
-          Update
+          <v-icon>save</v-icon>
+        </v-btn>
+        <v-spacer />
+        <v-btn color="primary" @click="share">
+          <v-icon>share</v-icon>
         </v-btn>
         <v-btn
           v-if="!selectedEventParsed.input.loggedVisitId"
-          dark
+          :disabled="!isConnected"
           color="secondary"
           @click="logEvent"
         >
-          Log
+          <v-icon>cloud_done</v-icon>
         </v-btn>
       </v-card-actions></v-card
     >
@@ -112,17 +115,14 @@
 </template>
 
 <script>
-import VueQRCodeComponent from 'vue-qr-generator';
-
 export default {
   name: 'pickersMenu',
   props: {
     selectedEventParsed: Object,
     mailToUri: String,
+    isConnected: Boolean,
   },
-  components: {
-    VueQRCodeComponent,
-  },
+  components: {},
   data() {
     return {
       banner: false,

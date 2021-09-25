@@ -1,5 +1,5 @@
 <template>
-  <div id="calendarDiv" class="fill-height" width="100%">
+  <div id="calendarDiv" class="Calendar fill-height" width="100%">
     <v-toolbar flat>
       <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
       <v-btn fab text small color="grey darken-2" @click="prev">
@@ -59,7 +59,8 @@
       </v-tooltip>
     </v-toolbar>
 
-    <v-sheet :height="calendarHeight">
+    <!-- <v-sheet :height="calendarHeight"> -->
+    <v-sheet class="Calendar">
       <v-calendar
         id="calendar-target"
         ref="calendar"
@@ -91,13 +92,13 @@
         </template>
       </v-calendar>
     </v-sheet>
-    <div v-if="mailToUri" @click="copyUrl">Copy URL</div>
 
     <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
         <PickersMenu
           :selectedEventParsed="selectedEventParsed"
           :mailToUri="mailToUri"
+          :isConnected="isConnected"
           @newDateTime="onNewDateTime"
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
@@ -111,7 +112,7 @@
                 v-model="alias"
                 :rules="[rules.required, rules.email]"
                 clearable
-                label="Email address*"
+                label="To enable Email button, enter an email address"
                 hint="Email a person directly or send to yourself and forward"
               ></v-text-field>
 
@@ -130,13 +131,27 @@
                 :hint="gatheringHint"
               ></v-text-field> </v-col
           ></v-row>
-          <v-row no-gutters
+          <v-divider></v-divider>
+          <v-row no-gutters>
+            <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
+            <v-spacer />
+            <v-btn
+              color="green"
+              v-show="alias"
+              text
+              input-value
+              @click="emailEvent"
+            >
+              Email
+            </v-btn>
+          </v-row>
+          <v-row
             ><v-col>
               <VueQRCodeComponent
                 id="qr"
                 ref="qr"
                 :text="mailToUri"
-                :size="200"
+                :size="150"
               >
               </VueQRCodeComponent></v-col
             ><v-col>
@@ -150,19 +165,6 @@
               </div></v-col
             ></v-row
           >
-          <v-row>
-            <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
-            <v-spacer />
-            <v-btn
-              color="green"
-              v-show="alias"
-              text
-              input-value
-              @click="emailEvent"
-            >
-              Email
-            </v-btn>
-          </v-row>
         </v-banner>
       </v-sheet>
     </v-bottom-sheet>
@@ -193,6 +195,8 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <div v-if="mailToUri" @click="copyUrl">Copy</div>
+    <v-textarea :value="status" class="text-caption ml-3" />
   </div>
 </template>
 
@@ -202,6 +206,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime, inFuture, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
+import { printJson } from '@/utils/helpers';
 
 export default {
   name: 'Calendar',
@@ -217,6 +222,7 @@ export default {
     confirmations: Object,
     usernumber: Number,
     getVisits: Function,
+    isConnected: Boolean,
   },
   components: {
     PickersMenu,
@@ -372,7 +378,7 @@ export default {
       selectedEventParsed: null,
       selectedOpen: false,
 
-      status: 'Ready',
+      status: 'Ready for action',
       graphName: this.$defaultGraphName,
 
       snackbar: false,
@@ -385,6 +391,10 @@ export default {
   },
 
   methods: {
+    setStatus(msg) {
+      this.status += `
+        ${msg}`;
+    },
     copyUrl() {
       // const html = this.qrText.firstChild.nextElementSibling.outerHTML;
       // const dataUrl = this.qrText.firstChild.toDataURL();
@@ -466,7 +476,8 @@ export default {
     },
     onLogEvent(newDateTimes) {
       const { date, start, end } = newDateTimes;
-
+      this.setStatus = `onLogEvent(): newDateTimes=`;
+      this.setStatus = printJson(newDateTimes);
       this.seePickers = false;
       this.selectedEvent.date = date;
       this.selectedEvent.start = start;
@@ -789,5 +800,10 @@ export default {
   position: absolute;
   width: 300;
   font-size: 15px;
+}
+
+.Calendar {
+  width: 100vw;
+  height: 60vh;
 }
 </style>

@@ -1,27 +1,23 @@
 <template>
   <div>
     <v-card v-if="info">
-      <v-card-title>{{ name }}</v-card-title>
-      <v-card-subtitle>{{ address }}</v-card-subtitle>
+      <v-card-text class="text-h5 pb-0">{{ name }}</v-card-text>
+      <v-card-subtitle
+        >{{ address }}<br /><span v-if="info.url" v-html="placeLink"></span
+      ></v-card-subtitle>
 
       <v-card-text>
-        <p v-if="info.url" v-html="placeLink"></p>
+        <v-btn block color="primary" @click="onVisitPlace(placeId)"
+          >Mark Your Calendar</v-btn
+        >
 
-        <v-row no-gutters>
-          <v-col cols="3">Postion Data</v-col>
-          <v-col>
-            <small>
-              {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }} <br />
-              PlaceID: {{ placeId }}<br />
-              GlobalCode: {{ globalCode }}
-            </small></v-col
-          >
-        </v-row>
+        <div class="text-caption">
+          {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
+          {{ `PlaceID:    ${placeId}` }}<br />
+          {{ `GlobalCode: ${globalCode}` }}
+          }}
+        </div>
       </v-card-text>
-
-      <v-btn block color="primary" @click="onVisitPlace(placeId)"
-        >Mark Your Calendar</v-btn
-      >
     </v-card>
   </div>
 </template>

@@ -14,7 +14,7 @@ import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 
-import { highlight, success, printJson } from '../../utils/helpers';
+import { highlight, success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
 
@@ -407,6 +407,7 @@ export default {
       connectMe: this.connectMe,
       isConnected: this.isConnected,
       needsUsername: this.needsUsername,
+
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
       onMarkerAdded: this.onMarkerAdded,
