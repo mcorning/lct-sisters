@@ -172,14 +172,18 @@ export default {
       this.$emit('share');
     },
     logEvent() {
-      const start = new Date(
-        this.pickedDate + ' ' + this.pickedStartTime
-      ).getTime();
-      const end = new Date(
-        this.pickedDate + ' ' + this.pickedEndTime
-      ).getTime();
+      // const start = new Date(
+      //   this.pickedDate + ' ' + this.pickedStartTime
+      // ).getTime();
+      // const end = new Date(
+      //   this.pickedDate + ' ' + this.pickedEndTime
+      // ).getTime();
       this.dirty = false;
-      this.$emit('logEvent', { date: this.pickedDate, start, end });
+      this.$emit('logEvent', {
+        date: this.pickedDate,
+        start: this.pickedStartTime,
+        end: this.pickedEndTime,
+      });
     },
   },
   watch: {

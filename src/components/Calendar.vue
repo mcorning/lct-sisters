@@ -588,6 +588,10 @@ export default {
       const open = () => {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
+        this.setStatus(`showEvent(): this.selectedEvent=`);
+        this.setStatus(printJson(this.selectedEvent));
+        this.setStatus(`showEvent(): this.selectedEventParsed=`);
+        this.setStatus(printJson(this.selectedEventParsed));
         this.seePickers = true;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
