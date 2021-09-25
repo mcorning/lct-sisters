@@ -104,7 +104,7 @@
         <v-btn
           v-if="!selectedEventParsed.input.loggedVisitId"
           :disabled="!isConnected"
-          color="secondary"
+          color="primary"
           @click="logEvent"
         >
           <v-icon>cloud_done</v-icon>
@@ -180,9 +180,9 @@ export default {
       // ).getTime();
       this.dirty = false;
       this.$emit('logEvent', {
-        date: this.pickedDate,
-        start: this.pickedStartTime,
-        end: this.pickedEndTime,
+        pickedDate: this.pickedDate,
+        pickedStartTime: this.pickedStartTime,
+        pickedEndTime: this.pickedEndTime,
       });
     },
   },

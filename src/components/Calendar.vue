@@ -474,12 +474,27 @@ export default {
 
       this.seePickers = false;
     },
+
+    // NaN Date error when:
+    // Mark
+    // Don’t log
+    // Click
+    // Log
+    // Nothing happens
+    // Click event
+    // See error
     onLogEvent(newDateTimes) {
-      const { date, start, end } = newDateTimes;
-      this.setStatus = `onLogEvent(): newDateTimes=`;
-      this.setStatus = printJson(newDateTimes);
+      const { pickedDate, pickedStartTime, pickedEndTime } = newDateTimes;
+      this.setStatus(
+        `onLogEvent(): pickedDate, pickedStartTime, pickedEndTime=`
+      );
+      this.setStatus(`${pickedDate}, ${pickedStartTime}, ${pickedEndTime}`);
+      const start = new Date(pickedDate + ' ' + pickedStartTime).getTime();
+      const end = new Date(pickedDate + ' ' + pickedEndTime).getTime();
+      this.setStatus(`${pickedDate}, ${start}, ${end}`);
+
       this.seePickers = false;
-      this.selectedEvent.date = date;
+      this.selectedEvent.date = pickedDate;
       this.selectedEvent.start = start;
       this.selectedEvent.end = end;
       this.update('graph');
@@ -588,10 +603,10 @@ export default {
       const open = () => {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
-        this.setStatus(`showEvent(): this.selectedEvent=`);
-        this.setStatus(printJson(this.selectedEvent));
-        this.setStatus(`showEvent(): this.selectedEventParsed=`);
-        this.setStatus(printJson(this.selectedEventParsed));
+        // this.setStatus(`showEvent(): this.selectedEvent=`);
+        // this.setStatus(printJson(this.selectedEvent));
+        // this.setStatus(`showEvent(): this.selectedEventParsed=`);
+        // this.setStatus(printJson(this.selectedEventParsed));
         this.seePickers = true;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
