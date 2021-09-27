@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid id="calendarDiv" class="Calendar fill-height" width="100%">
+  <v-container fluid id="calendarDiv" class=" fill-height" width="100%">
     <v-toolbar flat>
       <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
       <v-btn fab text small color="grey darken-2" @click="prev">

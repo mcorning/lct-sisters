@@ -15,14 +15,14 @@
           readonly
       /></v-col>
       <v-col cols="2" sm="1">
+        <v-btn class="ml-2" text @click="toggleStatus()"
+          ><v-icon>cancel</v-icon></v-btn
+        >
         <v-btn class="ml-2" text @click="copyStatus"
           ><v-icon>content_copy</v-icon></v-btn
         >
         <v-btn class="ml-2" text @click="cutStatus"
           ><v-icon>content_cut</v-icon></v-btn
-        >
-        <v-btn class="ml-2" text @click="toggleStatus()"
-          ><v-icon>cancel</v-icon></v-btn
         >
       </v-col>
     </v-row>
