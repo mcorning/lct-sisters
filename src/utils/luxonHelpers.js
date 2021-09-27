@@ -69,6 +69,14 @@ const showCurrentMilitaryTime = () => {
     .toLocaleString(DateTime.TIME_24_SIMPLE);
 };
 
+const makeTimes = (pickedDate, pickedStartTime, pickedEndTime) => {
+  const startTime = DateTime.fromISO(
+    `${pickedDate}T${pickedStartTime}`
+  ).toMillis();
+  const endTime = DateTime.fromISO(`${pickedDate}T${pickedEndTime}`).toMillis();
+  return { startTime, endTime };
+};
+
 // takes an old time and two time strings
 // returns the new time as the difference between intervals
 const updateTime = (time, newVal, oldVal) => {
@@ -127,6 +135,7 @@ module.exports = {
   formatTime,
   formatVisitedDate,
   getVisitDate,
+  makeTimes,
   showCurrentMilitaryTime,
   updateTime,
   t,

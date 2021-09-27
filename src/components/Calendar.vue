@@ -1,5 +1,5 @@
 <template>
-  <div id="calendarDiv" class="Calendar fill-height" width="100%">
+  <v-container fluid id="calendarDiv" class="Calendar fill-height" width="100%">
     <v-toolbar flat>
       <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
       <v-btn fab text small color="grey darken-2" @click="prev">
@@ -60,7 +60,7 @@
     </v-toolbar>
 
     <!-- <v-sheet :height="calendarHeight"> -->
-    <v-sheet class="Calendar">
+    <v-sheet class="Calendar" :class="{ CalendarWithStatus: showStatus }">
       <v-calendar
         id="calendar-target"
         ref="calendar"
@@ -195,18 +195,24 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <div v-if="mailToUri" @click="copyUrl">Copy</div>
-    <v-textarea :value="status" class="text-caption ml-3" />
-  </div>
+    <status-card
+      v-if="showStatus"
+      :status="status"
+      :toggleStatus="toggleStatus"
+      :copyStatus="copyStatus"
+      :cutStatus="cutStatus"
+    ></status-card>
+  </v-container>
 </template>
 
 <script>
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import PickersMenu from '@/components/menus/pickersMenu.vue';
-import { DateTime, inFuture, userSince } from '@/utils/luxonHelpers';
+import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
-import { printJson } from '@/utils/helpers';
+import StatusCard from './cards/statusCard.vue';
+// import { printJson } from '@/utils/helpers';
 
 export default {
   name: 'Calendar',
@@ -227,6 +233,7 @@ export default {
   components: {
     PickersMenu,
     VueQRCodeComponent,
+    StatusCard,
   },
   computed: {
     gatheringLabel() {
@@ -253,7 +260,6 @@ export default {
       const { place_id, name, date, start, end } = this.selectedEvent;
       const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
       const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); // we will reverse this edit in space.js
-      console.log(escapedName);
       // do normal url encoding for the rest of the args
       const uri = encodeURIComponent(
         `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
@@ -328,6 +334,7 @@ export default {
   },
   data() {
     return {
+      showStatus: true,
       qrText: '',
       clipboard: null,
       rules: {
@@ -378,7 +385,7 @@ export default {
       selectedEventParsed: null,
       selectedOpen: false,
 
-      status: 'Ready for action',
+      status: '',
       graphName: this.$defaultGraphName,
 
       snackbar: false,
@@ -391,51 +398,21 @@ export default {
   },
 
   methods: {
-    setStatus(msg) {
-      this.status += `
-        ${msg}`;
+    toggleStatus() {
+      this.showStatus = !this.showStatus;
     },
-    copyUrl() {
-      // const html = this.qrText.firstChild.nextElementSibling.outerHTML;
-      // const dataUrl = this.qrText.firstChild.toDataURL();
-      // // this.$clipboard({ html, dataUrl }); // this.$clipboard copy any String/Array/Object you want
-      console.log(this.$clipboard(this.mailToUri)); // this.$clipboard copy any String/Array/Object you want
-      // this.confirmationMessage = success
-      //   ? 'Copied to clipboard'
-      //   : "Oops, couldn't copy";
-      // this.snackbar = true;
+    setStatus(msg) {
+      this.status += `${msg}
+      `;
+    },
+    copyStatus() {
+      this.setStatus('Copied to clipboard', this.$clipboard(this.status)); // this.$clipboard copy any String/Array/Object you want
+    },
+    cutStatus() {
+      this.$clipboard(this.status);
+      this.status = 'Status cut to clipboard';
     },
 
-    // copyQr() {
-    //   navigator.permissions
-    //     .query({ name: 'clipboard-write' })
-    //     .then((result) => {
-    //       if (result.state == 'granted' || result.state == 'prompt') {
-    //         /* write to the clipboard now */
-    //         var e = document.getElementById('canvas');
-    //         var canvasDataUrl = e.toDataURL('image/png');
-    //         const data = [new ClipboardItem({ [blob.type]: canvasDataUrl })];
-    //         return navigator.clipboard.write(data);
-    //       }
-    //     });
-    // },
-    // copyQrBad() {
-    //   var e = document.getElementById('canvas');
-    //   var canvasDataUrl = e.toDataURL('image/png');
-    //   //canvasDataUrl.select();
-    //   const selectedDataUrl = document.createElement('textarea');
-    //   document.body.appendChild(selectedDataUrl);
-    //   selectedDataUrl.value = canvasDataUrl;
-    //   selectedDataUrl.select();
-    //   try {
-    //     var successful = document.execCommand('copy');
-    //     var msg = successful ? 'successful' : 'unsuccessful';
-    //     console.log('Copying Chart to Clipboard was ' + msg);
-    //   } catch (err) {
-    //     console.log('Oops, unable to copy');
-    //   }
-    //   document.body.removeChild(selectedDataUrl);
-    // },
     openBanner() {
       this.banner = true;
       this.qrText = document.getElementById('qr');
@@ -489,14 +466,16 @@ export default {
         `onLogEvent(): pickedDate, pickedStartTime, pickedEndTime=`
       );
       this.setStatus(`${pickedDate}, ${pickedStartTime}, ${pickedEndTime}`);
-      const start = new Date(pickedDate + ' ' + pickedStartTime).getTime();
-      const end = new Date(pickedDate + ' ' + pickedEndTime).getTime();
-      this.setStatus(`${pickedDate}, ${start}, ${end}`);
+      const times = makeTimes(pickedDate, pickedStartTime, pickedEndTime);
+      const { startTime, endTime } = times;
+      this.setStatus(
+        `Updating graph with: [${pickedDate}], ${startTime}, ${endTime}`
+      );
 
       this.seePickers = false;
       this.selectedEvent.date = pickedDate;
-      this.selectedEvent.start = start;
-      this.selectedEvent.end = end;
+      this.selectedEvent.start = startTime;
+      this.selectedEvent.end = endTime;
       this.update('graph');
     },
     onNewDateTime(newDateTimes) {
@@ -509,10 +488,10 @@ export default {
     },
     emailEvent() {
       if (this.mailToString) {
-        console.log('setting window.location to:', this.mailToString);
+        this.setStatus('setting window.location to:', this.mailToString);
         window.location = this.mailToString;
       } else {
-        this.status = 'No email address entered. No mail sent.';
+        this.setStatus('No email address entered. No mail sent.');
       }
       this.banner = false;
       this.seePickers = false;
@@ -563,7 +542,9 @@ export default {
         // this.firstTime = `${String(
         //   Number(this.openAt.split(':')[0]) - 1
         // ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
-        this.status += `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${this.range}  intervalCount: ${this.intervalCount} `;
+        this.setStatus(
+          `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${this.range}  intervalCount: ${this.intervalCount} `
+        );
       } else {
         this.tip = 'Stay safe out there...';
       }
@@ -572,14 +553,14 @@ export default {
     viewDay({ date }) {
       this.focus = date;
       console.log(`Going to ${date}`);
-      this.status = `Going to ${date}`;
+      this.setStatus(`Going to ${date}`);
       this.type = 'day';
       this.currentDate = date;
     },
     setToday() {
       this.focus = '';
       this.viewDay(Date.now());
-      this.status = `Going back to today`;
+      this.this.setStatus(`Going back to today`);
     },
 
     prev() {
@@ -603,10 +584,10 @@ export default {
       const open = () => {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
-        // this.setStatus(`showEvent(): this.selectedEvent=`);
-        // this.setStatus(printJson(this.selectedEvent));
-        // this.setStatus(`showEvent(): this.selectedEventParsed=`);
-        // this.setStatus(printJson(this.selectedEventParsed));
+        this.setStatus(`showEvent(): this.selectedEvent=`);
+        this.setStatus(JSON.stringify(this.selectedEvent, null, 3));
+        this.setStatus(`showEvent(): this.selectedEventParsed=`);
+        this.setStatus(JSON.stringify(this.selectedEventParsed, null, 3));
         this.seePickers = true;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
@@ -635,7 +616,9 @@ export default {
       // selectedEventParsed used for past/future events (not included in cal.getVisibleEvents())
       this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
 
-      this.status = `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`;
+      this.setStatus(
+        `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`
+      );
     },
 
     //#endregion Calendar functions
@@ -688,7 +671,7 @@ export default {
       ).cata({
         Just: (unlogged) => this.logVisitNow(unlogged),
         Nothing: (err) => {
-          console.log(err ? err : 'No unlogged visits');
+          this.setStatus(err ? err : 'No unlogged visits');
         },
       });
     },
@@ -701,13 +684,13 @@ export default {
 
   watch: {
     mailToString(val) {
-      console.log(val);
+      this.setStatus('email:', val);
     },
 
     ready() {
       this.findUnloggedVisits();
-      let x = userSince(new Date('2021-09-13'));
-      console.log(x);
+      let x = userSince(new Date(this.usernumber));
+      this.setStatus(`Active for: ${x}`);
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);
@@ -727,14 +710,15 @@ export default {
       this.confirmationMessage = confirmationMessage;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
-        console.log('Deleted visit to', this.selectedEvent.name);
+        this.setStatus('Deleted visit to', this.selectedEvent.name);
       } else {
         this.selectedEvent.color = logged ? 'primary' : 'secondary';
         this.selectedEvent.loggedVisitId = loggedVisitId;
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);
-        if (age < 22) {
-          alert('Congratulations for adopting LCT. Stay safe out there.');
+        if (age < 32) {
+          this.confirmationMessage =
+            'Congratulations for adopting LCT. Stay safe out there.';
         }
       }
       this.snackbar = true;
@@ -823,6 +807,10 @@ export default {
 
 .Calendar {
   width: 100vw;
-  height: 60vh;
+  height: 80vh;
+}
+
+.CalendarWithStatus {
+  height: 64vh;
 }
 </style>

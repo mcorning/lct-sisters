@@ -59,7 +59,13 @@
         </v-btn>
       </template>
     </v-snackbar>
-    <v-textarea :value="status" class="text-caption ml-3" />
+    <status-card
+      v-if="showStatus"
+      :status="status"
+      :toggleStatus="toggleStatus"
+      :copyStatus="copyStatus"
+      :cutStatus="cutStatus"
+    ></status-card>
   </v-container>
 </template>
 
@@ -70,6 +76,7 @@ import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
+import StatusCard from './cards/statusCard.vue';
 
 export default {
   name: `Map`,
@@ -91,6 +98,7 @@ export default {
   },
   components: {
     InfoWindowCard,
+    StatusCard,
   },
 
   computed: {
@@ -146,13 +154,14 @@ export default {
   },
   data() {
     return {
+      showStatus: true,
       startFrom: '',
       prompt: '',
       snackbarPrompt: false,
       title: '',
-      status: 'Ready',
+      status: '',
       overlay: true,
-      message: '',
+      message: null,
       info: null,
       snackbar: false,
       timeout: 10000,
@@ -177,9 +186,19 @@ export default {
     Share
  */
   methods: {
+    toggleStatus() {
+      this.showStatus = !this.showStatus;
+    },
     setStatus(msg) {
-      this.status += `
-        ${msg}`;
+      this.status += `${msg}
+      `;
+    },
+    copyStatus() {
+      this.setStatus('Copied to clipboard', this.$clipboard(this.status)); // this.$clipboard copy any String/Array/Object you want
+    },
+    cutStatus() {
+      this.$clipboard(this.status);
+      this.status = 'Status cut to clipboard';
     },
 
     goThere() {
@@ -334,7 +353,7 @@ export default {
     },
 
     onMounted({ google, map }) {
-      this.status = 'Mounting map';
+      this.setStatus('Mounting map');
       const geocoder = new google.maps.Geocoder();
       const service = new google.maps.places.PlacesService(map);
 
@@ -654,6 +673,6 @@ body {
 
 .Map {
   width: 100vw;
-  height: 60vh;
+  height: 65vh;
 }
 </style>
