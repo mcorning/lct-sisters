@@ -584,10 +584,6 @@ export default {
       const open = () => {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
-        this.setStatus(`showEvent(): this.selectedEvent=`);
-        this.setStatus(JSON.stringify(this.selectedEvent, null, 3));
-        this.setStatus(`showEvent(): this.selectedEventParsed=`);
-        this.setStatus(JSON.stringify(this.selectedEventParsed, null, 3));
         this.seePickers = true;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
@@ -690,7 +686,7 @@ export default {
     ready() {
       this.findUnloggedVisits();
       let x = userSince(new Date(this.usernumber));
-      this.setStatus(`Active for: ${x}`);
+      this.setStatus(`Active for: ${Math.round(x, 0)} days`);
     },
     selectedGraph() {
       this.changeGraphName(this.selectedGraph);
