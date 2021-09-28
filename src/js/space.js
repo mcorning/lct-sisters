@@ -39,10 +39,10 @@ export const spaceMixin = {
       this.callVisitUpdate({ place_id, start, end, name, shared });
     },
 
-    callVisitUpdate({ place_id, start, end, name, shared }) {
+    callVisitUpdate({ place_id, start, end, name, shared, gatheringName }) {
       let visit = {
         id: randomId(),
-        name,
+        name: gatheringName || name,
         place_id,
 
         date: DateTime.fromMillis(start).toISODate(),
@@ -62,12 +62,19 @@ export const spaceMixin = {
       this.updateVisit(visit);
     },
 
-    onVisitPlace(placeId) {
+    onVisitPlace(data) {
+      const { placeId, gatheringName } = data;
       const currentPlace = Place.getPlace(placeId);
       const { name, place_id } = currentPlace;
       const start = roundTime(Date.now());
       const end = start + this.avgStay;
-      this.callVisitUpdate({ place_id, start, end, name });
+      this.callVisitUpdate({
+        place_id,
+        start,
+        end,
+        name: name || gatheringName,
+        gatheringName,
+      });
     },
 
     onMarkerAdded(markedPlace) {

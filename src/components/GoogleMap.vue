@@ -21,6 +21,7 @@
       id="infowin"
       :info="info"
       :onVisitPlace="onVisitPlace"
+      @namedGathering="onNamedGathering"
     ></info-window-card>
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
@@ -186,6 +187,10 @@ export default {
     Share
  */
   methods: {
+    onNamedGathering(val) {
+      this.info.name = val;
+    },
+
     toggleStatus() {
       this.showStatus = !this.showStatus;
     },
@@ -234,7 +239,7 @@ export default {
           name,
           formatted_address,
           place_id,
-          global_code: plus_code.global_code,
+          global_code: plus_code?.global_code,
           url,
           position,
           title,

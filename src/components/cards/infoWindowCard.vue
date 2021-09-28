@@ -1,13 +1,23 @@
 <template>
   <div>
     <v-card v-if="info">
-      <v-card-text class="text-h6 pb-0">{{ name }}</v-card-text>
+      <v-card-text class="text-h6 pb-0">
+        <div v-if="!isGathering">{{ name }}</div>
+        <v-text-field
+          v-else
+          v-model="gatheringName"
+          label="Enter a name for your gathering"
+        />
+      </v-card-text>
       <v-card-subtitle
         >{{ address }}<br /><span v-if="info.url" v-html="placeLink"></span
       ></v-card-subtitle>
 
       <v-card-text>
-        <v-btn block color="primary" @click="onVisitPlace(placeId)"
+        <v-btn
+          block
+          color="primary"
+          @click="onVisitPlace({ placeId, gatheringName })"
           >Mark Calendar</v-btn
         >
         <div class=" mt-3" @click="toggle">
@@ -36,6 +46,9 @@ export default {
   filters: {},
 
   computed: {
+    isGathering() {
+      return this.name === 'Gathering';
+    },
     latLng: () => {
       return this.info
         ? `Lat: ${this.info.position.lat} Lng:  ${this.info.position.lng}`
@@ -65,6 +78,7 @@ export default {
   data() {
     return {
       showPostions: false,
+      gatheringName: '',
     };
   },
   methods: {
