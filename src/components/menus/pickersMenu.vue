@@ -161,7 +161,11 @@ export default {
         this.pickedDate + ' ' + this.pickedEndTime
       ).getTime();
       this.dirty = false;
-      this.$emit('newDateTime', { date: this.pickedDate, start, end });
+      this.$emit('newDateTime', {
+        pickedDate: this.pickedDate,
+        pickedStartTime: this.pickedStartTime,
+        pickedEndTime: this.pickedEndTime,
+      });
     },
     noDateTime() {
       this.dirty = false;

@@ -479,11 +479,21 @@ export default {
       this.update('graph');
     },
     onNewDateTime(newDateTimes) {
-      const { date, start, end } = newDateTimes;
+      const { pickedDate, pickedStartTime, pickedEndTime } = newDateTimes;
+      this.setStatus(
+        `onNewDateTime(): pickedDate, pickedStartTime, pickedEndTime=`
+      );
+      this.setStatus(`${pickedDate}, ${pickedStartTime}, ${pickedEndTime}`);
+      const times = makeTimes(pickedDate, pickedStartTime, pickedEndTime);
+      const { startTime, endTime } = times;
+      this.setStatus(
+        `Updating cache with: [${pickedDate}], ${startTime}, ${endTime}`
+      );
+
       this.seePickers = false;
-      this.selectedEvent.date = date;
-      this.selectedEvent.start = start;
-      this.selectedEvent.end = end;
+      this.selectedEvent.date = pickedDate;
+      this.selectedEvent.start = startTime;
+      this.selectedEvent.end = endTime;
       this.update('cache');
     },
     emailEvent() {
