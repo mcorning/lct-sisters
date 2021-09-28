@@ -9,6 +9,7 @@
         logVisits,
         onExposureWarning,
         getUnloggedVisits,
+        setVaccinationStatus,
       }"
     >
       <exposure
@@ -19,6 +20,7 @@
         :logVisits="logVisits"
         :onExposureWarning="onExposureWarning"
         :getUnloggedVisits="getUnloggedVisits"
+        :setVaccinationStatus=setVaccinationStatus
       />
     </div>
   </Model>

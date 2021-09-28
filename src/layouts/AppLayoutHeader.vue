@@ -16,7 +16,11 @@
       />
       <!-- End Options Menu-->
     </v-app-bar>
-    <prompt-banner :riskScore="riskScore" :refresh="refresh"></prompt-banner>
+    <prompt-banner
+      :riskScore="riskScore"
+      :refresh="refresh"
+      :warningsReceived="warningsReceived"
+    ></prompt-banner>
   </div>
 </template>
 
@@ -33,6 +37,8 @@ export default {
     updateLoggedVisitId: Function,
     isConnected: Boolean,
     getPoi: Function,
+    incrementWarningsReceived: Function,
+    setVaccinationStatus:Function,
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
@@ -139,6 +145,7 @@ export default {
       riskScore: null,
       showBanner: false,
       refresh: 0,
+      warningsReceived: 0,
     };
   },
   sockets: {
@@ -146,6 +153,10 @@ export default {
       this.riskScore = riskScore;
       this.refresh++;
       this.showBanner = true;
+      this.incrementWarningsReceived().then((x) => {
+        // TODO this is a Maybe
+        this.warningsReceived = x[0].warningsReceived;
+      });
     },
     /*
      * 👂 Listen to socket events emitted from the socket server

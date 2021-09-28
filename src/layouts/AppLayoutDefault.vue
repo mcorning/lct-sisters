@@ -10,6 +10,7 @@
         updateSession,
         usernumber,
         getPoi,
+        incrementWarningsReceived,
       }"
     >
       <AppLayoutHeader
@@ -20,6 +21,7 @@
         :updateSession="updateSession"
         :usernumber="usernumber"
         :getPoi="getPoi"
+        :incrementWarningsReceived="incrementWarningsReceived"
       />
       <CaptureErrorSnackbar>
         <slot />

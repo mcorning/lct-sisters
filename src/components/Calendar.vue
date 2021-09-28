@@ -106,7 +106,7 @@
           @deleteEvent="onDeleteEvent"
         />
         <v-banner v-model="banner">
-          <v-row no-gutters>
+          <v-row class="mt-0" no-gutters>
             <v-col cols="12">
               <v-text-field
                 v-model="alias"
@@ -134,6 +134,7 @@
           <v-divider></v-divider>
           <v-row no-gutters>
             <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
+            <v-btn text @click="copyUrl">Copy Url </v-btn>
             <v-spacer />
             <v-btn
               color="green"
@@ -146,21 +147,24 @@
             </v-btn>
           </v-row>
           <v-row
-            ><v-col>
+            ><v-col cols="4">
               <VueQRCodeComponent
                 id="qr"
                 ref="qr"
                 :text="mailToUri"
-                :size="150"
+                :size="100"
               >
               </VueQRCodeComponent></v-col
-            ><v-col>
+            ><v-col cols="8">
               <div class="ml-4">
-                <p>Scan QR with phone or copy/paste to email or printer.</p>
-
                 <p>
-                  Hover over the QR code, and you can copy the event's URL, as
-                  well.
+                  As an option to email, copy the QR code from your computer
+                  with a right-click the image and select the "Copy image"
+                  option from the context menu.
+                </p>
+                <p>
+                  Then you can paste the image in an email, text file, or social
+                  media app to share the event with others.
                 </p>
               </div></v-col
             ></v-row
@@ -169,8 +173,8 @@
       </v-sheet>
     </v-bottom-sheet>
 
-    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="4000"
-      >{{ confirmationMessage }}
+    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="15000">
+      <span v-html="confirmationMessage" />
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
           Thanks
@@ -237,13 +241,13 @@ export default {
   },
   computed: {
     gatheringLabel() {
-      return this.selectedEvent && this.selectedEvent.name === 'Gathering'
-        ? 'Description '
-        : 'Room ';
+      return this.selectedEvent && this.selectedEvent.indoor
+        ? 'Room '
+        : 'Description ';
     },
     gatheringHint() {
       // TODO this and label above need Maybe treatment
-      return this.selectedEvent && this.selectedEvent.name === 'Gathering'
+      return this.selectedEvent && this.selectedEvent.outdoor
         ? 'Outdoor events may need a description'
         : 'Indoor events may need a room ID';
     },
@@ -406,7 +410,16 @@ export default {
       `;
     },
     copyStatus() {
-      this.setStatus('Copied to clipboard', this.$clipboard(this.status)); // this.$clipboard copy any String/Array/Object you want
+      this.setStatus(
+        `Copied Status to clipboard, ${this.$clipboard(this.status)}`
+      ); // this.$clipboard copy any String/Array/Object you want
+    },
+    copyUrl() {
+      this.setStatus(
+        `Copied ${this.mailToUri} to clipboard, ${this.$clipboard(
+          this.mailToUri
+        )}`
+      ); // this.$clipboard copy any String/Array/Object you want
     },
     cutStatus() {
       this.$clipboard(this.status);
@@ -452,48 +465,22 @@ export default {
       this.seePickers = false;
     },
 
-    // NaN Date error when:
-    // Mark
-    // Don’t log
-    // Click
-    // Log
-    // Nothing happens
-    // Click event
-    // See error
-    onLogEvent(newDateTimes) {
+    makeDateTimes(newDateTimes) {
       const { pickedDate, pickedStartTime, pickedEndTime } = newDateTimes;
-      this.setStatus(
-        `onLogEvent(): pickedDate, pickedStartTime, pickedEndTime=`
-      );
-      this.setStatus(`${pickedDate}, ${pickedStartTime}, ${pickedEndTime}`);
       const times = makeTimes(pickedDate, pickedStartTime, pickedEndTime);
       const { startTime, endTime } = times;
-      this.setStatus(
-        `Updating graph with: [${pickedDate}], ${startTime}, ${endTime}`
-      );
 
       this.seePickers = false;
       this.selectedEvent.date = pickedDate;
       this.selectedEvent.start = startTime;
       this.selectedEvent.end = endTime;
+    },
+    onLogEvent(newDateTimes) {
+      this.makeDateTimes(newDateTimes);
       this.update('graph');
     },
     onNewDateTime(newDateTimes) {
-      const { pickedDate, pickedStartTime, pickedEndTime } = newDateTimes;
-      this.setStatus(
-        `onNewDateTime(): pickedDate, pickedStartTime, pickedEndTime=`
-      );
-      this.setStatus(`${pickedDate}, ${pickedStartTime}, ${pickedEndTime}`);
-      const times = makeTimes(pickedDate, pickedStartTime, pickedEndTime);
-      const { startTime, endTime } = times;
-      this.setStatus(
-        `Updating cache with: [${pickedDate}], ${startTime}, ${endTime}`
-      );
-
-      this.seePickers = false;
-      this.selectedEvent.date = pickedDate;
-      this.selectedEvent.start = startTime;
-      this.selectedEvent.end = endTime;
+      this.makeDateTimes(newDateTimes);
       this.update('cache');
     },
     emailEvent() {
@@ -663,14 +650,27 @@ export default {
       this.snackbarPrompt = false;
     },
 
-    logSharedVisit(query) {
-      if (query && query.shared) {
+    promptToLog(data) {
+      if (this.isConnected && data) {
         this.selectedEvent = this.$route.params;
 
-        const { name, date } = query;
-        this.prompt = `Log shared event (${name} on ${date})?`;
+        const { name, date } = data;
+        this.prompt = `Log ${
+          data.shared ? 'shared' : ''
+        } event (${name} on ${date})?`;
         this.snackbarPrompt = true;
+      } else {
+        this.confirmationColor = 'orange';
+        this.confirmationMessage =
+          'You are offline. We will log your visit as soon as you get connected.';
+        this.snackbar = true;
       }
+    },
+    // logSharedVisit(query) {
+    //   this.promptToLog(query);
+    // },
+    logVisitNow(unlogged) {
+      this.promptToLog(unlogged);
     },
     findUnloggedVisits() {
       head(
@@ -683,11 +683,6 @@ export default {
           this.setStatus(err ? err : 'No unlogged visits');
         },
       });
-    },
-    logVisitNow(unlogged) {
-      this.selectedEvent = unlogged;
-      this.prompt = `Log event?  ${this.selectedEvent.name} ${this.selectedEvent.date}`;
-      this.snackbarPrompt = true;
     },
   },
 
@@ -725,10 +720,9 @@ export default {
         this.selectedEvent.loggedVisitId = loggedVisitId;
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);
-        if (age < 32) {
-          // this.confirmationMessage =
-          //   'Congratulations for adopting LCT. Stay safe out there.';
-          alert('Congratulations for adopting LCT. Stay safe out there.');
+        if (age < 8) {
+          this.confirmationMessage +=
+            '<br/>Oh, and congratulations for adopting LCT. Stay safe out there.';
         }
       }
       this.snackbar = true;
@@ -736,11 +730,11 @@ export default {
   },
 
   mounted() {
-    this.ready = true;
     this.configureCalendar();
     this.updateTime();
     // log a shared visit (if data was in the route querystring)
-    this.logSharedVisit(this.$route.params);
+    // this.logSharedVisit(this.$route.params);
+    this.ready = true;
   },
 };
 </script>

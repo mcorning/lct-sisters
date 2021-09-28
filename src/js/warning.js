@@ -7,6 +7,10 @@ import { firstOrNone } from '@/fp/utils';
 export const warningMixin = {
   name: 'warningMixin',
   methods: {
+    incrementWarnings() {
+      return Setting.incrementWarnings();
+    },
+
     updateSetting(setting) {
       // TODO NOTE: For then() to work up here, Setting.update() must return the $create() Promise.
       Setting.update(setting)

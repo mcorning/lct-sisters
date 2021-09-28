@@ -63,7 +63,7 @@ export default {
               logged: true,
               loggedVisitId: id,
               confirmationColor: 'success',
-              confirmationMessage: `${place} logged to ${graphName} graph on visit relationship ID ${id}`,
+              confirmationMessage: `<strong>${place}</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`,
             }
           : deleted
           ? {

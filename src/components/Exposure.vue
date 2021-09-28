@@ -203,6 +203,7 @@ export default {
     logVisits: Function,
     onExposureWarning: Function,
     getUnloggedVisits: Function,
+    setVaccinationStatus: Function,
   },
   components: {
     ConfirmationSnackbar,
@@ -447,6 +448,9 @@ export default {
         score: this.score,
         reliability: this.pctWeight,
       });
+      this.confirmationMessage =
+        'Well done. You have done your duty in our war against COVID-19. Now, get well soon.';
+      this.confSnackbar = true;
     },
   },
 
@@ -466,6 +470,8 @@ export default {
     },
     vaccinationStatus() {
       console.log(this.vaccinationStatus);
+      this.setVaccinationStatus(this.vaccinationStatus);
+
       this.epsilon = this.vaccinationStatus ? 1 : 0;
       console.log('score:', this.score);
     },

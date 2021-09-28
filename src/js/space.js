@@ -27,14 +27,12 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
-    // TODO NOTE: be sure any method in this mixin is included in the render() function in Model.
-    // and that the method is included in the scoped-slot and props of dependent components; e.g., GoogleMaps
     onSharePlace() {
       const place_id = this.$route.query.place_id;
       const start = Number(this.$route.query.start);
       const end = Number(this.$route.query.end);
-      // replace the "escaped" underscores with spaces and distinguish this event as a Gathering
-      const name = `Gathering at: ${this.$route.query.name.replace(/_/g, ' ')}`;
+      // replace the "escaped" underscores with spaces
+      const name = this.$route.query.name.replace(/_/g, ' ');
       const shared = true;
       this.callVisitUpdate({ place_id, start, end, name, shared });
     },

@@ -26,6 +26,8 @@ export default class Setting extends Model {
 
       vaccinationStatus: this.number(0),
       recentFluShot: this.boolean(),
+      warningsSent: this.number(0),
+      warningsReceived: this.number(0),
 
       preferredGraph: this.string(this.$defaultGraphName),
       namespace: this.string(),
@@ -34,9 +36,19 @@ export default class Setting extends Model {
     };
   }
 
+
   static update(settings) {
     console.log(settings);
     return this.$create({ data: settings });
+  }
+  
+  static incrementWarnings() {
+    return this.$update({
+      where: 1,
+      data(setting) {
+        setting.warningsReceived = (setting.warningsReceived ||0) + 1;
+      },
+    });
   }
 
   static delete() {

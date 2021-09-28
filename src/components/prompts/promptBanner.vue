@@ -4,6 +4,7 @@
       <v-card :color="getAlertColor">
         <v-card-title>COVID Exposure Early Warning System</v-card-title>
         <v-card-text tile v-html="alertMessage" />
+        Warnings received to date: <strong>{{ warningsReceived }}</strong>
       </v-card>
       <template v-slot:actions="{ dismiss }">
         <v-btn text @click="dismiss">Dismiss </v-btn>
@@ -19,6 +20,7 @@ export default {
     riskScore: Object,
     refresh: Number,
     showBanner: Boolean,
+    warningsReceived: Number,
   },
   computed: {
     getAlertColor() {

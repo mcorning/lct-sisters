@@ -336,6 +336,11 @@ export default {
       console.log('Model passing', data, 'to Setting');
       this.updateSetting({ id: 1, ...data });
     },
+    incrementWarningsReceived() {
+      return this.incrementWarnings();
+    },
+    setVaccinationStatus(n)
+    {this.updateSetting({ id: 1, vaccinationStatus: n });}
   },
 
   watch: {
@@ -347,14 +352,7 @@ export default {
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
     },
-    'state.settings.vaccinationStatus'(n) {
-      console.log(n);
-      this.updateSetting({ id: 1, vaccinationStatus: n });
-    },
-    'state.settings.lastFluShot'(n) {
-      console.log(n);
-      this.updateSetting({ id: 1, lastFluShot: n });
-    },
+
   },
 
   mounted() {
@@ -436,6 +434,8 @@ export default {
       logVisits: this.logVisits, // takes an array of visits as input
       onExposureWarning: this.onExposureWarning,
       getUnloggedVisits: this.getUnloggedVisits,
+      incrementWarningsReceived: this.incrementWarningsReceived,
+      setVaccinationStatus:this.setVaccinationStatus
     });
   },
 };

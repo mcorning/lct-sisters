@@ -154,12 +154,6 @@ export default {
     },
 
     newDateTime() {
-      const start = new Date(
-        this.pickedDate + ' ' + this.pickedStartTime
-      ).getTime();
-      const end = new Date(
-        this.pickedDate + ' ' + this.pickedEndTime
-      ).getTime();
       this.dirty = false;
       this.$emit('newDateTime', {
         pickedDate: this.pickedDate,
