@@ -212,7 +212,7 @@ import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import StatusCard from './cards/statusCard.vue';
-// import { printJson } from '@/utils/helpers';
+import { printJson } from '@/utils/helpers';
 
 export default {
   name: 'Calendar',
@@ -509,6 +509,9 @@ export default {
       this.selectedOpen = false;
     },
     update(target) {
+      this.setStatus(`Updating cache with:`);
+      const { name, date, start, end, id } = this.selectedEvent;
+      this.setStatus(printJson({ name, date, start, end, id }));
       this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
     },
@@ -713,8 +716,9 @@ export default {
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);
         if (age < 32) {
-          this.confirmationMessage =
-            'Congratulations for adopting LCT. Stay safe out there.';
+          // this.confirmationMessage =
+          //   'Congratulations for adopting LCT. Stay safe out there.';
+          alert('Congratulations for adopting LCT. Stay safe out there.');
         }
       }
       this.snackbar = true;
