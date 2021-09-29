@@ -8,7 +8,7 @@
 
       <v-card-text>
         <v-textarea :value="query" label="Query:" />
-        <v-textarea :value="results" label="Results" />
+        <v-textarea :value="res" label="Results" />
       </v-card-text>
       <!-- <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
       <v-card-subtitle>A COVID Early Warning System</v-card-subtitle>
@@ -39,13 +39,16 @@
 <script>
 export default {
   name: 'testCard',
-  props: { testGraph: Function },
+  props: { testGraph: Function, res:Object, },
   components: {},
 
   computed: {},
 
   data() {
-    return { results: '', query: `MATCH p=()-[*]->() RETURN p`, ready: false };
+    return {
+      query: `MATCH p=(:visitor{userID:'b6644acc815efb64'})-[v:visited]->(s:space) RETURN p`,
+      ready: false,
+    };
   },
 
   methods: {},

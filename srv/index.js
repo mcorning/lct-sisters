@@ -394,9 +394,13 @@ io.on('connection', (socket) => {
     console.error('See the errors.json later for details.');
   });
   //#endregion
+  socket.on('testGraph', (query, ack) => {
+    console.log(query);
+    testGraph(ack);
+  });
 
   //#region Graph testing
-  socket.on('testGraph', (query, ack) => {
+  socket.on('testGraphX', (query, ack) => {
     // call the graph
     console.log(getNow());
     console.log(ack);

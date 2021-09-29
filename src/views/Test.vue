@@ -1,7 +1,7 @@
 <template>
-  <Model @error="onError" @updatedTest="onUpdatedTest">
+  <Model @error="onError" @updatedGraphTest="onUpdatedGraphTest">
     <div slot-scope="{ testGraph }">
-      <test-card :testGraph="testGraph" />
+      <test-card :testGraph="testGraph" :res="res" />
     </div>
   </Model>
 </template>
@@ -18,7 +18,6 @@ export default {
   components: {
     testCard,
     Model,
-
   },
   computed: {
     test() {
@@ -37,8 +36,10 @@ export default {
     allRelationships() {
       // const query = `MATCH p=()-[*]->() RETURN p`;
     },
-    onUpdatedTest(val) {
-      alert(val);
+    onUpdatedGraphTest(res) {
+      this.res = res;
+      const { msg, results } = res;
+      alert(`${msg}: ${JSON.stringify(results, null, 3)}`);
     },
   },
 

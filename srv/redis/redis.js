@@ -62,6 +62,10 @@ module.exports = {
   onExposureWarning,
   options,
   testGraph,
+  matchQuery,
+  matchWithParamsQuery,
+  matchNamedPathsQuery,
+  matchAllNodesQuery,
 };
 //#endregion Setup
 
@@ -75,26 +79,95 @@ module.exports = {
 //   "'": '&#39;',
 //   '/': '&#x2F;',
 // };
-function testGraph(query) {
-  // OK event handler that converts redis results into lct object
-  function returnResults(results) {
-    const id = results.next().get('id(r)');
-    return {
-      id,
-    };
-  }
-
-  // return this either-async to client
-  return Graph.query(query)
-    .toEither()
-    .cata({
-      ok: (results) => returnResults(results),
-      error: (results) => {
-        // TODO shouldn't this return the same structure as ok (except logged=false)?
-        console.log(results, 'Issues when testing graph');
-      },
+function matchQuery(ack) {
+  // Match query.
+  const query = 'MATCH (v:visitor)-[:visited]->(:space) RETURN v.userID';
+  console.log('matchQuery(', query, ')');
+  Graph.query(query)
+    .then((res) => {
+      const s = new Set();
+      while (res.hasNext()) {
+        let record = res.next();
+        let userId = record.get('v.userID');
+        console.log('v.userID:', userId);
+        s.add(userId);
+      }
+      if (ack) {
+        ack({ msg: 'UserIDs of everybody on the graph', results: [...s] });
+      }
+      console.log(res.getStatistics().queryExecutionTime());
+    })
+    .catch((e) => {
+      console.log(e);
     });
 }
+async function matchWithParamsQuery() {
+  // Match with parameters.
+  let param = { userID: 'b6644acc815efb64' };
+  const res = await Graph.query(
+    'MATCH p=(carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) WHERE (exposed.userID <> carrier.userID) RETURN exposed',
+    param
+  );
+  while (res.hasNext()) {
+    let record = res.next();
+    console.log('exposed.userID:', record.get('exposed.userID'));
+  }
+}
+async function matchNamedPathsQuery() {
+  // Named paths matching.
+  const q = [
+    'MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)',
+    'WHERE (e.end>=c.start OR e.start>= c.end)',
+    'AND exposed.userID <> carrier.userID ',
+    'RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)',
+  ].join('\n');
+  let param = { userID: 'b6644acc815efb64' };
+
+  const res = await Graph.query(q, param);
+  while (res.hasNext()) {
+    let record = res.next();
+    // See path.js for more path API.
+    console.log('id(exposed):', record.get('id(exposed)'));
+  }
+}
+async function matchAllNodesQuery() {
+  // Named paths matching.
+  const q = 'MATCH n=() RETURN n';
+  const res = await Graph.query(q);
+  while (res.hasNext()) {
+    let record = res.next();
+    // See path.js for more path API.
+    console.log('nodeCount:', record.get('n').nodeCount);
+  }
+}
+function testGraph(ack) {
+  matchQuery(ack);
+  // matchWithParamsQuery();
+  // matchNamedPathsQuery();
+  // matchAllNodesQuery();
+}
+
+// function testGraphX(query, userID) {
+//   console.log('redis.testGraph():', query);
+//   // OK event handler that converts redis results into lct object
+//   function returnResults(results) {
+//     const id = results.next().get('userID');
+//     return {
+//       id,
+//     };
+//   }
+
+//   // return this either-async to client
+//   return Graph.query(query, { userID })
+//     .toEither()
+//     .cata({
+//       ok: (results) => returnResults(results),
+//       error: (results) => {
+//         // TODO shouldn't this return the same structure as ok (except logged=false)?
+//         console.log(results, 'Issues when testing graph');
+//       },
+//     });
+// }
 
 function changeGraph(graphName) {
   currentGraphName = graphName;
