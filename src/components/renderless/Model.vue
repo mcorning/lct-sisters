@@ -13,6 +13,7 @@ import { timeMixin } from '@/js/time';
 import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
+import { testMixin } from '@/js/test';
 
 import { highlight, success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
@@ -21,7 +22,7 @@ import { Some } from '@/fp/monads/Maybe.js';
 export default {
   props: {},
 
-  mixins: [graphMixin, spaceMixin, timeMixin, warningMixin],
+  mixins: [graphMixin, spaceMixin, testMixin, timeMixin, warningMixin],
 
   computed: {
     // preferredGraphName() {
@@ -113,6 +114,7 @@ export default {
         .get();
       return x;
     },
+
     onExposureWarning(reason) {
       this.emitFromClient('exposureWarning', reason);
     },
@@ -339,8 +341,9 @@ export default {
     incrementWarningsReceived() {
       return this.incrementWarnings();
     },
-    setVaccinationStatus(n)
-    {this.updateSetting({ id: 1, vaccinationStatus: n });}
+    setVaccinationStatus(n) {
+      this.updateSetting({ id: 1, vaccinationStatus: n });
+    },
   },
 
   watch: {
@@ -352,7 +355,6 @@ export default {
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
     },
-
   },
 
   mounted() {
@@ -435,7 +437,10 @@ export default {
       onExposureWarning: this.onExposureWarning,
       getUnloggedVisits: this.getUnloggedVisits,
       incrementWarningsReceived: this.incrementWarningsReceived,
-      setVaccinationStatus:this.setVaccinationStatus
+      setVaccinationStatus: this.setVaccinationStatus,
+
+      // Test assets
+      testGraph: this.testGraph,
     });
   },
 };

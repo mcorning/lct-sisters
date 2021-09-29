@@ -3,8 +3,14 @@
     <!-- <v-row align="center" justify="center">
       <v-spacer></v-spacer>
       <v-col cols="12"> -->
-    <v-card max-width="320">
-      <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
+    <v-card>
+      <v-card-title>Redis Monitor</v-card-title>
+
+      <v-card-text>
+        <v-textarea :value="query" label="Query:" />
+        <v-textarea :value="results" label="Results" />
+      </v-card-text>
+      <!-- <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
       <v-card-subtitle>A COVID Early Warning System</v-card-subtitle>
       <v-card-text>
         LCT is our community's way of getting back to work safely. This means we
@@ -18,10 +24,11 @@
         and treated orders of magnitude faster than with conventional
         time-consuming contract tracing.
       </v-card-text>
-      <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text>
+      <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text> -->
 
       <v-card-actions>
-        <myCard @go="onGo"></myCard>
+        <!-- <myCard @go="onGo"></myCard> -->
+        <v-btn @click="testGraph(query)">Run</v-btn>
       </v-card-actions>
     </v-card>
     <!-- </v-col>
@@ -32,36 +39,16 @@
 <script>
 export default {
   name: 'testCard',
-  props: { test: Function },
-  components: {
-    myCard: () => import('./myCard.vue'),
-  },
+  props: { testGraph: Function },
+  components: {},
 
-  computed: {
-    welcomeMessage() {
-      let msg =
-        "We can beat this thing. Let's get started, shall we? There's no time to lose. So let's get you connected to the server...";
-      return msg;
-    },
-  },
+  computed: {},
 
   data() {
-    return {
-      nsp: 'Sisters',
-    };
+    return { results: '', query: `MATCH p=()-[*]->() RETURN p`, ready: false };
   },
 
-  methods: {
-    onGo(data) {
-      console.info(
-        'Passing data back to App.vue with connectMe event',
-        JSON.stringify(data, null, 3)
-      );
-
-      this.dialog = false;
-      this.$emit('connectMe', data);
-    },
-  },
+  methods: {},
 
   watch: {},
   created() {},
@@ -69,8 +56,7 @@ export default {
   beforeUnmount() {},
 
   mounted() {
-    console.log('\tWELCOMECARD mounted');
-    this.test('WELCOMECARD mounted');
+    console.log('\tTESTCARD mounted');
   },
 };
 </script>

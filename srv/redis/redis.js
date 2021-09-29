@@ -61,6 +61,7 @@ module.exports = {
   logVisit,
   onExposureWarning,
   options,
+  testGraph,
 };
 //#endregion Setup
 
@@ -74,6 +75,26 @@ module.exports = {
 //   "'": '&#39;',
 //   '/': '&#x2F;',
 // };
+function testGraph(query) {
+  // OK event handler that converts redis results into lct object
+  function returnResults(results) {
+    const id = results.next().get('id(r)');
+    return {
+      id,
+    };
+  }
+
+  // return this either-async to client
+  return Graph.query(query)
+    .toEither()
+    .cata({
+      ok: (results) => returnResults(results),
+      error: (results) => {
+        // TODO shouldn't this return the same structure as ok (except logged=false)?
+        console.log(results, 'Issues when testing graph');
+      },
+    });
+}
 
 function changeGraph(graphName) {
   currentGraphName = graphName;

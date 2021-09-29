@@ -18,6 +18,10 @@
         <span>Time</span>
         <v-icon>mdi-calendar</v-icon>
       </v-btn>
+      <v-btn @click="open('Test')">
+        <span>Test</span>
+        <v-icon>question</v-icon>
+      </v-btn>
     </v-bottom-navigation>
   </v-footer>
 </template>

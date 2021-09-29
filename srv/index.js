@@ -55,6 +55,7 @@ const {
   changeGraph,
   logVisit,
   onExposureWarning,
+  testGraph,
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache');
@@ -392,7 +393,41 @@ io.on('connection', (socket) => {
     errorCache.print(null, 'Errors:');
     console.error('See the errors.json later for details.');
   });
+  //#endregion
 
+  //#region Graph testing
+  socket.on('testGraph', (query, ack) => {
+    // call the graph
+    console.log(getNow());
+    console.log(ack);
+    console.log(highlight('Visit to log:', printJson(query)));
+
+    function handleAck(results) {
+      if (ack) {
+        const x = results || 'no results';
+        console.log(highlight('acknowledging client', printJson(x)));
+        ack(results);
+        return;
+      }
+      console.log('No ack()');
+    }
+
+    // delegate to redis/redis.js
+    testGraph(query)
+      .toEither()
+      // TODO all inspect() to either-async
+      .map((x) => {
+        console.log(info('testGraph():', x));
+        return x;
+      })
+      .cata({
+        // ok: (results) => socket.emit('visitLogged', results),
+        ok: (results) => handleAck(results),
+        error: (results) => {
+          console.log(results, 'Issues calling redis.logVisit()');
+        },
+      });
+  });
   //#endregion
 
   //#region Disconnect handlers

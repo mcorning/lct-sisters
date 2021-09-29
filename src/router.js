@@ -2,13 +2,12 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
-// import Test from '@/views/Test.vue';
 
 Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/',
+    path: '/space',
     name: 'Space',
     component: Space,
     props: true,
@@ -28,6 +27,12 @@ const routes = [
     path: '/time',
     name: 'Time',
     component: Time,
+    props: true,
+  },
+  {
+    path: '/',
+    name: 'Test',
+    component: () => import('@/views/Test.vue'),
     props: true,
   },
 ];
