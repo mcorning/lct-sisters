@@ -38,7 +38,7 @@ export default {
     isConnected: Boolean,
     getPoi: Function,
     incrementWarningsReceived: Function,
-    setVaccinationStatus:Function,
+    setVaccinationStatus: Function,
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
@@ -150,6 +150,19 @@ export default {
   },
   sockets: {
     exposureAlert(riskScore) {
+      const audio = new AudioContext();
+      function beep(vol, freq, duration) {
+        const v = audio.createOscillator();
+        const u = audio.createGain();
+        v.connect(u);
+        v.frequency.value = freq;
+        v.type = 'square';
+        u.connect(audio.destination);
+        u.gain.value = vol * 0.01;
+        v.start(audio.currentTime);
+        v.stop(audio.currentTime + duration * 0.001);
+      }
+      beep(100, 520, 200);
       this.riskScore = riskScore;
       this.refresh++;
       this.showBanner = true;
