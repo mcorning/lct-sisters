@@ -66,6 +66,7 @@ module.exports = {
   matchWithParamsQuery,
   matchNamedPathsQuery,
   matchAllNodesQuery,
+  matchAllSpacesQuery,
 };
 //#endregion Setup
 
@@ -79,7 +80,9 @@ module.exports = {
 //   "'": '&#39;',
 //   '/': '&#x2F;',
 // };
-function matchQuery(ack) {
+function matchQuery(param, ack) {
+  console.log(param);
+
   // Match query.
   const query = 'MATCH (v:visitor)-[:visited]->(:space) RETURN v.userID';
   console.log('matchQuery(', query, ')');
@@ -101,19 +104,36 @@ function matchQuery(ack) {
       console.log(e);
     });
 }
-async function matchWithParamsQuery() {
+async function matchWithParamsQuery(param, ack) {
+  console.log(param);
+
+  // const p = { userID: 'b6644acc815efb64' };
+  // console.log(p);
+  console.log(param);
+  const s = new Set();
+  const q = [
+    'MATCH p=(v:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(o:visitor)',
+    'WHERE (o.userID <> v.userID) RETURN o.userID',
+  ].join('\n');
+
   // Match with parameters.
-  let param = { userID: 'b6644acc815efb64' };
-  const res = await Graph.query(
-    'MATCH p=(carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) WHERE (exposed.userID <> carrier.userID) RETURN exposed',
-    param
+  const res = await Graph.query(q, param).catch((e) =>
+    console.log('error in matchWithParamsQuery():', e)
   );
+
   while (res.hasNext()) {
     let record = res.next();
-    console.log('exposed.userID:', record.get('exposed.userID'));
+    const userId = record.get('o.userID');
+    console.log('o.userID:', userId);
+    s.add(userId);
+  }
+  if (ack) {
+    ack({ msg: 'UserID(s) of visitors sharing spacetime:', results: [...s] });
   }
 }
-async function matchNamedPathsQuery() {
+async function matchNamedPathsQuery(param, ack) {
+  console.log(param);
+
   // Named paths matching.
   const q = [
     'MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)',
@@ -121,30 +141,82 @@ async function matchNamedPathsQuery() {
     'AND exposed.userID <> carrier.userID ',
     'RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)',
   ].join('\n');
-  let param = { userID: 'b6644acc815efb64' };
+  // let param = { userID: 'b6644acc815efb64' };
+  const s = new Set();
 
   const res = await Graph.query(q, param);
   while (res.hasNext()) {
     let record = res.next();
-    // See path.js for more path API.
-    console.log('id(exposed):', record.get('id(exposed)'));
+    let id = record.get('id(exposed)');
+    console.log('id(exposed):', id);
+    s.add(id);
+  }
+  if (ack) {
+    ack({
+      msg: 'ID(s) of all exposed visitors:',
+      results: [...s],
+    });
   }
 }
-async function matchAllNodesQuery() {
+
+async function matchAllNodesQuery(param, ack) {
+  console.log(param);
+
   // Named paths matching.
   const q = 'MATCH n=() RETURN n';
   const res = await Graph.query(q);
-  while (res.hasNext()) {
-    let record = res.next();
-    // See path.js for more path API.
-    console.log('nodeCount:', record.get('n').nodeCount);
+  const nodeCt = res._resultsCount;
+  console.log('nodeCount:', nodeCt);
+
+  if (ack) {
+    ack({
+      msg: 'Number of visitor and space nodes on the graph',
+      results: nodeCt,
+    });
   }
 }
-function testGraph(ack) {
-  matchQuery(ack);
-  // matchWithParamsQuery();
-  // matchNamedPathsQuery();
-  // matchAllNodesQuery();
+async function matchAllSpacesQuery(param, ack) {
+  console.log(param);
+  const s = new Set();
+
+  const q = 'MATCH (:visitor)-[:visited]->(s:space) RETURN s.name';
+  const res = await Graph.query(q);
+  while (res.hasNext()) {
+    let record = res.next();
+    let name = record.get('s.name');
+    console.log('s.name:', name);
+    s.add(name);
+  }
+  if (ack) {
+    ack({
+      msg: 'Name(s) of visited space(s):',
+      results: [...s],
+    });
+  }
+}
+
+// test.js handles tha ack for the client
+function testGraph({ query, param }, ack) {
+  switch (query) {
+    case 'matchAllSpacesQuery':
+      matchAllSpacesQuery(param, ack);
+      break;
+    case 'matchQuery':
+      matchQuery(param, ack);
+      break;
+    case 'matchWithParamsQuery':
+      matchWithParamsQuery(param, ack);
+      break;
+    case 'matchNamedPathsQuery':
+      matchNamedPathsQuery(param, ack);
+      break;
+    case 'matchAllNodesQuery':
+      matchAllNodesQuery(param, ack);
+      break;
+
+    default:
+      break;
+  }
 }
 
 // function testGraphX(query, userID) {

@@ -7,7 +7,7 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/space',
+    path: '/',
     name: 'Space',
     component: Space,
     props: true,
@@ -30,7 +30,7 @@ const routes = [
     props: true,
   },
   {
-    path: '/',
+    path: '/test',
     name: 'Test',
     component: () => import('@/views/Test.vue'),
     props: true,

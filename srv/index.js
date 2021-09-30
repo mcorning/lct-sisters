@@ -394,9 +394,9 @@ io.on('connection', (socket) => {
     console.error('See the errors.json later for details.');
   });
   //#endregion
-  socket.on('testGraph', (query, ack) => {
-    console.log(query);
-    testGraph(ack);
+  socket.on('testGraph', (payload, ack) => {
+    const {query, param}=payload
+    testGraph({ query, param }, ack);
   });
 
   //#region Graph testing

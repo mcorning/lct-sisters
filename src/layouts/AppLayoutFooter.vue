@@ -18,9 +18,9 @@
         <span>Time</span>
         <v-icon>mdi-calendar</v-icon>
       </v-btn>
-      <v-btn @click="open('Test')">
-        <span>Test</span>
-        <v-icon>question</v-icon>
+
+      <v-btn icon @click="open('Test')">
+        <v-icon>mdi-monitor-dashboard</v-icon>
       </v-btn>
     </v-bottom-navigation>
   </v-footer>
