@@ -42,7 +42,7 @@ const dirPath = path.join(__dirname, '../dist');
 
 const { Cache } = require('../CacheClass');
 
-const alertsCache = new Cache('../alerts.json');
+// const alertsCache = new Cache('../alerts.json');
 const errorCache = new Cache('../errors.json');
 const feedbackCache = new Cache('../feedback.json');
 
@@ -58,7 +58,7 @@ const {
   testGraph,
 } = require('./redis/redis');
 
-const cache = require('./redis/redisJsonCache');
+const cache = require('./redis/redisJsonCache2');
 
 // high-order function to handle safe creation of sessions cache
 let setCache = function(key, path, node) {
@@ -128,14 +128,19 @@ io.on('connection', (socket) => {
   socket.join(newUserID);
 
   // check for pending alerts
-  if (alertsCache.has(newUserID)) {
+  // if (alertsCache.has(newUserID)) {
+  //   const msg = 'Your warning was cached, and now you have it.';
+  //   // sending to individual socketid (private message)
+  //   io.to(socketID).emit('exposureAlert', msg);
+  //   alertsCache.delete(newUserID);
+  //   alertsCache.print();
+  // }
+  if (cache.get('alerts', newUserID)) {
     const msg = 'Your warning was cached, and now you have it.';
     // sending to individual socketid (private message)
     io.to(socketID).emit('exposureAlert', msg);
-    alertsCache.delete(newUserID);
-    alertsCache.print();
+    cache.del('alerts', newUserID);
   }
-
   //#endregion Handling socket connection
 
   //#region Handling Users
@@ -177,7 +182,9 @@ io.on('connection', (socket) => {
 
     // alerts is an array of userIDs
     const alertOthers = (socket, alerts, riskScore) => {
-      const msPerDay = 1000 * 60 * 60 * 24;
+      // TODO do we need this var and the cache.purge() below?
+      // not if we check expiration when we try to use it
+      // const msPerDay = 1000 * 60 * 60 * 24;
 
       const sendExposureAlert = (to, riskScore) => {
         console.log('Alerting:', to); // to is a userID (of the exposed visitor)
@@ -193,20 +200,20 @@ io.on('connection', (socket) => {
       alerts.forEach((to) => {
         if (io.sockets.adapter.rooms.has(to)) {
           sendExposureAlert(to, riskScore);
-          alertsCache.delete(to);
+          cache.del('alerts', to);
         } else {
-          alertsCache.set(to, {
+          cache.set('alerts', to, {
             cached: new Date(),
           });
         }
       });
 
-      alertsCache
-        .purge((firstDate) => {
-          (Date.now() - new Date(firstDate).getTime()) / msPerDay > 14;
-        })
-        .then((purged) => console.log('Purged alertsCache of', purged))
-        .catch((err) => console.log('Purge alertsCache error:', err));
+      // alertsCache
+      //   .purge((firstDate) => {
+      //     (Date.now() - new Date(firstDate).getTime()) / msPerDay > 14;
+      //   })
+      //   .then((purged) => console.log('Purged alertsCache of', purged))
+      //   .catch((err) => console.log('Purge alertsCache error:', err));
     };
 
     const userID = socket.handshake.auth.userID;
@@ -297,26 +304,28 @@ io.on('connection', (socket) => {
       // notify other users
       socket.broadcast.emit('user disconnected', socket.userID);
       // update the connection status of the session
-      cache.printCache('sessions');
+      // cache.printCache('sessions');
 
-      setCache('sessions', socket.sessionID, {
-        userID: socket.userID,
-        username: socket.username,
-        lastInteraction: new Date().toLocaleString(),
-        connected: false,
-      }).then(() =>
-        cache
-          .filter('sessions', (v) => v[1].connected)
-          .then((online) => {
-            console.log(getNow());
-            console.log(
-              warn(
-                `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-              )
-            );
-            console.log(printJson(online));
-          })
-      );
+      cache
+        .set('sessions', socket.sessionID, {
+          userID: socket.userID,
+          username: socket.username,
+          lastInteraction: new Date().toLocaleString(),
+          connected: false,
+        })
+        .then(() =>
+          cache
+            .filter('sessions', (v) => v[1].connected)
+            .then((online) => {
+              console.log(getNow());
+              console.log(
+                warn(
+                  `There are ${online.length} online sessions after disconnecting ${socket.id}:`
+                )
+              );
+              console.log(printJson(online));
+            })
+        );
     }
   });
 
@@ -332,27 +341,30 @@ io.on('connection', (socket) => {
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session
           console.group(`${socket.id} disconnecting`);
-          cache.printCache('sessions');
+          // TODO add printCache to redisjsoncache2.js, if necessary
+          // cache.printCache('sessions');
 
-          setCache('sessions', socket.sessionID, {
-            userID: socket.userID,
-            username: socket.username,
-            lastInteraction: new Date().toLocaleString(),
-            connected: false,
-          }).then(() =>
-            cache
-              .filter('sessions', (v) => v[1].connected)
-              .then((online) => {
-                console.log(getNow());
+          cache
+            .set('sessions', socket.sessionID, {
+              userID: socket.userID,
+              username: socket.username,
+              lastInteraction: new Date().toLocaleString(),
+              connected: false,
+            })
+            .then(() =>
+              cache
+                .filter('sessions', (v) => v[1].connected)
+                .then((online) => {
+                  console.log(getNow());
 
-                console.log(
-                  warn(
-                    `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-                  )
-                );
-                console.log(printJson(online));
-              })
-          );
+                  console.log(
+                    warn(
+                      `There are ${online.length} online sessions after disconnecting ${socket.id}:`
+                    )
+                  );
+                  console.log(printJson(online));
+                })
+            );
           console.groupEnd();
         }
       });
