@@ -25,7 +25,6 @@ redisConfig.js
 /redis
 redisJson.options.js
 0-index.js
-test.js
 test2.js
 src/components/renderless/Crud.vue
 src/components/renderless/Messaging.vue
