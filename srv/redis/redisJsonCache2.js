@@ -129,6 +129,20 @@ function get(key, path = '.') {
     });
 }
 
+function filter(data, fn) {
+  console.log(data);
+  switch (typeof data) {
+    case 'string':
+      return get(data).then((d) => {
+        return Object.entries(d).filter(fn);
+      });
+    case 'object':
+      return Object.entries(data).filter(fn);
+    default:
+      return `Expecting string or object. Actual data is ${typeof data}.`;
+  }
+}
+
 function set(key, path, node) {
   return jsonCache
     .set(key, ensureValidPath(path), node)
@@ -150,6 +164,7 @@ module.exports = {
   add,
   create,
   del,
+  filter,
   get,
   set,
   isEmpty,
