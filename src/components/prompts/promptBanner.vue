@@ -2,7 +2,7 @@
   <div>
     <v-banner v-if="riskScore" :key="refresh" :color="getAlertColor">
       <v-card :color="getAlertColor">
-        <v-card-title>COVID Exposure Early Warning System</v-card-title>
+        <v-card-title class=text-h6>COVID Exposure Early Warning System</v-card-title>
         <v-card-text tile v-html="alertMessage" />
         Warnings received to date: <strong>{{ warningsReceived }}</strong>
       </v-card>

@@ -111,11 +111,18 @@ function del(key, path) {
   return jsonCache.del(key, ensureValidPath(path) || '.');
 }
 
-function isEmpty(key, path = '.') {
-  return jsonCache.objlen(key, path).then((x) => {
-    console.log(getNow(), 'Cache size:', x);
-    return !x;
-  });
+function filter(data, fn) {
+  console.log(data);
+  switch (typeof data) {
+    case 'string':
+      return get(data).then((d) => {
+        return Object.entries(d).filter(fn);
+      });
+    case 'object':
+      return Object.entries(data).filter(fn);
+    default:
+      return `Expecting string or object. Actual data is ${typeof data}.`;
+  }
 }
 
 function get(key, path = '.') {
@@ -129,18 +136,15 @@ function get(key, path = '.') {
     });
 }
 
-function filter(data, fn) {
-  console.log(data);
-  switch (typeof data) {
-    case 'string':
-      return get(data).then((d) => {
-        return Object.entries(d).filter(fn);
-      });
-    case 'object':
-      return Object.entries(data).filter(fn);
-    default:
-      return `Expecting string or object. Actual data is ${typeof data}.`;
-  }
+function has(key, path = '.') {
+  return get(key, path).then((data) => !!data);
+}
+
+function isEmpty(key, path = '.') {
+  return jsonCache.objlen(key, path).then((x) => {
+    console.log(getNow(), 'Cache size:', x);
+    return !x;
+  });
 }
 
 function set(key, path, node) {
@@ -166,7 +170,8 @@ module.exports = {
   del,
   filter,
   get,
-  set,
+  has,
   isEmpty,
+  set,
   asTable,
 };

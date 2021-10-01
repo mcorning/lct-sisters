@@ -86,13 +86,7 @@ const server = express()
 const io = socketIO(server);
 
 io.on('connection', (socket) => {
-  const {
-    socketID,
-    sessionID,
-    userID,
-    username,
-    usernumber,
-  } = socket.handshake.auth;
+  const { sessionID, userID, username, usernumber } = socket.handshake.auth;
 
   console.log(sessionID, userID, username, usernumber);
   const newSessionID = sessionID || randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
@@ -102,7 +96,7 @@ io.on('connection', (socket) => {
     '============================ io.on(connection) ================================='
   );
   //#region Handling socket connection
-  console.log(success('Client connected on socket ', socketID));
+  console.log(success('Client connected on socket ', socket.id));
   const session = {
     userID: newUserID,
     username,
@@ -131,16 +125,17 @@ io.on('connection', (socket) => {
   // if (alertsCache.has(newUserID)) {
   //   const msg = 'Your warning was cached, and now you have it.';
   //   // sending to individual socketid (private message)
-  //   io.to(socketID).emit('exposureAlert', msg);
+  //   io.to(socket.id).emit('exposureAlert', msg);
   //   alertsCache.delete(newUserID);
   //   alertsCache.print();
   // }
-  if (cache.get('alerts', newUserID)) {
-    const msg = 'Your warning was cached, and now you have it.';
+  cache.get('alerts', newUserID).then((alert) => {
+    if (!alert) return;
+
     // sending to individual socketid (private message)
-    io.to(socketID).emit('exposureAlert', msg);
+    io.to(socket.id).emit('exposureAlert', alert.riskScore);
     cache.del('alerts', newUserID);
-  }
+  });
   //#endregion Handling socket connection
 
   //#region Handling Users
@@ -191,8 +186,8 @@ io.on('connection', (socket) => {
         socket.to(to).emit(
           'exposureAlert',
           riskScore //,
-          // ack((socketID) => {
-          //   console.log(success(socketID, 'confirms'));
+          // ack((socket.id) => {
+          //   console.log(success(socket.id, 'confirms'));
           // })
         );
       };
@@ -204,6 +199,7 @@ io.on('connection', (socket) => {
         } else {
           cache.set('alerts', to, {
             cached: new Date(),
+            riskScore,
           });
         }
       });

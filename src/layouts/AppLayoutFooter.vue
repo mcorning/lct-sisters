@@ -19,9 +19,7 @@
         <v-icon>mdi-calendar</v-icon>
       </v-btn>
 
-      <v-btn icon @click="open('Test')">
-        <v-icon>mdi-monitor-dashboard</v-icon>
-      </v-btn>
+
     </v-bottom-navigation>
   </v-footer>
 </template>
@@ -35,7 +33,11 @@ export default {
       const phrase = this.$socket.connected
         ? `You (${'...' + this.$socket.client.auth.userID.slice(12)}) are `
         : 'You are';
-      return `${phrase} ${this.$socket.connected ? 'connected' : 'offline'}`;
+      return `${phrase} ${
+        this.$socket.connected
+          ? `connected on socket: ${this.$socket.client.id}`
+          : 'offline'
+      }`;
     },
   },
   methods: {

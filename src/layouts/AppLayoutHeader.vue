@@ -8,7 +8,9 @@
       <v-icon right class="pl-3"
         >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
       </v-icon>
-
+      <v-btn icon @click="open('Test')">
+        <v-icon>mdi-monitor-dashboard</v-icon>
+      </v-btn>
       <!-- Begin Options Menu-->
       <nestedMenu
         :menu-items="fileMenuItems"
@@ -238,6 +240,14 @@ export default {
   },
 
   methods: {
+        open(view) {
+      if (this.$router.currentRoute.name === view) {
+        return;
+      }
+      this.$router.push({
+        name: view,
+      });
+    },
     // why are we passing in a payload when Model gets that itself from the server?
     // const { username, userID, sessionID } = payload;    // connectMe(payload) {
     connectMe() {
