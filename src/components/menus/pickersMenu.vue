@@ -10,11 +10,11 @@
               v-if="hover"
               class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-3 pa-3"
             >
-              To share this event, click the QR code.
+              Enlarge Event's QR code
             </div>
           </v-expand-transition>
 
-          <v-btn text @click="share">
+          <v-btn text @click="$emit('enlargeQR')">
             <v-icon>qr_code_2</v-icon>
           </v-btn>
         </v-toolbar>
@@ -98,17 +98,29 @@
           <v-icon>save</v-icon>
         </v-btn>
         <v-spacer />
-        <v-btn color="primary" @click="share">
-          <v-icon>share</v-icon>
-        </v-btn>
-        <v-btn
-          v-if="!selectedEventParsed.input.loggedVisitId"
-          :disabled="!isConnected"
-          color="primary"
-          @click="logEvent"
-        >
-          <v-icon>cloud_done</v-icon>
-        </v-btn>
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn v-bind="attrs" v-on="on" color="primary" @click="share">
+              <v-icon>share</v-icon>
+            </v-btn>
+          </template>
+          <span>Email this event to others </span>
+        </v-tooltip>
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              v-on="on"
+              v-if="!selectedEventParsed.input.loggedVisitId"
+              :disabled="!isConnected"
+              color="primary"
+              @click="logEvent"
+            >
+              <v-icon>cloud_done</v-icon>
+            </v-btn>
+          </template>
+          <span>Finish the workflow </span>
+        </v-tooltip>
       </v-card-actions></v-card
     >
   </div>

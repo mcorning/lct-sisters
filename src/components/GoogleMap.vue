@@ -1,5 +1,10 @@
 <template>
   <v-container fluid class="fill-height">
+    <v-overlay :value="overlay">
+      <v-progress-circular indeterminate size="64"
+        >Loading map</v-progress-circular
+      >
+    </v-overlay>
     <!-- Map container -->
     <!-- map size set in .Map class below -->
     <div class="Map" ref="map"></div>

@@ -1,5 +1,26 @@
 <template>
   <v-container fluid id="calendarDiv" class=" fill-height" width="100%">
+    <v-dialog v-model="enlargeQR" width="500">
+      <v-card>
+        <v-card-title>Event QR</v-card-title>
+        <v-card-text>
+          <v-row justify="space-around">
+            <VueQRCodeComponent id="qr" ref="qr" :text="mailToUri">
+            </VueQRCodeComponent>
+          </v-row>
+        </v-card-text>
+        <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
+        <v-card-text class="text-caption">{{ mailToUri }}</v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="enlargeQR = false"><v-icon>close</v-icon></v-btn>
+          <v-spacer />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-toolbar flat>
       <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
       <v-btn fab text small color="grey darken-2" @click="prev">
@@ -104,6 +125,7 @@
           @logEvent="onLogEvent"
           @share="openBanner"
           @deleteEvent="onDeleteEvent"
+          @enlargeQR="enlargeQR = true"
         />
         <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
@@ -134,7 +156,6 @@
           <v-divider></v-divider>
           <v-row no-gutters>
             <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
-            <v-btn text @click="copyUrl">Copy Url </v-btn>
             <v-spacer />
             <v-btn
               color="green"
@@ -146,7 +167,7 @@
               Email
             </v-btn>
           </v-row>
-          <v-row
+          <!-- <v-row
             ><v-col cols="4">
               <VueQRCodeComponent
                 id="qr"
@@ -168,7 +189,7 @@
                 </p>
               </div></v-col
             ></v-row
-          >
+          > -->
         </v-banner>
       </v-sheet>
     </v-bottom-sheet>
@@ -271,6 +292,26 @@ export default {
       return `${this.origin}/?${uri}`;
     },
 
+    // mailToString() {
+    //   if (!this.alias) {
+    //     return '';
+    //   }
+    //   const { place_id, name, date, start, end } = this.selectedEvent;
+    //   const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
+    //   const text = [
+    //     `mailto:${this.alias}?subject=Join me at ${printedName.replace(
+    //       /&/g,
+    //       'and'
+    //     )} on ${date}&body=To add this event to your LCT app click this link:`,
+    //     `${this.mailToUri}`,
+    //     `Name/Place-id: ${printedName}/${place_id}`,
+    //     `Start time: ${new Date(start)}`,
+    //     `End time: ${new Date(end)}`,
+    //     ``,
+    //     `See you then...${this.newLine}${this.toName}`,
+    //   ].join('\n');
+    //   return text;
+    // },
     mailToString() {
       if (!this.alias) {
         return '';
@@ -281,12 +322,9 @@ export default {
       return `mailto:${this.alias}?subject=Join me at ${printedName.replace(
         /&/g,
         'and'
-      )} on ${date}&body=To add this event to your LCT app click this link (copy and paste the url into a messaging client like WhatsApp):${
+      )} on ${date}&body=Click this link to open LCT (then log the event from there):${
         this.newLine
-      } ${this.mailToUri}  ${
-        this.newLine
-      }     QR Code: copy the QR code in LCT and paste it here
-            ${this.newLine}  ${
+      } ${this.mailToUri}  ${this.newLine}  ${
         this.newLine
       }      Name/Place-id: ${printedName}/${place_id} ${
         this.newLine
@@ -338,6 +376,8 @@ export default {
   },
   data() {
     return {
+      enlargeQR: false,
+
       showStatus: true,
       qrText: '',
       clipboard: null,
@@ -414,13 +454,7 @@ export default {
         `Copied Status to clipboard, ${this.$clipboard(this.status)}`
       ); // this.$clipboard copy any String/Array/Object you want
     },
-    copyUrl() {
-      this.setStatus(
-        `Copied ${this.mailToUri} to clipboard, ${this.$clipboard(
-          this.mailToUri
-        )}`
-      ); // this.$clipboard copy any String/Array/Object you want
-    },
+
     cutStatus() {
       this.$clipboard(this.status);
       this.status = 'Status cut to clipboard';
