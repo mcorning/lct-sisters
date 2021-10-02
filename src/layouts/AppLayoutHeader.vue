@@ -1,23 +1,52 @@
 <template>
   <div>
-    <v-app-bar color="primary" app dark>
-      <v-toolbar-title>{{ toolbarTitle }} </v-toolbar-title>
-
-      <v-spacer></v-spacer>
-      {{ $version }}
-      <v-icon right class="pl-3"
-        >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-      </v-icon>
-      <v-btn icon @click="open('Test')">
-        <v-icon>mdi-monitor-dashboard</v-icon>
-      </v-btn>
-      <!-- Begin Options Menu-->
-      <nestedMenu
-        :menu-items="fileMenuItems"
-        @nestedMenu-click="onMenuItemClick"
-      />
-      <!-- End Options Menu-->
-    </v-app-bar>
+    <v-hover v-slot="{ hover }">
+      <v-app-bar color="primary" app dark>
+        <v-toolbar-title @click="showCvewQR = true"
+          >{{ toolbarTitle }}
+        </v-toolbar-title>
+        <v-expand-transition>
+          <div
+            v-if="hover"
+            class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-5 pa-3"
+          >
+            Click the app bar to share the LCT/CVEW QR code
+          </div>
+        </v-expand-transition>
+        <v-spacer></v-spacer>
+        {{ $version }}
+        <v-icon right class="pl-3"
+          >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+        </v-icon>
+        <v-btn icon @click="open('Test')">
+          <v-icon>mdi-monitor-dashboard</v-icon>
+        </v-btn>
+        <!-- Begin Options Menu-->
+        <nestedMenu
+          :menu-items="fileMenuItems"
+          @nestedMenu-click="onMenuItemClick"
+        />
+        <!-- End Options Menu-->
+      </v-app-bar>
+    </v-hover>
+    <v-dialog v-model="showCvewQR" max-width="400">
+      <v-card>
+        <v-row justify="space-around">
+          <v-col>
+            <v-card-title>Share the app</v-card-title>
+            <v-card-text>
+              <v-img src="./cvew-qr-code.png"></v-img>
+              <v-card-subtitle>URL: http://cvew.herokuapp.com</v-card-subtitle>
+              <v-card-actions
+                ><v-spacer /><v-btn dark @click="showCvewQR = false"
+                  ><v-icon>close</v-icon></v-btn
+                ><v-spacer
+              /></v-card-actions>
+            </v-card-text>
+          </v-col>
+        </v-row>
+      </v-card>
+    </v-dialog>
     <prompt-banner
       :riskScore="riskScore"
       :refresh="refresh"
@@ -141,6 +170,7 @@ export default {
 
   data() {
     return {
+      showCvewQR: false,
       handledSessionEvent: false,
       graphName: '',
       feedbackDialog: false,
@@ -240,7 +270,7 @@ export default {
   },
 
   methods: {
-        open(view) {
+    open(view) {
       if (this.$router.currentRoute.name === view) {
         return;
       }
