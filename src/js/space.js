@@ -27,8 +27,8 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
-    onSharePlace() {
-      const place_id = this.$route.query.place_id;
+    onSharePlace(decoded) {
+      const place_id = decoded || this.$route.query.place_id;
       const start = Number(this.$route.query.start);
       const end = Number(this.$route.query.end);
       // replace the "escaped" underscores with spaces

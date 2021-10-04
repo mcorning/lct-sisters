@@ -1,5 +1,66 @@
 # Field Notes
 
+## Workflows
+
+### Share events
+
+On the Calendar, visitor shares via email or qr code.
+
+```js
+    decodedUri() {
+      // the QR code generator needs to use the decoded URI
+      const d = decodeURIComponent(this.mailToUri);
+      console.log(d);
+      return d;
+    },
+
+    // TODO we shouldn't need this guard
+    mailToUri() {
+      if (!this.selectedEvent) {
+        return;
+      }
+      const { place_id, name, date, start, end } = this.selectedEvent;
+      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
+      const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); 
+      // do normal url encoding for the rest of the args
+      // we will reverse this edit in space.js (but see note above in decodedUri())
+      const uri = encodeURIComponent(
+        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
+      );
+      return `${this.origin}/?${uri}`;
+    },
+```
+
+When following the link in email or the scan of the QR code:
+
+GoogleMap.vue
+
+```javascript
+  watch: {
+    ready() {
+      console.log('Map component ready');
+      if (this.$route.query.place_id) {
+        console.log('Detected a shared event:', this.$route.query.place_id);
+        // in **space.js**
+        this.**onSharePlace**();
+      }
+    },
+  },
+```  
+
+```js
+space.js
+    onSharePlace() {
+      const place_id = this.$route.query.place_id;
+      const start = Number(this.$route.query.start);
+      const end = Number(this.$route.query.end);
+      // replace the "escaped" underscores with spaces
+      const name = this.$route.query.name.replace(/_/g, ' ');
+      const shared = true;
+      this.callVisitUpdate({ place_id, start, end, name, shared });
+    },
+```
+
 ## Bootstrap
 
 When Model.js (a renderless component) mounts, it calls connectMe().

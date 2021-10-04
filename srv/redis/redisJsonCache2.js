@@ -116,7 +116,10 @@ function filter(data, fn) {
   switch (typeof data) {
     case 'string':
       return get(data).then((d) => {
-        return Object.entries(d).filter(fn);
+        if (d) {
+          return Object.entries(d).filter(fn);
+        }
+        return [];
       });
     case 'object':
       return Object.entries(data).filter(fn);

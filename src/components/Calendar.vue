@@ -5,12 +5,12 @@
         <v-card-title>Event QR</v-card-title>
         <v-card-text>
           <v-row justify="space-around">
-            <VueQRCodeComponent id="qr" ref="qr" :text="mailToUri">
+            <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
             </VueQRCodeComponent>
           </v-row>
         </v-card-text>
         <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
-        <v-card-text class="text-caption">{{ mailToUri }}</v-card-text>
+        <v-card-text class="text-caption">{{ decodedUri }}</v-card-text>
 
         <v-divider></v-divider>
 
@@ -276,6 +276,12 @@ export default {
     graphSelectLabel() {
       return `Exposure Graphs (${this.getGraphName()})`;
     },
+    decodedUri() {
+      // the QR code generator needs to use the decoded URI
+      const d = decodeURIComponent(this.mailToUri);
+      console.log(d);
+      return d;
+    },
 
     // TODO we shouldn't need this guard
     mailToUri() {
@@ -284,34 +290,15 @@ export default {
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
       const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
-      const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and'); // we will reverse this edit in space.js
+      const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
+      // we will reverse this edit in space.js (but see note above in decodedUri())
       const uri = encodeURIComponent(
         `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
       );
       return `${this.origin}/?${uri}`;
     },
 
-    // mailToString() {
-    //   if (!this.alias) {
-    //     return '';
-    //   }
-    //   const { place_id, name, date, start, end } = this.selectedEvent;
-    //   const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
-    //   const text = [
-    //     `mailto:${this.alias}?subject=Join me at ${printedName.replace(
-    //       /&/g,
-    //       'and'
-    //     )} on ${date}&body=To add this event to your LCT app click this link:`,
-    //     `${this.mailToUri}`,
-    //     `Name/Place-id: ${printedName}/${place_id}`,
-    //     `Start time: ${new Date(start)}`,
-    //     `End time: ${new Date(end)}`,
-    //     ``,
-    //     `See you then...${this.newLine}${this.toName}`,
-    //   ].join('\n');
-    //   return text;
-    // },
     mailToString() {
       if (!this.alias) {
         return '';
