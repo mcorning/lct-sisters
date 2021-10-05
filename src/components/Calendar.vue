@@ -674,12 +674,12 @@ export default {
     promptToLog(data) {
       if (this.isConnected && data) {
         this.selectedEvent = this.$route.params;
-
-        const { name, date } = data;
-        this.prompt = `Log ${
-          data.shared ? 'shared' : ''
-        } event (${name} on ${date})?`;
-        this.snackbarPrompt = true;
+        this.update('graph');
+        // const { name, date } = data;
+        // this.prompt = `Log ${
+        //   data.shared ? 'shared' : ''
+        // } event (${name} on ${date})?`;
+        // this.snackbarPrompt = true;
       } else {
         this.confirmationColor = 'orange';
         this.confirmationMessage =
