@@ -45,13 +45,6 @@ export default {
     Spaces,
     Model,
   },
-  props: {
-    state: {
-      type: Object,
-    },
-    isConnected: Boolean,
-    onDeletePlace: Function,
-  },
 
   data() {
     return {
@@ -69,7 +62,11 @@ export default {
       throw error;
     },
   },
-  watch: {},
+  watch: {
+    state() {
+      console.log(this.state);
+    },
+  },
 
   mounted() {
     console.log('\tSPACE.vue mounted');

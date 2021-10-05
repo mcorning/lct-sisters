@@ -1,7 +1,11 @@
 <template>
-  <Model @error="onError" @updatedGraphTest="onUpdatedGraphTest">
-    <div slot-scope="{ testGraph }">
-      <test-card :testGraph="testGraph" :results="results" />
+  <Model @error="onError" @visitors="onVisitors" @exposures="onExposures">
+    <div slot-scope="{ getVisitors }">
+      <redis
+        :visitors="visitors"
+        :exposures="exposures"
+        :getVisitors="getVisitors"
+      />
     </div>
   </Model>
 </template>
@@ -9,15 +13,14 @@
 <script>
 import Model from '@/components/renderless/Model.vue';
 
-import testCard from '@/components/cards/testCard.vue';
+import Redis from '../components/Redis.vue';
 
 export default {
   name: 'Test',
-  props: {},
 
   components: {
-    testCard,
     Model,
+    Redis,
   },
   computed: {
     test() {
@@ -26,7 +29,8 @@ export default {
   },
   data() {
     return {
-      results: {},
+      visitors: {},
+      exposures: {},
       query: `MATCH p=()-[*]->() RETURN p`,
       ready: false,
     };
@@ -39,22 +43,26 @@ export default {
       throw error;
     },
 
-    allRelationships() {
-      // const query = `MATCH p=()-[*]->() RETURN p`;
-    },
-    onUpdatedGraphTest(res) {
-      this.results = res;
+    onVisitors(res) {
       const { msg, results } = res;
+      this.visitors = results;
+      console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
+    },
+
+    onExposures(res) {
+      const { msg, results } = res;
+      this.exposures = results;
       console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
     },
   },
 
   watch: {
-    ready() {
-      this.allRelationships();
+    ready() {},
+    visitors(n, o) {
+      console.log('visitors', n, o);
     },
-    res(n, o) {
-      console.log(n, o);
+    exposures(n, o) {
+      console.log('exposures', n, o);
     },
   },
 

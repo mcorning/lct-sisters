@@ -94,9 +94,20 @@
         <v-btn dark @click="noDateTime"> <v-icon>close</v-icon> </v-btn>
         <v-btn dark @click="deleteEvent"> <v-icon>delete</v-icon> </v-btn>
         <v-spacer />
-        <v-btn v-show="dirty" color="primary" @click="newDateTime">
-          <v-icon>save</v-icon>
-        </v-btn>
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              v-on="on"
+              v-show="dirty"
+              color="primary"
+              @click="newDateTime"
+            >
+              <v-icon>save</v-icon>
+            </v-btn>
+          </template>
+          <span>Save changes to your database</span>
+        </v-tooltip>
         <v-spacer />
         <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">

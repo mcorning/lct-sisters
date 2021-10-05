@@ -11,6 +11,7 @@
         usernumber,
         getPoi,
         incrementWarningsReceived,
+        getVisitors,
       }"
     >
       <AppLayoutHeader
@@ -24,14 +25,7 @@
         :incrementWarningsReceived="incrementWarningsReceived"
       />
       <CaptureErrorSnackbar>
-        <slot />
-
-        <!-- status bar -->
-        <!-- <v-row no-gutters justify="space-around"
-          ><v-spacer /><v-col cols="auto" class="text-center"
-            ><small class="mt-5 mb-0 ml-3 ">{{ status }}</small></v-col
-          ><v-spacer
-        /></v-row> -->
+        <slot :getVisitors="getVisitors" />
       </CaptureErrorSnackbar>
 
       <AppLayoutFooter /></div
@@ -60,6 +54,7 @@ export default {
     },
     isConnected: Boolean,
     getPoi: Function,
+    getVisitors: Function,
   },
   computed: {
     status() {

@@ -55,7 +55,8 @@ const {
   changeGraph,
   logVisit,
   onExposureWarning,
-  testGraph,
+  getVisitors,
+  getExposures,
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache2');
@@ -368,9 +369,8 @@ io.on('connection', (socket) => {
   //#endregion
 
   //#region Graph testing
-  socket.on('testGraph', (payload, ack) => {
-    const { query, param } = payload;
-    testGraph({ query, param }, ack);
+  socket.on('getVisitors', (query, ack) => {
+    getVisitors(ack);
   });
 
   socket.on('testGraphX', (query, ack) => {
@@ -390,11 +390,11 @@ io.on('connection', (socket) => {
     }
 
     // delegate to redis/redis.js
-    testGraph(query)
+    getVisitors(query)
       .toEither()
       // TODO all inspect() to either-async
       .map((x) => {
-        console.log(info('testGraph():', x));
+        console.log(info('getVisitors():', x));
         return x;
       })
       .cata({

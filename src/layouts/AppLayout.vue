@@ -1,11 +1,12 @@
 <template>
   <keep-alive>
     <Model>
-      <div slot-scope="{ isConnected, usernumber }">
+      <div slot-scope="{ isConnected, usernumber, getVisitors }">
         <component
           :is="layout"
           :isConnected="isConnected"
           :usernumber="usernumber"
+          :getVisitors="getVisitors"
         >
           <slot />
         </component>

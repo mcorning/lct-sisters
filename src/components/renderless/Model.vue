@@ -440,7 +440,7 @@ export default {
       setVaccinationStatus: this.setVaccinationStatus,
 
       // Test assets
-      testGraph: this.testGraph,
+      getVisitors: this.getVisitors,
     });
   },
 };

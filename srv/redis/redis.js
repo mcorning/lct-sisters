@@ -1,4 +1,3 @@
-//https://github.com/RedisGraph/redisgraph.js
 /**
  * There are two redis graphs:
  *    official (with some given name, e.g., 'Sisters')
@@ -61,7 +60,8 @@ module.exports = {
   logVisit,
   onExposureWarning,
   options,
-  testGraph,
+  getVisitors,
+  getExposures,
   matchQuery,
   matchWithParamsQuery,
   matchNamedPathsQuery,
@@ -80,20 +80,18 @@ module.exports = {
 //   "'": '&#39;',
 //   '/': '&#x2F;',
 // };
-function matchQuery(param, ack) {
-  console.log(param);
-
+function matchQuery(ack) {
   // Match query.
-  const query = 'MATCH (v:visitor)-[:visited]->(:space) RETURN v.userID';
+  const query = 'MATCH (v:visitor) RETURN v.userID';
   console.log('matchQuery(', query, ')');
   Graph.query(query)
     .then((res) => {
       const s = new Set();
       while (res.hasNext()) {
         let record = res.next();
-        let userId = record.get('v.userID');
-        console.log('v.userID:', userId);
-        s.add(userId);
+        let userID = record.get('v.userID');
+        console.log(printJson(userID));
+        s.add({userID});
       }
       if (ack) {
         ack({ msg: 'UserIDs of everybody on the graph', results: [...s] });
@@ -104,6 +102,38 @@ function matchQuery(param, ack) {
       console.log(e);
     });
 }
+
+async function matchNamedPathsQuery(param, ack) {
+  console.log(param);
+
+  // Named paths matching.
+  const q = [
+    'MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)',
+    'WHERE (e.end>=c.start OR e.start>= c.end)',
+    'AND exposed.userID <> carrier.userID ',
+    'RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)',
+  ].join('\n');
+  // let param = { userID: 'b6644acc815efb64' };
+  const s = new Set();
+
+  const res = await Graph.query(q, param);
+  while (res.hasNext()) {
+    const record = res.next();
+    const userID = record.get('exposed.userID');
+    const start = record.get('e.start');
+    const space = record.get('s.name');
+    const payload = { userID, start, space };
+    console.log(printJson(payload));
+    s.add(payload);
+  }
+  if (ack) {
+    ack({
+      msg: 'ID(s) of all exposed visitors:',
+      results: [...s],
+    });
+  }
+}
+
 async function matchWithParamsQuery(param, ack) {
   console.log(param);
 
@@ -131,34 +161,6 @@ async function matchWithParamsQuery(param, ack) {
     ack({ msg: 'UserID(s) of visitors sharing spacetime:', results: [...s] });
   }
 }
-async function matchNamedPathsQuery(param, ack) {
-  console.log(param);
-
-  // Named paths matching.
-  const q = [
-    'MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)',
-    'WHERE (e.end>=c.start OR e.start>= c.end)',
-    'AND exposed.userID <> carrier.userID ',
-    'RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)',
-  ].join('\n');
-  // let param = { userID: 'b6644acc815efb64' };
-  const s = new Set();
-
-  const res = await Graph.query(q, param);
-  while (res.hasNext()) {
-    let record = res.next();
-    let id = record.get('id(exposed)');
-    console.log('id(exposed):', id);
-    s.add(id);
-  }
-  if (ack) {
-    ack({
-      msg: 'ID(s) of all exposed visitors:',
-      results: [...s],
-    });
-  }
-}
-
 async function matchAllNodesQuery(param, ack) {
   console.log(param);
 
@@ -179,13 +181,14 @@ async function matchAllSpacesQuery(param, ack) {
   console.log(param);
   const s = new Set();
 
-  const q = 'MATCH (:visitor)-[:visited]->(s:space) RETURN s.name';
+  const q = 'MATCH (:visitor)-[:visited]->(s:space) RETURN s.name, id(s)';
   const res = await Graph.query(q);
   while (res.hasNext()) {
     let record = res.next();
     let name = record.get('s.name');
-    console.log('s.name:', name);
-    s.add(name);
+    let id = record.get('id(s)');
+    console.log('s.name:', name, 'id(s):', id);
+    s.add({ name, id });
   }
   if (ack) {
     ack({
@@ -195,32 +198,39 @@ async function matchAllSpacesQuery(param, ack) {
   }
 }
 
-// test.js handles tha ack for the client
-function testGraph({ query, param }, ack) {
-  switch (query) {
-    case 'matchAllSpacesQuery':
-      matchAllSpacesQuery(param, ack);
-      break;
-    case 'matchQuery':
-      matchQuery(param, ack);
-      break;
-    case 'matchWithParamsQuery':
-      matchWithParamsQuery(param, ack);
-      break;
-    case 'matchNamedPathsQuery':
-      matchNamedPathsQuery(param, ack);
-      break;
-    case 'matchAllNodesQuery':
-      matchAllNodesQuery(param, ack);
-      break;
-
-    default:
-      break;
-  }
+function getVisitors(ack) {
+  matchQuery(ack);
+}
+function getExposures({ param, ack }) {
+  matchNamedPathsQuery({ param, ack });
 }
 
+// test.js handles tha ack for the client
+// function getTest({ query, param }, ack) {
+//   switch (query) {
+//     case 'matchAllSpacesQuery':
+//       matchAllSpacesQuery(param, ack);
+//       break;
+//     case 'matchQuery':
+//       matchQuery(param, ack);
+//       break;
+//     case 'matchWithParamsQuery':
+//       matchWithParamsQuery(param, ack);
+//       break;
+//     case 'matchNamedPathsQuery':
+//       matchNamedPathsQuery(param, ack);
+//       break;
+//     case 'matchAllNodesQuery':
+//       matchAllNodesQuery(param, ack);
+//       break;
+
+//     default:
+//       break;
+//   }
+// }
+
 // function testGraphX(query, userID) {
-//   console.log('redis.testGraph():', query);
+//   console.log('redis.getVisitors():', query);
 //   // OK event handler that converts redis results into lct object
 //   function returnResults(results) {
 //     const id = results.next().get('userID');
