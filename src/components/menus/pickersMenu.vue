@@ -22,6 +22,72 @@
       <v-card-subtitle class="pb-1"
         >You can edit the Date and Time fields</v-card-subtitle
       >
+
+      <v-card-text>
+        <v-row justify="space-around" align="center" no-gutters>
+          <v-col cols="4">
+            <v-text-field
+              v-model="pickedDate"
+              label="Date"
+              prepend-icon="event"
+              readonly
+              @click="pick(1, true, false)"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="3">
+            <v-date-picker v-if="picked == 1" v-model="pickedDate">
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" @click="pick(0, false, false)">
+                Cancel
+              </v-btn>
+              <v-btn text color="primary" @click="pick(0, false, true)">
+                OK
+              </v-btn></v-date-picker
+            ></v-col
+          >
+        </v-row>
+        <v-row>
+          <v-col>
+            <v-row align="center" dense>
+              <v-col>
+                <v-card-text>Start</v-card-text>
+              </v-col>
+              <v-col cols="3">
+                <scroll-picker
+                  v-model="startHr"
+                  :options="hoursList"
+                ></scroll-picker></v-col
+              ><v-col cols="1" class="text-center">:</v-col
+              ><v-col cols="3"
+                ><scroll-picker
+                  v-model="startMin"
+                  :options="['00', '15', '30', '45']"
+                ></scroll-picker>
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col>
+            <v-row align="center" dense>
+              <v-col>
+                <v-card-text>End</v-card-text>
+              </v-col>
+              <v-col cols="3">
+                <scroll-picker
+                  v-model="endHr"
+                  :options="hoursList"
+                ></scroll-picker></v-col
+              ><v-col cols="1" class="text-center">:</v-col
+              ><v-col cols="3"
+                ><scroll-picker
+                  v-model="endMin"
+                  :options="['00', '15', '30', '45']"
+                ></scroll-picker>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
       <!-- Pickers row -->
       <v-row justify="space-around" align="center" no-gutters>
         <v-col cols="4">
@@ -87,7 +153,6 @@
           </v-btn></v-time-picker
         >
       </v-row>
-
       <v-divider />
 
       <v-card-actions v-if="!editing">
@@ -117,7 +182,7 @@
           </template>
           <span>Email this event to others </span>
         </v-tooltip>
-        <v-tooltip top>
+        <!-- <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
             <v-btn
               v-bind="attrs"
@@ -131,13 +196,16 @@
             </v-btn>
           </template>
           <span>Finish the workflow </span>
-        </v-tooltip>
+        </v-tooltip> -->
       </v-card-actions></v-card
     >
   </div>
 </template>
 
 <script>
+import 'vue-scroll-picker/dist/style.css';
+import { ScrollPicker } from 'vue-scroll-picker';
+
 export default {
   name: 'pickersMenu',
   props: {
@@ -145,9 +213,19 @@ export default {
     mailToUri: String,
     isConnected: Boolean,
   },
-  components: {},
+  components: { ScrollPicker },
+  computed: {
+    hoursList() {
+      return [...Array(12).keys()].map((v) => (v + 1).toString());
+    },
+  },
   data() {
     return {
+      startHr: '10',
+      startMin: '30',
+      endHr: '11',
+      endMin: '00',
+      timeVal: '10:00',
       banner: false,
       editing: false,
       dirty: false,

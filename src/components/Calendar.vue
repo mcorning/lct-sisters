@@ -116,7 +116,12 @@
 
     <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
-        <PickersMenu
+        <date-time-card
+          :currDate="currDate"
+          :currTimes="currTimes"
+          :dateList="dateList"
+        />
+        <!-- <PickersMenu
           :selectedEventParsed="selectedEventParsed"
           :mailToUri="mailToUri"
           :isConnected="isConnected"
@@ -126,7 +131,7 @@
           @share="openBanner"
           @deleteEvent="onDeleteEvent"
           @enlargeQR="enlargeQR = true"
-        />
+        /> -->
         <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
             <v-col cols="12">
@@ -233,11 +238,12 @@
 <script>
 import VueQRCodeComponent from 'vue-qr-generator';
 
-import PickersMenu from '@/components/menus/pickersMenu.vue';
+// import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import StatusCard from './cards/statusCard.vue';
 import { printJson } from '@/utils/helpers';
+import DateTimeCard from './cards/dateTimeCard.vue';
 
 export default {
   name: 'Calendar',
@@ -256,11 +262,44 @@ export default {
     isConnected: Boolean,
   },
   components: {
-    PickersMenu,
+    // PickersMenu,
     VueQRCodeComponent,
     StatusCard,
+    DateTimeCard,
   },
   computed: {
+    dateList() {
+      return ['Yesterday', 'Today', 'Tomorrow'];
+    },
+    currDate() {
+      return DateTime.now().toFormat("ccc ',' DD");
+    },
+    startTimeObject() {
+      const { hour, minute } = this.selectedEventParsed?.start;
+      return { hour, minute };
+    },
+    endTimeObject() {
+      const { hour, minute } = this.selectedEventParsed?.end;
+      return { hour, minute };
+    },
+    currTimes() {
+      if (!this.selectedEventParsed) {
+        return null;
+      }
+      const start = this.selectedEventParsed.start.time;
+      const end = this.selectedEventParsed?.end.time;
+      const past = this.selectedEventParsed.start.past;
+      const present = this.selectedEventParsed.start.present;
+      const future = this.selectedEventParsed.start.future;
+      return {
+        start,
+        end,
+        past,
+        present,
+        future,
+      };
+    },
+
     gatheringLabel() {
       return this.selectedEvent && this.selectedEvent.indoor
         ? 'Room '
