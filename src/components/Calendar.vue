@@ -116,12 +116,7 @@
 
     <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
-        <date-time-card
-          :currDate="currDate"
-          :currTimes="currTimes"
-          :dateList="dateList"
-        />
-        <!-- <PickersMenu
+        <event-edit-card
           :selectedEventParsed="selectedEventParsed"
           :mailToUri="mailToUri"
           :isConnected="isConnected"
@@ -131,7 +126,10 @@
           @share="openBanner"
           @deleteEvent="onDeleteEvent"
           @enlargeQR="enlargeQR = true"
-        /> -->
+          @closeDateTimeCard="onCloseDateTimeCard"
+        ></event-edit-card>
+
+        <!-- this opens up when the Share button on event-edit-card gets clicked -->
         <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
             <v-col cols="12">
@@ -172,34 +170,16 @@
               Email
             </v-btn>
           </v-row>
-          <!-- <v-row
-            ><v-col cols="4">
-              <VueQRCodeComponent
-                id="qr"
-                ref="qr"
-                :text="mailToUri"
-                :size="100"
-              >
-              </VueQRCodeComponent></v-col
-            ><v-col cols="8">
-              <div class="ml-4">
-                <p>
-                  As an option to email, copy the QR code from your computer
-                  with a right-click the image and select the "Copy image"
-                  option from the context menu.
-                </p>
-                <p>
-                  Then you can paste the image in an email, text file, or social
-                  media app to share the event with others.
-                </p>
-              </div></v-col
-            ></v-row
-          > -->
         </v-banner>
       </v-sheet>
     </v-bottom-sheet>
 
-    <v-snackbar v-model="snackbar" :color="confirmationColor" timeout="15000">
+    <v-snackbar
+      v-model="snackbar"
+      top
+      :color="confirmationColor"
+      timeout="15000"
+    >
       <span v-html="confirmationMessage" />
       <template v-slot:action="{ attrs }">
         <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
@@ -236,14 +216,13 @@
 </template>
 
 <script>
+import EventEditCard from '@/components/cards/eventEditCard';
 import VueQRCodeComponent from 'vue-qr-generator';
 
-// import PickersMenu from '@/components/menus/pickersMenu.vue';
 import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import StatusCard from './cards/statusCard.vue';
 import { printJson } from '@/utils/helpers';
-import DateTimeCard from './cards/dateTimeCard.vue';
 
 export default {
   name: 'Calendar',
@@ -262,44 +241,11 @@ export default {
     isConnected: Boolean,
   },
   components: {
-    // PickersMenu,
     VueQRCodeComponent,
     StatusCard,
-    DateTimeCard,
+    EventEditCard,
   },
   computed: {
-    dateList() {
-      return ['Yesterday', 'Today', 'Tomorrow'];
-    },
-    currDate() {
-      return DateTime.now().toFormat("ccc ',' DD");
-    },
-    startTimeObject() {
-      const { hour, minute } = this.selectedEventParsed?.start;
-      return { hour, minute };
-    },
-    endTimeObject() {
-      const { hour, minute } = this.selectedEventParsed?.end;
-      return { hour, minute };
-    },
-    currTimes() {
-      if (!this.selectedEventParsed) {
-        return null;
-      }
-      const start = this.selectedEventParsed.start.time;
-      const end = this.selectedEventParsed?.end.time;
-      const past = this.selectedEventParsed.start.past;
-      const present = this.selectedEventParsed.start.present;
-      const future = this.selectedEventParsed.start.future;
-      return {
-        start,
-        end,
-        past,
-        present,
-        future,
-      };
-    },
-
     gatheringLabel() {
       return this.selectedEvent && this.selectedEvent.indoor
         ? 'Room '
@@ -542,6 +488,15 @@ export default {
     onNewDateTime(newDateTimes) {
       this.makeDateTimes(newDateTimes);
       this.update('cache');
+    },
+    onCloseDateTimeCard(dto) {
+      if (dto) {
+        this.selectedEvent.date = dto.date;
+        this.selectedEvent.start = dto.start;
+        this.selectedEvent.end = dto.end;
+        this.update('cache');
+      }
+      this.seePickers = false;
     },
     emailEvent() {
       if (this.mailToString) {

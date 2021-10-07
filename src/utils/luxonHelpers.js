@@ -8,6 +8,18 @@ const t = () => {
   // using Luxon Presets
   return DateTime.now();
 };
+
+const yesterdayAsISO = () => {
+  const y = t().minus({ days: 1 });
+  return y.toISO();
+};
+const todayAsISO = () => t().toISO();
+
+const tomorrowAsISO = () => {
+  const y = t().plus({ days: 1 });
+  return y.toISO();
+};
+
 const tPlusOne = (avgStay = 30) => {
   // using Luxon Presets
   return DateTime.now().plus({ minutes: avgStay });
@@ -123,6 +135,7 @@ const inFuture = (date) => {
     },
   });
 };
+
 module.exports = {
   DateTime,
   getNow,
@@ -141,4 +154,7 @@ module.exports = {
   t,
   tPlusOne,
   userSince,
+  todayAsISO,
+  yesterdayAsISO,
+  tomorrowAsISO,
 };

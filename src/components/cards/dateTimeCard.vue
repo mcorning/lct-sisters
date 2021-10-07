@@ -2,13 +2,13 @@
   <v-card>
     <v-row justify="space-between" dense>
       <v-col cols="1">
-        <v-icon>close</v-icon>
+        <v-icon @click="close">close</v-icon>
       </v-col>
       <v-col cols="auto">
         <span class="text-h7 text-center">Change from: {{ currDate }}</span>
       </v-col>
       <v-col cols="1">
-        <v-icon>check</v-icon>
+        <v-icon @click="update">check</v-icon>
       </v-col>
     </v-row>
     <v-row dense
@@ -60,13 +60,19 @@
 <script>
 import 'vue-scroll-picker/dist/style.css';
 import { ScrollPicker } from 'vue-scroll-picker';
+import {
+  DateTime,
+  todayAsISO,
+  yesterdayAsISO,
+  tomorrowAsISO,
+} from '@/utils/luxonHelpers';
 
 export default {
   name: 'dateTimeCard',
 
   props: {
     currDate: String,
-    currTimes: Object,
+    currTimes: { type: Object, required: true },
     dateList: Array,
   },
   components: { ScrollPicker },
@@ -80,7 +86,7 @@ export default {
 
     newDateTime() {
       //   const x = ''
-      const x = `${this.newDate},  from ${this.startHr}:${this.startMin} ${this.startAmPm} to ${this.endHr}:${this.endMin} ${this.endAmPm}`;
+      const x = ` from ${this.dateStruct.start.hr}:${this.dateStruct.start.min} ${this.dateStruct.start.amPm} to ${this.dateStruct.end.hr}:${this.dateStruct.end.min} ${this.dateStruct.end.amPm}`;
       return x;
     },
     hoursList() {
@@ -89,65 +95,134 @@ export default {
   },
   data() {
     return {
+      dateStruct: {
+        dateString: '',
+        start: { hr: '', min: '', amPm: '' },
+        end: { hr: '', min: '', amPm: '' },
+        startTime: 0,
+        endTime: 0,
+      },
       ready: false,
       isEndTime: 0, // this is a toggle value: start=0 end=1
       newDate: 'Today',
       hr: '',
       min: '',
       amPm: '',
-      startHr: '',
-      startMin: '',
-      startAmPm: '',
+      //   startHr: '',
+      //   startMin: '',
+      //   startAmPm: '',
 
-      endHr: '',
-      endMin: '',
-      endAmPm: '',
+      //   endHr: '',
+      //   endMin: '',
+      //   endAmPm: '',
     };
   },
   methods: {
+    noDateTime() {
+      this.dirty = false;
+      this.$emit('noDateTime');
+    },
+    close() {
+      this.$emit('closeDateTimeCard');
+    },
+    update() {
+      // send the date as string
+      // create ms for start and end based on picker
+      const dt = DateTime.fromISO(this.dateStruct.dateString);
+      const start = dt
+        .set({
+          hours:
+            this.dateStruct.start.amPm === 'PM'
+              ? Number(this.dateStruct.start.hr) + 12
+              : this.dateStruct.start.hr,
+          minutes: this.dateStruct.start.min,
+        })
+        .toMillis();
+      const end = dt
+        .set({
+          hours:
+            this.dateStruct.end.amPm === 'PM'
+              ? Number(this.dateStruct.end.hr) + 12
+              : this.dateStruct.end.hr,
+          minutes: this.dateStruct.end.min,
+        })
+        .toMillis();
+      this.$emit('closeDateTimeCard', {
+        date: dt.toLocaleString(),
+        start,
+        end,
+      });
+    },
+
     fixDates() {
       this.newDate = this.currTimes.present
         ? 'Today'
         : this.currTimes.past
         ? 'Yesterday'
         : 'Tomorrow';
+      this.convertNewDate();
 
-      this.hr = this.currTimes.start.split(':')[0];
-      this.min = this.currTimes.start.split(':')[1];
-      this.amPm = this.hr >= 12 ? 'PM' : 'AM';
+      const startHour = this.currTimes.start.split(':')[0];
+      this.dateStruct.start.hr = startHour > 12 ? startHour - 12 : startHour;
+      this.dateStruct.start.min = this.currTimes.start.split(':')[1];
+      this.dateStruct.start.amPm = startHour >= 12 ? 'PM' : 'AM';
 
-      this.startHr = this.hr;
-      this.startMin = this.minute;
-      this.startAmPm = this.amPm;
-      this.endHr = this.currTimes.end.split(':')[0];
-      this.endMin = this.currTimes.end.split(':')[1];
-      this.endAmPm = this.endHr >= 12 ? 'PM' : 'AM';
+      const endHour = this.currTimes.end.split(':')[0];
+      this.dateStruct.end.hr = endHour > 12 ? endHour - 12 : endHour;
+      this.dateStruct.end.min = this.currTimes.end.split(':')[1];
+      this.dateStruct.end.amPm = endHour >= 12 ? 'PM' : 'AM';
+
+      this.hr = this.dateStruct.start.hr;
+      this.min = this.dateStruct.start.min;
+      this.amPm = this.dateStruct.start.amPm;
       this.ready = true;
+    },
+    convertNewDate() {
+      this.dateStruct.dateString =
+        this.newDate === 'Today'
+          ? todayAsISO()
+          : this.newDate === 'Yesterday'
+          ? yesterdayAsISO()
+          : tomorrowAsISO();
     },
   },
   watch: {
-    hr(hr) {
+    hr() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.endHr = hr;
+        this.dateStruct.end.hr = this.hr;
       } else {
-        this.startHr = hr;
+        this.dateStruct.start.hr = this.hr;
       }
     },
-    min(min) {
+    min() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.endMin = min;
+        this.dateStruct.end.min = this.min;
       } else {
-        this.startMin = min;
+        this.dateStruct.start.min = this.min;
       }
     },
-    amPm(amPm) {
+    amPm() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.endAmPm = amPm;
+        this.dateStruct.end.amPm = this.amPm;
       } else {
-        this.startAmPm = amPm;
+        this.dateStruct.start.amPm = this.amPm;
+      }
+    },
+    newDate() {
+      this.convertNewDate();
+    },
+    isEndTime(isEndTime) {
+      if (isEndTime) {
+        this.min = this.dateStruct.end.min;
+        this.hr = this.dateStruct.end.hr;
+        this.amPm = this.dateStruct.end.amPm;
+      } else {
+        this.min = this.dateStruct.start.min;
+        this.hr = this.dateStruct.start.hr;
+        this.amPm = this.dateStruct.start.amPm;
       }
     },
   },
