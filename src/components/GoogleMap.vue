@@ -204,7 +204,7 @@ export default {
       `;
     },
     copyStatus() {
-      this.setStatus('Copied to clipboard', this.$clipboard(this.status)); // this.$clipboard copy any String/Array/Object you want
+      this.setStatus(`Copied to clipboard ${this.$clipboard(this.status)}`); // this.$clipboard copy any String/Array/Object you want
     },
     cutStatus() {
       this.$clipboard(this.status);
@@ -642,7 +642,9 @@ export default {
       console.log('Map component ready');
       if (this.$route.query.place_id) {
         console.log('Detected a shared event:', this.$route.query.place_id);
-        this.setStatus('Detected a shared event:', this.$route.query.place_id);
+        this.setStatus(
+          `Detected a shared event: ${this.$route.query.place_id}`
+        );
         this.setStatus(printJson(this.$route.query) + '\n\n');
         // in space.js
         this.onSharePlace();

@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card flat>
     <v-row justify="space-between" dense>
       <v-col cols="1">
         <v-icon @click="close">close</v-icon>
@@ -18,11 +18,19 @@
         </v-btn-toggle></v-col
       ><v-spacer
     /></v-row>
-    <v-row align="center" dense
-      ><v-col
+
+    <v-row
+      align="center"
+      dense
+      :style="{
+        'font-size': `${fontSize}px`,
+      }"
+    >
+      <v-col
         ><scroll-picker
           v-model="newDate"
           :options="readyDateList"
+          ref="picker"
         ></scroll-picker>
       </v-col>
       <v-col cols="2">
@@ -53,7 +61,19 @@
         ><scroll-picker v-model="amPm" :options="['AM', 'PM']"></scroll-picker
       ></v-col>
     </v-row>
+
     <v-card-subtitle class="text-center">to: {{ newDateTime }}</v-card-subtitle>
+    <v-row
+      ><v-col>
+        <span class="px-3">Font Size: {{ fontSize }}px</span>
+        <input
+          type="range"
+          :min="16"
+          :max="36"
+          :step="4"
+          v-model="fontSize"
+          @input="$refs.picker.resize()"/></v-col
+    ></v-row>
   </v-card>
 </template>
 
@@ -65,6 +85,8 @@ import {
   todayAsISO,
   yesterdayAsISO,
   tomorrowAsISO,
+  formatDateWithToken,
+  formatDateAsISO,
 } from '@/utils/luxonHelpers';
 
 export default {
@@ -77,6 +99,11 @@ export default {
   },
   components: { ScrollPicker },
   computed: {
+    formattedDate() {
+      return this.dateStruct.dateString
+        ? formatDateWithToken(this.dateStruct.dateString, DateTime.DATE_MED)
+        : '';
+    },
     readyDateList() {
       if (!this.ready) {
         return [];
@@ -85,8 +112,7 @@ export default {
     },
 
     newDateTime() {
-      //   const x = ''
-      const x = ` from ${this.dateStruct.start.hr}:${this.dateStruct.start.min} ${this.dateStruct.start.amPm} to ${this.dateStruct.end.hr}:${this.dateStruct.end.min} ${this.dateStruct.end.amPm}`;
+      const x = `${this.formattedDate} from ${this.dateStruct.start.hr}:${this.dateStruct.start.min} ${this.dateStruct.start.amPm} to ${this.dateStruct.end.hr}:${this.dateStruct.end.min} ${this.dateStruct.end.amPm}`;
       return x;
     },
     hoursList() {
@@ -95,6 +121,7 @@ export default {
   },
   data() {
     return {
+      fontSize: 24,
       dateStruct: {
         dateString: '',
         start: { hr: '', min: '', amPm: '' },
@@ -108,13 +135,6 @@ export default {
       hr: '',
       min: '',
       amPm: '',
-      //   startHr: '',
-      //   startMin: '',
-      //   startAmPm: '',
-
-      //   endHr: '',
-      //   endMin: '',
-      //   endAmPm: '',
     };
   },
   methods: {
@@ -183,7 +203,9 @@ export default {
           ? todayAsISO()
           : this.newDate === 'Yesterday'
           ? yesterdayAsISO()
-          : tomorrowAsISO();
+          : this.newDate === 'Tomorrow'
+          ? tomorrowAsISO()
+          : formatDateAsISO(new Date(this.newDate));
     },
   },
   watch: {

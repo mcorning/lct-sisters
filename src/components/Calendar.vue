@@ -123,14 +123,14 @@
           @newDateTime="onNewDateTime"
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
-          @share="openBanner"
+          @share="emailEvent"
           @deleteEvent="onDeleteEvent"
           @enlargeQR="enlargeQR = true"
           @closeDateTimeCard="onCloseDateTimeCard"
         ></event-edit-card>
 
         <!-- this opens up when the Share button on event-edit-card gets clicked -->
-        <v-banner v-model="banner">
+        <!-- <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
             <v-col cols="12">
               <v-text-field
@@ -170,7 +170,7 @@
               Email
             </v-btn>
           </v-row>
-        </v-banner>
+        </v-banner> -->
       </v-sheet>
     </v-bottom-sheet>
 
@@ -498,14 +498,32 @@ export default {
       }
       this.seePickers = false;
     },
+
+    getMailToString() {
+      const { place_id, name, date, start, end } = this.selectedEvent;
+      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
+
+      return `mailto:?subject=Join me at ${printedName.replace(
+        /&/g,
+        'and'
+      )} on ${date}&body=Click this link to open LCT (then log the event from there):${
+        this.newLine
+      } ${this.mailToUri}  ${this.newLine}  ${
+        this.newLine
+      }      Name/Place-id: ${printedName}/${place_id} ${
+        this.newLine
+      }      Start time: ${new Date(start)}${
+        this.newLine
+      }      End time: ${new Date(end)}${this.newLine}${
+        this.newLine
+      }See you then...${this.newLine}${this.toName}`;
+    },
+
     emailEvent() {
-      if (this.mailToString) {
-        this.setStatus('setting window.location to:', this.mailToString);
-        window.location = this.mailToString;
-      } else {
-        this.setStatus('No email address entered. No mail sent.');
-      }
-      this.banner = false;
+      const mailToString = this.getMailToString();
+      this.setStatus(`Setting window.location to:`);
+      this.setStatus(`${mailToString}`);
+      window.location = mailToString;
       this.seePickers = false;
     },
 
@@ -703,7 +721,7 @@ export default {
 
   watch: {
     mailToString(val) {
-      this.setStatus('email:', val);
+      this.setStatus(`email: ${val}`);
     },
 
     ready() {
@@ -729,7 +747,7 @@ export default {
       this.confirmationMessage = confirmationMessage;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
-        this.setStatus('Deleted visit to', this.selectedEvent.name);
+        this.setStatus(`Deleted visit to ${this.selectedEvent.name}`);
       } else {
         this.selectedEvent.color = logged ? 'primary' : 'secondary';
         this.selectedEvent.loggedVisitId = loggedVisitId;

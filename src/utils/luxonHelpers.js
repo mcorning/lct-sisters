@@ -9,17 +9,6 @@ const t = () => {
   return DateTime.now();
 };
 
-const yesterdayAsISO = () => {
-  const y = t().minus({ days: 1 });
-  return y.toISO();
-};
-const todayAsISO = () => t().toISO();
-
-const tomorrowAsISO = () => {
-  const y = t().plus({ days: 1 });
-  return y.toISO();
-};
-
 const tPlusOne = (avgStay = 30) => {
   // using Luxon Presets
   return DateTime.now().plus({ minutes: avgStay });
@@ -81,14 +70,6 @@ const showCurrentMilitaryTime = () => {
     .toLocaleString(DateTime.TIME_24_SIMPLE);
 };
 
-const makeTimes = (pickedDate, pickedStartTime, pickedEndTime) => {
-  const startTime = DateTime.fromISO(
-    `${pickedDate}T${pickedStartTime}`
-  ).toMillis();
-  const endTime = DateTime.fromISO(`${pickedDate}T${pickedEndTime}`).toMillis();
-  return { startTime, endTime };
-};
-
 // takes an old time and two time strings
 // returns the new time as the difference between intervals
 const updateTime = (time, newVal, oldVal) => {
@@ -118,6 +99,7 @@ const updateTime = (time, newVal, oldVal) => {
 
   return newTime;
 };
+
 const inFuture = (date) => {
   const x = (date) => {
     const dateType = typeof date;
@@ -128,6 +110,7 @@ const inFuture = (date) => {
         return DateTime.fromISO(date) > DateTime.now();
     }
   };
+
   parseDate(date).cata({
     Just: (date) => x(date),
     Nothing: (results) => {
@@ -136,6 +119,44 @@ const inFuture = (date) => {
   });
 };
 
+const yesterdayAsISO = () => {
+  const y = t().minus({ days: 1 });
+  return y.toISO();
+};
+const todayAsISO = () => t().toISO();
+
+const tomorrowAsISO = () => {
+  const y = t().plus({ days: 1 });
+  return y.toISO();
+};
+const datesBack = (daysBack) => {
+  const dayBeforeYesterday = 2;
+  const dates = Array.from({ length: daysBack }, (_, idx) =>
+    DateTime.now()
+      .minus({ days: daysBack - idx + dayBeforeYesterday })
+      .toLocaleString(DateTime.DATE_MED)
+  );
+  return dates;
+};
+const datesAhead = (daysAhead) => {
+  const dayAfterTomorrow = 2;
+  const dates = Array.from({ length: daysAhead }, (_, idx) =>
+    DateTime.now()
+      .plus({ days: idx + dayAfterTomorrow })
+      .toLocaleString(DateTime.DATE_MED)
+  );
+  return dates;
+};
+
+const formatDateWithToken = (dt, token) => {
+  const d = DateTime.fromISO(dt).toLocaleString(token);
+  return d;
+};
+
+const formatDateAsISO = (jsDate) => {
+  const dt = DateTime.fromJSDate(jsDate).toISO();
+  return dt;
+};
 module.exports = {
   DateTime,
   getNow,
@@ -148,7 +169,6 @@ module.exports = {
   formatTime,
   formatVisitedDate,
   getVisitDate,
-  makeTimes,
   showCurrentMilitaryTime,
   updateTime,
   t,
@@ -157,4 +177,8 @@ module.exports = {
   todayAsISO,
   yesterdayAsISO,
   tomorrowAsISO,
+  datesBack,
+  datesAhead,
+  formatDateWithToken,
+  formatDateAsISO,
 };

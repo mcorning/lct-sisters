@@ -32,13 +32,13 @@
       </template>
     </v-snackbar>
     <!-- End PWA snackbar -->
-    <v-main>
-      <!-- NOTE: ApplyLayout is configured in main.js -->
-      <AppLayout>
+    <!-- NOTE: ApplyLayout is configured in main.js -->
+    <AppLayout>
+      <v-main>
         <!-- <router-view @exposureWarning="onExposureWarning" /> -->
         <router-view />
-      </AppLayout>
-    </v-main>
+      </v-main>
+    </AppLayout>
   </v-app>
 </template>
 

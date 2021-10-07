@@ -1,11 +1,11 @@
 <template>
   <div>
-    <v-app-bar color="primary" app dark>
+    <v-system-bar color="primary" app dark window>
       <v-tooltip top>
         <template v-slot:activator="{ on, attrs }">
-          <v-toolbar-title v-bind="attrs" v-on="on" @click="toggleQr"
+          <span v-bind="attrs" v-on="on" @click="toggleQr"
             >{{ toolbarTitle }}
-          </v-toolbar-title>
+          </span>
         </template>
         <span>Click to share LCT</span>
       </v-tooltip>
@@ -16,6 +16,7 @@
       <v-icon right class="pl-3"
         >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
       </v-icon>
+      <span>{{ shortUserID }}</span>
       <v-btn icon @click="open('Test')">
         <v-icon>mdi-monitor-dashboard</v-icon>
       </v-btn>
@@ -25,7 +26,7 @@
         @nestedMenu-click="onMenuItemClick"
       />
       <!-- End Options Menu-->
-    </v-app-bar>
+    </v-system-bar>
     <v-dialog v-model="showCvewQR" max-width="400">
       <v-card class="dialog;">
         <v-row justify="space-around">
@@ -74,6 +75,14 @@ export default {
     PromptBanner,
   },
   computed: {
+    shortUserID() {
+      if (this.$socket.connected) {
+        const id = this.$socket.client.auth.userID.slice(12);
+        return id;
+      }
+      return '';
+    },
+
     toolbarTitle() {
       const t = this.$vuetify.breakpoint.xsOnly
         ? 'LCT'

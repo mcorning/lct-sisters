@@ -1,25 +1,33 @@
 <template>
   <v-footer app color="primary" class="white--text">
     <!-- status bar -->
-    <div class="center mx-0 my-0">{{ status }}</div>
 
     <!-- View buttons -->
-    <v-bottom-navigation color="secondary" background-color="primary" dark grow>
-      <v-btn @click="open('Space')">
+
+    <v-bottom-navigation
+      v-model="value"
+      color="secondary"
+      background-color="primary"
+      grow
+      dark
+      shift
+    >
+      <!-- <span class="center mx-0 my-0">{{ status }}</span>
+      <br /> -->
+      <v-btn value="Space" @click="open('Space')">
         <span>Space</span>
         <v-icon>mdi-map-marker</v-icon>
       </v-btn>
 
-      <v-btn fab color="red" class="black--text" dark @click="open('Warn')">
+      <v-btn value="Warn" class="red black--text" @click="open('Warn')">
         <span>Warn</span>
-        <v-icon dark> mdi-alert </v-icon></v-btn
-      >
-      <v-btn @click="open('Time')">
+        <v-icon>mdi-alert</v-icon>
+      </v-btn>
+
+      <v-btn value="Time" @click="open('Time')">
         <span>Time</span>
         <v-icon>mdi-calendar</v-icon>
       </v-btn>
-
-
     </v-bottom-navigation>
   </v-footer>
 </template>
@@ -40,6 +48,11 @@ export default {
       }`;
     },
   },
+  data() {
+    return {
+      value: '',
+    };
+  },
   methods: {
     // TODO NOTE: an alternative design uses Model here and passes data and functions to props.
     // At this writing, we have Space and Time vue files that wrap the map and calendars in their own Model reference
@@ -54,6 +67,7 @@ export default {
     },
   },
   mounted() {
+    this.value = this.$router.currentRoute.name;
     console.log('\tAppLayoutFooter mounted');
   },
 };

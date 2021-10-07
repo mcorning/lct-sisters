@@ -27,48 +27,19 @@
     ></date-time-card>
     <v-card-actions>
       <!-- <v-btn dark @click="noDateTime"> <v-icon>close</v-icon> </v-btn> -->
-      <v-btn color="secondary" @click="deleteEvent">
+      <v-btn icon color="secondary" @click="deleteEvent">
         <v-icon>delete</v-icon>
       </v-btn>
       <v-spacer />
-      <!-- <v-tooltip top>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              v-bind="attrs"
-              v-on="on"
-              v-show="dirty"
-              color="primary"
-              @click="newDateTime"
-            >
-              <v-icon>save</v-icon>
-            </v-btn>
-          </template>
-          <span>Save changes to your database</span>
-        </v-tooltip> -->
-      <!-- <v-spacer /> -->
+
       <v-tooltip top>
         <template v-slot:activator="{ on, attrs }">
-          <v-btn v-bind="attrs" v-on="on" color="primary" @click="share">
+          <v-btn icon v-bind="attrs" v-on="on" color="primary" @click="share">
             <v-icon>share</v-icon>
           </v-btn>
         </template>
         <span>Email this event to others </span>
       </v-tooltip>
-      <!-- <v-tooltip top>
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              v-bind="attrs"
-              v-on="on"
-              v-if="!selectedEventParsed.input.loggedVisitId"
-              :disabled="!isConnected"
-              color="primary"
-              @click="logEvent"
-            >
-              <v-icon>cloud_done</v-icon>
-            </v-btn>
-          </template>
-          <span>Finish the workflow </span>
-        </v-tooltip> -->
     </v-card-actions></v-card
   >
 </template>
@@ -76,7 +47,7 @@
 <script>
 import 'vue-scroll-picker/dist/style.css';
 import DateTimeCard from './dateTimeCard.vue';
-import { DateTime } from '@/utils/luxonHelpers';
+import { DateTime, datesBack, datesAhead } from '@/utils/luxonHelpers';
 
 export default {
   name: 'eventEditCard',
@@ -88,7 +59,8 @@ export default {
   components: { DateTimeCard },
   computed: {
     dateList() {
-      return ['Yesterday', 'Today', 'Tomorrow'];
+      const backDates = datesBack(7);
+      return [...backDates, 'Yesterday', 'Today', 'Tomorrow', ...datesAhead(7)];
     },
     currDate() {
       return DateTime.now().toFormat("ccc ',' DD");
