@@ -7,20 +7,23 @@
     </v-overlay>
     <!-- Map container -->
     <!-- map size set in .Map class below -->
+    <v-toolbar dense floating id="autocompleteToolbar">
+      <v-text-field
+        hide-details
+        prepend-icon="mdi-magnify"
+        single-line
+        class="ml-3"
+        dense
+        id="autoCompleteInput"
+        hint="Enter place search terms here"
+        persistent-hint
+      >
+      </v-text-field
+      ><v-spacer />
+      <v-btn icon><v-icon>mdi-crosshairs-gps</v-icon></v-btn>
+    </v-toolbar>
     <div class="Map" ref="map"></div>
 
-    <v-row>
-      <v-col>
-        <v-text-field
-          class="ml-3"
-          dense
-          id="autoCompleteInput"
-          hint="Enter place search terms here"
-          persistent-hint
-        >
-        </v-text-field>
-      </v-col>
-    </v-row>
     <info-window-card
       ref="infowin"
       id="infowin"
@@ -192,6 +195,18 @@ export default {
     Share
  */
   methods: {
+    // panToCurrentLocation() {
+    //   navigator.geolocation.getCurrentPosition(
+    //     (position) => {
+    //       const pos = {
+    //         lat: position.coords.latitude,
+    //         lng: position.coords.longitude,
+    //       };
+    //       this.map.setCenter(pos);
+    //     },
+    //     () => {}
+    //   );
+    // },
     onNamedGathering(val) {
       this.info.name = val;
     },
@@ -545,6 +560,9 @@ export default {
           getAutocompleteResults({ google, map, infowindow, places });
         });
         this.setStatus('2) Autocomplete setup');
+        const toolbar = document.getElementById('autocompleteToolbar');
+        map.controls[google.maps.ControlPosition.TOP_CENTER].push(toolbar);
+
         return { google, map };
       };
       setupAutocomplete({ google, map, infowindow });
@@ -615,6 +633,7 @@ export default {
 
       // last steps in bootstrap
       showMap({ map, geocoder });
+
       this.ready = true;
     },
 
@@ -687,6 +706,6 @@ body {
 
 .Map {
   width: 100vw;
-  height: 65vh;
+  height: 88vh;
 }
 </style>
