@@ -1,13 +1,16 @@
 <template>
   <v-container fluid class="fill-height">
-    <v-overlay :value="overlay">
-      <v-progress-circular indeterminate size="64"
-        >Loading map</v-progress-circular
-      >
-    </v-overlay>
-    <!-- Map container -->
-    <!-- map size set in .Map class below -->
-    <v-toolbar dense floating id="autocompleteToolbar">
+    <div class="text-center text-black">
+      <v-overlay :value="overlay" opacity=".25">
+        <v-progress-circular indeterminate width="10" size="200" color="purple">
+          <span> Starting LCT, contacting server, and loading map... </span>
+        </v-progress-circular>
+      </v-overlay>
+    </div>
+
+    <v-toolbar v-show="ready" dense floating id="autocompleteToolbar">
+      <v-app-bar-nav-icon></v-app-bar-nav-icon>
+
       <v-text-field
         hide-details
         prepend-icon="mdi-magnify"
@@ -15,13 +18,19 @@
         class="ml-3"
         dense
         id="autoCompleteInput"
-        hint="Enter place search terms here"
-        persistent-hint
+        placeholder="Type here to search"
       >
-      </v-text-field
-      ><v-spacer />
-      <v-btn icon><v-icon>mdi-crosshairs-gps</v-icon></v-btn>
+      </v-text-field>
+
+      <btn-with-tooltip
+        tip="Pan to your location"
+        :click="panToCurrentLocation"
+        icon="mdi-crosshairs-gps"
+      />
     </v-toolbar>
+
+    <!-- Map container -->
+    <!-- map size set in .Map class below -->
     <div class="Map" ref="map"></div>
 
     <info-window-card
@@ -69,7 +78,7 @@
       </template>
     </v-snackbar>
     <status-card
-      v-if="showStatus"
+      v-if="ready && showStatus"
       :status="status"
       :toggleStatus="toggleStatus"
       :copyStatus="copyStatus"
@@ -86,6 +95,7 @@ import { printJson } from '@/utils/helpers';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
 import StatusCard from './cards/statusCard.vue';
+import BtnWithTooltip from './misc/btnWithTooltip.vue';
 
 export default {
   name: `Map`,
@@ -108,6 +118,7 @@ export default {
   components: {
     InfoWindowCard,
     StatusCard,
+    BtnWithTooltip,
   },
 
   computed: {
@@ -163,6 +174,7 @@ export default {
   },
   data() {
     return {
+      map: null,
       showStatus: true,
       startFrom: '',
       prompt: '',
@@ -195,18 +207,18 @@ export default {
     Share
  */
   methods: {
-    // panToCurrentLocation() {
-    //   navigator.geolocation.getCurrentPosition(
-    //     (position) => {
-    //       const pos = {
-    //         lat: position.coords.latitude,
-    //         lng: position.coords.longitude,
-    //       };
-    //       this.map.setCenter(pos);
-    //     },
-    //     () => {}
-    //   );
-    // },
+    panToCurrentLocation() {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          this.map.setCenter(pos);
+        },
+        () => {}
+      );
+    },
     onNamedGathering(val) {
       this.info.name = val;
     },
@@ -414,6 +426,7 @@ export default {
           map.setCenter(location);
           map.fitBounds(viewport);
           map.setZoom(vm.defaultZoom);
+          this.ready = true;
         }
       };
 
@@ -443,6 +456,7 @@ export default {
                   JSON.stringify(geometry.location),
                   JSON.stringify(geometry.viewport)
                 );
+                this.ready = true;
               });
           })
           .cata({
@@ -596,8 +610,9 @@ export default {
       //     });
       // };
 
-      const showMap = () => {
+      const showMap = ({ map }) => {
         try {
+          this.map = map;
           if ('geolocation' in navigator) {
             this.setStatus(`This browser supports geolocation `);
           } else {
@@ -633,8 +648,6 @@ export default {
 
       // last steps in bootstrap
       showMap({ map, geocoder });
-
-      this.ready = true;
     },
 
     //#region Delete Marker code called by template
@@ -668,6 +681,7 @@ export default {
         // in space.js
         this.onSharePlace();
       }
+      this.overlay = false;
     },
   },
 
@@ -689,7 +703,7 @@ export default {
       .then(({ google, map }) => this.onMounted({ google, map }))
       .catch((error) => console.log(error))
       .finally(() => {
-        console.timeEnd('Mounted GoogleMaps'), (this.overlay = false);
+        console.timeEnd('Mounted GoogleMaps');
       });
   },
 };

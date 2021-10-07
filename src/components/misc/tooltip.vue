@@ -1,19 +1,15 @@
 <template>
   <v-tooltip position>
-    <template v-slot:activator="{ on, attrs }">
-      <v-icon color="primary" dark v-bind="attrs" v-on="on">
-        {{ icon }}
-      </v-icon>
-    </template>
-    <span>{{ tooltip }}</span>
+    <slot />
+    <span>{{ tip }}</span>
   </v-tooltip>
 </template>
 
 <script>
 export default {
+  name: 'tootip',
   props: {
-    tooltip: String,
-    icon: String,
+    tip: String,
     position: { type: String, default: 'bottom' },
   },
 };
