@@ -20,22 +20,36 @@
           @click="onVisitPlace({ placeId, gatheringName })"
           >Mark Calendar</v-btn
         >
-        <div class=" mt-3" @click="toggle">
-          {{ showPostions ? 'Hide' : 'Show' }} Positions
-        </div>
-        <div v-if="showPostions">
-          {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
-          {{ `PlaceID:    ${placeId}` }}<br />
-          {{ `GlobalCode: ${globalCode}` }}
-          }}
-        </div>
+        <v-row no-gutters align="start">
+          <v-col cols="11">
+            <div class=" mt-3" @click="toggle">
+              {{ showPostions ? 'Hide' : 'Show' }} Positions
+            </div>
+
+            <div v-if="showPostions">
+              {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
+              {{ `PlaceID:    ${placeId}` }}<br />
+              {{ `GlobalCode: ${globalCode}` }}
+              }}
+            </div>
+          </v-col>
+          <v-col cols="1">
+            <btn-with-tooltip
+              tip="Delete this marker from map"
+              :click="deleteMarker"
+              icon="mdi-delete"
+            ></btn-with-tooltip>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
   </div>
 </template>
 
 <script>
+import btnWithTooltip from '../misc/btnWithTooltip.vue';
 export default {
+  components: { btnWithTooltip },
   props: {
     info: {
       type: Object,
@@ -82,6 +96,9 @@ export default {
     };
   },
   methods: {
+    deleteMarker() {
+      this.$emit('deleteMarker');
+    },
     toggle() {
       this.showPostions = !this.showPostions;
     },

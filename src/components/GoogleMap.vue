@@ -9,7 +9,82 @@
     </div>
 
     <v-toolbar v-show="ready" dense floating id="autocompleteToolbar">
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
+      <div class="text-center">
+        <v-menu
+          v-model="menu"
+          :close-on-content-click="false"
+          :nudge-width="200"
+          offset-x
+        >
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn icon v-bind="attrs" v-on="on">
+              <v-icon>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </template>
+          <v-card>
+            <div v-if="underConstruction">
+              <v-card-text>Under construction</v-card-text>
+            </div>
+            <div v-else>
+              <v-list>
+                <v-list-item>
+                  <v-list-item-avatar>
+                    <img
+                      src="https://cdn.vuetifyjs.com/images/john.jpg"
+                      alt="John"
+                    />
+                  </v-list-item-avatar>
+
+                  <v-list-item-content>
+                    <v-list-item-title>John Leider</v-list-item-title>
+                    <v-list-item-subtitle
+                      >Founder of Vuetify</v-list-item-subtitle
+                    >
+                  </v-list-item-content>
+
+                  <v-list-item-action>
+                    <v-btn
+                      :class="fav ? 'red--text' : ''"
+                      icon
+                      @click="fav = !fav"
+                    >
+                      <v-icon>mdi-heart</v-icon>
+                    </v-btn>
+                  </v-list-item-action>
+                </v-list-item>
+              </v-list>
+
+              <v-divider></v-divider>
+
+              <v-list>
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-switch v-model="messages" color="purple"></v-switch>
+                  </v-list-item-action>
+                  <v-list-item-title>Enable messages</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-action>
+                    <v-switch v-model="hints" color="purple"></v-switch>
+                  </v-list-item-action>
+                  <v-list-item-title>Enable hints</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </div>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+
+              <v-btn text @click="menu = false">
+                Cancel
+              </v-btn>
+              <v-btn color="primary" text @click="menu = false">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-menu>
+      </div>
 
       <v-text-field
         hide-details
@@ -21,14 +96,12 @@
         placeholder="Type here to search"
       >
       </v-text-field>
-
       <btn-with-tooltip
         tip="Pan to your location"
         :click="panToCurrentLocation"
         icon="mdi-crosshairs-gps"
       />
     </v-toolbar>
-
     <!-- Map container -->
     <!-- map size set in .Map class below -->
     <div class="Map" ref="map"></div>
@@ -39,7 +112,9 @@
       :info="info"
       :onVisitPlace="onVisitPlace"
       @namedGathering="onNamedGathering"
+      @deleteMarker="deleteMarker"
     ></info-window-card>
+
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
       <v-card color="orange" flat>
@@ -174,7 +249,13 @@ export default {
   },
   data() {
     return {
-      map: null,
+      underConstruction: true,
+      fav: true,
+      menu: false,
+      messages: false,
+      hints: true,
+
+      map: null, // only used for panToCurrentLocation()
       showStatus: true,
       startFrom: '',
       prompt: '',
@@ -469,6 +550,7 @@ export default {
 
       const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
         this.info = markedPlace;
+        this.selectedMarker = marker; // for deleting purposes
         infowindow.open(map, marker);
         return markedPlace;
       };
@@ -670,6 +752,9 @@ export default {
   },
 
   watch: {
+    group() {
+      this.drawer = false;
+    },
     ready() {
       console.log('Map component ready');
       if (this.$route.query.place_id) {

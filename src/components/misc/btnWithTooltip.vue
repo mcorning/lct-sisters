@@ -1,7 +1,14 @@
 <template>
   <v-tooltip :left="left" :bottom="bottom">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" text :color="color" @click="click">
+      <v-btn
+        :icon="isIconic"
+        v-bind="attrs"
+        v-on="on"
+        text
+        :color="color"
+        @click="click"
+      >
         <v-icon> {{ icon }} </v-icon>
       </v-btn>
     </template>
@@ -28,6 +35,10 @@ export default {
     left: {
       type: Boolean,
       default: false,
+    },
+    isIconic: {
+      type: Boolean,
+      default: true,
     },
     tip: {
       type: String,
