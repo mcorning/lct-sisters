@@ -59,7 +59,7 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-tooltip left>
+      <!-- <v-tooltip left>
         <template v-slot:activator="{ on, attrs }">
           <v-btn
             fab
@@ -77,7 +77,7 @@
           >During acceptance testing default graph is fixed:
           {{ getGraphName() }}</span
         >
-      </v-tooltip>
+      </v-tooltip> -->
     </v-toolbar>
 
     <!-- <v-sheet :height="calendarHeight"> -->
@@ -123,17 +123,17 @@
           @newDateTime="onNewDateTime"
           @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
-          @share="emailEvent"
+          @share="banner = true"
           @deleteEvent="onDeleteEvent"
           @enlargeQR="enlargeQR = true"
           @closeDateTimeCard="onCloseDateTimeCard"
         ></event-edit-card>
 
-        <!-- this opens up when the Share button on event-edit-card gets clicked -->
-        <!-- <v-banner v-model="banner">
+        <!-- this opens up when the Description field -->
+        <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
             <v-col cols="12">
-              <v-text-field
+              <!-- <v-text-field
                 v-model="alias"
                 :rules="[rules.required, rules.email]"
                 clearable
@@ -147,7 +147,7 @@
                 clearable
                 hint="Name used at the end of your invitation "
                 label="Your name:"
-              ></v-text-field>
+              ></v-text-field> -->
               <v-text-field
                 v-model="room"
                 dense
@@ -160,17 +160,11 @@
           <v-row no-gutters>
             <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
             <v-spacer />
-            <v-btn
-              color="green"
-              v-show="alias"
-              text
-              input-value
-              @click="emailEvent"
-            >
+            <v-btn color="green" text input-value @click="emailEvent">
               Email
             </v-btn>
           </v-row>
-        </v-banner> -->
+        </v-banner>
       </v-sheet>
     </v-bottom-sheet>
 
@@ -205,6 +199,15 @@
         </v-btn>
       </template>
     </v-snackbar>
+
+    <prompt-sheet
+      v-if="getDescription"
+      message="To ensure a sharable event, add a description to make the event unique."
+      event="description"
+      label="Room ID or [outdoor] description."
+      @description="onDescription"
+    ></prompt-sheet>
+
     <status-card
       v-if="showStatus"
       :status="status"
@@ -223,6 +226,7 @@ import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import StatusCard from './cards/statusCard.vue';
 import { printJson } from '@/utils/helpers';
+import PromptSheet from './prompts/promptSheet.vue';
 
 export default {
   name: 'Calendar',
@@ -244,6 +248,7 @@ export default {
     VueQRCodeComponent,
     StatusCard,
     EventEditCard,
+    PromptSheet,
   },
   computed: {
     gatheringLabel() {
@@ -264,13 +269,12 @@ export default {
     decodedUri() {
       // the QR code generator needs to use the decoded URI
       const d = decodeURIComponent(this.mailToUri);
-      console.log(d);
       return d;
     },
 
     // TODO we shouldn't need this guard
     mailToUri() {
-      if (!this.selectedEvent) {
+      if (Object.keys(this.selectedEvent).length === 0) {
         return;
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
@@ -362,6 +366,7 @@ export default {
       },
       seePickers: false,
       showQR: false,
+      getDescription: false,
       room: '',
       dev: false,
       origin: window.location.origin,
@@ -414,6 +419,10 @@ export default {
   },
 
   methods: {
+    onDescription(val) {
+      this.getDescription = false;
+      this.room = val;
+    },
     toggleStatus() {
       this.showStatus = !this.showStatus;
     },
@@ -848,6 +857,6 @@ export default {
 }
 
 .CalendarWithStatus {
-  height: 64vh;
+  height: 81vh;
 }
 </style>

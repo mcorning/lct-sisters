@@ -1,41 +1,56 @@
 <template>
-  <v-footer app color="primary" class="white--text">
+  <v-footer app dark color="primary" class="white--text">
     <!-- status bar -->
 
     <!-- View buttons -->
 
-    <v-bottom-navigation
+    <!-- <v-bottom-navigation
       v-model="value"
       color="secondary"
       background-color="primary"
-      grow
       dark
       shift
-    >
-      <!-- <span class="center mx-0 my-0">{{ status }}</span>
-      <br /> -->
-      <v-btn value="Space" @click="open('Space')">
-        <span>Space</span>
-        <v-icon>mdi-map-marker</v-icon>
-      </v-btn>
+    > -->
+    <!-- <span class="center mx-0 my-0">{{ status }}</span>-->
+    <v-spacer />
 
-      <v-btn value="Warn" class="red black--text" @click="open('Warn')">
-        <span>Warn</span>
-        <v-icon>mdi-alert</v-icon>
-      </v-btn>
+    <v-btn plain value="Space" @click="open('Space')">
+      <span class="mr-3">Space</span>
+      <v-icon>mdi-map-marker</v-icon>
+    </v-btn>
+    <v-spacer />
 
-      <v-btn value="Time" @click="open('Time')">
-        <span>Time</span>
-        <v-icon>mdi-calendar</v-icon>
-      </v-btn>
-    </v-bottom-navigation>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          v-bind="attrs"
+          v-on="on"
+          fab
+          value="Warn"
+          class="red"
+          @click="open('Warn')"
+        >
+          <v-icon>mdi-alert</v-icon>
+        </v-btn>
+      </template>
+      <span
+        >If you test positive, warn others they may be exposed to COVID
+      </span>
+    </v-tooltip>
+    <v-spacer />
+
+    <v-btn plain value="Time" @click="open('Time')">
+      <v-icon>mdi-calendar</v-icon>
+      <span class="ml-3">Time</span>
+    </v-btn>
+    <v-spacer />
+    <!-- </v-bottom-navigation> -->
   </v-footer>
 </template>
 
 <script>
 export default {
   name: 'AppLayoutFooter',
-  components: {},
   computed: {
     status() {
       const phrase = this.$socket.connected

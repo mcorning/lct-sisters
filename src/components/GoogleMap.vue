@@ -384,6 +384,7 @@ export default {
           position,
           place_id,
         });
+        this.selectedMarker = marker;
         marker.setMap(map);
         marker.addListener(`click`, (event) => {
           event.stop();
