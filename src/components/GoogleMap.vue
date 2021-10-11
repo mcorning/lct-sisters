@@ -114,7 +114,35 @@
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
     ></info-window-card>
-
+    <v-snackbar
+      v-model="snackbarThanks"
+      centered
+      :color="confirmationColor"
+      timeout="40000"
+      multi-line
+    >
+      <v-card color="green" flat>
+        <v-card-text class="text-h6 mb-0 pb-0"
+          >Welcome Microsoft Giving Campaign Supporters</v-card-text
+        >
+        <v-card-subtitle class="pt-1"
+          >Thank you for taking the time to look at our work.</v-card-subtitle
+        >
+        <v-card-text
+          >Click on the building for your next meeting. You will see the event
+          on your COVID-aware calendar.
+        </v-card-text>
+        <v-card-text>
+          If you test positive later, come back to LCT and click the Big Red
+          Button to warn others of possible exposure to the virus.
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text @click="snackbarThanks = false">
+            Thanks a 0x4240 for your support
+          </v-btn></v-card-actions
+        >
+      </v-card>
+    </v-snackbar>
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
       <v-card color="orange" flat>
@@ -249,6 +277,9 @@ export default {
   },
   data() {
     return {
+      confirmationMessage: 'Welcome to a safer Microsoft Campus',
+      confirmationColor: 'green',
+      snackbarThanks: false,
       underConstruction: true,
       fav: true,
       menu: false,
@@ -701,12 +732,14 @@ export default {
           } else {
             this.setStatus(`This browser does NOT support geolocation `);
           }
+
           const defaultPoi = this.getPoi();
           this.setStatus(`Default POI `);
           this.setStatus(`${printJson(defaultPoi)})`);
 
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
+              // success event handler
               showPosition
               // geolocationErrorHandler(defaultPoi)
             );
@@ -724,6 +757,8 @@ export default {
           //   );
           // }
         } catch (error) {
+          this.overlay = false;
+          console.log(error.message);
           this.setStatus(error.message);
           this.setStatus(error.stack);
         }
@@ -767,7 +802,9 @@ export default {
         // in space.js
         this.onSharePlace();
       }
-      this.overlay = false;
+      if (this.$route.query.sponsor) {
+        this.snackbarThanks = true;
+      } else this.overlay = false;
     },
   },
 
@@ -790,6 +827,7 @@ export default {
       .catch((error) => console.log(error))
       .finally(() => {
         console.timeEnd('Mounted GoogleMaps');
+        this.overlay = false;
       });
   },
 };
