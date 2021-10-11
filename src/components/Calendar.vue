@@ -117,6 +117,7 @@
     <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
         <event-edit-card
+          v-if="!banner"
           :selectedEventParsed="selectedEventParsed"
           :mailToUri="mailToUri"
           :isConnected="isConnected"
@@ -133,21 +134,6 @@
         <v-banner v-model="banner">
           <v-row class="mt-0" no-gutters>
             <v-col cols="12">
-              <!-- <v-text-field
-                v-model="alias"
-                :rules="[rules.required, rules.email]"
-                clearable
-                label="To enable Email button, enter an email address"
-                hint="Email a person directly or send to yourself and forward"
-              ></v-text-field>
-
-              <v-text-field
-                v-model="toName"
-                dense
-                clearable
-                hint="Name used at the end of your invitation "
-                label="Your name:"
-              ></v-text-field> -->
               <v-text-field
                 v-model="room"
                 dense
