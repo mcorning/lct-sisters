@@ -26,51 +26,43 @@
               <v-card-text>Under construction</v-card-text>
             </div>
             <div v-else>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-avatar>
-                    <img
-                      src="https://cdn.vuetifyjs.com/images/john.jpg"
-                      alt="John"
-                    />
-                  </v-list-item-avatar>
+              <v-row
+                ><v-col class="text-center"
+                  ><img src="https://picsum.photos/200/200" alt="nice"
+                /></v-col>
+                <v-col cols="auto">
+                  <v-list>
+                    <v-list-item>
+                      <v-list-item-action>
+                        <v-select
+                          v-model="workplace"
+                          :items="places"
+                          :menu-props="{ top: true, offsetY: true }"
+                          label="Workplace"
+                        ></v-select>
+                      </v-list-item-action>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-action>
+                        <v-text-field
+                          v-model="shift"
+                          label="Shift hours:"
+                          hide-details
+                        ></v-text-field>
+                      </v-list-item-action>
+                    </v-list-item>
 
-                  <v-list-item-content>
-                    <v-list-item-title>John Leider</v-list-item-title>
-                    <v-list-item-subtitle
-                      >Founder of Vuetify</v-list-item-subtitle
-                    >
-                  </v-list-item-content>
-
-                  <v-list-item-action>
-                    <v-btn
-                      :class="fav ? 'red--text' : ''"
-                      icon
-                      @click="fav = !fav"
-                    >
-                      <v-icon>mdi-heart</v-icon>
-                    </v-btn>
-                  </v-list-item-action>
-                </v-list-item>
-              </v-list>
+                    <v-list-item>
+                      <v-list-item-action>
+                        <v-switch v-model="hints" color="purple"></v-switch>
+                      </v-list-item-action>
+                      <v-list-item-title>Enable hints</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-col></v-row
+              >
 
               <v-divider></v-divider>
-
-              <v-list>
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-switch v-model="messages" color="purple"></v-switch>
-                  </v-list-item-action>
-                  <v-list-item-title>Enable messages</v-list-item-title>
-                </v-list-item>
-
-                <v-list-item>
-                  <v-list-item-action>
-                    <v-switch v-model="hints" color="purple"></v-switch>
-                  </v-list-item-action>
-                  <v-list-item-title>Enable hints</v-list-item-title>
-                </v-list-item>
-              </v-list>
             </div>
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -78,7 +70,7 @@
               <v-btn text @click="menu = false">
                 Cancel
               </v-btn>
-              <v-btn color="primary" text @click="menu = false">
+              <v-btn color="primary" text @click="saveSpecial">
                 Save
               </v-btn>
             </v-card-actions>
@@ -207,6 +199,7 @@ export default {
       type: Object,
       required: true,
     },
+    setSpecial: Function,
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,
@@ -225,6 +218,9 @@ export default {
   },
 
   computed: {
+    places() {
+      return this.state.places.map((v) => v.name);
+    },
     svgMarker() {
       return {
         path:
@@ -277,10 +273,12 @@ export default {
   },
   data() {
     return {
+      workplace: this.state.settings.workplace,
+      shift: this.state.settings.shift,
       confirmationMessage: 'Welcome to a safer Microsoft Campus',
       confirmationColor: 'green',
       snackbarThanks: false,
-      underConstruction: true,
+      underConstruction: false,
       fav: true,
       menu: false,
       messages: false,
@@ -319,6 +317,10 @@ export default {
     Share
  */
   methods: {
+    saveSpecial() {
+      this.setSpecial({ workplace: this.workplace, shift: this.shift });
+      this.menu = false;
+    },
     panToCurrentLocation() {
       navigator.geolocation.getCurrentPosition(
         (position) => {

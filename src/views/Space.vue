@@ -14,9 +14,11 @@
         setPoi,
         getPoi,
         usernumber,
+        setSpecial,
       }"
     >
       <Spaces
+        :setSpecial="setSpecial"
         :isConnected="isConnected"
         :state="state"
         :onToWork="onToWork"

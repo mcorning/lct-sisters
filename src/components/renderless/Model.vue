@@ -344,6 +344,9 @@ export default {
     setVaccinationStatus(n) {
       this.updateSetting({ id: 1, vaccinationStatus: n });
     },
+    setSpecial(vals) {
+      this.updateSetting({ id: 1, ...vals });
+    },
   },
 
   watch: {
@@ -407,6 +410,7 @@ export default {
       connectMe: this.connectMe,
       isConnected: this.isConnected,
       needsUsername: this.needsUsername,
+      setSpecial: this.setSpecial,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

@@ -15,7 +15,8 @@ export default class Setting extends Model {
       usernumber: this.number(),
       userID: this.string(''),
       people: this.string(''),
-      business: this.string(''),
+      workplace: this.string(''),
+      shift: this.number(),
       openAt: this.string('00:00'),
       closeAt: this.string('11:59'),
 
@@ -36,17 +37,16 @@ export default class Setting extends Model {
     };
   }
 
-
   static update(settings) {
     console.log(settings);
     return this.$create({ data: settings });
   }
-  
+
   static incrementWarnings() {
     return this.$update({
       where: 1,
       data(setting) {
-        setting.warningsReceived = (setting.warningsReceived ||0) + 1;
+        setting.warningsReceived = (setting.warningsReceived || 0) + 1;
       },
     });
   }

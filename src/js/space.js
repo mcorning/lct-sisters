@@ -37,7 +37,7 @@ export const spaceMixin = {
             .toMillis()
         : Number(route.end);
       // replace the "escaped" underscores with spaces
-      const name = this.$route.query.name.replace(/_/g, ' ');
+      const name = route.name.replace(/_/g, ' ');
       const shared = true;
       this.callVisitUpdate({ place_id, start, end, name, shared });
     },
