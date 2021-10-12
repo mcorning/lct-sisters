@@ -329,6 +329,7 @@ export default {
             lng: position.coords.longitude,
           };
           this.map.setCenter(pos);
+          this.map.setZoom(24);
         },
         () => {}
       );
@@ -539,47 +540,12 @@ export default {
 
         if (location) {
           map.setCenter(location);
-          map.fitBounds(viewport);
+          if (viewport) {
+            map.fitBounds(viewport);
+          }
           map.setZoom(vm.defaultZoom);
           this.ready = true;
         }
-      };
-
-      const showPosition = (position) => {
-        const vm = this;
-
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        geocoder
-          .geocode({ location: { lat, lng } })
-          .toEither()
-          .map(({ results }) => {
-            geocoder
-              .geocode({
-                address:
-                  results[0].address_components[2].short_name +
-                  ',' +
-                  results[0].address_components[4].short_name,
-              })
-              .then((city) => {
-                const geometry = city.results[0].geometry;
-                map.setCenter(geometry.location);
-                map.fitBounds(geometry.viewport);
-                map.setZoom(vm.defaultZoom - 3);
-                vm.setPoi(
-                  results[0].address_components[2].short_name,
-                  JSON.stringify(geometry.location),
-                  JSON.stringify(geometry.viewport)
-                );
-                this.ready = true;
-              });
-          })
-          .cata({
-            ok: (map) => map,
-            error: (results) => {
-              console.log(results, 'Issues in setupGeocoder()');
-            },
-          });
       };
 
       const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
@@ -697,35 +663,98 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
-      // const geolocationErrorHandler = (defaultPoi) => {
-      //   if (defaultPoi.namespace) {
-      //     showCity(defaultPoi);
-      //     return;
-      //   }
-      //   this.title = 'Welcome to LCT';
-      //   this.message = 'We are unable to find your location.';
-      //   this.prompt = 'Enter your default city:';
-      //   // this.snackbarPrompt = true;
-      //   const city = prompt('Enter your city');
-      //   const vm = this;
-      //   geocoder
-      //     .geocode({
-      //       address: city,
-      //     })
-      //     .then((city) => {
-      //       const geometry = city.results[0].geometry;
-      //       map.setCenter(geometry.location);
-      //       map.fitBounds(geometry.viewport);
-      //       map.setZoom(vm.defaultZoom - 3);
-      //       vm.setPoi(
-      //         city,
-      //         '',
-      //         JSON.stringify(geometry.location),
-      //         JSON.stringify(geometry.viewport)
-      //       );
-      //     });
-      // };
+      const geolocationErrorHandler = (defaultPoi) => {
+        if (defaultPoi.namespace) {
+          showCity(defaultPoi);
+          return;
+        }
+        this.title = 'Welcome to LCT';
+        this.message = 'We are unable to find your location.';
+        this.prompt = 'Enter your default city:';
+        // this.snackbarPrompt = true;
+        const city = prompt('Enter your city');
+        const vm = this;
+        geocoder
+          .geocode({
+            address: city,
+          })
+          .then((city) => {
+            const geometry = city.results[0].geometry;
+            map.setCenter(geometry.location);
+            map.fitBounds(geometry.viewport);
+            map.setZoom(vm.defaultZoom - 3);
+            vm.setPoi(
+              city,
+              '',
+              JSON.stringify(geometry.location),
+              JSON.stringify(geometry.viewport)
+            );
+          });
+      };
+      var options = {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0,
+      };
 
+      const success = (pos) => {
+        var crd = pos.coords;
+
+        console.log('Your current position is:');
+        console.log(`Latitude : ${crd.latitude}`);
+        console.log(`Longitude: ${crd.longitude}`);
+        console.log(`More or less ${crd.accuracy} meters.`);
+        showPosition(pos);
+      };
+
+      const error = (err) => {
+        console.warn(`ERROR(${err.code}): ${err.message}`);
+      };
+
+      const getAddressFrom = (results) => {
+        const address =
+          results.address_components.length > 3
+            ? results.address_components[2].short_name +
+              ',' +
+              results.address_components[4].short_name
+            : results.address_components[0].short_name;
+        console.log(address);
+        return { address };
+      };
+
+      const showPosition = (position) => {
+        const vm = this;
+
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        geocoder
+          .geocode({ location: { lat, lng } })
+          .toEither()
+          .map(({ results }) => {
+            console.log(results);
+            geocoder
+              .geocode(getAddressFrom(results[0]))
+              .then((city) => {
+                const geometry = city.results[0].geometry;
+                map.setCenter(geometry.location);
+                map.fitBounds(geometry.viewport);
+                map.setZoom(vm.defaultZoom - 3);
+                vm.setPoi(
+                  results[0].address_components[2].short_name,
+                  JSON.stringify(geometry.location),
+                  JSON.stringify(geometry.viewport)
+                );
+                this.ready = true;
+              })
+              .catch('oops.', (e) => console.log(e));
+          })
+          .cata({
+            ok: (map) => map,
+            error: (results) => {
+              console.log(results, 'Issues in setupGeocoder()');
+            },
+          });
+      };
       const showMap = ({ map }) => {
         try {
           this.map = map;
@@ -742,12 +771,15 @@ export default {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               // success event handler
-              showPosition
-              // geolocationErrorHandler(defaultPoi)
+              showPosition,
+              geolocationErrorHandler(defaultPoi)
             );
           } else if (defaultPoi.namespace) {
             showCity(defaultPoi);
           }
+
+          // navigator.geolocation.getCurrentPosition(success, error, options);
+
           this.setStatus('3) Ran showMap()');
 
           // if (defaultPoi.namespace) {
@@ -778,9 +810,11 @@ export default {
       this.snackbar = true;
     },
     deleteMarker() {
-      this.selectedMarker.setMap(null);
-      this.onDeletePlace(this.selectedMarker.place_id);
-      this.cancelDelete();
+      if (this.selectedMarker) {
+        this.selectedMarker.setMap(null);
+        this.onDeletePlace(this.selectedMarker.place_id);
+        this.cancelDelete();
+      }
     },
     cancelDelete() {
       this.selectedMarker = null;
@@ -822,6 +856,10 @@ export default {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: ['roadmap', 'terrain'],
           },
+          // fullscreenControl: true,
+          // fullscreenControlOptions: {
+          //   position: google.maps.ControlPosition.LEFT_BOTTOM,
+          // },
         });
         return { google, map };
       })
