@@ -441,6 +441,7 @@ export default {
 
       // Test assets
       getVisitors: this.getVisitors,
+      getExposures: this.getExposures,
     });
   },
 };

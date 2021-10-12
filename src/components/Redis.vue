@@ -1,10 +1,11 @@
 <template>
   <div>
-    <test-card :visitors=visitors :exposures=exposures></test-card>
+    <test-card :visitors="visitors" :exposures="exposures" @selectedChanged=onSelectedChanged></test-card>
   </div>
 </template>
 
 <script>
+// Test.vue calls this card
 import testCard from './cards/testCard.vue';
 export default {
   components: { testCard },
@@ -13,12 +14,22 @@ export default {
       type: Function,
       require: true,
     },
+    getExposures: {
+      type: Function,
+      require: true,
+    },
     visitors: Object,
-    Exposures: Object,
+    exposures: Object,
   },
-  mounted(){
-    this.getVisitors()
-  }
+  methods: {
+    onSelectedChanged(userID) {
+    this.getExposures(userID);
+      
+    }
+  },
+  mounted() {
+    this.getVisitors();
+  },
 };
 </script>
 

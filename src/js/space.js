@@ -28,9 +28,14 @@ export const spaceMixin = {
     },
 
     onSharePlace(decoded) {
-      const place_id = decoded || this.$route.query.place_id;
-      const start = Number(this.$route.query.start);
-      const end = Number(this.$route.query.end);
+      const route = this.$route.query;
+      const place_id = decoded || route.place_id;
+      const start = Number(route.start);
+      const end = route.shift
+        ? DateTime.fromMillis(start)
+            .plus({ hours: Number(route.shift) })
+            .toMillis()
+        : Number(route.end);
       // replace the "escaped" underscores with spaces
       const name = this.$route.query.name.replace(/_/g, ' ');
       const shared = true;

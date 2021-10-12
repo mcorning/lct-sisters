@@ -91,7 +91,7 @@ function matchQuery(ack) {
         let record = res.next();
         let userID = record.get('v.userID');
         console.log(printJson(userID));
-        s.add({userID});
+        s.add({ userID });
       }
       if (ack) {
         ack({ msg: 'UserIDs of everybody on the graph', results: [...s] });
@@ -103,7 +103,7 @@ function matchQuery(ack) {
     });
 }
 
-async function matchNamedPathsQuery(param, ack) {
+async function matchNamedPathsQuery({ param, ack }) {
   console.log(param);
 
   // Named paths matching.
@@ -127,6 +127,7 @@ async function matchNamedPathsQuery(param, ack) {
     s.add(payload);
   }
   if (ack) {
+    // test.js handles callback
     ack({
       msg: 'ID(s) of all exposed visitors:',
       results: [...s],

@@ -14,13 +14,34 @@ export const testMixin = {
           const { msg, results } = res;
           if (Array.isArray(results)) {
             console.log(success(`${msg}:`));
-            results.forEach(element => {
+            results.forEach((element) => {
               console.log(printJson(element));
             });
           } else {
             console.log(success(`${msg}:`, results));
           }
           this.$emit('visitors', res);
+        }
+      );
+    },
+
+    getExposures(userID) {
+      // send message to server
+      this.emitFromClient(
+        'getExposures',
+        userID,
+        // and handle the callback
+        (res) => {
+          const { msg, results } = res;
+          if (Array.isArray(results)) {
+            console.log(success(`${msg}:`));
+            results.forEach((element) => {
+              console.log(printJson(element));
+            });
+          } else {
+            console.log(success(`${msg}:`, results));
+          }
+          this.$emit('exposures', res);
         }
       );
     },

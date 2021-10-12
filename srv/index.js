@@ -372,6 +372,9 @@ io.on('connection', (socket) => {
   socket.on('getVisitors', (query, ack) => {
     getVisitors(ack);
   });
+  socket.on('getExposures', (param, ack) => {
+    getExposures({ param, ack });
+  });
 
   socket.on('testGraphX', (query, ack) => {
     // call the graph

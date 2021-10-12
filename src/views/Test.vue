@@ -1,10 +1,11 @@
 <template>
   <Model @error="onError" @visitors="onVisitors" @exposures="onExposures">
-    <div slot-scope="{ getVisitors }">
+    <div slot-scope="{ getVisitors, getExposures }">
       <redis
         :visitors="visitors"
         :exposures="exposures"
         :getVisitors="getVisitors"
+        :getExposures="getExposures"
       />
     </div>
   </Model>
