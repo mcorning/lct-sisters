@@ -204,17 +204,6 @@ export default {
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
-    changeGraphName(name) {
-      const newName = name
-        ? name
-        : this.graphName === '' || this.graphName === 'Sandbox'
-        ? this.$namespace
-        : 'Sandbox';
-      this.graphName = newName;
-      this.$defaultGraphName = this.graphName;
-      this.updateSetting({ id: 1, preferredGraph: this.graphName });
-      return newName;
-    },
 
     setPoi(namespace, global_code, location, viewport) {
       this.updateSetting({ id: 1, namespace, global_code, location, viewport });
@@ -428,7 +417,6 @@ export default {
       changeEvent: this.changeEvent,
       onUpdate: this.onUpdate,
       getGraphName: this.getGraphName,
-      changeGraphName: this.changeGraphName,
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,

@@ -7,7 +7,6 @@
         isDefaultGraph,
         state,
         onUpdate,
-        changeGraphName,
         setDefaultGraphName,
         getGraphName,
         usernumber,
@@ -20,7 +19,6 @@
         :isDefaultGraph="isDefaultGraph"
         :state="state"
         :onUpdate="onUpdate"
-        :changeGraphName="changeGraphName"
         :setDefaultGraphName="setDefaultGraphName"
         :getGraphName="getGraphName"
         :confirmations="confirmations"

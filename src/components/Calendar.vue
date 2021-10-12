@@ -59,28 +59,8 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <!-- <v-tooltip left>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn
-            fab
-            text
-            small
-            color="grey darken-2"
-            v-bind="attrs"
-            v-on="on"
-            @click="changeGraph"
-          >
-            <v-icon> mdi-graphql </v-icon>
-          </v-btn>
-        </template>
-        <span
-          >During acceptance testing default graph is fixed:
-          {{ getGraphName() }}</span
-        >
-      </v-tooltip> -->
     </v-toolbar>
 
-    <!-- <v-sheet :height="calendarHeight"> -->
     <v-sheet class="Calendar" :class="{ CalendarWithStatus: showStatus }">
       <v-calendar
         id="calendar-target"
@@ -186,14 +166,6 @@
       </template>
     </v-snackbar>
 
-    <prompt-sheet
-      v-if="getDescription"
-      message="To ensure a sharable event, add a description to make the event unique."
-      event="description"
-      label="Room ID or [outdoor] description."
-      @description="onDescription"
-    ></prompt-sheet>
-
     <status-card
       v-if="showStatus"
       :status="status"
@@ -212,7 +184,6 @@ import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import StatusCard from './cards/statusCard.vue';
 import { printJson } from '@/utils/helpers';
-import PromptSheet from './prompts/promptSheet.vue';
 
 export default {
   name: 'Calendar',
@@ -222,7 +193,6 @@ export default {
     isDefaultGraph: Boolean,
     state: Object,
     onUpdate: Function,
-    changeGraphName: Function,
     setDefaultGraphName: Function,
     getGraphName: Function,
     confirmations: Object,
@@ -234,7 +204,6 @@ export default {
     VueQRCodeComponent,
     StatusCard,
     EventEditCard,
-    PromptSheet,
   },
   computed: {
     gatheringLabel() {
@@ -352,7 +321,6 @@ export default {
       },
       seePickers: false,
       showQR: false,
-      getDescription: false,
       room: '',
       dev: false,
       origin: window.location.origin,
@@ -405,10 +373,6 @@ export default {
   },
 
   methods: {
-    onDescription(val) {
-      this.getDescription = false;
-      this.room = val;
-    },
     toggleStatus() {
       this.showStatus = !this.showStatus;
     },
@@ -418,8 +382,8 @@ export default {
     },
     copyStatus() {
       this.setStatus(
-        `Copied Status to clipboard, ${this.$clipboard(this.status)}`
-      ); // this.$clipboard copy any String/Array/Object you want
+        `Copied Status to clipboard, ${this.$clipboard(this.status)}` // this.$clipboard copy any String/Array/Object you want
+      );
     },
 
     cutStatus() {
@@ -520,13 +484,11 @@ export default {
       this.setStatus(`${mailToString}`);
       window.location = mailToString;
       this.seePickers = false;
+      this.selectedEvent.name += `: ${this.room}`;
+      this.update('cache');
     },
 
-    changeGraph() {
-      // TODO reset changeGraph() before we ship
-      //NOOP during acceptance testing
-      //this.changeGraphName();
-    },
+
 
     delete(target) {
       const deleteVisit = true;
@@ -613,6 +575,7 @@ export default {
         this.selectedEvent = event;
         this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
         this.seePickers = true;
+        this.banner = false;
         this.selectedElement = nativeEvent.target;
         setTimeout(() => (this.selectedOpen = true), 10);
       };
@@ -724,11 +687,7 @@ export default {
       let x = userSince(new Date(this.usernumber));
       this.setStatus(`Active for: ${Math.round(x, 0)} days`);
     },
-    selectedGraph() {
-      this.changeGraphName(this.selectedGraph);
-      this.confirmationMessage = `Graph is now ${this.selectedGraph}`;
-      this.snackbar = true;
-    },
+
 
     confirmations(msg) {
       const {

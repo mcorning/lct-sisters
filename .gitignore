@@ -42,3 +42,6 @@ srv/redis/redisGraph.options.js
 srv/redis/options.js
 src/Giving Notes.txt
 redisLab/app.js
+qrCodes/Fika.bc
+.gitignore
+qrCodes/SistersDental.bc
