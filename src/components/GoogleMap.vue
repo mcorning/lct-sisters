@@ -299,6 +299,11 @@ export default {
       selectedMarker: null,
       ready: false,
       defaultZoom: 16,
+      positionOptions: {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      },
     };
   },
 
@@ -329,9 +334,12 @@ export default {
             lng: position.coords.longitude,
           };
           this.map.setCenter(pos);
-          this.map.setZoom(24);
+          this.map.setZoom(18);
         },
-        () => {}
+        (error) => {
+          console.log(error);
+        },
+        this.positionOptions
       );
     },
     onNamedGathering(val) {
@@ -530,9 +538,9 @@ export default {
         });
       });
 
-      const showCity = (city) => {
+      const showCity = (poi) => {
         const vm = this;
-        const { global_code, location, viewport } = city;
+        const { global_code, location, viewport } = poi;
 
         this.setStatus(`showCity(): global_code: ${global_code}
         ${printJson(location)}
@@ -663,54 +671,6 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
-      const geolocationErrorHandler = (defaultPoi) => {
-        if (defaultPoi.namespace) {
-          showCity(defaultPoi);
-          return;
-        }
-        this.title = 'Welcome to LCT';
-        this.message = 'We are unable to find your location.';
-        this.prompt = 'Enter your default city:';
-        // this.snackbarPrompt = true;
-        const city = prompt('Enter your city');
-        const vm = this;
-        geocoder
-          .geocode({
-            address: city,
-          })
-          .then((city) => {
-            const geometry = city.results[0].geometry;
-            map.setCenter(geometry.location);
-            map.fitBounds(geometry.viewport);
-            map.setZoom(vm.defaultZoom - 3);
-            vm.setPoi(
-              city,
-              '',
-              JSON.stringify(geometry.location),
-              JSON.stringify(geometry.viewport)
-            );
-          });
-      };
-      var options = {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
-      };
-
-      const success = (pos) => {
-        var crd = pos.coords;
-
-        console.log('Your current position is:');
-        console.log(`Latitude : ${crd.latitude}`);
-        console.log(`Longitude: ${crd.longitude}`);
-        console.log(`More or less ${crd.accuracy} meters.`);
-        showPosition(pos);
-      };
-
-      const error = (err) => {
-        console.warn(`ERROR(${err.code}): ${err.message}`);
-      };
-
       const getAddressFrom = (results) => {
         const address =
           results.address_components.length > 3
@@ -718,32 +678,37 @@ export default {
               ',' +
               results.address_components[4].short_name
             : results.address_components[0].short_name;
-        console.log(address);
+        console.log('\tgetAddressFrom():');
+        console.log(printJson(address));
         return { address };
       };
 
       const showPosition = (position) => {
         const vm = this;
-
+        console.log('\tshowPosition():');
+        console.log(printJson(position.coords));
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         geocoder
           .geocode({ location: { lat, lng } })
           .toEither()
           .map(({ results }) => {
-            console.log(results);
+            console.log('\tgeocode results:');
+            console.log(printJson(results));
+
             geocoder
               .geocode(getAddressFrom(results[0]))
-              .then((city) => {
-                const geometry = city.results[0].geometry;
+              .then((poi) => {
+                const city = poi.results[0];
+                const geometry = city.geometry;
                 map.setCenter(geometry.location);
-                map.fitBounds(geometry.viewport);
+                map.fitBounds(geometry.bounds);
                 map.setZoom(vm.defaultZoom - 3);
-                vm.setPoi(
-                  results[0].address_components[2].short_name,
-                  JSON.stringify(geometry.location),
-                  JSON.stringify(geometry.viewport)
-                );
+                vm.setPoi({
+                  namespace: city.address_components[2].short_name,
+                  location: JSON.stringify(geometry.location),
+                  viewport: JSON.stringify(geometry.viewport),
+                });
                 this.ready = true;
               })
               .catch('oops.', (e) => console.log(e));
@@ -755,6 +720,7 @@ export default {
             },
           });
       };
+
       const showMap = ({ map }) => {
         try {
           this.map = map;
@@ -772,24 +738,17 @@ export default {
             navigator.geolocation.getCurrentPosition(
               // success event handler
               showPosition,
-              geolocationErrorHandler(defaultPoi)
+              // error event handler
+              (error) => {
+                alert(`Trouble getting your position: ${error.message}`);
+              },
+              this.positionOptions
             );
           } else if (defaultPoi.namespace) {
             showCity(defaultPoi);
           }
 
-          // navigator.geolocation.getCurrentPosition(success, error, options);
-
           this.setStatus('3) Ran showMap()');
-
-          // if (defaultPoi.namespace) {
-          //   showCity(defaultPoi);
-          // } else if (navigator.geolocation) {
-          //   navigator.geolocation.getCurrentPosition(
-          //     showPosition,
-          //     geolocationErrorHandler
-          //   );
-          // }
         } catch (error) {
           this.overlay = false;
           console.log(error.message);
@@ -856,10 +815,10 @@ export default {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: ['roadmap', 'terrain'],
           },
-          // fullscreenControl: true,
-          // fullscreenControlOptions: {
-          //   position: google.maps.ControlPosition.LEFT_BOTTOM,
-          // },
+          fullscreenControl: true,
+          fullscreenControlOptions: {
+            position: google.maps.ControlPosition.LEFT_BOTTOM,
+          },
         });
         return { google, map };
       })

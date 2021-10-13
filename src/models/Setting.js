@@ -34,6 +34,7 @@ export default class Setting extends Model {
       namespace: this.string(),
       location: this.string(),
       viewport: this.string(),
+      global_code: this.string(),
     };
   }
 
