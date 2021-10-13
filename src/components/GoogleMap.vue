@@ -54,6 +54,17 @@
 
                     <v-list-item>
                       <v-list-item-action>
+                        <v-btn
+                          color="primary"
+                          @click="clearLocationSettings"
+                          text
+                          >Clear location settings</v-btn
+                        >
+                      </v-list-item-action>
+                    </v-list-item>
+
+                    <v-list-item>
+                      <v-list-item-action>
                         <v-switch v-model="hints" color="purple"></v-switch>
                       </v-list-item-action>
                       <v-list-item-title>Enable hints</v-list-item-title>
@@ -200,6 +211,7 @@ export default {
       required: true,
     },
     setSpecial: Function,
+    clearLocationSettings: Function,
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,
@@ -325,6 +337,9 @@ export default {
     saveSpecial() {
       this.setSpecial({ workplace: this.workplace, shift: this.shift });
       this.menu = false;
+    },
+    clearLocationSettings() {
+      this.clearLocationSettings();
     },
     panToCurrentLocation() {
       navigator.geolocation.getCurrentPosition(

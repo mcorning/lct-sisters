@@ -204,7 +204,14 @@ export default {
     getGraphName() {
       return this.graphName || this.$defaultGraphName;
     },
-
+    clearLocationSettings() {
+      this.setPoi({
+        namespace: '',
+        location: '',
+        viewport: '',
+        global_code: '',
+      });
+    },
     setPoi({ namespace, global_code, location, viewport }) {
       this.updateSetting({ id: 1, namespace, global_code, location, viewport });
       this.updateState({
@@ -394,6 +401,7 @@ export default {
       onDeletePlace: this.onDeletePlace,
       setPoi: this.setPoi,
       getPoi: this.getPoi,
+      clearLocationSettings: this.clearLocationSettings,
 
       // Time assets
       changeEvent: this.changeEvent,

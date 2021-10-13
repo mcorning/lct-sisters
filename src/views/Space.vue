@@ -15,10 +15,12 @@
         getPoi,
         usernumber,
         setSpecial,
+        clearLocationSettings,
       }"
     >
       <Spaces
         :setSpecial="setSpecial"
+        :clearLocationSettings="clearLocationSettings"
         :isConnected="isConnected"
         :state="state"
         :onToWork="onToWork"
