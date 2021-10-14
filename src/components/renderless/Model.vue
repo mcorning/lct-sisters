@@ -212,10 +212,29 @@ export default {
         global_code: '',
       });
     },
-    setPoi({ namespace, global_code, location, viewport }) {
-      this.updateSetting({ id: 1, namespace, global_code, location, viewport });
+    setDefaultMapCenter(center) {
+      const centerString = JSON.stringify(center);
+      this.updateSetting({ id: 1, default_map_center: centerString });
       this.updateState({
-        settings: { namespace, global_code, location, viewport },
+        settings: { default_map_center: centerString },
+      });
+    },
+
+    setPoi({ namespace, global_code, location, viewport }) {
+      this.updateSetting({
+        id: 1,
+        namespace,
+        global_code,
+        location,
+        viewport,
+      });
+      this.updateState({
+        settings: {
+          namespace,
+          global_code,
+          location,
+          viewport,
+        },
       });
     },
     getPoi() {
@@ -402,6 +421,7 @@ export default {
       setPoi: this.setPoi,
       getPoi: this.getPoi,
       clearLocationSettings: this.clearLocationSettings,
+      setDefaultMapCenter: this.setDefaultMapCenter,
 
       // Time assets
       changeEvent: this.changeEvent,

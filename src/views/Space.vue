@@ -16,6 +16,7 @@
         usernumber,
         setSpecial,
         clearLocationSettings,
+        setDefaultMapCenter,
       }"
     >
       <Spaces
@@ -32,6 +33,7 @@
         :onDeletePlace="onDeletePlace"
         :setPoi="setPoi"
         :getPoi="getPoi"
+        :setDefaultMapCenter="setDefaultMapCenter"
         :usernumber="usernumber"
       />
     </div>

@@ -3,7 +3,7 @@
     <div class="text-center text-black">
       <v-overlay :value="overlay" opacity=".25">
         <v-progress-circular indeterminate width="10" size="200" color="purple">
-          <span> Starting LCT, contacting server, and loading map... </span>
+          <span> Contacting server and loading map... </span>
         </v-progress-circular>
       </v-overlay>
     </div>
@@ -22,68 +22,84 @@
             </v-btn>
           </template>
           <v-card>
-            <div v-if="underConstruction">
-              <v-card-text>Under construction</v-card-text>
-            </div>
-            <div v-else>
-              <v-row
-                ><v-col class="text-center"
-                  ><img src="https://picsum.photos/200/200" alt="nice"
-                /></v-col>
-                <v-col cols="auto">
-                  <v-list>
-                    <v-list-item>
-                      <v-list-item-action>
+            <v-row dense no-gutters
+              ><v-col class="text-center"
+                ><img src="https://picsum.photos/200/200" alt="nice"
+              /></v-col>
+              <v-col cols="auto">
+                <v-list>
+                  <v-list-item>
+                    <v-row dense
+                      ><v-col cols="8">
+                        <!-- <v-list-item>
+                          <v-list-item-action> -->
                         <v-select
                           v-model="workplace"
                           :items="places"
                           :menu-props="{ top: true, offsetY: true }"
                           label="Workplace"
                         ></v-select>
-                      </v-list-item-action>
-                    </v-list-item>
-                    <v-list-item>
-                      <v-list-item-action>
+                        <!-- </v-list-item-action>
+                        </v-list-item>--> </v-col
+                      ><v-col cols="4">
+                        <!-- <v-list-item>
+                          <v-list-item-action> -->
                         <v-text-field
                           v-model="shift"
-                          label="Shift hours:"
+                          label="Shift:"
+                          placeholder="(in hours)"
                           hide-details
                         ></v-text-field>
-                      </v-list-item-action>
-                    </v-list-item>
-
-                    <v-list-item>
-                      <v-list-item-action>
-                        <v-btn
-                          color="primary"
-                          @click="clearLocationSettings"
-                          text
-                          >Clear location settings</v-btn
-                        >
-                      </v-list-item-action>
-                    </v-list-item>
-
-                    <v-list-item>
-                      <v-list-item-action>
-                        <v-switch v-model="hints" color="purple"></v-switch>
-                      </v-list-item-action>
-                      <v-list-item-title>Enable hints</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-col></v-row
-              >
-
-              <v-divider></v-divider>
-            </div>
+                        <!-- </v-list-item-action>
+                        </v-list-item>  -->
+                      </v-col></v-row
+                    ></v-list-item
+                  >
+                  <v-list-item
+                    ><span class="text-caption mx-auto"
+                      >Default map center: {{ showMapCenter() }}</span
+                    ></v-list-item
+                  >
+                </v-list>
+              </v-col></v-row
+            >
+            <v-divider></v-divider>
             <v-card-actions>
+              <v-tooltip top>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    v-bind="attrs"
+                    v-on="on"
+                    color="primary"
+                    @click="clearMyLocationSettings"
+                    icon
+                    ><v-icon>location_off</v-icon>
+                  </v-btn>
+                </template>
+                <span>Clear location settings</span>
+              </v-tooltip>
+              <v-tooltip top>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    v-bind="attrs"
+                    v-on="on"
+                    color="primary"
+                    @click="setDefaultMapCenter(getMapCenter())"
+                    icon
+                    ><v-icon>pin_drop</v-icon>
+                  </v-btn>
+                </template>
+                <span>Set map center default</span>
+              </v-tooltip>
+
               <v-spacer></v-spacer>
 
-              <v-btn text @click="menu = false">
-                Cancel
+              <v-btn color="primary" icon @click="menu = false">
+                <v-icon>close</v-icon>
               </v-btn>
-              <v-btn color="primary" text @click="saveSpecial">
-                Save
-              </v-btn>
+              <!-- <v-btn color="primary" @click="saveSpecial" icon>
+                <v-icon>check</v-icon>
+              </v-btn> -->
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -183,6 +199,14 @@
         </v-btn>
       </template>
     </v-snackbar>
+
+    <confirmation-snackbar
+      v-if="confSnackbar"
+      :confirmationTitle="confirmationTitle"
+      :confirmationMessage="confirmationMessage"
+      :bottome="confBottom"
+    />
+
     <status-card
       v-if="ready && showStatus"
       :status="status"
@@ -202,6 +226,8 @@ import { printJson } from '@/utils/helpers';
 import InfoWindowCard from './cards/infoWindowCard.vue';
 import StatusCard from './cards/statusCard.vue';
 import BtnWithTooltip from './misc/btnWithTooltip.vue';
+import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
+import Tooltip from './misc/tooltip.vue';
 
 export default {
   name: `Map`,
@@ -222,11 +248,14 @@ export default {
     query: Object,
     setPoi: Function,
     getPoi: Function,
+    setDefaultMapCenter: Function,
   },
   components: {
     InfoWindowCard,
     StatusCard,
     BtnWithTooltip,
+    ConfirmationSnackbar,
+    Tooltip,
   },
 
   computed: {
@@ -286,9 +315,14 @@ export default {
   data() {
     return {
       workplace: this.state.settings.workplace,
-      shift: this.state.settings.shift,
+      shift: this.state.settings.shift || 8,
+
+      confSnackbar: false,
+      confirmationTitle: '',
       confirmationMessage: 'Welcome to a safer Microsoft Campus',
-      confirmationColor: 'green',
+      confirmationColor: '',
+      confBottom: true,
+
       snackbarThanks: false,
       underConstruction: false,
       fav: true,
@@ -338,7 +372,7 @@ export default {
       this.setSpecial({ workplace: this.workplace, shift: this.shift });
       this.menu = false;
     },
-    clearLocationSettings() {
+    clearMyLocationSettings() {
       this.clearLocationSettings();
     },
     panToCurrentLocation() {
@@ -448,9 +482,7 @@ export default {
           setInfo(markedPlace);
           showInfoWindow(marker);
         });
-        marker.addListener(`rightclick`, () =>
-          this.promptMarkerDeletion(marker)
-        );
+
         return marker;
       };
 
@@ -590,9 +622,7 @@ export default {
           event.stop();
           showInfoWindow({ map, markedPlace, marker, infowindow });
         });
-        marker.addListener(`rightclick`, () =>
-          this.promptMarkerDeletion(marker)
-        );
+
         return marker;
       };
 
@@ -686,47 +716,38 @@ export default {
       };
       setupAutocomplete({ google, map, infowindow });
 
-      const getAddressFrom = (results) => {
-        const address =
-          results.address_components.length > 3
-            ? results.address_components[2].short_name +
-              ',' +
-              results.address_components[4].short_name
-            : results.address_components[0].short_name;
-        console.log('\tgetAddressFrom():');
-        console.log(printJson(address));
-        return { address };
-      };
-
       const showPosition = (position) => {
         const vm = this;
         console.log('\tshowPosition():');
         console.log(printJson(position.coords));
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
+        const location = { lat, lng };
+        console.log('\t', printJson(location));
+
         geocoder
           .geocode({ location: { lat, lng } })
           .toEither()
           .map(({ results }) => {
-            console.log('\tgeocode results:');
-            console.log(printJson(results));
+            const poi = results[0];
 
-            geocoder
-              .geocode(getAddressFrom(results[0]))
-              .then((poi) => {
-                const city = poi.results[0];
-                const geometry = city.geometry;
-                map.setCenter(geometry.location);
-                map.fitBounds(geometry.bounds);
-                map.setZoom(vm.defaultZoom - 3);
-                vm.setPoi({
-                  namespace: city.address_components[2].short_name,
-                  location: JSON.stringify(geometry.location),
-                  viewport: JSON.stringify(geometry.viewport),
-                });
-                this.ready = true;
-              })
-              .catch('oops.', (e) => console.log(e));
+            console.log('\tgeocode results:');
+            console.log(printJson(poi));
+
+            const namespace = poi.address_components.find((v) =>
+              v.types.includes('locality')
+            ).short_name;
+            const geometry = poi.geometry;
+            const { location, viewport } = geometry;
+
+            map.setCenter(location);
+            map.setZoom(vm.defaultZoom - 2);
+            vm.setPoi({
+              namespace,
+              location: JSON.stringify(location),
+              viewport: JSON.stringify(viewport),
+            });
+            this.ready = true;
           })
           .cata({
             ok: (map) => map,
@@ -739,6 +760,10 @@ export default {
       const showMap = ({ map }) => {
         try {
           this.map = map;
+
+          this.confirmationMessage = 'Getting your current position...';
+          this.confSnackbar = true;
+
           if ('geolocation' in navigator) {
             this.setStatus(`This browser supports geolocation `);
           } else {
@@ -748,25 +773,37 @@ export default {
           const defaultPoi = this.getPoi();
           this.setStatus(`Default POI `);
           this.setStatus(`${printJson(defaultPoi)})`);
-
-          if (navigator.geolocation) {
+          if (this.state.settings.default_map_center) {
+            const center = JSON.parse(this.state.settings.default_map_center);
+            const position = {
+              coords: { latitude: center.lat, longitude: center.lng },
+            };
+            console.log('\tdefault_map_center:', position);
+            showPosition(position);
+          } else if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               // success event handler
               showPosition,
               // error event handler
-              (error) => {
-                alert(`Trouble getting your position: ${error.message}`);
+              () => {
+                this.confirmationTitle = 'Oops. Trouble getting your position.';
+                this.confirmationMessage =
+                  'If you are inside a building, you may not have internet connection. Try again outside.';
+                this.confBottom = true;
+                this.confSnackbar = true;
+                this.overlay = false;
               },
               this.positionOptions
             );
           } else if (defaultPoi.namespace) {
             showCity(defaultPoi);
           }
+          this.confSnackbar = false;
 
           this.setStatus('3) Ran showMap()');
         } catch (error) {
           this.overlay = false;
-          console.log(error.message);
+          console.log('showMap().catch():', error.message);
           this.setStatus(error.message);
           this.setStatus(error.stack);
         }
@@ -777,12 +814,6 @@ export default {
     },
 
     //#region Delete Marker code called by template
-    promptMarkerDeletion(marker) {
-      this.selectedMarker = marker;
-      this.title = 'Delete Marker/Place';
-      this.message = `Delete marker for <strong>${marker.title}</strong> from the map?`;
-      this.snackbar = true;
-    },
     deleteMarker() {
       if (this.selectedMarker) {
         this.selectedMarker.setMap(null);
@@ -794,12 +825,28 @@ export default {
       this.selectedMarker = null;
       this.snackbar = false;
     },
+    getMapCenter() {
+      return this.map ? this.map.getCenter() : null;
+    },
+    showMapCenter() {
+      const latLng = this.getMapCenter();
+      return latLng
+        ? `${latLng.lat().toFixed(5)} X ${latLng.lng().toFixed(5)}`
+        : '';
+    },
+
     //#endregion Delete Marker code
   },
 
   watch: {
     group() {
       this.drawer = false;
+    },
+    workplace() {
+      this.saveSpecial();
+    },
+    shift() {
+      this.saveSpecial();
     },
     ready() {
       console.log('Map component ready');
@@ -835,10 +882,17 @@ export default {
             position: google.maps.ControlPosition.LEFT_BOTTOM,
           },
         });
+
         return { google, map };
       })
       .then(({ google, map }) => this.onMounted({ google, map }))
-      .catch((error) => console.log(error))
+      .catch(() => {
+        this.confirmationTitle = 'Oops. Trouble loading your map.';
+        this.confirmationMessage =
+          'If you are inside a building, you may not have internet connection. Try again outside.';
+        this.confSnackbar = true;
+        this.confBottom = true;
+      })
       .finally(() => {
         console.timeEnd('Mounted GoogleMaps');
         this.overlay = false;

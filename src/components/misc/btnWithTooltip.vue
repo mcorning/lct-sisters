@@ -20,7 +20,20 @@
 export default {
   name: 'btnWithTooltip',
   props: {
+    top: {
+      type: Boolean,
+      default: true,
+    },
     bottom: {
+      type: Boolean,
+      default: false,
+    },
+    left: {
+      type: Boolean,
+      default: false,
+    },
+
+    left: {
       type: Boolean,
       default: false,
     },
@@ -32,10 +45,7 @@ export default {
       type: String,
       default: 'mdi-close',
     },
-    left: {
-      type: Boolean,
-      default: false,
-    },
+
     isIconic: {
       type: Boolean,
       default: true,

@@ -35,6 +35,7 @@ export default class Setting extends Model {
       location: this.string(),
       viewport: this.string(),
       global_code: this.string(),
+      default_map_center: this.string(),
     };
   }
 
