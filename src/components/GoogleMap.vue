@@ -154,10 +154,15 @@
         <v-card-text>
           If you test positive later, come back to LCT and click the Big Red
           Button to warn others of possible exposure to the virus.
+          <p class="mx-auto my-5">Thanks a 0x4240 for your support</p>
         </v-card-text>
         <v-card-actions>
-          <v-btn text @click="snackbarThanks = false">
-            Thanks a 0x4240 for your support
+          <v-btn text @click="volunteer">
+            Volunteer your skill
+          </v-btn>
+          <v-spacer />
+          <v-btn icon @click="snackbarThanks = false"
+            ><v-icon>close</v-icon>
           </v-btn></v-card-actions
         >
       </v-card>
@@ -835,6 +840,11 @@ export default {
         : '';
     },
 
+    volunteer() {
+      this.snackbarThanks = false;
+      window.location =
+        'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';
+    },
     //#endregion Delete Marker code
   },
 
