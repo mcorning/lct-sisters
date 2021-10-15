@@ -87,7 +87,7 @@ export default {
       const t = this.$vuetify.breakpoint.xsOnly
         ? 'LCT'
         : 'Local Contact Tracing';
-      return `${t}-${this.namespace}`;
+      return this.namespace ? `${t}-${this.namespace}` : '';
     },
 
     namespace() {

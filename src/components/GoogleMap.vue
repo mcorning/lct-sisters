@@ -65,41 +65,18 @@
             >
             <v-divider></v-divider>
             <v-card-actions>
-              <v-tooltip top>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    color="primary"
-                    @click="clearMyLocationSettings"
-                    icon
-                    ><v-icon>location_off</v-icon>
-                  </v-btn>
-                </template>
-                <span>Clear location settings</span>
-              </v-tooltip>
-              <v-tooltip top>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    color="primary"
-                    @click="setDefaultMapCenter(getMapCenter())"
-                    icon
-                    ><v-icon>pin_drop</v-icon>
-                  </v-btn>
-                </template>
-                <span>Set map center default</span>
-              </v-tooltip>
+              <v-switch
+                v-model="savedMapCenter"
+                label="Map center saved"
+                color="primary"
+                @change="changeMapCenter"
+              ></v-switch>
 
               <v-spacer></v-spacer>
 
               <v-btn color="primary" icon @click="menu = false">
                 <v-icon>close</v-icon>
               </v-btn>
-              <!-- <v-btn color="primary" @click="saveSpecial" icon>
-                <v-icon>check</v-icon>
-              </v-btn> -->
             </v-card-actions>
           </v-card>
         </v-menu>
@@ -272,6 +249,14 @@ export default {
   },
 
   computed: {
+    lastLocation() {
+      return this.state.settings.location
+        ? JSON.parse(this.state.settings.location)
+        : null;
+    },
+    defaultMapCenter() {
+      return this.state.settings.default_map_center;
+    },
     diagnostics() {
       return this.msg.join('\n');
     },
@@ -331,7 +316,8 @@ export default {
   },
   data() {
     return {
-      emergency: true,
+      savedMapCenter: this.defaultMapCenter,
+      emergency: false,
       msg: [],
       workplace: this.state.settings.workplace,
       shift: this.state.settings.shift || 8,
@@ -387,6 +373,10 @@ export default {
     Share
  */
   methods: {
+    changeMapCenter(val) {
+      const center = val ? this.getMapCenter() : '';
+      this.setDefaultMapCenter(center);
+    },
     emailDiagnostics() {
       this.$clipboard(this.msg);
       window.location = `mailto:mcorning@soteriaInstitute.org/?subject=Diagnostics&body=Paste copied text here, please.}`;
@@ -398,22 +388,7 @@ export default {
     clearMyLocationSettings() {
       this.clearLocationSettings();
     },
-    panToCurrentLocation() {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          this.map.setCenter(pos);
-          this.map.setZoom(18);
-        },
-        (error) => {
-          console.log(error);
-        },
-        this.positionOptions
-      );
-    },
+
     onNamedGathering(val) {
       this.info.name = val;
     },
@@ -608,23 +583,23 @@ export default {
         });
       });
 
-      const showCity = (poi) => {
-        const vm = this;
-        const { global_code, location, viewport } = poi;
+      // const showCity = (poi) => {
+      //   const vm = this;
+      //   const { global_code, location, viewport } = poi;
 
-        this.setStatus(`showCity(): global_code: ${global_code}
-        ${printJson(location)}
-        ${printJson(viewport)}`);
+      //   this.setStatus(`showCity(): global_code: ${global_code}
+      //   ${printJson(location)}
+      //   ${printJson(viewport)}`);
 
-        if (location) {
-          map.setCenter(location);
-          if (viewport) {
-            map.fitBounds(viewport);
-          }
-          map.setZoom(vm.defaultZoom);
-          this.ready = true;
-        }
-      };
+      //   if (location) {
+      //     map.setCenter(location);
+      //     if (viewport) {
+      //       map.fitBounds(viewport);
+      //     }
+      //     map.setZoom(vm.defaultZoom);
+      //     this.ready = true;
+      //   }
+      // };
 
       const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
         this.info = markedPlace;
@@ -763,7 +738,8 @@ export default {
             ).short_name;
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
-
+            this.msg.push('\tgeocode geometry results:');
+            this.msg.push(`\t${printJson(geometry)}`);
             map.setCenter(location);
             map.setZoom(vm.defaultZoom - 2);
             vm.setPoi({
@@ -788,78 +764,126 @@ export default {
           });
       };
 
-      const showMap = ({ map }) => {
-        try {
-          this.map = map;
-          this.msg.push('Entering showMap()');
+      // const showMap = ({ map }) => {
+      //   try {
+      //     this.map = map;
+      //     this.msg.push('Entering showMap()');
 
-          this.confirmationMessage = '3) Getting your current position...';
-          this.confSnackbar = true;
-          this.msg.push(this.confirmationMessage);
+      //     this.confirmationMessage = '3) Getting your current position...';
+      //     this.confSnackbar = true;
+      //     this.msg.push(this.confirmationMessage);
 
-          if ('geolocation' in navigator) {
-            this.setStatus(`This browser supports geolocation `);
-          } else {
-            this.setStatus(`This browser does NOT support geolocation `);
-          }
+      //     if ('geolocation' in navigator) {
+      //       this.setStatus(`This browser supports geolocation `);
+      //     } else {
+      //       this.setStatus(`This browser does NOT support geolocation `);
+      //     }
 
-          const defaultPoi = this.getPoi();
-          this.setStatus(`Default POI `);
-          this.setStatus(`${printJson(defaultPoi)})`);
+      //     const defaultPoi = this.getPoi();
+      //     this.setStatus(`Default POI `);
+      //     this.setStatus(`${printJson(defaultPoi)})`);
 
-          // experienced user:
-          if (this.state.settings.default_map_center) {
-            const center = JSON.parse(this.state.settings.default_map_center);
-            const position = {
-              coords: { latitude: center.lat, longitude: center.lng },
-            };
-            this.msg.push(
-              `\ta) Have a default map center: ${printJson(position)}`
-            );
-            this.msg.push(`\tb) Calling showPosition(position)}`);
-            showPosition(position);
-            // else new user
-          } else if (navigator.geolocation) {
-            this.msg.push(`\ta) No default center.`);
-            this.msg.push('\tb) Calling getCurrentPosition().');
+      //     // experienced user:
+      //     if (this.state.settings.default_map_center) {
+      //       const center = JSON.parse(this.state.settings.default_map_center);
+      //       const position = {
+      //         coords: { latitude: center.lat, longitude: center.lng },
+      //       };
+      //       this.msg.push(
+      //         `\ta) Have a default map center: ${printJson(position)}`
+      //       );
+      //       this.msg.push(`\tb) Calling showPosition(position)}`);
+      //       showPosition(position);
+      //       // else new user
+      //     } else if (navigator.geolocation) {
+      //       this.msg.push(`\ta) No default center.`);
+      //       this.msg.push('\tb) Calling getCurrentPosition().');
 
-            navigator.geolocation.getCurrentPosition(
-              // success event handler
-              showPosition,
-              // error event handler
-              () => {
-                this.confirmationTitle = 'Oops. Trouble getting your position.';
-                this.msg.push(this.confirmationTitle);
-                this.confirmationMessage =
-                  'If you are inside a building, you may not have internet connection. Try again outside.';
-                this.confBottom = true;
-                this.confSnackbar = true;
-                this.overlay = false;
-                this.ready = true;
-              },
-              this.positionOptions
-            );
-          } else if (defaultPoi.namespace) {
-            showCity(defaultPoi);
-          }
-          this.confSnackbar = false;
-        } catch (error) {
-          this.overlay = false;
-          this.ready = true;
-          console.log('showMap().catch():', error.message);
-          this.msg.push(`showMap().catch(): ${error.message}`);
-          this.msg.push(`showMap().catch(): ${error.stack}`);
-          this.setStatus(error.message);
-          this.setStatus(error.stack);
-        }
-      };
+      //       navigator.geolocation.getCurrentPosition(
+      //         // success event handler
+      //         showPosition,
+      //         // error event handler
+      //         () => {
+      //           this.confirmationTitle = 'Oops. Trouble getting your position.';
+      //           this.msg.push(this.confirmationTitle);
+      //           this.confirmationMessage =
+      //             'If you are inside a building, you may not have internet connection. Try again outside.';
+      //           this.confBottom = true;
+      //           this.confSnackbar = true;
+      //           this.overlay = false;
+      //           this.ready = true;
+      //         },
+      //         this.positionOptions
+      //       );
+      //     } else if (defaultPoi.namespace) {
+      //       showCity(defaultPoi);
+      //     }
+      //     this.confSnackbar = false;
+      //   } catch (error) {
+      //     this.overlay = false;
+      //     this.ready = true;
+      //     console.log('showMap().catch():', error.message);
+      //     this.msg.push(`showMap().catch(): ${error.message}`);
+      //     this.msg.push(`showMap().catch(): ${error.stack}`);
+      //     this.setStatus(error.message);
+      //     this.setStatus(error.stack);
+      //   }
+      // };
 
       this.msg.push('Starting google workflow');
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });
-      showMap({ map, geocoder });
+
+      /*
+    First time: no setting values. Call getCurrentPosition(). Save that POI.
+    Second visit: get POI. load map.
+    Change default center. Save in settings.
+    Third visit: get defaultCenter or POI. load map.
+
+    */
+      try {
+        this.map = map;
+        if (this.defaultMapCenter && this.defaultMapCenter.length > 6) {
+          const center = JSON.parse(this.defaultMapCenter);
+          const position = {
+            coords: { latitude: center.lat, longitude: center.lng },
+          };
+          showPosition(position);
+        } else if (this.lastLocation) {
+          const center = this.lastLocation;
+          const position = {
+            coords: { latitude: center.lat, longitude: center.lng },
+          };
+          showPosition(position);
+        } else {
+          this.panToCurrentLocation();
+          // showMap({ map, geocoder });
+        }
+      } catch (error) {
+        alert('error loading map: ' + error.message);
+      }
     },
 
+    panToCurrentLocation() {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          this.map.setCenter(pos);
+          this.map.setZoom(18);
+          this.ready = true;
+          this.setPoi({
+            location: JSON.stringify(pos),
+          });
+        },
+        (error) => {
+          console.log(error);
+        },
+        this.positionOptions
+      );
+    },
     //#region Delete Marker code called by template
     deleteMarker() {
       if (this.selectedMarker) {
@@ -872,6 +896,8 @@ export default {
       this.selectedMarker = null;
       this.snackbar = false;
     },
+    //#endregion Delete Marker code
+
     getMapCenter() {
       return this.map ? this.map.getCenter() : null;
     },
@@ -887,7 +913,6 @@ export default {
       window.location =
         'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';
     },
-    //#endregion Delete Marker code
   },
 
   watch: {
