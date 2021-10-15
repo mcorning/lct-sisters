@@ -56,9 +56,7 @@ export default {
   },
   methods: {},
   watch: {
-    ready() {
-      console.log(this.riskScore);
-    },
+    ready() {},
     showBanner(n, o) {
       console.log(n, o);
     },

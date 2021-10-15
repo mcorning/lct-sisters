@@ -123,8 +123,18 @@
     </v-toolbar>
     <!-- Map container -->
     <!-- map size set in .Map class below -->
-    <div class="Map" ref="map"></div>
-
+    <v-row
+      ><v-col>
+        <div
+          :class="`${emergency ? 'Emergency' : 'Map'}`"
+          ref="map"
+        ></div></v-col
+      ><v-col v-if="emergency">
+        <p class="text-h6">Emergency diagnostics</p>
+        <v-btn icon @click="emailDiagnostics"><v-icon>email</v-icon></v-btn>
+        <pre>{{ diagnostics }}</pre>
+      </v-col>
+    </v-row>
     <info-window-card
       ref="infowin"
       id="infowin"
@@ -232,7 +242,6 @@ import InfoWindowCard from './cards/infoWindowCard.vue';
 import StatusCard from './cards/statusCard.vue';
 import BtnWithTooltip from './misc/btnWithTooltip.vue';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
-import Tooltip from './misc/tooltip.vue';
 
 export default {
   name: `Map`,
@@ -260,10 +269,13 @@ export default {
     StatusCard,
     BtnWithTooltip,
     ConfirmationSnackbar,
-    Tooltip,
   },
 
   computed: {
+    diagnostics() {
+      return this.msg.join('\n');
+    },
+
     places() {
       return this.state.places.map((v) => v.name);
     },
@@ -319,6 +331,8 @@ export default {
   },
   data() {
     return {
+      emergency: true,
+      msg: [],
       workplace: this.state.settings.workplace,
       shift: this.state.settings.shift || 8,
 
@@ -342,7 +356,7 @@ export default {
       snackbarPrompt: false,
       title: '',
       status: '',
-      overlay: true,
+      overlay: false,
       message: null,
       info: null,
       snackbar: false,
@@ -373,6 +387,10 @@ export default {
     Share
  */
   methods: {
+    emailDiagnostics() {
+      this.$clipboard(this.msg);
+      window.location = `mailto:mcorning@soteriaInstitute.org/?subject=Diagnostics&body=Paste copied text here, please.}`;
+    },
     saveSpecial() {
       this.setSpecial({ workplace: this.workplace, shift: this.shift });
       this.menu = false;
@@ -637,10 +655,10 @@ export default {
         });
         console.log(`Rendered ${markers.length} markers`);
         this.setStatus('1) Markers ready');
+        this.msg.push(`1) Rendered ${markers.length} markers`);
+
         return { google, map, markers };
       };
-
-      makeMarkersFromCache({ google, map, infowindow });
 
       const getAutocompleteResults = ({ google, map, infowindow, places }) => {
         {
@@ -716,10 +734,10 @@ export default {
         this.setStatus('2) Autocomplete setup');
         const toolbar = document.getElementById('autocompleteToolbar');
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(toolbar);
+        this.msg.push('2) Autocomplete setup');
 
         return { google, map };
       };
-      setupAutocomplete({ google, map, infowindow });
 
       const showPosition = (position) => {
         const vm = this;
@@ -729,6 +747,7 @@ export default {
         const lng = position.coords.longitude;
         const location = { lat, lng };
         console.log('\t', printJson(location));
+        this.msg.push(`\tc) showPosition(): calling geocoder`);
 
         geocoder
           .geocode({ location: { lat, lng } })
@@ -755,9 +774,16 @@ export default {
             this.ready = true;
           })
           .cata({
-            ok: (map) => map,
+            ok: () => {
+              this.msg.push(
+                '\tLeaving geocoder in showPosition() and showMap()'
+              ),
+                this.msg.push('\tLeaving  showMap()');
+            },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
+              this.msg.push(`!!!! showPosition():error: ${results} !!!!`);
+              this.ready = true;
             },
           });
       };
@@ -765,9 +791,11 @@ export default {
       const showMap = ({ map }) => {
         try {
           this.map = map;
+          this.msg.push('Entering showMap()');
 
-          this.confirmationMessage = 'Getting your current position...';
+          this.confirmationMessage = '3) Getting your current position...';
           this.confSnackbar = true;
+          this.msg.push(this.confirmationMessage);
 
           if ('geolocation' in navigator) {
             this.setStatus(`This browser supports geolocation `);
@@ -778,25 +806,36 @@ export default {
           const defaultPoi = this.getPoi();
           this.setStatus(`Default POI `);
           this.setStatus(`${printJson(defaultPoi)})`);
+
+          // experienced user:
           if (this.state.settings.default_map_center) {
             const center = JSON.parse(this.state.settings.default_map_center);
             const position = {
               coords: { latitude: center.lat, longitude: center.lng },
             };
-            console.log('\tdefault_map_center:', position);
+            this.msg.push(
+              `\ta) Have a default map center: ${printJson(position)}`
+            );
+            this.msg.push(`\tb) Calling showPosition(position)}`);
             showPosition(position);
+            // else new user
           } else if (navigator.geolocation) {
+            this.msg.push(`\ta) No default center.`);
+            this.msg.push('\tb) Calling getCurrentPosition().');
+
             navigator.geolocation.getCurrentPosition(
               // success event handler
               showPosition,
               // error event handler
               () => {
                 this.confirmationTitle = 'Oops. Trouble getting your position.';
+                this.msg.push(this.confirmationTitle);
                 this.confirmationMessage =
                   'If you are inside a building, you may not have internet connection. Try again outside.';
                 this.confBottom = true;
                 this.confSnackbar = true;
                 this.overlay = false;
+                this.ready = true;
               },
               this.positionOptions
             );
@@ -804,17 +843,20 @@ export default {
             showCity(defaultPoi);
           }
           this.confSnackbar = false;
-
-          this.setStatus('3) Ran showMap()');
         } catch (error) {
           this.overlay = false;
+          this.ready = true;
           console.log('showMap().catch():', error.message);
+          this.msg.push(`showMap().catch(): ${error.message}`);
+          this.msg.push(`showMap().catch(): ${error.stack}`);
           this.setStatus(error.message);
           this.setStatus(error.stack);
         }
       };
 
-      // last steps in bootstrap
+      this.msg.push('Starting google workflow');
+      makeMarkersFromCache({ google, map, infowindow });
+      setupAutocomplete({ google, map, infowindow });
       showMap({ map, geocoder });
     },
 
@@ -859,17 +901,18 @@ export default {
       this.saveSpecial();
     },
     ready() {
-      console.log('Map component ready');
-      if (this.$route.query.place_id) {
-        console.log('Detected a shared event:', this.$route.query.place_id);
-        this.setStatus(
-          `Detected a shared event: ${this.$route.query.place_id}`
-        );
-        this.setStatus(printJson(this.$route.query) + '\n\n');
+      const query = this.$route.query;
+      this.emergency = query.emergency === 'true' || query.emergency === '1';
+
+      this.msg.push('Map component ready');
+      if (query.place_id) {
+        console.log('Detected a shared event:', query.place_id);
+        this.setStatus(`Detected a shared event: ${query.place_id}`);
+        this.setStatus(printJson(query) + '\n\n');
         // in space.js
         this.onSharePlace();
       }
-      if (this.$route.query.sponsor) {
+      if (query.sponsor) {
         this.snackbarThanks = true;
       } else this.overlay = false;
     },
@@ -892,7 +935,7 @@ export default {
             position: google.maps.ControlPosition.LEFT_BOTTOM,
           },
         });
-
+        this.msg.push('0) Initialized google map');
         return { google, map };
       })
       .then(({ google, map }) => this.onMounted({ google, map }))
@@ -902,6 +945,7 @@ export default {
           'If you are inside a building, you may not have internet connection. Try again outside.';
         this.confSnackbar = true;
         this.confBottom = true;
+        this.msg.push(`gmapsInit().catch() ${this.confirmationTitle}`);
       })
       .finally(() => {
         console.timeEnd('Mounted GoogleMaps');
@@ -922,6 +966,10 @@ body {
 
 .Map {
   width: 100vw;
+  height: 88vh;
+}
+.Emergency {
+  width: 70vw;
   height: 88vh;
 }
 </style>

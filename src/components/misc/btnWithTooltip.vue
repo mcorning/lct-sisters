@@ -33,10 +33,6 @@ export default {
       default: false,
     },
 
-    left: {
-      type: Boolean,
-      default: false,
-    },
     color: {
       type: String,
       default: 'grey darken-2',
