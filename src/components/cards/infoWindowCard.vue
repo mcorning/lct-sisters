@@ -12,44 +12,33 @@
       <v-card-subtitle
         >{{ address }}<br /><span v-if="info.url" v-html="placeLink"></span
       ></v-card-subtitle>
-
-      <v-card-text>
+      <v-card-actions>
         <v-btn
           block
           color="primary"
           @click="onVisitPlace({ placeId, gatheringName })"
           >Mark Calendar</v-btn
         >
-        <v-row no-gutters align="start">
-          <v-col cols="11">
-            <div class=" mt-3" @click="toggle">
-              {{ showPostions ? 'Hide' : 'Show' }} Positions
-            </div>
-
-            <div v-if="showPostions">
-              {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
-              {{ `PlaceID:    ${placeId}` }}<br />
-              {{ `GlobalCode: ${globalCode}` }}
-              }}
-            </div>
-          </v-col>
-          <v-col cols="1">
-            <btn-with-tooltip
-              tip="Delete this marker from map"
-              :click="deleteMarker"
-              icon="mdi-delete"
-            ></btn-with-tooltip>
-          </v-col>
-        </v-row>
-      </v-card-text>
+      </v-card-actions>
+      <v-card-actions>
+        <v-btn class=" text-caption " @click="toggle">
+          {{ showPostions ? 'Hide' : 'Show' }} Positions
+        </v-btn>
+        <v-spacer />
+        <v-btn @click="deleteMarker" icon><v-icon>mdi-delete</v-icon></v-btn>
+        <div v-if="showPostions">
+          {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
+          {{ `PlaceID:    ${placeId}` }}<br />
+          {{ `GlobalCode: ${globalCode}` }}
+          }}
+        </div>
+      </v-card-actions>
     </v-card>
   </div>
 </template>
 
 <script>
-import btnWithTooltip from '../misc/btnWithTooltip.vue';
 export default {
-  components: { btnWithTooltip },
   props: {
     info: {
       type: Object,

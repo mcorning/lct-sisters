@@ -71,13 +71,18 @@
                 color="primary"
                 @change="changeMapCenter"
               ></v-switch>
+              <v-spacer />
+              <v-btn color="primary" icon @click="menu = false">
+                <v-icon>close</v-icon>
+              </v-btn>
+            </v-card-actions>
+            <v-card-actions>
               <v-btn text @click="clearMyLocationSettings"
                 >Clear location</v-btn
               >
-              <v-spacer></v-spacer>
-
-              <v-btn color="primary" icon @click="menu = false">
-                <v-icon>close</v-icon>
+              <v-spacer />
+              <v-btn text @click="volunteer">
+                Volunteer
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -746,16 +751,19 @@ export default {
             this.msg.push(`\t${printJson(geometry)}`);
             map.setCenter(location);
             map.setZoom(vm.defaultZoom - 2);
-            vm.setPoi({
+            const err = vm.setPoi({
               namespace,
               location: JSON.stringify(location),
               viewport: JSON.stringify(viewport),
             });
+            const msg = err ? err : '\tc) Saved location settings';
+            this.msg.push(msg);
+
             this.ready = true;
           })
           .cata({
             ok: () => {
-              this.msg.push('\tLeaving geocoder in showPosition() ');
+              this.msg.push('\td) Leaving geocoder in showPosition() ');
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
@@ -831,7 +839,6 @@ export default {
       //   }
       // };
 
-      this.msg.push('Starting google workflow');
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });
 
