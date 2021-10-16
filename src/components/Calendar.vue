@@ -488,8 +488,6 @@ export default {
       this.update('cache');
     },
 
-
-
     delete(target) {
       const deleteVisit = true;
       this.onUpdate(target, this.selectedEvent, deleteVisit);
@@ -550,7 +548,7 @@ export default {
     setToday() {
       this.focus = '';
       this.viewDay(Date.now());
-      this.this.setStatus(`Going back to today`);
+      this.setStatus(`Going back to today`);
     },
 
     prev() {
@@ -671,7 +669,7 @@ export default {
       ).cata({
         Just: (unlogged) => this.logVisitNow(unlogged),
         Nothing: (err) => {
-          this.setStatus(err ? err : 'No unlogged visits');
+          this.setStatus(err);
         },
       });
     },
@@ -687,7 +685,6 @@ export default {
       let x = userSince(new Date(this.usernumber));
       this.setStatus(`Active for: ${Math.round(x, 0)} days`);
     },
-
 
     confirmations(msg) {
       const {

@@ -25,7 +25,7 @@
           {{ showPostions ? 'Hide' : 'Show' }} Positions
         </v-btn>
         <v-spacer />
-        <v-btn @click="deleteMarker" icon><v-icon>mdi-delete</v-icon></v-btn>
+        <v-btn @click="deleteMarker">Delete</v-btn>
         <div v-if="showPostions">
           {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
           {{ `PlaceID:    ${placeId}` }}<br />

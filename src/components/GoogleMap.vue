@@ -109,13 +109,13 @@
     <!-- map size set in .Map class below -->
     <v-row
       ><v-col>
-        <div
-          :class="`${emergency ? 'Emergency' : 'Map'}`"
-          ref="map"
-        ></div></v-col
+        <!-- {{ breakpoint }} -->
+        <div :class="checkEmergency" ref="map"></div></v-col
       ><v-col v-if="emergency">
-        <p class="text-h6">Emergency diagnostics</p>
-        <v-btn icon @click="emailDiagnostics"><v-icon>email</v-icon></v-btn>
+        <span class="text-subtitle-1">Emergency diagnostics</span>
+        <v-btn class="ml-10" icon @click="emailDiagnostics"
+          ><v-icon>email</v-icon></v-btn
+        >
         <pre>{{ diagnostics }}</pre>
       </v-col>
     </v-row>
@@ -206,13 +206,13 @@
       :bottome="confBottom"
     />
 
-    <status-card
+    <!-- <status-card
       v-if="ready && showStatus"
       :status="status"
       :toggleStatus="toggleStatus"
       :copyStatus="copyStatus"
       :cutStatus="cutStatus"
-    ></status-card>
+    ></status-card> -->
   </v-container>
 </template>
 
@@ -223,7 +223,7 @@ import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
-import StatusCard from './cards/statusCard.vue';
+// import StatusCard from './cards/statusCard.vue';
 import BtnWithTooltip from './misc/btnWithTooltip.vue';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 
@@ -250,12 +250,21 @@ export default {
   },
   components: {
     InfoWindowCard,
-    StatusCard,
+    // StatusCard,
     BtnWithTooltip,
     ConfirmationSnackbar,
   },
 
   computed: {
+    checkEmergency() {
+      if (!this.emergency) {
+        return 'Map';
+      }
+      return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
+    },
+    breakpoint() {
+      return this.$vuetify.breakpoint.name;
+    },
     lastLocation() {
       return this.state.settings.location
         ? JSON.parse(this.state.settings.location)
@@ -742,12 +751,24 @@ export default {
             console.log('\tgeocode results:');
             console.log(printJson(poi));
 
-            const namespace = poi.address_components.find((v) =>
+            const locality = poi.address_components.find((v) =>
               v.types.includes('locality')
-            ).short_name;
+            );
+            this.msg.push(
+              `\tc) ${
+                locality ? 'Found' : 'Could not find'
+              } locality address component`
+            );
+            if (!locality) {
+              this.msg.push(
+                `\t${printJson(poi.address_components.map((v) => v.types))})`
+              );
+            }
+
+            const namespace = locality ? locality.short_name : '';
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
-            this.msg.push('\tgeocode geometry results:');
+            this.msg.push('\td) Geocode geometry results:');
             this.msg.push(`\t${printJson(geometry)}`);
             map.setCenter(location);
             map.setZoom(vm.defaultZoom - 2);
@@ -756,7 +777,7 @@ export default {
               location: JSON.stringify(location),
               viewport: JSON.stringify(viewport),
             });
-            const msg = err ? err : '\tc) Saved location settings';
+            const msg = err ? err : '\te) Saved location settings';
             this.msg.push(msg);
 
             this.ready = true;
@@ -773,88 +794,22 @@ export default {
           });
       };
 
-      // const showMap = ({ map }) => {
-      //   try {
-      //     this.map = map;
-      //     this.msg.push('Entering showMap()');
-
-      //     this.confirmationMessage = '3) Getting your current position...';
-      //     this.confSnackbar = true;
-      //     this.msg.push(this.confirmationMessage);
-
-      //     if ('geolocation' in navigator) {
-      //       this.setStatus(`This browser supports geolocation `);
-      //     } else {
-      //       this.setStatus(`This browser does NOT support geolocation `);
-      //     }
-
-      //     const defaultPoi = this.getPoi();
-      //     this.setStatus(`Default POI `);
-      //     this.setStatus(`${printJson(defaultPoi)})`);
-
-      //     // experienced user:
-      //     if (this.state.settings.default_map_center) {
-      //       const center = JSON.parse(this.state.settings.default_map_center);
-      //       const position = {
-      //         coords: { latitude: center.lat, longitude: center.lng },
-      //       };
-      //       this.msg.push(
-      //         `\ta) Have a default map center: ${printJson(position)}`
-      //       );
-      //       this.msg.push(`\tb) Calling showPosition(position)}`);
-      //       showPosition(position);
-      //       // else new user
-      //     } else if (navigator.geolocation) {
-      //       this.msg.push(`\ta) No default center.`);
-      //       this.msg.push('\tb) Calling getCurrentPosition().');
-
-      //       navigator.geolocation.getCurrentPosition(
-      //         // success event handler
-      //         showPosition,
-      //         // error event handler
-      //         () => {
-      //           this.confirmationTitle = 'Oops. Trouble getting your position.';
-      //           this.msg.push(this.confirmationTitle);
-      //           this.confirmationMessage =
-      //             'If you are inside a building, you may not have internet connection. Try again outside.';
-      //           this.confBottom = true;
-      //           this.confSnackbar = true;
-      //           this.overlay = false;
-      //           this.ready = true;
-      //         },
-      //         this.positionOptions
-      //       );
-      //     } else if (defaultPoi.namespace) {
-      //       showCity(defaultPoi);
-      //     }
-      //     this.confSnackbar = false;
-      //   } catch (error) {
-      //     this.overlay = false;
-      //     this.ready = true;
-      //     console.log('showMap().catch():', error.message);
-      //     this.msg.push(`showMap().catch(): ${error.message}`);
-      //     this.msg.push(`showMap().catch(): ${error.stack}`);
-      //     this.setStatus(error.message);
-      //     this.setStatus(error.stack);
-      //   }
-      // };
-
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });
 
       /*
-    First time: no setting values. Call getCurrentPosition(). Save that POI.
-    Second visit: get POI. load map.
-    Change default center. Save in settings.
-    Third visit: get defaultCenter or POI. load map.
-
-    */
+      First time: no setting values. Call getCurrentPosition(). Save that POI.
+      Second visit: get POI. load map.
+      Change default center. Save in settings.
+      Third visit: get defaultCenter or POI. load map.
+      */
       try {
         this.map = map;
         this.msg.push('3) Getting default location:');
         const center = this.defaultMapCenter || this.lastLocation;
         if (center) {
-          this.msg.push(`\ta) found saved center: ${printJson(center)}`);
+          this.msg.push(`\ta) found saved center:`);
+          this.msg.push(`\t${printJson(center)}`);
           const position = {
             coords: { latitude: center.lat, longitude: center.lng },
           };
@@ -997,8 +952,12 @@ body {
   width: 100vw;
   height: 88vh;
 }
-.Emergency {
+.EmergencyW {
   width: 50vw;
   height: 88vh;
+}
+.EmergencyH {
+  width: 100vw;
+  height: 50vh;
 }
 </style>
