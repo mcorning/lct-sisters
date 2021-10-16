@@ -213,29 +213,23 @@ export default {
       });
     },
     setDefaultMapCenter(center) {
-      const centerString = JSON.stringify(center);
-      this.updateSetting({ id: 1, default_map_center: centerString });
-      this.updateState({
-        settings: { default_map_center: centerString },
-      });
+      const centerVal = center ? JSON.stringify(center) : center;
+      this.updateSetting({ id: 1, default_map_center: centerVal });
     },
 
     setPoi({ namespace, global_code, location, viewport }) {
-      this.updateSetting({
-        id: 1,
-        namespace,
-        global_code,
-        location,
-        viewport,
-      });
-      this.updateState({
-        settings: {
+      try {
+        this.updateSetting({
+          id: 1,
           namespace,
           global_code,
           location,
           viewport,
-        },
-      });
+        });
+        return;
+      } catch (error) {
+        return error;
+      }
     },
     getPoi() {
       return {

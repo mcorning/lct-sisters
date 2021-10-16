@@ -71,7 +71,9 @@
                 color="primary"
                 @change="changeMapCenter"
               ></v-switch>
-
+              <v-btn text @click="clearMyLocationSettings"
+                >Clear location</v-btn
+              >
               <v-spacer></v-spacer>
 
               <v-btn color="primary" icon @click="menu = false">
@@ -255,7 +257,9 @@ export default {
         : null;
     },
     defaultMapCenter() {
-      return this.state.settings.default_map_center;
+      return this.state.settings.default_map_center
+        ? JSON.parse(this.state.settings.default_map_center)
+        : null;
     },
     diagnostics() {
       return this.msg.join('\n');
@@ -374,7 +378,7 @@ export default {
  */
   methods: {
     changeMapCenter(val) {
-      const center = val ? this.getMapCenter() : '';
+      const center = val ? this.getMapCenter() : null;
       this.setDefaultMapCenter(center);
     },
     emailDiagnostics() {
@@ -722,7 +726,7 @@ export default {
         const lng = position.coords.longitude;
         const location = { lat, lng };
         console.log('\t', printJson(location));
-        this.msg.push(`\tc) showPosition(): calling geocoder`);
+        this.msg.push(`\tb) showPosition(): calling geocoder`);
 
         geocoder
           .geocode({ location: { lat, lng } })
@@ -751,10 +755,7 @@ export default {
           })
           .cata({
             ok: () => {
-              this.msg.push(
-                '\tLeaving geocoder in showPosition() and showMap()'
-              ),
-                this.msg.push('\tLeaving  showMap()');
+              this.msg.push('\tLeaving geocoder in showPosition() ');
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
@@ -843,21 +844,17 @@ export default {
     */
       try {
         this.map = map;
-        if (this.defaultMapCenter && this.defaultMapCenter.length > 6) {
-          const center = JSON.parse(this.defaultMapCenter);
-          const position = {
-            coords: { latitude: center.lat, longitude: center.lng },
-          };
-          showPosition(position);
-        } else if (this.lastLocation) {
-          const center = this.lastLocation;
+        this.msg.push('3) Getting default location:');
+        const center = this.defaultMapCenter || this.lastLocation;
+        if (center) {
+          this.msg.push(`\ta) found saved center: ${printJson(center)}`);
           const position = {
             coords: { latitude: center.lat, longitude: center.lng },
           };
           showPosition(position);
         } else {
+          this.msg.push(`\ta) panning to current location`);
           this.panToCurrentLocation();
-          // showMap({ map, geocoder });
         }
       } catch (error) {
         alert('error loading map: ' + error.message);
@@ -927,7 +924,7 @@ export default {
     },
     ready() {
       const query = this.$route.query;
-      this.emergency = query.emergency === 'true' || query.emergency === '1';
+      this.emergency = query.d === 'true' || query.d === '1';
 
       this.msg.push('Map component ready');
       if (query.place_id) {
@@ -994,7 +991,7 @@ body {
   height: 88vh;
 }
 .Emergency {
-  width: 70vw;
+  width: 50vw;
   height: 88vh;
 }
 </style>
