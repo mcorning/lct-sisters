@@ -79,10 +79,9 @@
               ></v-switch>
               <v-spacer />
               <v-switch
-                v-model="diagnosticsOpened"
+                v-model="emergency"
                 label="Diagnostics Open"
                 color="primary"
-                @change="openDiagnostics"
               ></v-switch>
             </v-card-actions>
             <v-card-actions>
@@ -334,7 +333,6 @@ export default {
   },
   data() {
     return {
-      diagnosticsOpened: false,
       savedMapCenter: false,
       emergency: false,
       msg: [],
@@ -392,9 +390,6 @@ export default {
     Share
  */
   methods: {
-    openDiagnostics() {
-      this.emergency = this.diagnosticsOpened;
-    },
     changeMapCenter(val) {
       const center = val ? this.getMapCenter() : null;
       this.setDefaultMapCenter(center);
@@ -663,19 +658,21 @@ export default {
           if (places.length == 0) {
             return;
           }
+
           const getMarkedPlace = (place) => {
             const {
               name = 'Gathering',
               formatted_address,
               place_id,
-              plus_code: { global_code },
               url,
+              plus_code,
               geometry,
             } = place;
             const position = {
               lat: geometry.location.lat(),
               lng: geometry.location.lng(),
             };
+            const global_code = plus_code?.global_code || '';
 
             const title = `${name}\nLast Visited: add lastVisit to Place type`;
             const markedPlace = {
@@ -737,6 +734,28 @@ export default {
       };
 
       const showPosition = (position) => {
+        const getLocality = (poi) => {
+          let locality = poi.address_components.find((v) =>
+            v.types.includes('locality')
+          );
+          this.msg.push(
+            `\tc) ${
+              locality ? 'Found' : 'Could not find'
+            } locality address component`
+          );
+          if (!locality) {
+            this.msg.push('Looking for postal_town type, instead.');
+            locality = poi.address_components.find((v) =>
+              v.types.includes('postal_town')
+            );
+            if (!locality) {
+              this.msg.push('Listing available address_component types:');
+              this.msg.push(
+                `\t${printJson(poi.address_components.map((v) => v.types))})`
+              );
+            }
+          }
+        };
         const vm = this;
         console.log('\tshowPosition():');
         console.log(printJson(position.coords));
@@ -755,19 +774,7 @@ export default {
             console.log('\tgeocode results:');
             console.log(printJson(poi));
 
-            const locality = poi.address_components.find((v) =>
-              v.types.includes('locality')
-            );
-            this.msg.push(
-              `\tc) ${
-                locality ? 'Found' : 'Could not find'
-              } locality address component`
-            );
-            if (!locality) {
-              this.msg.push(
-                `\t${printJson(poi.address_components.map((v) => v.types))})`
-              );
-            }
+            const locality = getLocality(poi);
 
             const namespace = locality ? locality.short_name : '';
             const geometry = poi.geometry;
@@ -890,6 +897,8 @@ export default {
     },
     ready() {
       const query = this.$route.query;
+      this.emergency = query.d && query.d === '1';
+
       this.savedMapCenter = this.defaultMapCenter;
       this.msg.push('Map component ready');
       if (query.place_id) {
