@@ -61,7 +61,7 @@
       </v-menu>
     </v-toolbar>
 
-    <v-sheet class="Calendar" :class="{ CalendarWithStatus: showStatus }">
+    <v-sheet class="Calendar">
       <v-calendar
         id="calendar-target"
         ref="calendar"
@@ -796,9 +796,5 @@ export default {
 .Calendar {
   width: 100vw;
   height: 80vh;
-}
-
-.CalendarWithStatus {
-  height: 81vh;
 }
 </style>

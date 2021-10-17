@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="fill-height">
+  <v-sheet>
     <div class="text-center text-black">
       <v-overlay :value="overlay" opacity=".25">
         <v-progress-circular indeterminate width="10" size="200" color="purple">
@@ -23,16 +23,24 @@
           </template>
           <v-card>
             <v-row dense no-gutters
-              ><v-col class="text-center"
-                ><img src="https://picsum.photos/200/200" alt="nice"
-              /></v-col>
+              ><v-col cols="10"
+                ><img src="https://picsum.photos/200/200" alt="nice" />
+              </v-col>
+
+              <v-col col="1" class="text-right">
+                <v-btn color="primary" icon @click="menu = false">
+                  <v-icon>close</v-icon>
+                </v-btn></v-col
+              >
+            </v-row>
+            <v-row>
               <v-col cols="auto">
                 <v-list>
                   <v-list-item>
                     <v-row dense
                       ><v-col cols="8">
                         <!-- <v-list-item>
-                          <v-list-item-action> -->
+                            <v-list-item-action> -->
                         <v-select
                           v-model="workplace"
                           :items="places"
@@ -40,10 +48,10 @@
                           label="Workplace"
                         ></v-select>
                         <!-- </v-list-item-action>
-                        </v-list-item>--> </v-col
+                          </v-list-item>--> </v-col
                       ><v-col cols="4">
                         <!-- <v-list-item>
-                          <v-list-item-action> -->
+                            <v-list-item-action> -->
                         <v-text-field
                           v-model="shift"
                           label="Shift:"
@@ -51,16 +59,14 @@
                           hide-details
                         ></v-text-field>
                         <!-- </v-list-item-action>
-                        </v-list-item>  -->
+                          </v-list-item>  -->
                       </v-col></v-row
                     ></v-list-item
                   >
-                  <v-list-item
-                    ><span class="text-caption mx-auto"
-                      >Default map center: {{ showMapCenter() }}</span
-                    ></v-list-item
-                  >
                 </v-list>
+                <span class="text-caption ml-4"
+                  >Default map center is: {{ showMapCenter() }}</span
+                >
               </v-col></v-row
             >
             <v-divider></v-divider>
@@ -72,9 +78,12 @@
                 @change="changeMapCenter"
               ></v-switch>
               <v-spacer />
-              <v-btn color="primary" icon @click="menu = false">
-                <v-icon>close</v-icon>
-              </v-btn>
+              <v-switch
+                v-model="diagnosticsOpened"
+                label="Diagnostics Open"
+                color="primary"
+                @change="openDiagnostics"
+              ></v-switch>
             </v-card-actions>
             <v-card-actions>
               <v-btn text @click="clearMyLocationSettings"
@@ -107,10 +116,9 @@
     </v-toolbar>
     <!-- Map container -->
     <!-- map size set in .Map class below -->
-    <v-row
+    <v-row no-gutters
       ><v-col>
-        <!-- {{ breakpoint }} -->
-        <div :class="checkEmergency" ref="map"></div></v-col
+        <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
       ><v-col v-if="emergency">
         <span class="text-subtitle-1">Emergency diagnostics</span>
         <v-btn class="ml-10" icon @click="emailDiagnostics"
@@ -205,15 +213,7 @@
       :confirmationMessage="confirmationMessage"
       :bottome="confBottom"
     />
-
-    <!-- <status-card
-      v-if="ready && showStatus"
-      :status="status"
-      :toggleStatus="toggleStatus"
-      :copyStatus="copyStatus"
-      :cutStatus="cutStatus"
-    ></status-card> -->
-  </v-container>
+  </v-sheet>
 </template>
 
 <script>
@@ -334,7 +334,8 @@ export default {
   },
   data() {
     return {
-      savedMapCenter: this.defaultMapCenter,
+      diagnosticsOpened: false,
+      savedMapCenter: false,
       emergency: false,
       msg: [],
       workplace: this.state.settings.workplace,
@@ -391,13 +392,16 @@ export default {
     Share
  */
   methods: {
+    openDiagnostics() {
+      this.emergency = this.diagnosticsOpened;
+    },
     changeMapCenter(val) {
       const center = val ? this.getMapCenter() : null;
       this.setDefaultMapCenter(center);
     },
     emailDiagnostics() {
       this.$clipboard(this.msg);
-      window.location = `mailto:mcorning@soteriaInstitute.org/?subject=Diagnostics&body=Paste copied text here, please.}`;
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
     },
     saveSpecial() {
       this.setSpecial({ workplace: this.workplace, shift: this.shift });
@@ -886,8 +890,7 @@ export default {
     },
     ready() {
       const query = this.$route.query;
-      this.emergency = query.d === 'true' || query.d === '1';
-
+      this.savedMapCenter = this.defaultMapCenter;
       this.msg.push('Map component ready');
       if (query.place_id) {
         console.log('Detected a shared event:', query.place_id);
@@ -913,6 +916,7 @@ export default {
           mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: ['roadmap', 'terrain'],
+            position: google.maps.ControlPosition.BOTTOM,
           },
           fullscreenControl: true,
           fullscreenControlOptions: {
@@ -951,6 +955,7 @@ body {
 .Map {
   width: 100vw;
   height: 88vh;
+  overflow-y: hidden;
 }
 .EmergencyW {
   width: 50vw;
