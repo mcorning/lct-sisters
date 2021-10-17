@@ -7,10 +7,10 @@
 
       <v-row>
         <!-- Visitor table -->
-        <v-col cols="3" v-if="hasVisitors">
-          <v-card-title>Visitor Warning of Exposure</v-card-title>
+        <v-col v-if="hasVisitors">
+          <v-card-title><h6>Visitor Exposure Warning</h6></v-card-title>
           <v-card-subtitle
-            >See who would be at risk if a selected visitor sent an Exposure
+            >See how many others would be at risk if you sent an Exposure
             Warning</v-card-subtitle
           >
           <v-card-title>
@@ -27,16 +27,16 @@
             :search="search"
             :headers="visitorHeaders"
             :items="visitors"
-            item-key="userID"
             :single-select="singleSelect"
             show-select
+            dense
+            mobile-breakpoint
           >
           </v-data-table>
         </v-col>
 
         <!-- Exposures table -->
         <v-col>
-          <v-card-title>Visitors At-Risk</v-card-title>
           <v-card-subtitle
             >These visitors shared the same spacetime with the selected visitor:
             {{ selectedUserID.userID }}</v-card-subtitle
@@ -79,22 +79,11 @@ export default {
   data() {
     return {
       singleSelect: true,
-      selected: [],
-      // spaceHeaders: [
-      //   {
-      //     text: 'Space name',
-      //     align: 'start',
-      //     sortable: true,
-      //     value: 'name',
-      //   },
-
-      //   { text: 'ID', value: 'id' },
-      // ],
+      selected: [{ userID: this.$socket.client.auth.userID }],
       visitorHeaders: [
         {
-          text: 'Visitor ID',
+          text: 'ID',
           align: 'start',
-          sortable: true,
           value: 'userID',
         },
       ],
@@ -102,14 +91,13 @@ export default {
         {
           text: 'Exposed Visitor ID',
           align: 'start',
-          sortable: true,
           value: 'userID',
         },
 
         { text: 'Visit Started', value: 'start' },
         { text: 'Space', value: 'space' },
       ],
-      search: '',
+      search: this.$socket.client.auth.userID,
 
       pVal: '',
       snackbar: false,
@@ -132,17 +120,6 @@ export default {
           label: 'All visitors exposed by this visitor',
           paramName: '',
         },
-        // {
-        //   query: 'matchWithParamsQuery',
-        //   label: 'Who was with this visitor',
-        //   paramName: 'userID',
-        // },
-
-        // {
-        //   query: 'matchAllNodesQuery',
-        //   label: 'Number of visitor and space nodes on the graph',
-        //   paramName: '',
-        // },
       ],
       ready: false,
     };
@@ -161,9 +138,11 @@ export default {
     exposures(n) {
       console.log('exposures in testCard.vue', JSON.stringify(n, null, 3));
     },
-    selected(n, o) {
-      console.log(`selectedChanged from: ${o} to: ${this.selectedUserID}`);
-      this.$emit('selectedChanged', this.selectedUserID);
+    selected() {
+      console.log(JSON.stringify(this.selected, null, 3));
+      if (this.selectedUserID) {
+        this.$emit('selectedChanged', this.selectedUserID);
+      }
     },
   },
   created() {},
@@ -171,6 +150,7 @@ export default {
   beforeUnmount() {},
 
   mounted() {
+    // this.selected=this.$socket.client.auth.userID
     console.log('\tTESTCARD mounted');
   },
 };
