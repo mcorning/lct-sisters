@@ -150,7 +150,7 @@ export default {
   beforeUnmount() {},
 
   mounted() {
-    // this.selected=this.$socket.client.auth.userID
+    this.$emit('selectedChanged', this.selectedUserID);
     console.log('\tTESTCARD mounted');
   },
 };

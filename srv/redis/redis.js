@@ -8,6 +8,8 @@
  *
  *  In development, Sandbox is default is default graph.
  */
+
+// See https://github.com/RedisGraph/redisgraph.js/blob/master/examples/redisGraphExample.js
 const RedisGraph = require('redisgraph.js').Graph;
 // require('../../src/fp/monads/EitherAsync');
 require('either-async');
@@ -259,9 +261,13 @@ function changeGraph(graphName) {
 }
 
 //#region LAB
-function logVisit(visit) {
-  const { visitId, userID, place, start, end, graphName } = visit;
+function logVisit(data) {
+  // const {visit, action}=data
+  const { visitId, userID, place, start, end, graphName } = data;
 
+  // if (action.edit) {
+  //   this.deleteVisit({loggedVisitId:visitId})
+  // }
   function escapeHtml(string) {
     return String(string).replace(/[&<>"'/]/g, function(s) {
       // here we just escape strings characters

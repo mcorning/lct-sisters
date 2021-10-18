@@ -137,7 +137,7 @@ export default {
       this.updateVisit(this.selectedEvent);
     },
 
-    // called by Calendar when logging or deleting a Visit
+    // called by Calendar when logging, editing, or deleting a Visit
     graph(deleteVisit) {
       if (deleteVisit) {
         this.onDeleteNode(
@@ -147,7 +147,10 @@ export default {
         // if we deleted the graph node, then we should delete the cache entry, too
         // but we assume the node delete operation succeeds. what if it doesn't?
         this.cache(true);
-        return;
+
+return;
+          
+        
       }
       // TODO actually, this poor man's polymorphism here feels like it needs a functional approach
       this.onLogVisit(this.selectedEvent);
@@ -193,6 +196,8 @@ export default {
         userID: this.$socket.client.auth.userID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
+      // console.log(highlight(`action: ${printJson(action)}`));
+      // const data={query, action}
       this.emitFromClient('logVisit', query, redisGraphCallback);
     },
 

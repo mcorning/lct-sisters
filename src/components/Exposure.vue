@@ -1,12 +1,5 @@
 <template>
   <v-sheet class="overflow-auto fill-height ">
-    <!-- unlogged Visits -->
-    <confirmation-snackbar
-      v-if="!hasUnloggedVisits && snackbar"
-      confirmationMessage="No unlogged Visits."
-    />
-    <!-- End unlogged Visits -->
-
     <v-container
       fluid
       class="fill-height "

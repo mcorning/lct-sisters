@@ -13,7 +13,7 @@
           </div>
         </v-expand-transition>
 
-        <v-btn text @click="$emit('enlargeQR')">
+        <v-btn class=text-right text @click="$emit('enlargeQR')">
           <v-icon>qr_code_2</v-icon>
         </v-btn>
       </v-toolbar>
@@ -23,10 +23,8 @@
       :currTimes="currTimes"
       :dateList="dateList"
       @closeDateTimeCard="onCloseDateTimeCard"
-      @updateDateTimes="onUpdateDateTimes"
     ></date-time-card>
     <v-card-actions>
-      <!-- <v-btn dark @click="noDateTime"> <v-icon>close</v-icon> </v-btn> -->
       <v-btn icon color="secondary" @click="deleteEvent">
         <v-icon>delete</v-icon>
       </v-btn>
@@ -108,7 +106,6 @@ export default {
     onCloseDateTimeCard(newDateTimes) {
       this.$emit('closeDateTimeCard', newDateTimes);
     },
-    onUpdateDateTimes() {},
     //#endregion called by date-time-card
 
     getmailToUri() {
@@ -118,7 +115,6 @@ export default {
     deleteEvent() {
       this.dirty = false;
       this.$emit('deleteEvent');
-      // this.$emit('noDateTime');
     },
 
     pick(index, editing, dirty) {
@@ -127,18 +123,7 @@ export default {
       this.dirty = dirty;
     },
 
-    newDateTime() {
-      this.dirty = false;
-      this.$emit('newDateTime', {
-        pickedDate: this.pickedDate,
-        pickedStartTime: this.pickedStartTime,
-        pickedEndTime: this.pickedEndTime,
-      });
-    },
-    noDateTime() {
-      this.dirty = false;
-      this.$emit('noDateTime');
-    },
+
     share() {
       this.dirty = false;
       this.$emit('share');

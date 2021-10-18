@@ -93,7 +93,15 @@
         </template>
       </v-calendar>
     </v-sheet>
-
+    <v-row no-gutters
+      ><v-col v-if="emergency">
+        <span class="text-subtitle-1">Diagnostics</span>
+        <v-btn class="ml-10" icon @click="emailDiagnostics"
+          ><v-icon>email</v-icon></v-btn
+        >
+        <pre>{{ diagnosticOutput }}</pre>
+      </v-col>
+    </v-row>
     <v-bottom-sheet v-model="seePickers" max-width="400">
       <v-sheet>
         <event-edit-card
@@ -101,8 +109,6 @@
           :selectedEventParsed="selectedEventParsed"
           :mailToUri="mailToUri"
           :isConnected="isConnected"
-          @newDateTime="onNewDateTime"
-          @noDateTime="seePickers = false"
           @logEvent="onLogEvent"
           @share="banner = true"
           @deleteEvent="onDeleteEvent"
@@ -206,6 +212,15 @@ export default {
     EventEditCard,
   },
   computed: {
+    diagnosticOutput() {
+      return this.diagnostics.join('\n');
+    },
+    checkEmergency() {
+      if (!this.emergency) {
+        return 'Map';
+      }
+      return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
+    },
     gatheringLabel() {
       return this.selectedEvent && this.selectedEvent.indoor
         ? 'Room '
@@ -307,6 +322,8 @@ export default {
   },
   data() {
     return {
+      emergency: true,
+      diagnostics: [],
       enlargeQR: false,
 
       showStatus: true,
@@ -373,6 +390,14 @@ export default {
   },
 
   methods: {
+    emailDiagnostics() {
+      this.$clipboard(this.msg);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+    },
+    log(diagnostic) {
+      this.diagnostics.push(diagnostic);
+    },
+
     toggleStatus() {
       this.showStatus = !this.showStatus;
     },
@@ -444,15 +469,14 @@ export default {
       this.makeDateTimes(newDateTimes);
       this.update('graph');
     },
-    onNewDateTime(newDateTimes) {
-      this.makeDateTimes(newDateTimes);
-      this.update('cache');
-    },
+
     onCloseDateTimeCard(dto) {
       if (dto) {
         this.selectedEvent.date = dto.date;
         this.selectedEvent.start = dto.start;
         this.selectedEvent.end = dto.end;
+        this.onUpdate('graph', this.selectedEvent, { edit: true });
+
         this.update('cache');
       }
       this.seePickers = false;
@@ -489,8 +513,7 @@ export default {
     },
 
     delete(target) {
-      const deleteVisit = true;
-      this.onUpdate(target, this.selectedEvent, deleteVisit);
+      this.onUpdate(target, this.selectedEvent, { delete: true });
       this.selectedOpen = false;
     },
     update(target) {
@@ -639,35 +662,37 @@ export default {
       this.snackbarPrompt = false;
     },
 
-    promptToLog(data) {
+    // used all the time now to ensure every event is logged to the graph
+    promptOrLog(data) {
+      this.log('0) promptOrLog(data):');
+      this.log(printJson(data));
       if (this.isConnected && data) {
+        this.selectedEvent = data; //this.$route.params;
+        this.log('1) Logging unlogged event');
+        // in Model.vue
+        this.onUpdate('graph', this.selectedEvent);
+      }
+      if (this.$route.params.id) {
         this.selectedEvent = this.$route.params;
-        this.update('graph');
-        // const { name, date } = data;
-        // this.prompt = `Log ${
-        //   data.shared ? 'shared' : ''
-        // } event (${name} on ${date})?`;
-        // this.snackbarPrompt = true;
+        this.log('1) Logging new event');
+        // in Model.vue
+        this.onUpdate('graph', this.selectedEvent);
       } else {
+        this.log('1) Visitor is offline');
         this.confirmationColor = 'orange';
         this.confirmationMessage =
           'You are offline. We will log your visit as soon as you get connected.';
         this.snackbar = true;
       }
     },
-    // logSharedVisit(query) {
-    //   this.promptToLog(query);
-    // },
-    logVisitNow(unlogged) {
-      this.promptToLog(unlogged);
-    },
+
     findUnloggedVisits() {
       head(
         this.relevantEvents.filter(
           (v) => !v.loggedVisitId && !inFuture(v.start)
         )
       ).cata({
-        Just: (unlogged) => this.logVisitNow(unlogged),
+        Just: (unlogged) => this.promptOrLog(unlogged),
         Nothing: (err) => {
           this.setStatus(err);
         },
@@ -796,5 +821,13 @@ export default {
 .Calendar {
   width: 100vw;
   height: 80vh;
+}
+.EmergencyW {
+  width: 50vw;
+  height: 88vh;
+}
+.EmergencyH {
+  width: 100vw;
+  height: 50vh;
 }
 </style>

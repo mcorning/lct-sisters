@@ -138,10 +138,6 @@ export default {
     };
   },
   methods: {
-    noDateTime() {
-      this.dirty = false;
-      this.$emit('noDateTime');
-    },
     close() {
       this.$emit('closeDateTimeCard');
     },

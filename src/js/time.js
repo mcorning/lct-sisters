@@ -28,7 +28,7 @@ export const timeMixin = {
         graphName,
         color: 'primary', // use parameter if we need a different color for Sandbox graph
       };
-      console.log('updateVisitOnGraph() data:', data);
+      console.log('updateLoggedVisitId() data:', data);
 
       // this is the original EitherAsync used by the pre refactored Model.visitLogged()
       Visit.updateLoggedVisitId(data)
@@ -61,7 +61,7 @@ export const timeMixin = {
         graphName,
         color: 'primary', // use parameter if we need a different color for Sandbox graph
       };
-      console.log('updateVisitOnGraph() data:', data);
+      console.log('updateLoggedVisitIdOld() data:', data);
 
       // this is the original EitherAsync used by the pre refactored Model.visitLogged()
       Visit.updateLoggedVisitId(data)
