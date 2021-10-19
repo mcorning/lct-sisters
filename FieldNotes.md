@@ -1,5 +1,29 @@
 # Field Notes
 
+## Alert Protocol
+
+```
+MATCH (carrier:visitor{userID:'f7e7d622acece46e'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+    WHERE ((e.start>=c.start AND e.end>=c.end)
+    OR (e.start<=c.start AND e.end>=c.start)
+    OR (e.start<= c.start AND e.end>=c.end))
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)
+
+no info
+
+MATCH (carrier:visitor{userID:'f7e7d622acece46e'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)
+WHERE (e.end>=c.start OR e.start>= c.end)
+AND exposed.userID <> carrier.userID 
+RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)
+
+
+```
+exposed.userID | id(exposed) s.name | id(s) | c.start | c.end | id(c) | e.start | e.end | id(e)
+---------------|--------------------|-------|---------|-------|-------|---------|-------|------
+2ebbb7d06677456a | 94 | Fika Sisters Coffeehouse 18 | 1634598005865 | 1634616005865 | 34 | 1634603400000 1634605200000 64
+9b7c302f6f1b1fa4 | 98 | Fika Sisters Coffeehouse 18 | 1634598005865 | 1634616005865 | 34 | 1634603400000 1634605200000 36
+
 ## Workflows
 
 ### Share events

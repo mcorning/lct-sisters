@@ -22,6 +22,7 @@ const {
   highlight,
   success,
 } = require('../../src/utils/helpers');
+// const { DateTime } = require('../../src/utils/luxonHelpers');
 
 let options, currentGraphName, defaultGraphName;
 
@@ -69,6 +70,7 @@ module.exports = {
   matchNamedPathsQuery,
   matchAllNodesQuery,
   matchAllSpacesQuery,
+  matchQueryWithParamsQuery,
 };
 //#endregion Setup
 
@@ -137,6 +139,23 @@ async function matchNamedPathsQuery({ param, ack }) {
   }
 }
 
+async function matchQueryWithParamsQuery(data, ack) {
+  // TODO Research multiple params for redisgraph...
+  const { query, param } = data;
+  const { id, start, end } = param;
+  console.log('query:', query);
+  console.log('param:', param);
+  //...in the meantime, just use macros
+  const q = `MATCH ()-[v:visited]->() WHERE id(v)=${id} set v.start=${start}, v.end=${end}`;
+  console.log(q);
+  Graph.query(q).catch((e) =>
+    console.log('error in matchQueryWithParamsQuery():', e)
+  );
+
+  if (ack) {
+    ack({ msg: 'Query complete' });
+  }
+}
 async function matchWithParamsQuery(param, ack) {
   console.log(param);
 
@@ -372,7 +391,11 @@ function onExposureWarning(userID) {
 
   const getQuery = (userID) => {
     return `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
-    WHERE (e.end>=c.start OR e.start>= c.end) 
+    WHERE 
+    ((e.start>=c.start AND e.end<=c.end) OR
+    (e.start<=c.start AND e.end>=c.start) OR 
+    (e.start<= c.start AND e.end>=c.end) OR
+    (e.start<=c.start AND e.end>=c.end) )
     AND exposed.userID <> carrier.userID    
     RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
   };

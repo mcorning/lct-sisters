@@ -429,6 +429,7 @@ return;
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
+      updateVisitOnGraphWithParm:this.updateVisitOnGraphWithParm,
 
       //Warning assets
       visitCount: this.visitCount,

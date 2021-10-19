@@ -1,185 +1,180 @@
 <template>
-  <v-container fluid id="calendarDiv" class=" fill-height" width="100%">
-    <v-dialog v-model="enlargeQR" width="500">
-      <v-card>
-        <v-card-title>Event QR</v-card-title>
-        <v-card-text>
-          <v-row justify="space-around">
-            <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
-            </VueQRCodeComponent>
-          </v-row>
-        </v-card-text>
-        <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
-        <v-card-text class="text-caption">{{ decodedUri }}</v-card-text>
+  <v-row no-gutters>
+    <v-col fluid id="calendarDiv" class=" fill-height">
+      <v-toolbar flat>
+        <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
+        <v-btn fab text small color="grey darken-2" @click="prev">
+          <v-icon> mdi-chevron-left </v-icon>
+        </v-btn>
+        <v-btn fab text small color="grey darken-2" @click="next">
+          <v-icon> mdi-chevron-right </v-icon>
+        </v-btn>
+        <v-toolbar-title v-if="cal">
+          {{ cal.title }}
+        </v-toolbar-title>
+        <v-spacer></v-spacer>
 
-        <v-divider></v-divider>
+        <v-menu bottom right>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
+              <span>{{ typeToLabel[type] }}</span>
+              <v-icon right> mdi-menu-down </v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="type = 'category'">
+              <v-list-item-title>Work</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="type = 'day'">
+              <v-list-item-title>Day</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="type = '4day'">
+              <v-list-item-title>4 days</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="type = 'week'">
+              <v-list-item-title>Week</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="type = 'month'">
+              <v-list-item-title>Month</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </v-toolbar>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn @click="enlargeQR = false"><v-icon>close</v-icon></v-btn>
-          <v-spacer />
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-toolbar flat>
-      <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
-      <v-btn fab text small color="grey darken-2" @click="prev">
-        <v-icon> mdi-chevron-left </v-icon>
-      </v-btn>
-      <v-btn fab text small color="grey darken-2" @click="next">
-        <v-icon> mdi-chevron-right </v-icon>
-      </v-btn>
-      <v-toolbar-title v-if="cal">
-        {{ cal.title }}
-      </v-toolbar-title>
-      <v-spacer></v-spacer>
+      <v-sheet class="Calendar">
+        <v-calendar
+          id="calendar-target"
+          ref="calendar"
+          v-model="focus"
+          :events="relevantEvents"
+          color="primary"
+          :type="type"
+          :categories="categories"
+          :event-color="getEventColor"
+          :now="currentDate"
+          :first-time="firstTime"
+          :interval-minutes="intervalMinutes"
+          :interval-count="intervalCount"
+          @click:more="viewDay"
+          @click:date="viewDay"
+          @click:event="showEvent"
+          @change="onChange"
+        >
+          <template v-slot:event="{ timed, eventSummary }">
+            <div class="v-event-draggable" v-html="eventSummary()"></div>
+            <div v-if="timed" class="v-event-drag-bottom"></div>
+          </template>
+          <template #day-body="{ date, week }">
+            <div
+              class="v-current-time"
+              :class="{ first: date === week[0].date }"
+              :style="{ top: nowY }"
+            ></div>
+          </template>
+        </v-calendar>
+      </v-sheet>
 
-      <v-menu bottom right>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn outlined color="grey darken-2" v-bind="attrs" v-on="on">
-            <span>{{ typeToLabel[type] }}</span>
-            <v-icon right> mdi-menu-down </v-icon>
+      <v-bottom-sheet v-model="seePickers" max-width="400">
+        <v-sheet>
+          <event-edit-card
+            v-if="!banner"
+            :selectedEventParsed="selectedEventParsed"
+            :mailToUri="mailToUri"
+            :isConnected="isConnected"
+            @logEvent="onLogEvent"
+            @share="banner = true"
+            @deleteEvent="onDeleteEvent"
+            @enlargeQR="enlargeQR = true"
+            @closeDateTimeCard="onCloseDateTimeCard"
+          ></event-edit-card>
+
+          <!-- this opens up when the Description field -->
+          <v-banner v-model="banner">
+            <v-row class="mt-0" no-gutters>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="room"
+                  dense
+                  clearable
+                  :label="gatheringLabel"
+                  :hint="gatheringHint"
+                ></v-text-field> </v-col
+            ></v-row>
+            <v-divider></v-divider>
+            <v-row no-gutters>
+              <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
+              <v-spacer />
+              <v-btn color="green" text input-value @click="emailEvent">
+                Email
+              </v-btn>
+            </v-row>
+          </v-banner>
+        </v-sheet>
+      </v-bottom-sheet>
+
+      <v-dialog v-model="enlargeQR" width="500">
+        <v-card>
+          <v-card-title>Event QR</v-card-title>
+          <v-card-text>
+            <v-row justify="space-around">
+              <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+              </VueQRCodeComponent>
+            </v-row>
+          </v-card-text>
+          <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
+          <v-card-text class="text-caption">{{ decodedUri }}</v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn @click="enlargeQR = false"><v-icon>close</v-icon></v-btn>
+            <v-spacer />
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-snackbar
+        v-model="snackbar"
+        top
+        :color="confirmationColor"
+        timeout="15000"
+      >
+        <span v-html="confirmationMessage" />
+        <template v-slot:action="{ attrs }">
+          <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
+            Thanks
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item @click="type = 'category'">
-            <v-list-item-title>Work</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="type = 'day'">
-            <v-list-item-title>Day</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="type = '4day'">
-            <v-list-item-title>4 days</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="type = 'week'">
-            <v-list-item-title>Week</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="type = 'month'">
-            <v-list-item-title>Month</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-    </v-toolbar>
+      </v-snackbar>
 
-    <v-sheet class="Calendar">
-      <v-calendar
-        id="calendar-target"
-        ref="calendar"
-        v-model="focus"
-        :events="relevantEvents"
+      <v-snackbar
+        v-model="snackbarPrompt"
+        centered
+        vertical
+        height="100px"
         color="primary"
-        :type="type"
-        :categories="categories"
-        :event-color="getEventColor"
-        :now="currentDate"
-        :first-time="firstTime"
-        :interval-minutes="intervalMinutes"
-        :interval-count="intervalCount"
-        @click:more="viewDay"
-        @click:date="viewDay"
-        @click:event="showEvent"
-        @change="onChange"
       >
-        <template v-slot:event="{ timed, eventSummary }">
-          <div class="v-event-draggable" v-html="eventSummary()"></div>
-          <div v-if="timed" class="v-event-drag-bottom"></div>
+        {{ prompt }}
+        <template v-slot:action="{ attrs }">
+          <v-btn text v-bind="attrs" @click.stop="updateSharedVisit">
+            <v-icon>check</v-icon>
+          </v-btn>
+          <v-btn icon class="ml-4" @click="snackbarPrompt = false">
+            <v-icon>close</v-icon>
+          </v-btn>
         </template>
-        <template #day-body="{ date, week }">
-          <div
-            class="v-current-time"
-            :class="{ first: date === week[0].date }"
-            :style="{ top: nowY }"
-          ></div>
-        </template>
-      </v-calendar>
-    </v-sheet>
-    <v-row no-gutters
-      ><v-col v-if="emergency">
+      </v-snackbar>
+    </v-col>
+    <v-col v-if="emergency" no-gutters
+      ><v-col>
         <span class="text-subtitle-1">Diagnostics</span>
         <v-btn class="ml-10" icon @click="emailDiagnostics"
           ><v-icon>email</v-icon></v-btn
         >
         <pre>{{ diagnosticOutput }}</pre>
       </v-col>
-    </v-row>
-    <v-bottom-sheet v-model="seePickers" max-width="400">
-      <v-sheet>
-        <event-edit-card
-          v-if="!banner"
-          :selectedEventParsed="selectedEventParsed"
-          :mailToUri="mailToUri"
-          :isConnected="isConnected"
-          @logEvent="onLogEvent"
-          @share="banner = true"
-          @deleteEvent="onDeleteEvent"
-          @enlargeQR="enlargeQR = true"
-          @closeDateTimeCard="onCloseDateTimeCard"
-        ></event-edit-card>
-
-        <!-- this opens up when the Description field -->
-        <v-banner v-model="banner">
-          <v-row class="mt-0" no-gutters>
-            <v-col cols="12">
-              <v-text-field
-                v-model="room"
-                dense
-                clearable
-                :label="gatheringLabel"
-                :hint="gatheringHint"
-              ></v-text-field> </v-col
-          ></v-row>
-          <v-divider></v-divider>
-          <v-row no-gutters>
-            <v-btn color="red" text @click="banner = false">Dismiss </v-btn>
-            <v-spacer />
-            <v-btn color="green" text input-value @click="emailEvent">
-              Email
-            </v-btn>
-          </v-row>
-        </v-banner>
-      </v-sheet>
-    </v-bottom-sheet>
-
-    <v-snackbar
-      v-model="snackbar"
-      top
-      :color="confirmationColor"
-      timeout="15000"
-    >
-      <span v-html="confirmationMessage" />
-      <template v-slot:action="{ attrs }">
-        <v-btn color="black" text v-bind="attrs" @click="snackbar = false">
-          Thanks
-        </v-btn>
-      </template>
-    </v-snackbar>
-
-    <v-snackbar
-      v-model="snackbarPrompt"
-      centered
-      vertical
-      height="100px"
-      color="primary"
-    >
-      {{ prompt }}
-      <template v-slot:action="{ attrs }">
-        <v-btn text v-bind="attrs" @click.stop="updateSharedVisit">
-          <v-icon>check</v-icon>
-        </v-btn>
-        <v-btn icon class="ml-4" @click="snackbarPrompt = false">
-          <v-icon>close</v-icon>
-        </v-btn>
-      </template>
-    </v-snackbar>
-
-    <status-card
-      v-if="showStatus"
-      :status="status"
-      :toggleStatus="toggleStatus"
-      :copyStatus="copyStatus"
-      :cutStatus="cutStatus"
-    ></status-card>
-  </v-container>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
@@ -188,7 +183,6 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
-import StatusCard from './cards/statusCard.vue';
 import { printJson } from '@/utils/helpers';
 
 export default {
@@ -205,10 +199,10 @@ export default {
     usernumber: Number,
     getVisits: Function,
     isConnected: Boolean,
+    updateVisitOnGraphWithParm: Function,
   },
   components: {
     VueQRCodeComponent,
-    StatusCard,
     EventEditCard,
   },
   computed: {
@@ -217,7 +211,7 @@ export default {
     },
     checkEmergency() {
       if (!this.emergency) {
-        return 'Map';
+        return 'Calendar';
       }
       return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
     },
@@ -322,7 +316,7 @@ export default {
   },
   data() {
     return {
-      emergency: true,
+      emergency: false,
       diagnostics: [],
       enlargeQR: false,
 
@@ -419,24 +413,8 @@ export default {
     openBanner() {
       this.banner = true;
       this.qrText = document.getElementById('qr');
-      // this.getClipboard();
     },
-    // getClipboard() {
-    //   var btn = document.getElementById('copyBtn');
-    //   var clipboard = new ClipboardJS(btn, {
-    //     text: function(trigger) {
-    //       return trigger.getAttribute('aria-label');
-    //     },
-    //   });
 
-    //   clipboard.on('success', function(e) {
-    //     console.log(e);
-    //   });
-
-    //   clipboard.on('error', function(e) {
-    //     console.log(e);
-    //   });
-    // },
     copy: (e) => {
       alert('You just copied: ' + e.text);
     },
@@ -471,13 +449,24 @@ export default {
     },
 
     onCloseDateTimeCard(dto) {
+      const { date, start, end } = dto;
       if (dto) {
-        this.selectedEvent.date = dto.date;
-        this.selectedEvent.start = dto.start;
-        this.selectedEvent.end = dto.end;
-        this.onUpdate('graph', this.selectedEvent, { edit: true });
-
+        this.selectedEvent.date = date;
+        this.selectedEvent.start = start;
+        this.selectedEvent.end = end;
         this.update('cache');
+
+        const id = this.selectedEvent.loggedVisitId;
+        const query = [
+          'MATCH ()-[v:visited]->()',
+          'WHERE id(v)=$id',
+          'set v.start=$start, v.end=$end',
+        ];
+        const param = { id, start, end };
+        this.log(printJson(param));
+        this.updateVisitOnGraphWithParm(query, param, (msg) => {
+          this.log(msg);
+        });
       }
       this.seePickers = false;
     },
@@ -523,6 +512,10 @@ export default {
       this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
     },
+    onStateAvailable() {
+      console.log('onStateAvailable for all components');
+    },
+    //#region Calendar controls functions
 
     scrollToTime() {
       const time = this.getCurrentTime();
@@ -535,9 +528,6 @@ export default {
       this.scrollToTime();
     },
 
-    onStateAvailable() {
-      console.log('onStateAvailable for all components');
-    },
     configureCalendar() {
       // TODO Refactor if block to use grid under calendar for workers only
       if (this.isCategoryCalendar && this.isTakingAppointments) {
@@ -560,7 +550,6 @@ export default {
         this.tip = 'Stay safe out there...';
       }
     },
-    //#region Calendar controls functions
     viewDay({ date }) {
       this.focus = date;
       console.log(`Going to ${date}`);
@@ -663,26 +652,20 @@ export default {
     },
 
     // used all the time now to ensure every event is logged to the graph
-    promptOrLog(data) {
-      this.log('0) promptOrLog(data):');
-      this.log(printJson(data));
-      if (this.isConnected && data) {
-        this.selectedEvent = data; //this.$route.params;
-        this.log('1) Logging unlogged event');
-        // in Model.vue
-        this.onUpdate('graph', this.selectedEvent);
-      }
-      if (this.$route.params.id) {
-        this.selectedEvent = this.$route.params;
-        this.log('1) Logging new event');
-        // in Model.vue
-        this.onUpdate('graph', this.selectedEvent);
-      } else {
-        this.log('1) Visitor is offline');
+    start(data) {
+      if (!this.isConnected) {
+        this.log('0) Visitor is offline');
         this.confirmationColor = 'orange';
         this.confirmationMessage =
           'You are offline. We will log your visit as soon as you get connected.';
         this.snackbar = true;
+      }
+      if (data) {
+        this.log('1) Logging an event');
+        this.log(printJson(data));
+        this.selectedEvent = data;
+        // in Model.vue
+        this.onUpdate('graph', this.selectedEvent);
       }
     },
 
@@ -692,7 +675,7 @@ export default {
           (v) => !v.loggedVisitId && !inFuture(v.start)
         )
       ).cata({
-        Just: (unlogged) => this.promptOrLog(unlogged),
+        Just: (unlogged) => this.start(unlogged),
         Nothing: (err) => {
           this.setStatus(err);
         },

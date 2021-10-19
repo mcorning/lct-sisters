@@ -139,34 +139,34 @@ export default {
   },
   methods: {
     close() {
-      this.$emit('closeDateTimeCard');
+      this.$emit('closeDateTimeCard',0);
     },
     update() {
       // send the date as string
       // create ms for start and end based on picker
       const dt = DateTime.fromISO(this.dateStruct.dateString);
-      const start = dt
-        .set({
-          hours:
-            this.dateStruct.start.amPm === 'PM'
-              ? Number(this.dateStruct.start.hr) + 12
-              : this.dateStruct.start.hr,
-          minutes: this.dateStruct.start.min,
-        })
-        .toMillis();
-      const end = dt
-        .set({
-          hours:
-            this.dateStruct.end.amPm === 'PM'
-              ? Number(this.dateStruct.end.hr) + 12
-              : this.dateStruct.end.hr,
-          minutes: this.dateStruct.end.min,
-        })
-        .toMillis();
+      const start = dt.set({
+        hours:
+          this.dateStruct.start.amPm === 'PM'
+            ? Number(this.dateStruct.start.hr) + 12
+            : this.dateStruct.start.hr,
+        minutes: this.dateStruct.start.min,
+      });
+      const end = dt.set({
+        hours:
+          this.dateStruct.end.amPm === 'PM'
+            ? Number(this.dateStruct.end.hr) + 12
+            : this.dateStruct.end.hr,
+        minutes: this.dateStruct.end.min,
+      });
+      console.log(
+        start.toLocaleString(DateTime.TIME_SIMPLE),
+        end.toLocaleString(DateTime.TIME_SIMPLE)
+      );
       this.$emit('closeDateTimeCard', {
         date: dt.toLocaleString(),
-        start,
-        end,
+        start: start.toMillis(),
+        end: end.toMillis(),
       });
     },
 

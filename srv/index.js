@@ -36,7 +36,7 @@ const {
   printNow,
   getNow,
 } = require('../src/utils/helpers.js');
-
+// const { DateTime } = require('../src/utils/luxonHelpers');
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');
 
@@ -57,6 +57,7 @@ const {
   onExposureWarning,
   getVisitors,
   getExposures,
+  matchQueryWithParamsQuery,
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache2');
@@ -224,6 +225,13 @@ io.on('connection', (socket) => {
         });
       })
       .catch((error) => console.error(error));
+  });
+
+  socket.on('updateVisit', ({ query, param }, ack) => {
+    matchQueryWithParamsQuery({ query, param }, ack);
+    if (ack) {
+      ack();
+    }
   });
 
   socket.on('logVisit', (data, ack) => {
