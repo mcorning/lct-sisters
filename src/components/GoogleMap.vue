@@ -748,6 +748,7 @@ export default {
             locality = poi.address_components.find((v) =>
               v.types.includes('postal_town')
             );
+            this.msg.push(printJson(locality));
             if (!locality) {
               this.msg.push('Listing available address_component types:');
               this.msg.push(
