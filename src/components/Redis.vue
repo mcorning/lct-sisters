@@ -1,6 +1,10 @@
 <template>
   <div>
-    <test-card :visitors="visitors" :exposures="exposures" @selectedChanged=onSelectedChanged></test-card>
+    <test-card
+      :visitors="visitors"
+      :exposures="exposures"
+      @selectedChanged="onSelectedChanged"
+    ></test-card>
   </div>
 </template>
 
@@ -18,14 +22,18 @@ export default {
       type: Function,
       require: true,
     },
+    getVisitedSpaces: {
+      type: Function,
+      require: true,
+    },
     visitors: Object,
     exposures: Object,
   },
   methods: {
     onSelectedChanged(userID) {
-    this.getExposures(userID);
-      
-    }
+      this.getExposures(userID);
+      this.getVisitedSpaces(userID);
+    },
   },
   mounted() {
     this.getVisitors();

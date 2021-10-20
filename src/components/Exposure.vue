@@ -152,6 +152,7 @@
 
     <confirmation-snackbar
       v-if="confSnackbar"
+      :centered="true"
       :confirmationMessage="confirmationMessage"
     />
   </v-sheet>

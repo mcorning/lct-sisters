@@ -1,11 +1,18 @@
 <template>
-  <Model @error="onError" @visitors="onVisitors" @exposures="onExposures">
-    <div slot-scope="{ getVisitors, getExposures }">
+  <Model
+    @error="onError"
+    @spaces="onSpaces"
+    @visitors="onVisitors"
+    @exposures="onExposures"
+  >
+    <div slot-scope="{ getVisitors, getExposures, getVisitedSpaces }">
       <redis
         :visitors="visitors"
         :exposures="exposures"
+        :spaces="spaces"
         :getVisitors="getVisitors"
         :getExposures="getExposures"
+        :getVisitedSpaces="getVisitedSpaces"
       />
     </div>
   </Model>
@@ -32,6 +39,7 @@ export default {
     return {
       visitors: {},
       exposures: {},
+      spaces: {},
       query: `MATCH p=()-[*]->() RETURN p`,
       ready: false,
     };
@@ -55,6 +63,11 @@ export default {
       this.exposures = results;
       console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
     },
+    onSpaces(res) {
+      const { msg, results } = res;
+      this.spaces = results;
+      console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
+    },
   },
 
   watch: {
@@ -64,6 +77,9 @@ export default {
     },
     exposures(n, o) {
       console.log('exposures', n, o);
+    },
+    spaces(n, o) {
+      console.log('spaces', n, o);
     },
   },
 

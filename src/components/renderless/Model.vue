@@ -148,9 +148,7 @@ export default {
         // but we assume the node delete operation succeeds. what if it doesn't?
         this.cache(true);
 
-return;
-          
-        
+        return;
       }
       // TODO actually, this poor man's polymorphism here feels like it needs a functional approach
       this.onLogVisit(this.selectedEvent);
@@ -194,6 +192,7 @@ return;
         end: end,
         graphName: this.getGraphName(),
         userID: this.$socket.client.auth.userID,
+        sessionID: this.sessionID
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
       // console.log(highlight(`action: ${printJson(action)}`));
@@ -429,7 +428,7 @@ return;
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
-      updateVisitOnGraphWithParm:this.updateVisitOnGraphWithParm,
+      updateVisitOnGraphWithParm: this.updateVisitOnGraphWithParm,
 
       //Warning assets
       visitCount: this.visitCount,
@@ -444,6 +443,7 @@ return;
       // Test assets
       getVisitors: this.getVisitors,
       getExposures: this.getExposures,
+      getVisitedSpaces: this.getVisitedSpaces,
     });
   },
 };

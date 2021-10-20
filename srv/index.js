@@ -57,20 +57,23 @@ const {
   onExposureWarning,
   getVisitors,
   getExposures,
+  getVisitedSpaces,
   matchQueryWithParamsQuery,
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache2');
 
+// TODO experiment: moving sessionID store from RedisJson to RedisGraph
+// TODO this code was unreliable with frequent craches
 // high-order function to handle safe creation of sessions cache
-let setCache = function(key, path, node) {
-  return cache.create(key, path, node).then(() => {
-    setCache = function(key, path, node) {
-      return cache.add(key, path, node);
-    };
-    return setCache;
-  });
-};
+// let setCacheBad = function(key, path, node) {
+//   return cache.create(key, path, node).then(() => {
+//     setCache = function(key, path, node) {
+//       return cache.add(key, path, node);
+//     };
+//     return setCache;
+//   });
+// };
 //#endregion
 
 console.log(getNow());
@@ -99,14 +102,15 @@ io.on('connection', (socket) => {
   );
   //#region Handling socket connection
   console.log(success('Client connected on socket ', socket.id));
-  const session = {
-    userID: newUserID,
-    username,
-    lastInteraction: new Date().toLocaleString(),
-    connected: true,
-  };
 
-  setCache('sessions', newSessionID, session);
+  // TODO experiment: moving sessionID store from RedisJson to RedisGraph
+  // const session = {
+  //   userID: newUserID,
+  //   username,
+  //   lastInteraction: new Date().toLocaleString(),
+  //   connected: true,
+  // };
+  // setCache('sessions', newSessionID, session);
 
   if (!sessionID) {
     console.log('Returning session data to client', newSessionID, newUserID);
@@ -311,26 +315,27 @@ io.on('connection', (socket) => {
       // update the connection status of the session
       // cache.printCache('sessions');
 
-      cache
-        .set('sessions', socket.sessionID, {
-          userID: socket.userID,
-          username: socket.username,
-          lastInteraction: new Date().toLocaleString(),
-          connected: false,
-        })
-        .then(() =>
-          cache
-            .filter('sessions', (v) => v[1].connected)
-            .then((online) => {
-              console.log(getNow());
-              console.log(
-                warn(
-                  `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-                )
-              );
-              console.log(printJson(online));
-            })
-        );
+      // TODO experiment: moving sessionID store from RedisJson to RedisGraph
+      // cache
+      //   .set('sessions', socket.sessionID, {
+      //     userID: socket.userID,
+      //     username: socket.username,
+      //     lastInteraction: new Date().toLocaleString(),
+      //     connected: false,
+      //   })
+      //   .then(() =>
+      //     cache
+      //       .filter('sessions', (v) => v[1].connected)
+      //       .then((online) => {
+      //         console.log(getNow());
+      //         console.log(
+      //           warn(
+      //             `There are ${online.length} online sessions after disconnecting ${socket.id}:`
+      //           )
+      //         );
+      //         console.log(printJson(online));
+      //       })
+      //   );
     }
   });
 
@@ -349,27 +354,28 @@ io.on('connection', (socket) => {
           // TODO add printCache to redisjsoncache2.js, if necessary
           // cache.printCache('sessions');
 
-          cache
-            .set('sessions', socket.sessionID, {
-              userID: socket.userID,
-              username: socket.username,
-              lastInteraction: new Date().toLocaleString(),
-              connected: false,
-            })
-            .then(() =>
-              cache
-                .filter('sessions', (v) => v[1].connected)
-                .then((online) => {
-                  console.log(getNow());
+          // TODO experiment: moving sessionID store from RedisJson to RedisGraph
+          // cache
+          //   .set('sessions', socket.sessionID, {
+          //     userID: socket.userID,
+          //     username: socket.username,
+          //     lastInteraction: new Date().toLocaleString(),
+          //     connected: false,
+          //   })
+          //   .then(() =>
+          //     cache
+          //       .filter('sessions', (v) => v[1].connected)
+          //       .then((online) => {
+          //         console.log(getNow());
 
-                  console.log(
-                    warn(
-                      `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-                    )
-                  );
-                  console.log(printJson(online));
-                })
-            );
+          //         console.log(
+          //           warn(
+          //             `There are ${online.length} online sessions after disconnecting ${socket.id}:`
+          //           )
+          //         );
+          //         console.log(printJson(online));
+          //       })
+          //   );
           console.groupEnd();
         }
       });
@@ -382,6 +388,9 @@ io.on('connection', (socket) => {
   });
   socket.on('getExposures', (param, ack) => {
     getExposures({ param, ack });
+  });
+  socket.on('getVisitedSpaces', (param, ack) => {
+    getVisitedSpaces(param, ack);
   });
 
   socket.on('testGraphX', (query, ack) => {

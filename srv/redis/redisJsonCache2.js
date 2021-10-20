@@ -157,6 +157,11 @@ function set(key, path, node) {
 }
 
 function create(key, path, node) {
+  console.log(key, path, node);
+}
+
+// TODO Investigate why isEmpty() can fail (often)
+function createBroken(key, path, node) {
   // confirm a null key before creating one (i.e., don't overwrite a cache)
   return isEmpty(key).then((canCreate) => {
     canCreate

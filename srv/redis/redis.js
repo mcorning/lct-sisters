@@ -57,6 +57,7 @@ console.log(info(`Redis Graph ${currentGraphName} opened`));
 module.exports = {
   currentGraphName,
   host,
+  getSessionID,
   deleteVisit,
   findExposedVisitors,
   changeGraph,
@@ -65,6 +66,7 @@ module.exports = {
   options,
   getVisitors,
   getExposures,
+  getVisitedSpaces,
   matchQuery,
   matchWithParamsQuery,
   matchNamedPathsQuery,
@@ -73,6 +75,43 @@ module.exports = {
   matchQueryWithParamsQuery,
 };
 //#endregion Setup
+function getSessionID(param, ack) {
+  const { userID } = param;
+  const q = `MATCH (v:visitor{userID:'${userID}'}) RETURN v.sessionID`;
+  Graph.query(q).then((res) => {
+    const sessionID = res.get('sessionID');
+    console.log('sessionID', sessionID);
+    if (ack) {
+      // test.js handles callback
+      ack({
+        msg: 'SessionID for ' + userID,
+        results: sessionID,
+      });
+    }
+  });
+}
+
+function getVisitedSpacesForUser(param, ack) {
+  const q = `MATCH p=(:visitor{userID:'${param.userID}'})-[v:visited]->(s:space) RETURN s.name`;
+  const s = new Set();
+  console.log(q);
+  Graph.query(q).then((res) => {
+    while (res.hasNext()) {
+      const record = res.next();
+      const space = record.get('s.name');
+      console.log(printJson(space));
+      s.add(space);
+    }
+    console.log([...s]);
+    if (ack) {
+      // test.js handles callback
+      ack({
+        msg: 'Names of public spaces visited by ' + param.userID,
+        results: [...s],
+      });
+    }
+  });
+}
 
 // TODO can we use the entityMap to escape html elsewhere (e.g., warning email)
 // and you should probably move this code to utils.js
@@ -111,12 +150,14 @@ async function matchNamedPathsQuery({ param, ack }) {
   console.log(param);
 
   // Named paths matching.
-  const q = [
-    'MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)',
-    'WHERE (e.end>=c.start OR e.start>= c.end)',
-    'AND exposed.userID <> carrier.userID ',
-    'RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)',
-  ].join('\n');
+  const q = `MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+    WHERE 
+    ((e.start>=c.start AND e.end<=c.end) OR
+    (e.start<=c.start AND e.end>=c.start) OR 
+    (e.start<= c.start AND e.end>=c.end) OR
+    (e.start<=c.start AND e.end>=c.end) )
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
   // let param = { userID: 'b6644acc815efb64' };
   const s = new Set();
 
@@ -125,8 +166,9 @@ async function matchNamedPathsQuery({ param, ack }) {
     const record = res.next();
     const userID = record.get('exposed.userID');
     const start = record.get('e.start');
+    const end = record.get('e.end');
     const space = record.get('s.name');
-    const payload = { userID, start, space };
+    const payload = { userID, start, end, space };
     console.log(printJson(payload));
     s.add(payload);
   }
@@ -226,6 +268,9 @@ function getVisitors(ack) {
 function getExposures({ param, ack }) {
   matchNamedPathsQuery({ param, ack });
 }
+function getVisitedSpaces(param, ack) {
+  getVisitedSpacesForUser(param, ack);
+}
 
 // test.js handles tha ack for the client
 // function getTest({ query, param }, ack) {
@@ -282,7 +327,7 @@ function changeGraph(graphName) {
 //#region LAB
 function logVisit(data) {
   // const {visit, action}=data
-  const { visitId, userID, place, start, end, graphName } = data;
+  const { visitId, userID, place, start, end, graphName, sessionID } = data;
 
   // if (action.edit) {
   //   this.deleteVisit({loggedVisitId:visitId})
@@ -300,10 +345,12 @@ function logVisit(data) {
   }
 
   // Graph.query() arg
-  const query = `MERGE (v:visitor{  userID: '${userID}'}) 
+  const query = `MERGE (v:visitor{  userID: '${userID}', sessionID:'${sessionID}'}) 
       MERGE (s:space{ name: '${escapeHtml(place)}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
+  console.log('logVisit():');
+  console.log(query);
 
   // OK event handler that converts redis results into lct object
   function returnResults(results) {

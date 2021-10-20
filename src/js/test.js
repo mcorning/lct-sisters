@@ -45,5 +45,25 @@ export const testMixin = {
         }
       );
     },
+
+    getVisitedSpaces(userID) {
+      this.emitFromClient(
+        'getVisitedSpaces',
+        userID,
+        // and handle the callback
+        (res) => {
+          const { msg, results } = res;
+          if (Array.isArray(results)) {
+            console.log(success(`${msg}:`));
+            results.forEach((element) => {
+              console.log(printJson(element));
+            });
+          } else {
+            console.log(success(`${msg}:`, results));
+          }
+          this.$emit('spaces', res);
+        }
+      );
+    },
   },
 };

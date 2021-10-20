@@ -21,6 +21,8 @@
               single-line
               hide-details
             ></v-text-field>
+            Spaces Visited:
+            <pre>{{ visitedSpaces }}</pre>
           </v-card-title>
           <v-data-table
             v-model="selected"
@@ -41,15 +43,18 @@
             >These visitors shared the same spacetime with the selected visitor:
             {{ selectedUserID.userID }}</v-card-subtitle
           >
-
           <v-data-table
             v-if="hasExposures"
             :headers="exposureHeaders"
             :items="exposures"
             group-by="userID"
             ><template v-slot:[`item.start`]="{ item }">
-              <v-subheader v-text="getDate(item.start)" /> </template
-          ></v-data-table>
+              <v-subheader v-text="getDate(item.start)" />
+            </template>
+            <template v-slot:[`item.end`]="{ item }">
+              <v-subheader v-text="getDate(item.end)" />
+            </template>
+          </v-data-table>
         </v-col>
       </v-row>
     </v-card>
@@ -57,13 +62,25 @@
 </template>
 
 <script>
+import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
+
 // Redis.vue calls this card
+// visitors
+// exposures
 export default {
   name: 'testCard',
-  props: { visitors: Object, exposures: Object },
+  props: {
+    visitors: Object,
+    exposures: Object,
+    spaces: Object,
+  },
   components: {},
 
   computed: {
+    visitedSpaces() {
+      const x = this.spaces;
+      return x;
+    },
     selectedUserID() {
       const userID = this.selected.length > 0 ? this.selected[0] : '';
       return userID;
@@ -93,9 +110,9 @@ export default {
           align: 'start',
           value: 'userID',
         },
-
-        { text: 'Visit Started', value: 'start' },
         { text: 'Space', value: 'space' },
+        { text: 'Start', value: 'start' },
+        { text: 'End', value: 'end' },
       ],
       search: this.$socket.client.auth.userID,
 
@@ -127,7 +144,14 @@ export default {
 
   methods: {
     getDate(ms) {
-      return new Date(ms).toString();
+      try {
+        const dt = formatSmallTime(ms);
+        console.log('dt',dt);
+        return dt;
+      } catch (e) {
+        console.log(e);
+        return '';
+      }
     },
   },
 
@@ -137,6 +161,9 @@ export default {
     },
     exposures(n) {
       console.log('exposures in testCard.vue', JSON.stringify(n, null, 3));
+    },
+    spaces(n) {
+      console.log('spaces in testCard.vue', JSON.stringify(n, null, 3));
     },
     selected() {
       console.log(JSON.stringify(this.selected, null, 3));
