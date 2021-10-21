@@ -22,17 +22,13 @@ export default {
       type: Function,
       require: true,
     },
-    getVisitedSpaces: {
-      type: Function,
-      require: true,
-    },
+    
     visitors: Object,
     exposures: Object,
   },
   methods: {
     onSelectedChanged(userID) {
       this.getExposures(userID);
-      this.getVisitedSpaces(userID);
     },
   },
   mounted() {

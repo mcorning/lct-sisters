@@ -26,7 +26,7 @@ const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
 const {
   printJson,
-  // err,
+  err,
   warn,
   highlight,
   info,
@@ -62,6 +62,43 @@ const {
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache2');
+cache.connectCache(true).then(() => {
+  console.log(getNow());
+  console.log('RedisGraph host:', host);
+  console.log('Node sees Exposure graph:', special(currentGraphName), '\n');
+});
+
+const getPendingAlerts = (newUserID, socketId) => {
+  const message = `Checking pending alerts for ${newUserID}...`;
+
+  const get = (newUserID, socketId, message) => {
+    cache.get('alerts', newUserID, message).then((alert) => {
+      if (!alert) return;
+
+      // sending to individual socketid (private message)
+      io.to(socketId).emit('exposureAlert', alert.riskScore);
+      cache.del('alerts', newUserID);
+    });
+  };
+
+  try {
+    get(newUserID, socketId, message);
+  } catch (error) {
+    cache.connectCache().then(() => {
+      get(newUserID, socketId, message);
+    });
+  }
+};
+const deleteCacheItem = (key, to) => {
+  // cache.connectCache().then(() => {
+  cache.del(key, to);
+  // });
+};
+const setCacheItem = (key, to, val) => {
+  // cache.connectCache().then(() => {
+  cache.set(key, to, val);
+  // });
+};
 
 // TODO experiment: moving sessionID store from RedisJson to RedisGraph
 // TODO this code was unreliable with frequent craches
@@ -76,10 +113,6 @@ const cache = require('./redis/redisJsonCache2');
 // };
 //#endregion
 
-console.log(getNow());
-console.log('RedisGraph host:', host);
-console.log('Node sees Exposure graph:', special(currentGraphName), '\n');
-
 const server = express()
   .use(serveStatic(dirPath))
   .use('*', (req, res) => res.sendFile(dirPath + '/index.html'))
@@ -93,7 +126,16 @@ const io = socketIO(server);
 io.on('connection', (socket) => {
   const { sessionID, userID, username, usernumber } = socket.handshake.auth;
 
-  console.log(sessionID, userID, username, usernumber);
+  console.log(
+    'sessionID:',
+    sessionID,
+    'userID:',
+    userID,
+    'username:',
+    username,
+    'usernumber:',
+    usernumber
+  );
   const newSessionID = sessionID || randomId(); // these values gets attached to the socket so the client knows which session has their data and messages
   const newUserID = userID || randomId();
 
@@ -135,26 +177,8 @@ io.on('connection', (socket) => {
   //   alertsCache.delete(newUserID);
   //   alertsCache.print();
   // }
-  cache.get('alerts', newUserID).then((alert) => {
-    if (!alert) return;
-
-    // sending to individual socketid (private message)
-    io.to(socket.id).emit('exposureAlert', alert.riskScore);
-    cache.del('alerts', newUserID);
-  });
+  getPendingAlerts(newUserID, socket.id);
   //#endregion Handling socket connection
-
-  //#region Handling Users
-
-  // TODO restore?
-  // fetch existing users
-  // const users = sessionCache.all();
-  // send users back to client so they know how widespread LCT usage is
-  // (the more users are active, the safer the community)
-  // socket.emit('users', [...users]);
-  // const onlineUsers = users.filter((v) => v[1].connected);
-  // console.group(`There are ${onlineUsers.length} online users:`);
-  // console.log(printJson(onlineUsers));
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
   socket.broadcast.emit('userConnected', {
@@ -166,27 +190,14 @@ io.on('connection', (socket) => {
   console.log(
     '============================ io.on(connection) ================================='
   );
-  //#endregion Handling Users
 
   //#region Visit API
-  // socket.on('exposureWarning')
-  // major function:
-  //  1) broadcasts message to all users (online only?) when a case of covid is found in the community
-  //  2) redisGraph queries for anyone connected to the positive case (ignoring the immunity some might have)
-  //  3) returns the number of possible exposures to positive case
   socket.on('exposureWarning', async (riskScore, ack) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
-    // do all connected visitors handle this event? i find no alertPending event handlers
-    // socket.broadcast.emit('alertPending', riskScore);
-
     // alerts is an array of userIDs
     const alertOthers = (socket, alerts, riskScore) => {
-      // TODO do we need this var and the cache.purge() below?
-      // not if we check expiration when we try to use it
-      // const msPerDay = 1000 * 60 * 60 * 24;
-
       const sendExposureAlert = (to, riskScore) => {
         console.log('Alerting:', to); // to is a userID (of the exposed visitor)
         socket.to(to).emit(
@@ -201,21 +212,14 @@ io.on('connection', (socket) => {
       alerts.forEach((to) => {
         if (io.sockets.adapter.rooms.has(to)) {
           sendExposureAlert(to, riskScore);
-          cache.del('alerts', to);
+          deleteCacheItem('alerts', to);
         } else {
-          cache.set('alerts', to, {
+          setCacheItem('alerts', to, {
             cached: new Date(),
             riskScore,
           });
         }
       });
-
-      // alertsCache
-      //   .purge((firstDate) => {
-      //     (Date.now() - new Date(firstDate).getTime()) / msPerDay > 14;
-      //   })
-      //   .then((purged) => console.log('Purged alertsCache of', purged))
-      //   .catch((err) => console.log('Purge alertsCache error:', err));
     };
 
     const userID = socket.handshake.auth.userID;
@@ -228,7 +232,7 @@ io.on('connection', (socket) => {
           );
         });
       })
-      .catch((error) => console.error(error));
+      .catch((error) => console.error(err(error)));
   });
 
   socket.on('updateVisit', ({ query, param }, ack) => {
@@ -266,7 +270,7 @@ io.on('connection', (socket) => {
         // ok: (results) => socket.emit('visitLogged', results),
         ok: (results) => handleAck(results),
         error: (results) => {
-          console.log(results, 'Issues calling redis.logVisit()');
+          console.error(err(results, 'Issues calling redis.logVisit()'));
         },
       });
   });
@@ -300,7 +304,7 @@ io.on('connection', (socket) => {
     errorCache.save();
     console.error('Incoming client_error!');
     errorCache.print(null, 'Errors:');
-    console.error('See the errors.json later for details.');
+    console.error(err('See the errors.json later for details.'));
   });
   //#endregion
 
@@ -312,30 +316,6 @@ io.on('connection', (socket) => {
       socket.emit('disconnected');
       // notify other users
       socket.broadcast.emit('user disconnected', socket.userID);
-      // update the connection status of the session
-      // cache.printCache('sessions');
-
-      // TODO experiment: moving sessionID store from RedisJson to RedisGraph
-      // cache
-      //   .set('sessions', socket.sessionID, {
-      //     userID: socket.userID,
-      //     username: socket.username,
-      //     lastInteraction: new Date().toLocaleString(),
-      //     connected: false,
-      //   })
-      //   .then(() =>
-      //     cache
-      //       .filter('sessions', (v) => v[1].connected)
-      //       .then((online) => {
-      //         console.log(getNow());
-      //         console.log(
-      //           warn(
-      //             `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-      //           )
-      //         );
-      //         console.log(printJson(online));
-      //       })
-      //   );
     }
   });
 
@@ -351,36 +331,12 @@ io.on('connection', (socket) => {
           socket.broadcast.emit('user disconnected', socket.userID);
           // update the connection status of the session
           console.group(`${socket.id} disconnecting`);
-          // TODO add printCache to redisjsoncache2.js, if necessary
-          // cache.printCache('sessions');
-
-          // TODO experiment: moving sessionID store from RedisJson to RedisGraph
-          // cache
-          //   .set('sessions', socket.sessionID, {
-          //     userID: socket.userID,
-          //     username: socket.username,
-          //     lastInteraction: new Date().toLocaleString(),
-          //     connected: false,
-          //   })
-          //   .then(() =>
-          //     cache
-          //       .filter('sessions', (v) => v[1].connected)
-          //       .then((online) => {
-          //         console.log(getNow());
-
-          //         console.log(
-          //           warn(
-          //             `There are ${online.length} online sessions after disconnecting ${socket.id}:`
-          //           )
-          //         );
-          //         console.log(printJson(online));
-          //       })
-          //   );
           console.groupEnd();
         }
       });
   });
   //#endregion
+  //"O8irXhpkZFLXxQo9AAAy"
 
   //#region Graph testing
   socket.on('getVisitors', (query, ack) => {
@@ -421,7 +377,7 @@ io.on('connection', (socket) => {
         // ok: (results) => socket.emit('visitLogged', results),
         ok: (results) => handleAck(results),
         error: (results) => {
-          console.log(results, 'Issues calling redis.logVisit()');
+          console.log(err(results, 'Issues calling redis.logVisit()'));
         },
       });
   });

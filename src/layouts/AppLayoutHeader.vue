@@ -9,7 +9,6 @@
         </template>
         <span>Click to share LCT</span>
       </v-tooltip>
-
       <v-spacer></v-spacer>
 
       {{ $version }}
@@ -87,7 +86,7 @@ export default {
       const t = this.$vuetify.breakpoint.xsOnly
         ? 'LCT'
         : 'Local Contact Tracing';
-      return this.namespace ? `${t}-${this.namespace}` : '';
+      return `${t} ${this.namespace ? `- ${this.namespace}` : ''}`;
     },
 
     namespace() {

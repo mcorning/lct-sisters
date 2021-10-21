@@ -142,43 +142,8 @@ function matchQuery(ack) {
       console.log(res.getStatistics().queryExecutionTime());
     })
     .catch((e) => {
-      console.log(e);
+      console.error(e);
     });
-}
-
-async function matchNamedPathsQuery({ param, ack }) {
-  console.log(param);
-
-  // Named paths matching.
-  const q = `MATCH (carrier:visitor{userID:$userID})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
-    WHERE 
-    ((e.start>=c.start AND e.end<=c.end) OR
-    (e.start<=c.start AND e.end>=c.start) OR 
-    (e.start<= c.start AND e.end>=c.end) OR
-    (e.start<=c.start AND e.end>=c.end) )
-    AND exposed.userID <> carrier.userID    
-    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
-  // let param = { userID: 'b6644acc815efb64' };
-  const s = new Set();
-
-  const res = await Graph.query(q, param);
-  while (res.hasNext()) {
-    const record = res.next();
-    const userID = record.get('exposed.userID');
-    const start = record.get('e.start');
-    const end = record.get('e.end');
-    const space = record.get('s.name');
-    const payload = { userID, start, end, space };
-    console.log(printJson(payload));
-    s.add(payload);
-  }
-  if (ack) {
-    // test.js handles callback
-    ack({
-      msg: 'ID(s) of all exposed visitors:',
-      results: [...s],
-    });
-  }
 }
 
 async function matchQueryWithParamsQuery(data, ack) {
@@ -191,7 +156,7 @@ async function matchQueryWithParamsQuery(data, ack) {
   const q = `MATCH ()-[v:visited]->() WHERE id(v)=${id} set v.start=${start}, v.end=${end}`;
   console.log(q);
   Graph.query(q).catch((e) =>
-    console.log('error in matchQueryWithParamsQuery():', e)
+    console.error('error in matchQueryWithParamsQuery():', e)
   );
 
   if (ack) {
@@ -212,7 +177,7 @@ async function matchWithParamsQuery(param, ack) {
 
   // Match with parameters.
   const res = await Graph.query(q, param).catch((e) =>
-    console.log('error in matchWithParamsQuery():', e)
+    console.error('error in matchWithParamsQuery():', e)
   );
 
   while (res.hasNext()) {
@@ -325,9 +290,47 @@ function changeGraph(graphName) {
 }
 
 //#region LAB
+async function matchNamedPathsQuery({ param, ack }) {
+  const { userID } = param;
+  console.log(param);
+  const now = Date.now();
+  // Named paths matching.
+  const q = `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+    WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
+  console.log(userID);
+  console.log(Graph._graphId);
+  console.log(q);
+
+  const s = new Set();
+
+  const res = await Graph.query(q);
+  while (res.hasNext()) {
+    const record = res.next();
+    const userID = record.get('exposed.userID');
+    const start = record.get('e.start');
+    const end = record.get('e.end');
+    const space = record.get('s.name');
+    const payload = { userID, start, end, space };
+    console.log(printJson(payload));
+    s.add(payload);
+  }
+  if (ack) {
+    // test.js handles callback
+    ack({
+      msg: 'ID(s) of all exposed visitors:',
+      results: [...s],
+    });
+  }
+}
+
 function logVisit(data) {
-  // const {visit, action}=data
-  const { visitId, userID, place, start, end, graphName, sessionID } = data;
+  // TODO CONSIDER: if we want to store sessionID, we pass it in through data arg
+  // but this may have side effectes in MERGE since i think we would have to always
+  // pass both userID and sessionID to the graph (test this premise)
+  // const { visitId, userID, place, start, end, graphName, sessionID } = data;
+  const { visitId, userID, place, start, end, graphName } = data;
 
   // if (action.edit) {
   //   this.deleteVisit({loggedVisitId:visitId})
@@ -340,12 +343,16 @@ function logVisit(data) {
       // return entityMap[s];
     });
   }
-  if (graphName && graphName !== currentGraphName) {
-    changeGraph(graphName);
-  }
 
-  // Graph.query() arg
-  const query = `MERGE (v:visitor{  userID: '${userID}', sessionID:'${sessionID}'}) 
+  // TODO ALERT: put this back after you work out the optimal query design
+  // if ((graphName && graphName !== currentGraphName)) {
+  changeGraph('Test');
+  // changeGraph(graphName);
+  // }
+
+  // TODO CONSIDER: if we want to store sessionID, we pass it in through data arg
+  // const query = `MERGE (v:visitor{  userID: '${userID}', sessionID:'${sessionID}'})
+  const query = `MERGE (v:visitor{  userID: '${userID}'}) 
       MERGE (s:space{ name: '${escapeHtml(place)}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
@@ -355,7 +362,13 @@ function logVisit(data) {
   // OK event handler that converts redis results into lct object
   function returnResults(results) {
     const id = results.next().get('id(r)');
-    return { id, place, graphName, visitId, logged: true };
+    return {
+      id,
+      place,
+      graphName,
+      visitId,
+      logged: true,
+    };
   }
 
   // return this either-async to client
@@ -435,14 +448,11 @@ function findExposedVisitors(userID, subject = false) {
 function onExposureWarning(userID) {
   console.log('Searching graph with', userID);
   console.log(info('Current graph name:', currentGraphName));
-
+  const now = Date.now();
+  // TODO refactor so this function and getExposures() uses the same query string
   const getQuery = (userID) => {
-    return `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
-    WHERE 
-    ((e.start>=c.start AND e.end<=c.end) OR
-    (e.start<=c.start AND e.end>=c.start) OR 
-    (e.start<= c.start AND e.end>=c.end) OR
-    (e.start<=c.start AND e.end>=c.end) )
+    return `MATCH p=(carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)
+    WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
     AND exposed.userID <> carrier.userID    
     RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
   };
@@ -508,7 +518,7 @@ function deleteExpiredVisits() {
         resolve({ deleted: true });
       })
       .catch((error) => {
-        console.log(error);
+        console.error(error);
         reject({ deleted: false, error: error });
       });
   });

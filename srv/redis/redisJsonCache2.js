@@ -29,8 +29,6 @@ if (process.env.NODE_ENV === 'production') {
   };
 }
 
-const Rejson = require('iorejson');
-
 const heads = (k) => heading(k);
 
 function handleAsSingleEntry(cache) {
@@ -73,38 +71,46 @@ function ensureValidPath(path) {
   return path;
 }
 
+const Rejson = require('iorejson');
 Rejson.defaultOptions = options;
 const jsonCache = new Rejson();
-jsonCache
-  .connect()
-  .then(() => {
-    console.log('....................... RedisJSON .........................');
-    console.groupCollapsed('\tConnected to RedisJSON using:');
-    console.log(printJson(options), '\n');
 
-    jsonCache.get('alerts', '.').then((node) => {
-      if (Object.keys(node).length > 0) {
-        console.log(getNow());
-        console.log(
-          '....................... RedisJSON .........................'
-        );
-        console.groupCollapsed('\tPast Alerts (including unconnected):');
-        asTable(node);
-        console.groupEnd();
-        console.log(
-          '.........................................................'
-        );
-      }
-    });
-    console.groupEnd();
-    console.log('.........................................................');
-  })
-  .catch((e) => console.log('error connecting to rejson', e));
+function connectCache(init = false) {
+  return new Promise((resolve, reject) => {
+    jsonCache
+      .connect()
+      .then(() => {
+        if (init) {
+          jsonCache.get('alerts', '.').then((node) => {
+            const keys = Object.keys(node);
+            const pending = keys.length ? keys.join('\n') : 'nobody';
+            console.log(
+              success(
+                '....................... RedisJSON .........................'
+              )
+            );
+            console.log(success('Connected to RedisJSON using:'));
+            console.log(success(`${JSON.stringify(options, null, 3)}`));
+            console.log(success('There are pending alerts for: '));
+            console.log(success('\t', pending));
+            console.log(
+              success(
+                '.........................................................\n'
+              )
+            );
+            console.log();
+          });
+        }
+        resolve(true);
+      })
+      .catch((e) => reject(e));
+  });
+}
 
 function add(key, path, node) {
   return jsonCache
     .set(key, '._' + path, node)
-    .catch((e) => console.log(err('Error in add()', printJson(e))));
+    .catch((e) => console.error(err('Error in add()', printJson(e))));
 }
 
 function del(key, path) {
@@ -128,14 +134,13 @@ function filter(data, fn) {
   }
 }
 
-function get(key, path = '.') {
+function get(key, path = '.', message) {
+  console.log(message);
   return jsonCache
     .get(key, ensureValidPath(path))
     .then((data) => data)
     .catch(() => {
-      console.log(
-        warn(`${path} not found in sessions cache. Will add them next.`)
-      );
+      console.log(warn('...Pending cache item not found'));
     });
 }
 
@@ -153,26 +158,27 @@ function isEmpty(key, path = '.') {
 function set(key, path, node) {
   return jsonCache
     .set(key, ensureValidPath(path), node)
-    .catch((e) => console.log('Error in set()', e));
+    .catch((e) => console.error('Error in set()', e));
 }
 
-function create(key, path, node) {
-  console.log(key, path, node);
-}
+// function create(key, path, node) {
+//   console.log(key, path, node);
+// }
 
 // TODO Investigate why isEmpty() can fail (often)
-function createBroken(key, path, node) {
+function create(key, path, node) {
   // confirm a null key before creating one (i.e., don't overwrite a cache)
   return isEmpty(key).then((canCreate) => {
     canCreate
       ? jsonCache
           .set(key, '.', { ['_' + path]: node })
           .then((ok) => console.log(getNow(), success('Created?', ok)))
-          .catch((e) => console.log(err('Error in create():', e)))
+          .catch((e) => console.error(err('Error in create():', e)))
       : console.log(getNow(), 'Cache is not empty');
   });
 }
 module.exports = {
+  connectCache,
   add,
   create,
   del,

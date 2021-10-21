@@ -265,9 +265,10 @@ export default {
       return this.$vuetify.breakpoint.name;
     },
     lastLocation() {
-      return this.state.settings.location
+      const loc = this.state.settings.location
         ? JSON.parse(this.state.settings.location)
         : null;
+      return loc.lat ? loc : null;
     },
     defaultMapCenter() {
       return this.state.settings.default_map_center
@@ -756,6 +757,7 @@ export default {
               );
             }
           }
+          return locality;
         };
         const vm = this;
         console.log('\tshowPosition():');
@@ -777,7 +779,7 @@ export default {
 
             const locality = getLocality(poi);
 
-            const namespace = locality ? locality.short_name : '';
+            const namespace = locality ? locality.short_name : 'NA';
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
             this.msg.push('\td) Geocode geometry results:');

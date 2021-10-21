@@ -47,7 +47,7 @@ Vue.prototype.$version = version;
 // 9.16 opting out of global namespace in favor of dynamic namespace based on Map component
 // Vue.prototype.$namespace = process.env.VUE_APP_NAMESPACE;
 // TODO work on default graph after acceptance testing
-Vue.prototype.$defaultGraphName = 'Sandbox'; // process.env.VUE_APP_NAMESPACE;
+Vue.prototype.$defaultGraphName = 'Test'; // process.env.VUE_APP_NAMESPACE;
 Vue.prototype.$DEBUG = false;
 
 Vue.config.productionTip = false;

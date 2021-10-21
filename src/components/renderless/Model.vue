@@ -253,6 +253,7 @@ export default {
       // this.state, overriding anything on this.state
       // TODO NOTE: if any of the props in newState are undefined, iterating halts
       // should we be using Maybes here?
+      // TODO CONSIDER: using getters on the entities instead of this state object
       this.state = { ...this.state, ...newState };
       if (this.$DEBUG) {
         console.log('Updated state:');

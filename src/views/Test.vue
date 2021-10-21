@@ -5,14 +5,13 @@
     @visitors="onVisitors"
     @exposures="onExposures"
   >
-    <div slot-scope="{ getVisitors, getExposures, getVisitedSpaces }">
+    <div slot-scope="{ getVisitors, getExposures }">
       <redis
         :visitors="visitors"
         :exposures="exposures"
         :spaces="spaces"
         :getVisitors="getVisitors"
         :getExposures="getExposures"
-        :getVisitedSpaces="getVisitedSpaces"
       />
     </div>
   </Model>

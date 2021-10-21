@@ -21,8 +21,6 @@
               single-line
               hide-details
             ></v-text-field>
-            Spaces Visited:
-            <pre>{{ visitedSpaces }}</pre>
           </v-card-title>
           <v-data-table
             v-model="selected"
@@ -40,7 +38,7 @@
         <!-- Exposures table -->
         <v-col>
           <v-card-subtitle
-            >These visitors shared the same spacetime with the selected visitor:
+            >Other visitors shared the same spacetimes with visitor:
             {{ selectedUserID.userID }}</v-card-subtitle
           >
           <v-data-table
@@ -58,11 +56,15 @@
         </v-col>
       </v-row>
     </v-card>
+    <v-row
+      ><v-col>hasVisitors:{{ hasVisitors }}</v-col
+      ><v-col>hasExposures:{{ hasExposures }}</v-col></v-row
+    >
   </v-container>
 </template>
 
 <script>
-import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
+import { formatSmallTime } from '@/utils/luxonHelpers';
 
 // Redis.vue calls this card
 // visitors
@@ -72,15 +74,10 @@ export default {
   props: {
     visitors: Object,
     exposures: Object,
-    spaces: Object,
   },
   components: {},
 
   computed: {
-    visitedSpaces() {
-      const x = this.spaces;
-      return x;
-    },
     selectedUserID() {
       const userID = this.selected.length > 0 ? this.selected[0] : '';
       return userID;
@@ -95,6 +92,7 @@ export default {
 
   data() {
     return {
+      ready: false,
       singleSelect: true,
       selected: [{ userID: this.$socket.client.auth.userID }],
       visitorHeaders: [
@@ -138,7 +136,6 @@ export default {
           paramName: '',
         },
       ],
-      ready: false,
     };
   },
 
@@ -146,10 +143,10 @@ export default {
     getDate(ms) {
       try {
         const dt = formatSmallTime(ms);
-        console.log('dt',dt);
+        console.log('dt', dt);
         return dt;
       } catch (e) {
-        console.log(e);
+        console.error(e);
         return '';
       }
     },
@@ -162,9 +159,7 @@ export default {
     exposures(n) {
       console.log('exposures in testCard.vue', JSON.stringify(n, null, 3));
     },
-    spaces(n) {
-      console.log('spaces in testCard.vue', JSON.stringify(n, null, 3));
-    },
+
     selected() {
       console.log(JSON.stringify(this.selected, null, 3));
       if (this.selectedUserID) {
@@ -178,6 +173,7 @@ export default {
 
   mounted() {
     this.$emit('selectedChanged', this.selectedUserID);
+    this.ready = true;
     console.log('\tTESTCARD mounted');
   },
 };
