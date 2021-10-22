@@ -92,13 +92,15 @@ export const testMixin = {
         )
       );
       // ensure each graph visit is stored locally...
-      const orphanNodes = fromGraph.map((edge) => {
-        console.log('edge.id:', edge.id);
+      const orphanNodes = fromGraph.reduce((a,c) => {
+        console.log('edge.id:', c.id);
         const graphNodeInLocalStorage = localVisits.find(
-          (v) => v.loggedVisitId === edge.id
+          (v) => v.loggedVisitId === c.id
         );
-        return !graphNodeInLocalStorage ? edge.id : null;
-      });
+        if (!graphNodeInLocalStorage) {
+          return a.push(c.id);
+        }
+      },[]);
       // ...otherwise delete the graphed event
       if (orphanNodes) {
         console.log(warn(`deleting ${orphanNodes} orphaned graph events`));
