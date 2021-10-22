@@ -68,6 +68,10 @@ cache.connectCache(true).then(() => {
   console.log('Node sees Exposure graph:', special(currentGraphName), '\n');
 });
 
+// TODO CONSIDER: a better design for handling RedisJson async issues
+// this is the first time we call RedisJson (smells fishy)
+// if it wasn't we would have to ensure the first call is done like this
+// so we don't have any null reference issues due to async timing
 const getPendingAlerts = (newUserID, socketId) => {
   const message = `Checking pending alerts for ${newUserID}...`;
 
@@ -90,27 +94,12 @@ const getPendingAlerts = (newUserID, socketId) => {
   }
 };
 const deleteCacheItem = (key, to) => {
-  // cache.connectCache().then(() => {
   cache.del(key, to);
-  // });
 };
 const setCacheItem = (key, to, val) => {
-  // cache.connectCache().then(() => {
   cache.set(key, to, val);
-  // });
 };
 
-// TODO experiment: moving sessionID store from RedisJson to RedisGraph
-// TODO this code was unreliable with frequent craches
-// high-order function to handle safe creation of sessions cache
-// let setCacheBad = function(key, path, node) {
-//   return cache.create(key, path, node).then(() => {
-//     setCache = function(key, path, node) {
-//       return cache.add(key, path, node);
-//     };
-//     return setCache;
-//   });
-// };
 //#endregion
 
 const server = express()
@@ -124,6 +113,7 @@ const server = express()
 const io = socketIO(server);
 
 io.on('connection', (socket) => {
+  //#region Handling socket connection
   const { sessionID, userID, username, usernumber } = socket.handshake.auth;
 
   console.log(
@@ -142,17 +132,7 @@ io.on('connection', (socket) => {
   console.log(
     '============================ io.on(connection) ================================='
   );
-  //#region Handling socket connection
   console.log(success('Client connected on socket ', socket.id));
-
-  // TODO experiment: moving sessionID store from RedisJson to RedisGraph
-  // const session = {
-  //   userID: newUserID,
-  //   username,
-  //   lastInteraction: new Date().toLocaleString(),
-  //   connected: true,
-  // };
-  // setCache('sessions', newSessionID, session);
 
   if (!sessionID) {
     console.log('Returning session data to client', newSessionID, newUserID);
@@ -169,16 +149,7 @@ io.on('connection', (socket) => {
   // we send alerts using the userID stored in redisGraph for visitors
   socket.join(newUserID);
 
-  // check for pending alerts
-  // if (alertsCache.has(newUserID)) {
-  //   const msg = 'Your warning was cached, and now you have it.';
-  //   // sending to individual socketid (private message)
-  //   io.to(socket.id).emit('exposureAlert', msg);
-  //   alertsCache.delete(newUserID);
-  //   alertsCache.print();
-  // }
   getPendingAlerts(newUserID, socket.id);
-  //#endregion Handling socket connection
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
   socket.broadcast.emit('userConnected', {
@@ -190,6 +161,7 @@ io.on('connection', (socket) => {
   console.log(
     '============================ io.on(connection) ================================='
   );
+  //#endregion Handling socket connection
 
   //#region Visit API
   socket.on('exposureWarning', async (riskScore, ack) => {
@@ -336,7 +308,6 @@ io.on('connection', (socket) => {
       });
   });
   //#endregion
-  //"O8irXhpkZFLXxQo9AAAy"
 
   //#region Graph testing
   socket.on('getVisitors', (query, ack) => {
@@ -382,6 +353,15 @@ io.on('connection', (socket) => {
       });
   });
   //#endregion
-});
 
-//
+  //#region Lab
+  socket.on('validateVisits', (userID, ack) => {
+    console.log('validateVisits:', userID, ack);
+    getVisitedSpaces(userID, (spaces) => {
+      if (ack) {
+        ack([...spaces]);
+      }
+    });
+  });
+  //#endregion
+});

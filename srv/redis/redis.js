@@ -91,24 +91,20 @@ function getSessionID(param, ack) {
   });
 }
 
-function getVisitedSpacesForUser(param, ack) {
-  const q = `MATCH p=(:visitor{userID:'${param.userID}'})-[v:visited]->(s:space) RETURN s.name`;
-  const s = new Set();
+function getVisitedSpacesForUser(userID, ack) {
+  const q = `MATCH p=(:visitor{userID:'${userID}'})-[v:visited]->(s:space) RETURN v`;
+  let ids = [];
   console.log(q);
   Graph.query(q).then((res) => {
     while (res.hasNext()) {
-      const record = res.next();
-      const space = record.get('s.name');
-      console.log(printJson(space));
-      s.add(space);
+      let record = res.next();
+      let v = record.get('v');
+      console.log(printJson(v.id));
+      ids = [...ids, v.id];
     }
-    console.log([...s]);
+    console.log(ids);
     if (ack) {
-      // test.js handles callback
-      ack({
-        msg: 'Names of public spaces visited by ' + param.userID,
-        results: [...s],
-      });
+      ack(ids);
     }
   });
 }

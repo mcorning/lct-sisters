@@ -134,8 +134,9 @@ function filter(data, fn) {
   }
 }
 
+// TODO Consider: a better design here. Why is it an error if you cannot find a record?
 function get(key, path = '.', message) {
-  console.log(message);
+  console.log(warn(message));
   return jsonCache
     .get(key, ensureValidPath(path))
     .then((data) => data)

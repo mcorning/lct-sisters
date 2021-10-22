@@ -102,8 +102,16 @@ export default {
   },
 
   methods: {
-    getVisits() {
+    visitExists(loggedVisitId) {
       // return this.visits.filter((v) => !v.loggedVisitId);
+      console.log(loggedVisitId);
+      const x = Visit.query()
+        .where('loggedVisitId', loggedVisitId)
+        .exists();
+      console.log('Visit ID:', loggedVisitId, x ? 'exists' : 'does not exist');
+      return x;
+    },
+    getVisits() {
       const x = Visit.query().get();
       return x;
     },
@@ -192,7 +200,7 @@ export default {
         end: end,
         graphName: this.getGraphName(),
         userID: this.$socket.client.auth.userID,
-        sessionID: this.sessionID
+        sessionID: this.sessionID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
       // console.log(highlight(`action: ${printJson(action)}`));
@@ -429,6 +437,7 @@ export default {
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
+      visitExists: this.visitExists,
       updateVisitOnGraphWithParm: this.updateVisitOnGraphWithParm,
 
       //Warning assets

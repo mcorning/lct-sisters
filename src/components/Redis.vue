@@ -3,6 +3,8 @@
     <test-card
       :visitors="visitors"
       :exposures="exposures"
+      :getVisits="getVisits"
+      :visitExists="visitExists"
       @selectedChanged="onSelectedChanged"
     ></test-card>
   </div>
@@ -22,7 +24,15 @@ export default {
       type: Function,
       require: true,
     },
-    
+    getVisits: {
+      type: Function,
+      require: true,
+    },
+    visitExists: {
+      type: Function,
+      require: true,
+    },
+
     visitors: Object,
     exposures: Object,
   },

@@ -109,8 +109,7 @@ export const graphMixin = {
         try {
           this.emitFromClient(
             'updateVisit',
-            {query,
-            param},
+            { query, param },
             // and handle the callback
             (results) => {
               console.log(
