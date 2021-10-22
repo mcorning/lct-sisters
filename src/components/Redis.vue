@@ -32,6 +32,10 @@ export default {
       type: Function,
       require: true,
     },
+    validateVisits: {
+      type: Function,
+      require: true,
+    },
 
     visitors: Object,
     exposures: Object,
@@ -39,6 +43,7 @@ export default {
   methods: {
     onSelectedChanged(userID) {
       this.getExposures(userID);
+      this.validateVisits(userID)
     },
   },
   mounted() {

@@ -27,7 +27,7 @@ export default class Visit extends Model {
       category: this.string(), // used for COVID-safe appointments
 
       // From the graph component
-      loggedVisitId: this.string(''), // ID of the graph Visit relationship
+      loggedVisitId: this.number(), // internal RedisGraph node ID of the Visit edge
       graphName: this.string(''), // graphname may be 'Sand box' for users' playground
 
       shared: this.boolean(false), // set true when someone shares an event
@@ -62,6 +62,18 @@ export default class Visit extends Model {
 
   static delete(id) {
     return this.$delete(id);
+  }
+
+  static convertLoggedVisitId() {
+    this.$update({
+      where: (visit) => {
+        return typeof visit.loggedVisitId === 'string';
+      },
+
+      data(visit) {
+        visit.loggedVisitId = Number(visit.loggedVisitId);
+      },
+    });
   }
 
   // App.js onLogVisit() used this function to update the visit with loggedVisitId and graphName

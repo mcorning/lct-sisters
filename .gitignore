@@ -45,3 +45,5 @@ redisLab/app.js
 qrCodes/Fika.bc
 .gitignore
 qrCodes/SistersDental.bc
+srv/redisGraphResults.json
+srv/redisGraphResultsEdges.json

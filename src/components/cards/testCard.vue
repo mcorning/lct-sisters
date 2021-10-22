@@ -5,6 +5,7 @@
 
       <v-divider></v-divider>
       <v-btn @click="validateVisits">Validate Visits</v-btn>
+      <v-btn @click="getVisitedPaths">Verify Visits</v-btn>
       <v-row>
         <!-- Visitor table -->
         <v-col v-if="hasVisitors">
@@ -142,38 +143,7 @@ export default {
   },
 
   methods: {
-    // TODO ALERT: most of this code is not DRY. DRY it out.
-    validateVisits() {
-      const graphName = this.$defaultGraphName;
-      const userID = this.selectedUserID || this.$socket.client.auth.userID;
-      this.$socket.client.emit('validateVisits', userID, (visitedIDs) => {
-        const visits = this.getVisits();
-        console.log(JSON.stringify(visits, null, 3));
-        console.log('visitedIDs:', JSON.stringify(visitedIDs, null, 3));
-        visitedIDs.forEach((id) => {
-          // using equality instead of identity
-          // so JS will coerse the id numeric value to
-          // the string value of loggedVisitId from local storage
-          const exists = visits.find((v) => v.loggedVisitId == id);
-          console.log(`Visit ${id} ${exists ? 'exists' : 'does not exist'}`);
-          if (!exists) {
-            const query = {
-              loggedVisitId: id, // use the same name as the delete query does on RedisGraph
-              graphName,
-            };
-            this.$socket.client.emit(
-              'deleteVisit',
-              query,
-              // and handle the callback
-              (results) => {
-                console.log(`loggedVisitId ${results} deleted from graph`);
-              }
-            );
-          }
-        });
-      });
-    },
-    getDate(ms) {
+   getDate(ms) {
       try {
         const dt = formatSmallTime(ms);
         console.log('dt', dt);

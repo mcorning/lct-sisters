@@ -58,6 +58,7 @@ const {
   getVisitors,
   getExposures,
   getVisitedSpaces,
+  getVisitedPaths,
   matchQueryWithParamsQuery,
 } = require('./redis/redis');
 
@@ -360,6 +361,14 @@ io.on('connection', (socket) => {
     getVisitedSpaces(userID, (spaces) => {
       if (ack) {
         ack([...spaces]);
+      }
+    });
+  });
+  socket.on('getVisitedPaths', (userID, ack) => {
+    console.log('getVisitedPaths:', userID, ack);
+    getVisitedPaths(userID, (paths) => {
+      if (ack) {
+        ack([...paths]);
       }
     });
   });

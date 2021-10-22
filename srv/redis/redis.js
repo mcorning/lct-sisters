@@ -67,6 +67,7 @@ module.exports = {
   getVisitors,
   getExposures,
   getVisitedSpaces,
+  getVisitedPaths,
   matchQuery,
   matchWithParamsQuery,
   matchNamedPathsQuery,
@@ -91,20 +92,45 @@ function getSessionID(param, ack) {
   });
 }
 
+function getVisitedPaths(userID, ack) {
+  const q = `MATCH p=(:visitor{userID:'${userID}'})-[v:visited]->(s:space) RETURN p`;
+  let paths = [];
+  console.log(q);
+  Graph.query(q).then((res) => {
+    while (res.hasNext()) {
+      let record = res.next();
+      let p = record.get('p');
+      console.log(printJson(p));
+      paths = [...paths, p];
+    }
+    console.log(paths);
+    if (ack) {
+      ack(paths);
+    }
+  });
+}
+
 function getVisitedSpacesForUser(userID, ack) {
   const q = `MATCH p=(:visitor{userID:'${userID}'})-[v:visited]->(s:space) RETURN v`;
-  let ids = [];
+  let visits = [];
   console.log(q);
   Graph.query(q).then((res) => {
     while (res.hasNext()) {
       let record = res.next();
       let v = record.get('v');
       console.log(printJson(v.id));
-      ids = [...ids, v.id];
+      visits = [
+        ...visits,
+        {
+          id: v.id,
+          start: v.properties.start,
+          end: v.properties.end,
+        },
+      ];
     }
-    console.log(ids);
+    console.log(visits);
     if (ack) {
-      ack(ids);
+      ack(visits);
     }
   });
 }

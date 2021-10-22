@@ -5,7 +5,7 @@
     @visitors="onVisitors"
     @exposures="onExposures"
   >
-    <div slot-scope="{ getVisitors, getExposures, getVisits, visitExists }">
+    <div slot-scope="{ getVisitors, getExposures, getVisits, visitExists, validateVisits, }">
       <redis
         :visitors="visitors"
         :exposures="exposures"
@@ -14,6 +14,7 @@
         :getExposures="getExposures"
         :getVisits="getVisits"
         :visitExists="visitExists"
+        :validateVisits=validateVisits
       />
     </div>
   </Model>
