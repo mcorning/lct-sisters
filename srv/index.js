@@ -60,6 +60,7 @@ const {
   getVisitedSpaces,
   getVisitedPaths,
   matchQueryWithParamsQuery,
+  confirmDates,
 } = require('./redis/redis');
 
 const cache = require('./redis/redisJsonCache2');
@@ -320,40 +321,10 @@ io.on('connection', (socket) => {
   socket.on('getVisitedSpaces', (param, ack) => {
     getVisitedSpaces(param, ack);
   });
-
-  socket.on('testGraphX', (query, ack) => {
-    // call the graph
-    console.log(getNow());
-    console.log(ack);
-    console.log(highlight('Visit to log:', printJson(query)));
-
-    function handleAck(results) {
-      if (ack) {
-        const x = results || 'no results';
-        console.log(highlight('acknowledging client', printJson(x)));
-        ack(results);
-        return;
-      }
-      console.log('No ack()');
-    }
-
-    // delegate to redis/redis.js
-    getVisitors(query)
-      .toEither()
-      // TODO all inspect() to either-async
-      .map((x) => {
-        console.log(info('getVisitors():', x));
-        return x;
-      })
-      .cata({
-        // ok: (results) => socket.emit('visitLogged', results),
-        ok: (results) => handleAck(results),
-        error: (results) => {
-          console.log(err(results, 'Issues calling redis.logVisit()'));
-        },
-      });
+  socket.on('confirmDates', (data, ack) => {
+    confirmDates(data, ack);
   });
-  //#endregion
+  //#endregion Graph testing
 
   //#region Lab
   socket.on('validateVisits', (userID, ack) => {

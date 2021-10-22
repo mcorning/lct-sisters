@@ -76,23 +76,9 @@ export const testMixin = {
       console.log('Validating Visit Data');
       console.log(warn('fromGraph:', printJson(fromGraph)));
       const localVisits = this.getVisits();
-      // ensure old visits get their loggedVisitId converted to proper numeric value
-      console.log(
-        warn(
-          'localStorage:',
-          printJson(
-            localVisits.map((v) => {
-              return {
-                id: v.loggedVisitId,
-                start: v.start,
-                end: v.end,
-              };
-            })
-          )
-        )
-      );
+
       // ensure each graph visit is stored locally...
-      const orphanNodes = fromGraph.reduce((a,c) => {
+      const orphanNodes = fromGraph.reduce((a, c) => {
         console.log('edge.id:', c.id);
         const graphNodeInLocalStorage = localVisits.find(
           (v) => v.loggedVisitId === c.id
@@ -100,7 +86,7 @@ export const testMixin = {
         if (!graphNodeInLocalStorage) {
           return a.push(c.id);
         }
-      },[]);
+      }, []);
       // ...otherwise delete the graphed event
       if (orphanNodes) {
         console.log(warn(`deleting ${orphanNodes} orphaned graph events`));
@@ -110,6 +96,17 @@ export const testMixin = {
       } else {
         console.log(success('Your graph has only valid visits'));
       }
+
+      // now ensure that start/end diads are equal
+      const userID = this.$socket.client.auth.userID;
+      const dates = [
+        { id: 1, start: 1634931900000, end: 1634933700000 },
+        { id: 9, start: 2, end: 3 },
+      ];
+      const data = { userID, dates };
+      this.emitFromClient('confirmDates', data, (result) =>
+        console.log(result)
+      );
     },
 
     //#endregion Lab

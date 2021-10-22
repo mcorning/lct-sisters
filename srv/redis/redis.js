@@ -74,6 +74,7 @@ module.exports = {
   matchAllNodesQuery,
   matchAllSpacesQuery,
   matchQueryWithParamsQuery,
+  confirmDates,
 };
 //#endregion Setup
 function getSessionID(param, ack) {
@@ -259,52 +260,6 @@ function getVisitedSpaces(param, ack) {
   getVisitedSpacesForUser(param, ack);
 }
 
-// test.js handles tha ack for the client
-// function getTest({ query, param }, ack) {
-//   switch (query) {
-//     case 'matchAllSpacesQuery':
-//       matchAllSpacesQuery(param, ack);
-//       break;
-//     case 'matchQuery':
-//       matchQuery(param, ack);
-//       break;
-//     case 'matchWithParamsQuery':
-//       matchWithParamsQuery(param, ack);
-//       break;
-//     case 'matchNamedPathsQuery':
-//       matchNamedPathsQuery(param, ack);
-//       break;
-//     case 'matchAllNodesQuery':
-//       matchAllNodesQuery(param, ack);
-//       break;
-
-//     default:
-//       break;
-//   }
-// }
-
-// function testGraphX(query, userID) {
-//   console.log('redis.getVisitors():', query);
-//   // OK event handler that converts redis results into lct object
-//   function returnResults(results) {
-//     const id = results.next().get('userID');
-//     return {
-//       id,
-//     };
-//   }
-
-//   // return this either-async to client
-//   return Graph.query(query, { userID })
-//     .toEither()
-//     .cata({
-//       ok: (results) => returnResults(results),
-//       error: (results) => {
-//         // TODO shouldn't this return the same structure as ok (except logged=false)?
-//         console.log(results, 'Issues when testing graph');
-//       },
-//     });
-// }
-
 function changeGraph(graphName) {
   currentGraphName = graphName;
   Graph = new RedisGraph(graphName, null, null, options);
@@ -346,7 +301,45 @@ async function matchNamedPathsQuery({ param, ack }) {
     });
   }
 }
+async function confirmDates(data, ack) {
+  const { userID, dates } = data;
+  console.log(dates);
+  const q = `MATCH p=(:visitor{userID:'${userID}'})-[e:visited]->(:space) return e`;
+  const res = await Graph.query(q).catch((e) =>
+    console.error('error in confirmDates():', e)
+  );
 
+  while (res.hasNext()) {
+    let record = res.next();
+    const e = record.get('e');
+    const d = dates.find((v) => v.id === e.id);
+    console.log(warn('local dates:', d.id, d.start, d.end));
+    console.log('graph edge:', e.id, e.properties.start, e.properties.end);
+    if (e.properties.start !== d.start) {
+      const setQ = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.start=${d.start}`;
+      console.log(setQ);
+      const res = await Graph.query(setQ).catch((e) =>
+        console.error('error in confirmDates():', e)
+      );
+      console.log(printJson(res));
+    }
+
+    if (e.properties.end !== d.end) {
+      const setQ2 = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.end=${d.end}`;
+      console.log(setQ2);
+      const res = await Graph.query(setQ2).catch((e) =>
+        console.error('error in confirmDates():', e)
+      );
+      console.log(printJson(res));
+    }
+  }
+  if (ack) {
+    ack();
+  }
+}
+//#endregion LAB
+
+//#region READ Graph
 function logVisit(data) {
   // TODO CONSIDER: if we want to store sessionID, we pass it in through data arg
   // but this may have side effectes in MERGE since i think we would have to always
@@ -405,9 +398,6 @@ function logVisit(data) {
     });
 }
 
-//#endregion LAB
-
-//#region READ Graph
 // see if an alerted visitor has potential alerts to share
 function findExposedVisitors(userID, subject = false) {
   return new Promise(function(resolve) {
@@ -546,174 +536,6 @@ function deleteExpiredVisits() {
   });
 }
 //#endregion DELETE Graph Nodes
-
-//#region Old code -- delete or refactor soon
-
-// TODO refactor using cli table
-// function printExposureWarnings(res) {
-//   console.log(
-//     warn(`
-//     Visits on or after exposure by ${userID}:
-//     `)
-//   );
-//   // console.log(
-//   //   '123456791123456789212345679012345678931234567901234567894123456795123456789612345678981234567899123456789100'
-//   // );
-//   while (res.hasNext()) {
-//     let record = res.next();
-//     let startC = new Date(record.get('c.start') / 1).toLocaleString();
-//     let endC = new Date(record.get('c.end') / 1).toLocaleString();
-//     let startE = new Date(record.get('e.start') / 1).toLocaleString();
-//     let endE = new Date(record.get('e.end') / 1).toLocaleString();
-
-//     let userID = record.get('exposed.userID');
-//     let exposedId = record.get('id(exposed)');
-//     let eid = record.get('id(e)');
-//     let sid = record.get('id(s)');
-
-//     console.log(
-//       userID,
-//       'left',
-//       record.get('e.end') >= record.get('c.start') ? 'after' : 'before',
-//       'carrier arrived'
-//     );
-//     console.log(endE, startC);
-
-//     console.log(
-//       userID,
-//       'arrived',
-//       record.get('e.start') <= record.get('c.end') ? 'before' : 'after',
-//       'carrier left'
-//     );
-//     console.log(startE, endC);
-//     console.log(' ');
-//     printTable(
-//       exposedId,
-//       eid,
-//       sid,
-//       userID,
-//       record,
-//       startC,
-//       endC,
-//       startE,
-//       endE
-//     );
-//   }
-// }
-
-// function printTable(
-//   exposedId,
-//   eid,
-//   sid,
-//   userID,
-//   record,
-//   startC,
-//   endC,
-//   startE,
-//   endE
-// ) {
-//   console.log(
-//     exposedId < 10 ? ' ' : '',
-//     exposedId,
-
-//     userID,
-//     ' '.repeat(20 - userID.length),
-
-//     eid < 10 ? ' ' : '',
-//     eid,
-//     record.get('c.start'),
-//     '=',
-//     startC,
-//     ' '.repeat(25 - startC.length),
-//     record.get('c.end'),
-//     '=',
-//     endC,
-//     ' '.repeat(25 - endC.length),
-
-//     record.get('e.start'),
-//     '=',
-//     startE,
-//     ' '.repeat(25 - startE.length),
-//     record.get('e.end'),
-//     '=',
-//     endE,
-//     ' '.repeat(25 - endE.length),
-
-//     sid < 10 ? ' ' : '',
-//     sid,
-//     record.get('s.name')
-//   );
-// }
-// }
-
-// delegated in index.js to handle socket.on('logVisit')
-// Can add a visit to the graph or can edit the time(s) of a logged visit [when the data includes the logged field (which is the id of the Relationship)]
-// Example query:
-// MERGE (v:visitor{ name: 'hero', userID: '439ae5f4946d2d5d'}) MERGE (s:space{ name: 'Fika Sisters Coffeehouse'}) MERGE (v)-[:visited{start:'1615856400000'}]->(s)
-// function logVisit(data) {
-//   return new Promise((resolve, reject) => {
-//     const {
-//       username,
-//       userID,
-//       selectedSpace,
-//       start,
-//       end,
-//       date,
-//       interval,
-//       loggedVisitId,
-//       graphName,
-//     } = data;
-//     if (graphName && graphName !== graphName) {
-//       changeGraph(graphName);
-//     }
-
-//     // update visit with loggedVisitId
-//     // or add a new visit
-//     // note: be sure any freeform text field (like username and selectedSpace) is wrapped in ""
-//     // (otherwise, an apostrophe will throw an exception)
-//     let query = loggedVisitId
-//       ? `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}
-//       SET
-//       v.start=${start},
-//       v.end=${end},
-//       v.date='${date}',
-//       v.interval='${interval}'
-//       RETURN id(v)`
-//       : `MERGE (v:visitor{ name: "${username}", userID: '${userID}'})
-//       MERGE (s:space{ name: "${selectedSpace}"})
-//       MERGE (v)-[r:visited{start:${start}, end:${end}, date: '${date}', interval: '${interval}'}]->(s)
-//         RETURN id(r)`;
-
-//     console.log(warn(`${graphName} visit query: ${query}`));
-//     Graph.query(query)
-//       .then((results) => {
-//         let x = results.next();
-//         let id = x.get('id(r)');
-//         if (!id) {
-//           throw `${graphName} returned unexpected null id after update.`;
-//         }
-
-//         const stats = results._statistics._raw;
-//         console.log(special(`Logged visit stats: ${printJson(stats)}`));
-//         console.log(special(`New Visit graph ID: ${printJson(id)}`));
-//         resolve({
-//           graph: graphName,
-//           logged: true,
-//           id: id,
-//         });
-//       })
-//       .then(() => deleteExpiredVisits())
-//       .catch((error) => {
-//         console.log(error);
-//         reject({
-//           logged: false,
-//           error: error,
-//         });
-//       });
-//   });
-// }
-//#endregion Update Graph
-//#endregion
 
 //#region Cheatsheet
 // if we store these output Cypher commands in a text file, we can bulk import them into Redis
