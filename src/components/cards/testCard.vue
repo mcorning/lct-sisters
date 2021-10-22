@@ -4,7 +4,7 @@
       <v-card-title>Redis Monitor</v-card-title>
 
       <v-divider></v-divider>
-
+      <v-btn @click="validateVisits">Validate Visits</v-btn>
       <v-row>
         <!-- Visitor table -->
         <v-col v-if="hasVisitors">
@@ -74,12 +74,14 @@ export default {
   props: {
     visitors: Object,
     exposures: Object,
+    getVisits: Function,
+    visitExists: Function,
   },
   components: {},
 
   computed: {
     selectedUserID() {
-      const userID = this.selected.length > 0 ? this.selected[0] : '';
+      const userID = this.selected.length > 0 ? this.selected[0].userID : '';
       return userID;
     },
     hasVisitors() {
@@ -140,6 +142,37 @@ export default {
   },
 
   methods: {
+    // TODO ALERT: most of this code is not DRY. DRY it out.
+    validateVisits() {
+      const graphName = this.$defaultGraphName;
+      const userID = this.selectedUserID || this.$socket.client.auth.userID;
+      this.$socket.client.emit('validateVisits', userID, (visitedIDs) => {
+        const visits = this.getVisits();
+        console.log(JSON.stringify(visits, null, 3));
+        console.log('visitedIDs:', JSON.stringify(visitedIDs, null, 3));
+        visitedIDs.forEach((id) => {
+          // using equality instead of identity
+          // so JS will coerse the id numeric value to
+          // the string value of loggedVisitId from local storage
+          const exists = visits.find((v) => v.loggedVisitId == id);
+          console.log(`Visit ${id} ${exists ? 'exists' : 'does not exist'}`);
+          if (!exists) {
+            const query = {
+              loggedVisitId: id, // use the same name as the delete query does on RedisGraph
+              graphName,
+            };
+            this.$socket.client.emit(
+              'deleteVisit',
+              query,
+              // and handle the callback
+              (results) => {
+                console.log(`loggedVisitId ${results} deleted from graph`);
+              }
+            );
+          }
+        });
+      });
+    },
     getDate(ms) {
       try {
         const dt = formatSmallTime(ms);
@@ -172,25 +205,11 @@ export default {
   beforeUnmount() {},
 
   mounted() {
+    console.log('selectedUserID:', this.selectedUserID);
+    console.log('socket userID:', this.$socket.client.auth.userID);
     this.$emit('selectedChanged', this.selectedUserID);
     this.ready = true;
     console.log('\tTESTCARD mounted');
   },
 };
 </script>
-
-<!-- <v-card-title>Welcome to LCT-{{ nsp }}</v-card-title>
-      <v-card-subtitle>A COVID Early Warning System</v-card-subtitle>
-      <v-card-text>
-        LCT is our community's way of getting back to work safely. This means we
-        can balance the risk of infection against the risk of bankruptcy.
-      </v-card-text>
-      <v-card-text
-        >How? By depriving the virus of time to replicate and mutate. As soon as
-        you show symptoms or test positive, LCT sends alerts to all your tracked
-        visits. Each of those alerted users, in turn, alerts their own tracked
-        visits. An entire small community or large organization can get tested
-        and treated orders of magnitude faster than with conventional
-        time-consuming contract tracing.
-      </v-card-text>
-      <v-card-text class="text-center">{{ welcomeMessage }}</v-card-text> -->
