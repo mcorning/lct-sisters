@@ -203,8 +203,7 @@ export default {
         sessionID: this.sessionID,
       };
       console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
-      // console.log(highlight(`action: ${printJson(action)}`));
-      // const data={query, action}
+
       this.emitFromClient('logVisit', query, redisGraphCallback);
     },
 
@@ -361,6 +360,7 @@ export default {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
       console.log('Default Graph:', this.getGraphName());
+      Visit.convertLoggedVisitId();
     },
   },
 
@@ -454,6 +454,7 @@ export default {
       getVisitors: this.getVisitors,
       getExposures: this.getExposures,
       getVisitedSpaces: this.getVisitedSpaces,
+      validateVisits: this.validateVisits,
     });
   },
 };
