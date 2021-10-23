@@ -175,7 +175,7 @@ export default {
 
   components: {
     ConfirmModernDialog: () => import('../components/cards/dialogCard'),
-    businessCard: () => import('../components/cards/businessCard.vue'),
+    businessCard: () => import('../components/archive/businessCard.vue'),
     // State: () => import('../components/renderless/State.vue'),
   },
 

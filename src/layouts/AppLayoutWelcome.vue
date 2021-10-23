@@ -8,7 +8,7 @@
 
 <script>
 import CaptureErrorSnackbar from '@/components/errorBoundary/CaptureErrorSnackbar.vue';
-import WelcomeCard from '@/components/cards/welcomeCard';
+import WelcomeCard from '@/components/archive/welcomeCard';
 
 export default {
   name: 'AppLayoutWelcome',

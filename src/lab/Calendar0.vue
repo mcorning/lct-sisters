@@ -199,7 +199,8 @@ export default {
   },
 
   components: {
-    EventModernDialog: () => import('../components/cards/eventDialogCard.vue'),
+    EventModernDialog: () =>
+      import('../components/archive/eventDialogCard.vue'),
   },
 
   computed: {

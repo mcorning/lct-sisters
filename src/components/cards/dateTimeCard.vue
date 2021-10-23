@@ -69,7 +69,7 @@
         <input
           type="range"
           :min="16"
-          :max="36"
+          :max="32"
           :step="4"
           v-model="fontSize"
           @input="$refs.picker.resize()"/></v-col
@@ -121,7 +121,7 @@ export default {
   },
   data() {
     return {
-      fontSize: 24,
+      fontSize: 28,
       dateStruct: {
         dateString: '',
         start: { hr: '', min: '', amPm: '' },
@@ -147,14 +147,14 @@ export default {
       const dt = DateTime.fromISO(this.dateStruct.dateString);
       const start = dt.set({
         hours:
-          this.dateStruct.start.amPm === 'PM'
+          this.dateStruct.start.amPm === 'PM' && this.dateStruct.start.hr!=='12'
             ? Number(this.dateStruct.start.hr) + 12
             : this.dateStruct.start.hr,
         minutes: this.dateStruct.start.min,
       });
       const end = dt.set({
         hours:
-          this.dateStruct.end.amPm === 'PM'
+          this.dateStruct.end.amPm === 'PM' && this.dateStruct.start.hr!=='12'
             ? Number(this.dateStruct.end.hr) + 12
             : this.dateStruct.end.hr,
         minutes: this.dateStruct.end.min,

@@ -20,7 +20,7 @@
  *    So, the next run will have username and sessionID taken from the Setting entity.
  */
 
-import welcomeCard from '../components/cards/welcomeCard.vue';
+import welcomeCard from '../components/archive/welcomeCard.vue';
 
 import { err, info, success, warn, printJson } from '../utils/helpers';
 

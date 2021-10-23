@@ -99,10 +99,9 @@ export const testMixin = {
 
       // now ensure that start/end diads are equal
       const userID = this.$socket.client.auth.userID;
-      const dates = [
-        { id: 1, start: 1634931900000, end: 1634933700000 },
-        { id: 9, start: 2, end: 3 },
-      ];
+      const dates = localVisits.map((v) => {
+        return { id: v.loggedVisitId, start: v.start, end: v.end };
+      });
       const data = { userID, dates };
       this.emitFromClient('confirmDates', data, (result) =>
         console.log(result)

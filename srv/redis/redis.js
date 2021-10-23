@@ -321,7 +321,7 @@ async function confirmDates(data, ack) {
       const res = await Graph.query(setQ).catch((e) =>
         console.error('error in confirmDates():', e)
       );
-      console.log(printJson(res));
+      console.log(success(res._statistics._raw));
     }
 
     if (e.properties.end !== d.end) {
@@ -330,7 +330,7 @@ async function confirmDates(data, ack) {
       const res = await Graph.query(setQ2).catch((e) =>
         console.error('error in confirmDates():', e)
       );
-      console.log(printJson(res));
+      console.log(success(res._statistics._raw));
     }
   }
   if (ack) {
