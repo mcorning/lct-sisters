@@ -149,6 +149,13 @@
           >Thank you for taking the time to look at our work.</v-card-subtitle
         >
         <v-card-text>
+          This app stores your detailed location/visit data locally in
+          IndexedDB. When you log a visit to a public place, only a
+          non-significant ID number is stored in a remote graph. We traverse the
+          graph to alert visitors of possible exposure to Covid-19. We do not
+          share any LCT data, otherwise.
+        </v-card-text>
+        <v-card-text>
           Click on the building for your next meeting. You will see the event on
           your COVID-aware calendar.
         </v-card-text>
@@ -860,7 +867,8 @@ export default {
           });
         },
         (error) => {
-          console.log(error);
+          this.msg.push(`Disabling geolocation service.`);
+          this.msg.push(`\t${error}`);
         },
         this.positionOptions
       );
