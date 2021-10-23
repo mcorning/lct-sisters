@@ -135,26 +135,27 @@
       @deleteMarker="deleteMarker"
     ></info-window-card>
     <v-snackbar
+      color="green darken-2"
       v-model="snackbarThanks"
       centered
-      :color="confirmationColor"
-      timeout="40000"
+      timeout="60000"
       multi-line
     >
-      <v-card color="green" flat>
-        <v-card-text class="text-h6 mb-0 pb-0"
+      <v-sheet color="green darken-2" class="white-text" flat>
+        <v-card-text class="text-h6 mx-auto "
           >Welcome Microsoft Giving Campaign Supporters</v-card-text
         >
         <v-card-subtitle class="pt-1"
           >Thank you for taking the time to look at our work.</v-card-subtitle
         >
-        <v-card-text
-          >Click on the building for your next meeting. You will see the event
-          on your COVID-aware calendar.
+        <v-card-text>
+          Click on the building for your next meeting. You will see the event on
+          your COVID-aware calendar.
         </v-card-text>
         <v-card-text>
           If you test positive later, come back to LCT and click the Big Red
-          Button to warn others of possible exposure to the virus.
+          Button to warn others in the meeting of possible exposure to the
+          virus.
           <p class="mx-auto my-5">Thanks a 0x4240 for your support</p>
         </v-card-text>
         <v-card-actions>
@@ -166,7 +167,7 @@
             ><v-icon>close</v-icon>
           </v-btn></v-card-actions
         >
-      </v-card>
+      </v-sheet>
     </v-snackbar>
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
@@ -334,6 +335,7 @@ export default {
   },
   data() {
     return {
+      sponsor: '',
       savedMapCenter: false,
       emergency: false,
       msg: [],
@@ -821,7 +823,13 @@ export default {
         this.map = map;
         this.msg.push('3) Getting default location:');
         const center = this.defaultMapCenter || this.lastLocation;
-        if (center) {
+        if (this.sponsor === 'microsoft') {
+          this.msg.push(`\tWelcome Microsoft...`);
+          const position = {
+            coords: { latitude: 47.6888958, longitude: -122.1517598 },
+          };
+          showPosition(position);
+        } else if (center) {
           this.msg.push(`\ta) found saved center:`);
           this.msg.push(`\t${printJson(center)}`);
           const position = {
@@ -911,13 +919,15 @@ export default {
         // in space.js
         this.onSharePlace();
       }
-      if (query.sponsor) {
-        this.snackbarThanks = true;
-      } else this.overlay = false;
+      this.overlay = false;
     },
   },
 
   mounted() {
+    if (this.$route.query.sponsor) {
+      this.snackbarThanks = true;
+      this.sponsor = 'microsoft';
+    }
     console.time('Mounted GoogleMaps');
 
     // TODO this is an EitherAsync
