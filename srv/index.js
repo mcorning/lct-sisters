@@ -316,7 +316,7 @@ io.on('connection', (socket) => {
     getVisitors(ack);
   });
   socket.on('getExposures', (param, ack) => {
-    getExposures({ param, ack });
+    getExposures(param, ack);
   });
   socket.on('getVisitedSpaces', (param, ack) => {
     getVisitedSpaces(param, ack);

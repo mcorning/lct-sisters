@@ -253,8 +253,8 @@ async function matchAllSpacesQuery(param, ack) {
 function getVisitors(ack) {
   matchQuery(ack);
 }
-function getExposures({ param, ack }) {
-  matchNamedPathsQuery({ param, ack });
+function getExposures(param, ack) {
+  matchNamedPathsQuery(param, ack);
 }
 function getVisitedSpaces(param, ack) {
   getVisitedSpacesForUser(param, ack);
@@ -267,9 +267,8 @@ function changeGraph(graphName) {
 }
 
 //#region LAB
-async function matchNamedPathsQuery({ param, ack }) {
-  const { userID } = param;
-  console.log(param);
+async function matchNamedPathsQuery(userID, ack) {
+  console.log(userID);
   const now = Date.now();
   // Named paths matching.
   const q = `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 

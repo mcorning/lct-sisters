@@ -10,15 +10,6 @@
         <v-card-subtitle class="white--text"
           >Dated: {{ dated }}</v-card-subtitle
         >
-        <v-card-text class="white--text mb-1 pb-1">
-          <v-row no-gutters>
-            <v-col>
-              {{ visitCount == 1 ? 'Place' : 'Places' }}
-              at risk: {{ visitCount }}</v-col
-            >
-            <v-col>Unlogged visits: {{ hasUnloggedVisits }}</v-col>
-          </v-row>
-        </v-card-text>
         <v-divider />
         <v-card-text class="my-0 pt-1">
           <v-row no-gutters align="center" justify="center">

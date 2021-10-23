@@ -4,8 +4,7 @@
       <v-card-title>Redis Monitor</v-card-title>
 
       <v-divider></v-divider>
-      <v-btn @click="validateVisits">Validate Visits</v-btn>
-      <v-btn @click="getVisitedPaths">Verify Visits</v-btn>
+
       <v-row>
         <!-- Visitor table -->
         <v-col v-if="hasVisitors">
@@ -143,7 +142,7 @@ export default {
   },
 
   methods: {
-   getDate(ms) {
+    getDate(ms) {
       try {
         const dt = formatSmallTime(ms);
         console.log('dt', dt);
