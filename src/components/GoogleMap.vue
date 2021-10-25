@@ -153,14 +153,17 @@
         >
 
         <v-card-text>
-          Click on the building for your next meeting. You will see the event on
-          your COVID-aware calendar.
+          For your next meeting, click on the appropriate building or location.
+          You will see the event on your COVID-aware calendar. That's all you
+          have to do, for now.
         </v-card-text>
         <v-card-text>
-          If you test positive later, come back to LCT and click the Big Red
-          Button to warn others in the meeting of possible exposure to the
-          virus.
-          <p class="mx-auto my-5">Thanks a 0x4240 for your support</p>
+          Later, if you test positive for COVID, come back to LCT and click the
+          Big Red Button to warn others in the meeting of possible exposure to
+          the virus.
+          <p class="mx-auto my-5">
+            Thanks a 0x4240 for your support, and stay safe out there...
+          </p>
         </v-card-text>
         <v-divider />
         <v-card-actions>
@@ -351,7 +354,11 @@ export default {
   data() {
     return {
       sponsor: '',
-      sponsorPosition: {},
+      defaultPosition: {
+        lat: parseFloat(process.env.VUE_APP_LAT),
+        lng: parseFloat(process.env.VUE_APP_LNG),
+      },
+      sponsorPosition: this.defaultPosition,
       savedMapCenter: false,
       emergency: false,
       msg: [],
@@ -640,24 +647,6 @@ export default {
         });
       });
 
-      // const showCity = (poi) => {
-      //   const vm = this;
-      //   const { global_code, location, viewport } = poi;
-
-      //   this.setStatus(`showCity(): global_code: ${global_code}
-      //   ${printJson(location)}
-      //   ${printJson(viewport)}`);
-
-      //   if (location) {
-      //     map.setCenter(location);
-      //     if (viewport) {
-      //       map.fitBounds(viewport);
-      //     }
-      //     map.setZoom(vm.defaultZoom);
-      //     this.ready = true;
-      //   }
-      // };
-
       const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
         this.info = markedPlace;
         this.selectedMarker = marker; // for deleting purposes
@@ -773,7 +762,7 @@ export default {
         return { google, map };
       };
 
-      const showPosition = (position) => {
+      const showPosition = (latLng) => {
         const getLocality = (poi) => {
           let locality = poi.address_components.find((v) =>
             v.types.includes('locality')
@@ -798,17 +787,16 @@ export default {
           }
           return locality;
         };
+
         const vm = this;
         console.log('\tshowPosition():');
-        console.log(printJson(position.coords));
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const location = { lat, lng };
+        console.log(`\t${latLng}`);
+        const location = latLng;
         console.log('\t', printJson(location));
-        this.msg.push(`\tb) showPosition(): calling geocoder`);
-
+        vm.msg.push(`\tb) showPosition(): calling geocoder`);
+        vm.msg.push(`\t\twith location: ${printJson(location)}`);
         geocoder
-          .geocode({ location: { lat, lng } })
+          .geocode({ location })
           .toEither()
           .map(({ results }) => {
             const poi = results[0];
@@ -821,8 +809,8 @@ export default {
             const namespace = locality ? locality.short_name : 'NA';
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
-            this.msg.push('\td) Geocode geometry results:');
-            this.msg.push(`\t${printJson(geometry)}`);
+            vm.msg.push('\td) Geocode geometry results:');
+            vm.msg.push(`\t${printJson(geometry)}`);
             map.setCenter(location);
             map.setZoom(vm.defaultZoom - 2);
             const err = vm.setPoi({
@@ -831,18 +819,22 @@ export default {
               viewport: JSON.stringify(viewport),
             });
             const msg = err ? err : '\te) Saved location settings';
-            this.msg.push(msg);
+            vm.msg.push(msg);
 
-            this.ready = true;
+            vm.ready = true;
           })
           .cata({
             ok: () => {
-              this.msg.push('\td) Leaving geocoder in showPosition() ');
+              vm.msg.push('\td) Leaving geocoder in showPosition() ');
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
-              this.msg.push(`!!!! showPosition():error: ${results} !!!!`);
-              this.ready = true;
+              vm.msg.push(`!!!! showPosition():error: ${results} !!!!`);
+              vm.msg.push('\tReverting to default position:');
+              vm.msg.push(`\t${printJson(vm.defaultPosition)}`);
+              map.setCenter(vm.defaultPosition);
+
+              vm.ready = true;
             },
           });
       };
@@ -850,12 +842,7 @@ export default {
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });
 
-      /*
-      First time: no setting values. Call getCurrentPosition(). Save that POI.
-      Second visit: get POI. load map.
-      Change default center. Save in settings.
-      Third visit: get defaultCenter or POI. load map.
-      */
+      // final step in loading map:
       try {
         this.map = map;
         this.msg.push('3) Getting default location:');
@@ -869,49 +856,50 @@ export default {
         } else if (center) {
           this.msg.push(`\ta) found saved center:`);
           this.msg.push(`\t${printJson(center)}`);
-          const position = {
-            coords: { latitude: center.lat, longitude: center.lng },
-          };
-          showPosition(position);
+
+          showPosition(center);
         } else {
           this.msg.push(`\ta) panning to current location`);
           this.panToCurrentLocation();
         }
       } catch (error) {
-        alert('error loading map: ' + error.message);
+        throw 'Sorry. Error loading map: ' + error.message;
       }
     },
 
+    // called above in the last step to showing the map
     panToCurrentLocation() {
+      const self = this;
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // only HTML5 geolocation returns a position object
           const pos = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          this.map.setCenter(pos);
-          this.map.setZoom(18);
-          this.ready = true;
-          this.setPoi({
+          self.map.setCenter(pos);
+          self.map.setZoom(18);
+          self.ready = true;
+          self.setPoi({
             location: JSON.stringify(pos),
           });
         },
         (error) => {
           if (error.code === 1) {
             // default to sponsor or Sisters
-            const pos = this.sponsorPosition;
-            this.map.setCenter(pos);
-            this.map.setZoom(18);
-            this.ready = true;
-            this.setPoi({
+            const pos = self.sponsorPosition || self.defaultPosition;
+            self.map.setCenter(pos);
+            self.map.setZoom(18);
+            self.ready = true;
+            self.setPoi({
               location: JSON.stringify(pos),
             });
-            this.showPosition();
-            this.msg.push(`Disabling geolocation service.`);
-            this.msg.push(`\t${error}`);
+            self.showPosition(pos);
+            self.msg.push(`Disabling geolocation service.`);
+            self.msg.push(`\t${error}`);
           }
         },
-        this.positionOptions
+        self.positionOptions
       );
     },
     //#region Delete Marker code called by template
@@ -957,7 +945,6 @@ export default {
     },
     ready() {
       const query = this.$route.query;
-      this.emergency = query.d && query.d === '1';
 
       this.savedMapCenter = this.defaultMapCenter;
       this.msg.push('Map component ready');
@@ -973,13 +960,21 @@ export default {
   },
 
   mounted() {
-    this.sponsor = this.$route.query.sponsor;
+    const query = this.$route.query;
+
+    this.sponsor = query.sponsor;
+    this.emergency = query.d && query.d === '1';
+    this.msg.push(`${this.emergency ? 'Enabled diagnostics' : ''}`);
+
     if (this.sponsor) {
       this.snackbarThanks = true;
-      // TODO make this part of the query
+      // TODO Microsoft is the only sponsor right now
+      // so make position part of the querystring
       this.sponsorPosition = {
-        lat: 47.64223080000001,
-        lng: -122.1369332,
+        coords: {
+          lat: 47.64223080000001,
+          lng: -122.1369332,
+        },
       };
     }
     console.time('Mounted GoogleMaps');
