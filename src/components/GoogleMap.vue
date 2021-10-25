@@ -82,6 +82,7 @@
                 v-model="emergency"
                 label="Diagnostics Open"
                 color="primary"
+                @click="menu = false"
               ></v-switch>
             </v-card-actions>
             <v-card-actions>
@@ -119,11 +120,15 @@
       ><v-col>
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
       ><v-col v-if="emergency">
-        <span class="text-subtitle-1">Emergency diagnostics</span>
-        <v-btn absolute top right class="ml-10" icon @click="emailDiagnostics"
-          ><v-icon>email</v-icon></v-btn
-        >
-        <pre>{{ diagnostics }}</pre>
+        <v-card>
+          <v-btn absolute top right icon @click="emergency = false"
+            ><v-icon>close</v-icon></v-btn
+          >
+          <v-btn plain text @click="emailDiagnostics" large class="mt-3"
+            >Diagnostics</v-btn
+          >
+          <pre class="ml-5">{{ diagnostics }}</pre>
+        </v-card>
       </v-col>
     </v-row>
     <info-window-card
@@ -364,7 +369,7 @@ export default {
       },
       sponsorPosition: this.defaultPosition,
       savedMapCenter: false,
-      emergency: false,
+      emergency: true,
       msg: [],
       workplace: this.state.settings.workplace,
       shift: this.state.settings.shift || 8,
@@ -840,7 +845,7 @@ export default {
               vm.msg.push('\tReverting to default position:');
               vm.msg.push(`\t${printJson(vm.defaultPosition)}`);
               map.setCenter(vm.defaultPosition);
-
+              vm.emergency = true;
               vm.ready = true;
             },
           });
@@ -870,6 +875,8 @@ export default {
           this.panToCurrentLocation();
         }
       } catch (error) {
+        this.emergency = true;
+
         throw 'Sorry. Error loading map: ' + error.message;
       }
     },
@@ -904,6 +911,7 @@ export default {
             self.showPosition(pos);
             self.msg.push(`Disabling geolocation service.`);
             self.msg.push(`\t${error}`);
+            self.emergency = true;
           }
         },
         self.positionOptions
