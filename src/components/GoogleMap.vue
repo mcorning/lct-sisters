@@ -169,6 +169,9 @@
           <v-btn text @click="volunteer">
             Volunteer your skill
           </v-btn>
+          <v-btn text @click="goToDocs">
+            LCT Docs
+          </v-btn>
           <v-spacer />
           <v-btn icon @click="snackbarThanks = false"
             ><v-icon>close</v-icon>
@@ -276,7 +279,7 @@ export default {
       const loc = this.state.settings.location
         ? JSON.parse(this.state.settings.location)
         : null;
-      return loc.lat ? loc : null;
+      return loc;
     },
     defaultMapCenter() {
       return this.state.settings.default_map_center
@@ -343,6 +346,7 @@ export default {
   data() {
     return {
       sponsor: '',
+      sponsorPosition: {},
       savedMapCenter: false,
       emergency: false,
       msg: [],
@@ -407,6 +411,13 @@ export default {
     emailDiagnostics() {
       this.$clipboard(this.msg);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+    },
+    goToDocs() {
+      window.open(
+        'https://lct-docs.netlify.app',
+        '_blank',
+        'noopener noreferrer'
+      );
     },
     saveSpecial() {
       this.setSpecial({ workplace: this.workplace, shift: this.shift });
@@ -867,8 +878,19 @@ export default {
           });
         },
         (error) => {
-          this.msg.push(`Disabling geolocation service.`);
-          this.msg.push(`\t${error}`);
+          if (error.code === 1) {
+            // default to sponsor or Sisters
+            const pos = this.sponsorPosition;
+            this.map.setCenter(pos);
+            this.map.setZoom(18);
+            this.ready = true;
+            this.setPoi({
+              location: JSON.stringify(pos),
+            });
+            this.showPosition();
+            this.msg.push(`Disabling geolocation service.`);
+            this.msg.push(`\t${error}`);
+          }
         },
         this.positionOptions
       );
@@ -932,9 +954,14 @@ export default {
   },
 
   mounted() {
-    if (this.$route.query.sponsor) {
+    this.sponsor = this.$route.query.sponsor;
+    if (this.sponsor) {
       this.snackbarThanks = true;
-      this.sponsor = 'microsoft';
+      // TODO make this part of the query
+      this.sponsorPosition = {
+        lat: 47.64223080000001,
+        lng: -122.1369332,
+      };
     }
     console.time('Mounted GoogleMaps');
 
