@@ -17,6 +17,7 @@
         setSpecial,
         clearLocationSettings,
         setDefaultMapCenter,
+        setPreferredGraph,
       }"
     >
       <Spaces
@@ -34,6 +35,7 @@
         :setPoi="setPoi"
         :getPoi="getPoi"
         :setDefaultMapCenter="setDefaultMapCenter"
+        :setPreferredGraph=setPreferredGraph
         :usernumber="usernumber"
       />
     </div>

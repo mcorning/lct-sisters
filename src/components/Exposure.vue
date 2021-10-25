@@ -164,7 +164,6 @@ export default {
     visitCount: Number,
     logVisits: Function,
     onExposureWarning: Function,
-    getUnloggedVisits: Function,
     setVaccinationStatus: Function,
   },
   components: {
@@ -174,10 +173,7 @@ export default {
   },
 
   computed: {
-    hasUnloggedVisits() {
-      const x = this.getUnloggedVisits().length;
-      return x;
-    },
+
     getWarningColor() {
       if (this.pctWeight < 25) return 'amber';
       if (this.pctWeight < 75) return 'orange';
@@ -424,9 +420,7 @@ export default {
   watch: {
     ready() {
       console.log('Ready');
-      if (this.hasUnloggedVisits) {
-        this.logVisitsX(this.logVisits);
-      }
+
     },
     vaccinationStatus() {
       console.log(this.vaccinationStatus);

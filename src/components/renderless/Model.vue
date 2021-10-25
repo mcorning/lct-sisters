@@ -32,13 +32,7 @@ export default {
       return !!this.$socket.connected;
     },
 
-    unloggedVisits() {
-      return this.visits.filter((v) => !v.loggedVisitId);
-    },
 
-    hasUnloggedVisits() {
-      return this.unloggedVisits.length;
-    },
 
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
@@ -123,8 +117,8 @@ export default {
       return x;
     },
 
-    onExposureWarning(reason) {
-      this.emitFromClient('exposureWarning', reason);
+    onExposureWarning(riskScore) {
+      this.emitFromClient('exposureWarning', {graphName:this.$defaultGraphName, riskScore});
     },
 
     // TODO has this abstract approach been superseded by time.js and space.js?
@@ -162,16 +156,17 @@ export default {
       this.onLogVisit(this.selectedEvent);
     },
 
+// 10.25.21 now we log all visits (even future ones). this code is obsolete
     // called when there are unlogged visits
-    logVisits() {
-      return new Promise((resolve) => {
-        const x = this.unloggedVisits.length;
-        this.unloggedVisits.forEach((visit) => {
-          this.onLogVisit(visit);
-        });
-        resolve(`Logged ${x} visits.`);
-      });
-    },
+    // logVisits() {
+    //   return new Promise((resolve) => {
+    //     const x = this.unloggedVisits.length;
+    //     this.unloggedVisits.forEach((visit) => {
+    //       this.onLogVisit(visit);
+    //     });
+    //     resolve(`Logged ${x} visits.`);
+    //   });
+    // },
 
     // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable
     // and far easier to reason over and maintain
@@ -213,7 +208,9 @@ export default {
 
     // TODO Why isn't this a computed prop?
     getGraphName() {
-      return this.graphName || this.$defaultGraphName;
+      // graphName set in GoogleMaps.vue based on sponsor
+      // return this.graphName || this.$defaultGraphName;
+      return this.$defaultGraphName;
     },
     clearLocationSettings() {
       this.setPoi({
@@ -350,6 +347,10 @@ export default {
     setSpecial(vals) {
       this.updateSetting({ id: 1, ...vals });
     },
+    setPreferredGraph(graphName){
+      this.updateSetting({ id: 1, preferredGraph: graphName });
+
+    }
   },
 
   watch: {
@@ -415,6 +416,7 @@ export default {
       isConnected: this.isConnected,
       needsUsername: this.needsUsername,
       setSpecial: this.setSpecial,
+      setPreferredGraph:this.setPreferredGraph,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
@@ -443,7 +445,6 @@ export default {
       //Warning assets
       visitCount: this.visitCount,
       hasVisits: this.hasVisits,
-      hasUnloggedVisits: this.hasUnloggedVisits,
       logVisits: this.logVisits, // takes an array of visits as input
       onExposureWarning: this.onExposureWarning,
       getUnloggedVisits: this.getUnloggedVisits,

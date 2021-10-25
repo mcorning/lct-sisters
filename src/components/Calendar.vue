@@ -181,7 +181,7 @@
 import EventEditCard from '@/components/cards/eventEditCard';
 import VueQRCodeComponent from 'vue-qr-generator';
 
-import { DateTime, inFuture, makeTimes, userSince } from '@/utils/luxonHelpers';
+import { DateTime, makeTimes, userSince } from '@/utils/luxonHelpers';
 import { head } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
@@ -422,13 +422,8 @@ export default {
       alert('Failed to copy texts');
     },
     onDeleteEvent() {
-      if (!this.selectedEvent.loggedVisitId) {
-        // if unlogged, just delete cache
-        this.delete('cache');
-      } else {
-        // delete graph will also delete cache
-        this.delete('graph');
-      }
+      // delete graph will also delete cache
+      this.delete('graph');
 
       this.seePickers = false;
     },
@@ -671,9 +666,7 @@ export default {
 
     findUnloggedVisits() {
       head(
-        this.relevantEvents.filter(
-          (v) => !v.loggedVisitId && !inFuture(v.start)
-        )
+        this.relevantEvents.filter((v) => Object.is(v.loggedVisitId, NaN))
       ).cata({
         Just: (unlogged) => this.start(unlogged),
         Nothing: (err) => {

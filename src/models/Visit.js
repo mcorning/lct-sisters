@@ -27,8 +27,9 @@ export default class Visit extends Model {
       category: this.string(), // used for COVID-safe appointments
 
       // From the graph component
-      loggedVisitId: this.number(), // internal RedisGraph node ID of the Visit edge
-      graphName: this.string(''), // graphname may be 'Sand box' for users' playground
+      // default loggedVisitId is -1 so we can check for unlogged visits without getting confused by IDs of 0 and 1
+      loggedVisitId: this.number(-1), // internal RedisGraph node ID of the Visit edge
+      graphName: this.string(''), // graphname may be set by sponsor
 
       shared: this.boolean(false), // set true when someone shares an event
     };

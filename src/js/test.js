@@ -28,35 +28,6 @@ export const testMixin = {
       this.emitFromClient('getVisitedPaths', userID, this.verifyData);
     },
 
-    validateVisitsX() {
-      // TODO Alert: rewire dynamic graphs
-      const graphName = this.$defaultGraphName;
-      const userID = this.selectedUserID || this.$socket.client.auth.userID;
-      this.emitFromClient('validateVisits', userID, (visitedIDs) => {
-        const visits = this.getVisits();
-        console.log(JSON.stringify(visits, null, 3));
-        console.log('visitedIDs:', JSON.stringify(visitedIDs, null, 3));
-        visitedIDs.forEach((id) => {
-          const exists = visits.find((v) => v.loggedVisitId === id);
-          console.log(`Visit ${id} ${exists ? 'exists' : 'does not exist'}`);
-          if (!exists) {
-            const query = {
-              loggedVisitId: id, // use the same name as the delete query does on RedisGraph
-              graphName,
-            };
-            this.emitFromClient(
-              'deleteVisit',
-              query,
-              // and handle the callback
-              (results) => {
-                console.log(`loggedVisitId ${results} deleted from graph`);
-              }
-            );
-          }
-        });
-      });
-    },
-
     deleteVisitNode(loggedVisitId) {
       const query = {
         loggedVisitId, // use the same name as the delete query does on RedisGraph

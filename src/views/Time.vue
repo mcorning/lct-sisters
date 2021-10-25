@@ -25,7 +25,7 @@
         :confirmations="confirmations"
         :usernumber="usernumber"
         :getVisits="getVisits"
-        :updateVisitOnGraphWithParm=updateVisitOnGraphWithParm
+        :updateVisitOnGraphWithParm="updateVisitOnGraphWithParm"
       />
     </div>
   </Model>
@@ -57,6 +57,7 @@ export default {
 
       // interpret update results function
       const getMsg = (updateResults) => {
+        // TODO test that graphName is correct
         const { place, graphName, id, logged, deleted } = updateResults;
         const msg = logged
           ? {

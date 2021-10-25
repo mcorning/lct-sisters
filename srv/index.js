@@ -52,7 +52,6 @@ const {
   host,
   deleteVisit,
   findExposedVisitors,
-  changeGraph,
   logVisit,
   onExposureWarning,
   getVisitors,
@@ -166,7 +165,7 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region Visit API
-  socket.on('exposureWarning', async (riskScore, ack) => {
+  socket.on('exposureWarning', async ({ graphName, riskScore }, ack) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
@@ -197,7 +196,7 @@ io.on('connection', (socket) => {
     };
 
     const userID = socket.handshake.auth.userID;
-    onExposureWarning(userID)
+    onExposureWarning({ graphName, userID })
       .then((exposed) => {
         exposed.forEach((userID) => {
           console.log(warn('Processing '), userID);
@@ -262,11 +261,6 @@ io.on('connection', (socket) => {
   //#endregion
 
   //#region Utility handlers
-  socket.on('changeGraph', (graphName) => {
-    console.log('index.js switching to Sandbox');
-    changeGraph(graphName);
-  });
-
   socket.on('userFeedback', (data) => {
     feedbackCache.set(Date.now(), data);
     feedbackCache.save();

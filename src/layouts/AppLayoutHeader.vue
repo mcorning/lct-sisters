@@ -101,56 +101,6 @@ export default {
 
     fileMenuItems() {
       const x = [
-        // { isDivider: true },
-        // {
-        //   name: 'Select a Graph',
-        //   menu: [
-        //     {
-        //       name: 'Sisters',
-        //       subtitle: 'Where real data goes',
-        //       icon: 'mdi-graphql',
-        //       action: 'Sisters',
-        //     },
-        //     {
-        //       name: 'Sandbox',
-        //       subtitle: 'Play around with LCT safely',
-        //       icon: 'mdi-graphql',
-        //       action: 'Sandbox',
-        //     },
-        //   ],
-        // },
-        // { isDivider: true },
-        // {
-        //   name: 'Audit Log Tail:',
-        //   subtitle: 'Captures key runtime data for review',
-        //   icon: 'mdi-information-outline',
-        //   color: 'yellow',
-        //   menu: this.tail,
-        // menu: [
-        //   { name: '1.1' },
-        //   { name: '1.2' },
-        //   {
-        //     name: 'Sub-menu 2',
-        //     menu: [
-        //       { name: '2.1' },
-        //       { name: '2.2' },
-        //       {
-        //         name: 'Sub-menu 3',
-        //         menu: [
-        //           { name: '3.1' },
-        //           { name: '3.2' },
-        //           {
-        //             name: 'Sub-menu 4',
-        //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
-        //           },
-        //         ],
-        //       },
-        //     ],
-        //   },
-        // ],
-        // },
-
-        { isDivider: true },
         {
           subtitle: 'How are we doing?',
           name: 'Feedback',
@@ -165,16 +115,6 @@ export default {
           icon: 'mdi-information-variant',
           color: 'yellow',
         },
-
-        // { isDivider: true },
-
-        // {
-        //   subtitle: 'Remove localStorage username/sessionID',
-        //   name: 'Reset',
-        //   action: 'Reset',
-        //   icon: 'mdi-comment-quote-outline',
-        //   color: 'orange',
-        // },
       ];
       return x;
     },
@@ -232,13 +172,6 @@ export default {
     },
 
     // sent from Server after Server has all the data it needs to register the Visitor
-    // TODO better style uses a single object as arg. function deconstructs vars.
-    //    socket.emit('session', {
-    //        sessionID,
-    //        userID,
-    //        username,
-    //        graphName,
-    //    });
     newSession({ sessionID, userID, username, graphName }) {
       console.assert(
         sessionID && userID && username,
@@ -294,8 +227,6 @@ export default {
         name: view,
       });
     },
-    // why are we passing in a payload when Model gets that itself from the server?
-    // const { username, userID, sessionID } = payload;    // connectMe(payload) {
     connectMe() {
       if (this.isConnected) {
         return 'Already connected';
@@ -312,9 +243,6 @@ export default {
       if (this.$DEBUG) {
         console.info(warn('data:', JSON.stringify(data, null, 3)));
       }
-      // Setting.update(data);
-      // why are we updating the entity with something we just took from the entity?
-      // this.updateSetting(data);
 
       this.$socket.client.auth = {
         username: usernumber,
@@ -336,13 +264,6 @@ export default {
         name: 'Welcome',
       });
     },
-    // TODO this is part of the Model component, too
-    changeGraph(graphName) {
-      this.graphName =
-        graphName === 'Sandbox' ? 'Sandbox' : this.$defaultGraphName;
-      // this server event gets delegated to redis.js
-      //this.emitFromClient('changeGraph', this.graphName);
-    },
 
     onMenuItemClick(item) {
       if (typeof item.action === 'function') {
@@ -350,13 +271,6 @@ export default {
         return;
       }
       switch (item.action) {
-        case 'Sisters':
-        case 'Sandbox':
-          this.changeGraph(item.action);
-          break;
-        // case 'Audit Log':
-        //   this.showAuditLog = true;
-        //   break;
         case 'Docs':
           window.open(
             'https://lct-docs.netlify.app',
@@ -366,17 +280,6 @@ export default {
           break;
         case 'Feedback':
           this.feedbackDialog = true;
-          break;
-        case 'Donate':
-          alert(
-            'Your financial support makes this work possible. Email mcorning@soteriaInstitute.org for details. Thanks a 0xF4240.'
-          );
-          break;
-        case 'Reset':
-          // TODO replace with Model renderless component
-          // Visit.deleteAll();
-          // Setting.deleteAll();
-          window.location.reload();
           break;
       }
     },

@@ -12,16 +12,12 @@ export const timeMixin = {
     // TODO isn't the only diff between update and updateById is that the latter includes a value for the ID prop
     // called by RedisGraph callback
     updateLoggedVisitId({ visitId, place, graphName, id, logged }) {
-      // console.log('redisResult', redisResult);
-      // const { id, place, logged } = redisResult;
-
       // this is the Promisified/EitherAsync version with a single resolve() condition and two reject() opportunities
       if (!logged || id < 0) {
         alert(`Redis could not log Visit to  ${place}`);
         return;
       }
 
-      // const { graphName, visitId } = redisResult;
       const data = {
         visitId,
         loggedVisitId: id,

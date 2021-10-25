@@ -64,15 +64,6 @@ export const graphMixin = {
             graphName: redisResult.graph,
           };
           console.log('updateVisitOnGraph() data:', data);
-
-          // moved to time.js
-          // Visit.updateById(data);
-          // const msg = {
-          //   logged: true,
-          //   confirmationColor: 'success',
-          //   confirmationMessage: `${name} logged to ${data.graphName} on node ${data.loggedVisitId}`,
-          // };
-          // this.$emit('updatedModel', msg);
         })
         .catch((err) => {
           this.$emit('error', err);

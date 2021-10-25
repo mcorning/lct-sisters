@@ -1,14 +1,3 @@
-/**
- * There are two redis graphs:
- *    official (with some given name, e.g., 'Sisters')
- *    Sandbox (with that name)
- *
- * In production, we instantiate the official graph by default.
- *    We will instantiate Sandbox when the query includes that name.
- *
- *  In development, Sandbox is default is default graph.
- */
-
 // See https://github.com/RedisGraph/redisgraph.js/blob/master/examples/redisGraphExample.js
 const RedisGraph = require('redisgraph.js').Graph;
 // require('../../src/fp/monads/EitherAsync');
@@ -53,7 +42,7 @@ const host = options.host;
 console.log(highlight('Redis Options:', printJson(options)));
 
 let Graph = new RedisGraph(currentGraphName, null, null, options);
-console.log(info(`Redis Graph ${currentGraphName} opened`));
+console.log(info(`At initialization, Redis Graph opened ${currentGraphName}`));
 module.exports = {
   currentGraphName,
   host,
@@ -340,11 +329,8 @@ async function confirmDates(data, ack) {
 
 //#region READ Graph
 function logVisit(data) {
-  // TODO CONSIDER: if we want to store sessionID, we pass it in through data arg
-  // but this may have side effectes in MERGE since i think we would have to always
-  // pass both userID and sessionID to the graph (test this premise)
-  // const { visitId, userID, place, start, end, graphName, sessionID } = data;
   const { visitId, userID, place, start, end, graphName } = data;
+    changeGraph(graphName);
 
   // if (action.edit) {
   //   this.deleteVisit({loggedVisitId:visitId})
@@ -358,19 +344,12 @@ function logVisit(data) {
     });
   }
 
-  // TODO ALERT: put this back after you work out the optimal query design
-  // if ((graphName && graphName !== currentGraphName)) {
-  changeGraph('Test');
-  // changeGraph(graphName);
-  // }
-
-  // TODO CONSIDER: if we want to store sessionID, we pass it in through data arg
-  // const query = `MERGE (v:visitor{  userID: '${userID}', sessionID:'${sessionID}'})
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 
       MERGE (s:space{ name: '${escapeHtml(place)}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
   console.log('logVisit():');
+  // TODO ensure proper graphName
   console.log(query);
 
   // OK event handler that converts redis results into lct object
@@ -456,9 +435,11 @@ function findExposedVisitors(userID, subject = false) {
 }
 
 // find any visitor who's start time is between the carrier's start and end times
-function onExposureWarning(userID) {
-  console.log('Searching graph with', userID);
-  console.log(info('Current graph name:', currentGraphName));
+function onExposureWarning({graphName, userID}) {
+    changeGraph(graphName);
+
+  console.log(info(`Searching graph ${currentGraphName} with ${userID}`));
+  // TODO Be sure currentGraphName is appropriate for the visitor and not simply the default graph from the environment
   const now = Date.now();
   // TODO refactor so this function and getExposures() uses the same query string
   const getQuery = (userID) => {
@@ -495,11 +476,12 @@ function onExposureWarning(userID) {
 // delegated in index.js to handle socket.on('deleteVisit')
 function deleteVisit(data) {
   const { loggedVisitId, graphName } = data;
-
-  if (graphName && graphName !== currentGraphName) {
-    changeGraph(graphName);
-  }
-
+  console.log(
+    'Ensuring intented graph gets updated:',
+    graphName,
+    Graph._graphId
+  );
+  changeGraph(graphName)
   // Graph.query() arg
   let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
 
@@ -522,6 +504,7 @@ function deleteExpiredVisits() {
     const expiry = Date.now() - 86400000 * 14;
     let query = `MATCH ()-[v:visited]->() WHERE (v.start<=${expiry})  DELETE v`;
     console.log(warn('DELETE Expired Visits query:', query));
+    // TODO Ensure proper graph ("Sisters" or sponsor) gets the query
     Graph.query(query)
       .then((results) => {
         const stats = results._statistics._raw;

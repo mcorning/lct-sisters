@@ -154,7 +154,8 @@
           >Welcome Microsoft Giving Campaign Supporters</v-card-text
         >
         <v-card-subtitle class="pt-1"
-          >Thank you for taking the time to look at our work.</v-card-subtitle
+          >Thank you for taking the time to look at our work so far. LCT is in
+          beta, so expect a few improvements. Help Wanted.</v-card-subtitle
         >
 
         <v-card-text>
@@ -270,6 +271,7 @@ export default {
     setPoi: Function,
     getPoi: Function,
     setDefaultMapCenter: Function,
+    setPreferredGraph: Function,
   },
   components: {
     InfoWindowCard,
@@ -773,27 +775,34 @@ export default {
 
       const showPosition = (latLng) => {
         const getLocality = (poi) => {
-          let locality = poi.address_components.find((v) =>
+          // get city
+          let city = poi.address_components.find((v) =>
             v.types.includes('locality')
           );
           this.msg.push(
             `\tc) ${
-              locality ? 'Found' : 'Could not find'
+              city ? 'Found' : 'Could not find'
             } locality address component`
           );
-          if (!locality) {
+          if (!city) {
             this.msg.push('Looking for postal_town type, instead.');
-            locality = poi.address_components.find((v) =>
+            city = poi.address_components.find((v) =>
               v.types.includes('postal_town')
             );
-            this.msg.push(printJson(locality));
-            if (!locality) {
+            this.msg.push(printJson(city));
+            if (!city) {
               this.msg.push('Listing available address_component types:');
               this.msg.push(
                 `\t${printJson(poi.address_components.map((v) => v.types))})`
               );
             }
           }
+          // TODO what is the equivalent to state in the UK?
+          // get state
+          let adminArea = poi.address_components.find((v) =>
+            v.types.includes('administrative_area_level_1')
+          );
+          const locality = `${city.short_name} ${adminArea.short_name}`;
           return locality;
         };
 
@@ -814,8 +823,11 @@ export default {
             console.log(printJson(poi));
 
             const locality = getLocality(poi);
+            const namespace = locality ? locality : 'NA';
+            this.setPreferredGraph(namespace); // e.g., 'Sisters' or 'Redmond'
+            console.log('Preferred graph:', namespace);
+            vm.msg.push(`\t\tand preferred graph: ${namespace}`);
 
-            const namespace = locality ? locality.short_name : 'NA';
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
             vm.msg.push('\td) Geocode geometry results:');
@@ -972,17 +984,18 @@ export default {
   },
 
   mounted() {
+    const self = this;
     const query = this.$route.query;
 
-    this.sponsor = query.sponsor;
-    this.emergency = query.d && query.d === '1';
-    this.msg.push(`${this.emergency ? 'Enabled diagnostics' : ''}`);
+    self.sponsor = query.sponsor;
+    self.emergency = query.d && query.d === '1';
+    self.msg.push(`${self.emergency ? 'Enabled diagnostics' : ''}`);
 
-    if (this.sponsor) {
-      this.snackbarThanks = true;
+    if (self.sponsor) {
+      self.snackbarThanks = true;
       // TODO Microsoft is the only sponsor right now
       // so make position part of the querystring
-      this.sponsorPosition = {
+      self.sponsorPosition = {
         lat: 47.64223080000001,
         lng: -122.1369332,
       };
