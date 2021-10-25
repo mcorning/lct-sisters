@@ -177,11 +177,11 @@
               <v-btn text @click="volunteer">
                 Volunteer
               </v-btn>
-              <v-btn text @click="goToDocs">
+              <v-btn text @click="goToGithub">
                 Github
               </v-btn> </v-col
             ><v-spacer /><v-col>
-              <v-btn text @click="goToDocs">
+              <v-btn text @click="goToPolicies">
                 LCT Policies
               </v-btn>
               <v-btn text @click="goToDocs">
