@@ -25,54 +25,48 @@ export default {
 
     fileMenuItems() {
       const x = [
-        { isDivider: true },
-        {
-          name: 'Select a Graph',
-          menu: [
-            {
-              name: 'Sisters',
-              subtitle: 'Where real data goes',
-              icon: 'mdi-graphql',
-              action: 'Sisters',
-            },
-            {
-              name: 'Sandbox',
-              subtitle: 'Play around with LCT safely',
-              icon: 'mdi-graphql',
-              action: 'Sandbox',
-            },
-          ],
-        },
-        { isDivider: true },
-        {
-          name: 'Audit Log Tail:',
-          subtitle: 'Captures key runtime data for review',
-          icon: 'mdi-information-outline',
-          color: 'yellow',
-          menu: this.tail,
-          // menu: [
-          //   { name: '1.1' },
-          //   { name: '1.2' },
-          //   {
-          //     name: 'Sub-menu 2',
-          //     menu: [
-          //       { name: '2.1' },
-          //       { name: '2.2' },
-          //       {
-          //         name: 'Sub-menu 3',
-          //         menu: [
-          //           { name: '3.1' },
-          //           { name: '3.2' },
-          //           {
-          //             name: 'Sub-menu 4',
-          //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
-          //           },
-          //         ],
-          //       },
-          //     ],
-          //   },
-          // ],
-        },
+        // { isDivider: true },
+        // {
+        //   name: 'Select a Graph',
+        //   menu: [
+        //     {
+        //       name: 'Sisters',
+        //       subtitle: 'Where real data goes',
+        //       icon: 'mdi-graphql',
+        //       action: 'Sisters',
+        //     },
+        //     {
+        //       name: 'Sandbox',
+        //       subtitle: 'Play around with LCT safely',
+        //       icon: 'mdi-graphql',
+        //       action: 'Sandbox',
+        //     },
+        //   ],
+        // },
+        // { isDivider: true },
+
+        // menu: [
+        //   { name: '1.1' },
+        //   { name: '1.2' },
+        //   {
+        //     name: 'Sub-menu 2',
+        //     menu: [
+        //       { name: '2.1' },
+        //       { name: '2.2' },
+        //       {
+        //         name: 'Sub-menu 3',
+        //         menu: [
+        //           { name: '3.1' },
+        //           { name: '3.2' },
+        //           {
+        //             name: 'Sub-menu 4',
+        //             menu: [{ name: '4.1' }, { name: '4.2' }, { name: '4.3' }],
+        //           },
+        //         ],
+        //       },
+        //     ],
+        //   },
+        // ],
 
         { isDivider: true },
         {
@@ -90,15 +84,7 @@ export default {
           color: 'yellow',
         },
 
-        { isDivider: true },
-
-        {
-          subtitle: 'Remove localStorage username/sessionID',
-          name: 'Reset',
-          action: 'Reset',
-          icon: 'mdi-comment-quote-outline',
-          color: 'orange',
-        },
+        // { isDivider: true },
       ];
       return x;
     },

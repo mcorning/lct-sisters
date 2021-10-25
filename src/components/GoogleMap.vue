@@ -141,20 +141,17 @@
       timeout="60000"
       multi-line
     >
-      <v-sheet color="green darken-2" class="white-text" flat>
+      <v-card color="green darken-2" class="white-text" flat>
+        <v-btn absolute top right icon @click="snackbarThanks = false"
+          ><v-icon>close</v-icon>
+        </v-btn>
         <v-card-text class="text-h6 mx-auto "
           >Welcome Microsoft Giving Campaign Supporters</v-card-text
         >
         <v-card-subtitle class="pt-1"
           >Thank you for taking the time to look at our work.</v-card-subtitle
         >
-        <v-card-text>
-          This app stores your detailed location/visit data locally in
-          IndexedDB. When you log a visit to a public place, only a
-          non-significant ID number is stored in a remote graph. We traverse the
-          graph to alert visitors of possible exposure to Covid-19. We do not
-          share any LCT data, otherwise.
-        </v-card-text>
+
         <v-card-text>
           Click on the building for your next meeting. You will see the event on
           your COVID-aware calendar.
@@ -165,19 +162,27 @@
           virus.
           <p class="mx-auto my-5">Thanks a 0x4240 for your support</p>
         </v-card-text>
+        <v-divider />
         <v-card-actions>
-          <v-btn text @click="volunteer">
-            Volunteer your skill
-          </v-btn>
-          <v-btn text @click="goToDocs">
-            LCT Docs
-          </v-btn>
-          <v-spacer />
-          <v-btn icon @click="snackbarThanks = false"
-            ><v-icon>close</v-icon>
-          </v-btn></v-card-actions
-        >
-      </v-sheet>
+          <v-row no-gutters dense align="center"
+            ><v-col>
+              <v-btn text @click="volunteer">
+                Volunteer
+              </v-btn>
+              <v-btn text @click="goToDocs">
+                Github
+              </v-btn> </v-col
+            ><v-spacer /><v-col>
+              <v-btn text @click="goToDocs">
+                LCT Policies
+              </v-btn>
+              <v-btn text @click="goToDocs">
+                LCT Docs
+              </v-btn>
+            </v-col></v-row
+          >
+        </v-card-actions>
+      </v-card>
     </v-snackbar>
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
@@ -412,9 +417,23 @@ export default {
       this.$clipboard(this.msg);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
     },
+    goToPolicies() {
+      window.open(
+        'https://lct-docs.netlify.app/policy/#privacy-notice',
+        '_blank',
+        'noopener noreferrer'
+      );
+    },
     goToDocs() {
       window.open(
         'https://lct-docs.netlify.app',
+        '_blank',
+        'noopener noreferrer'
+      );
+    },
+    goToGithub() {
+      window.open(
+        'https://github.com/mcorning/lct-sisters',
         '_blank',
         'noopener noreferrer'
       );
