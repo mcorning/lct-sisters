@@ -861,11 +861,7 @@ export default {
         const center = this.defaultMapCenter || this.lastLocation;
         if (this.sponsor === 'microsoft') {
           this.msg.push(`\tWelcome Microsoft...`);
-          const position = {
-            lat: 47.6888958,
-            lng: -122.1517598,
-          };
-          showPosition(position);
+          showPosition(this.sponsorPosition);
         } else if (center) {
           this.msg.push(`\ta) found saved center:`);
           this.msg.push(`\t${printJson(center)}`);
@@ -987,10 +983,8 @@ export default {
       // TODO Microsoft is the only sponsor right now
       // so make position part of the querystring
       this.sponsorPosition = {
-        coords: {
-          lat: 47.64223080000001,
-          lng: -122.1369332,
-        },
+        lat: 47.64223080000001,
+        lng: -122.1369332,
       };
     }
     console.time('Mounted GoogleMaps');
