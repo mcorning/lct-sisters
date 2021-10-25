@@ -830,6 +830,9 @@ export default {
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
               vm.msg.push(`!!!! showPosition():error: ${results} !!!!`);
+              vm.msg.push(
+                `Your location setting is: ${this.state.settings.location}`
+              );
               vm.msg.push('\tReverting to default position:');
               vm.msg.push(`\t${printJson(vm.defaultPosition)}`);
               map.setCenter(vm.defaultPosition);
