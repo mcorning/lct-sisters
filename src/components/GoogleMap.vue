@@ -120,7 +120,7 @@
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
       ><v-col v-if="emergency">
         <span class="text-subtitle-1">Emergency diagnostics</span>
-        <v-btn class="ml-10" icon @click="emailDiagnostics"
+        <v-btn absolute top right class="ml-10" icon @click="emailDiagnostics"
           ><v-icon>email</v-icon></v-btn
         >
         <pre>{{ diagnostics }}</pre>
@@ -284,9 +284,13 @@ export default {
       return this.$vuetify.breakpoint.name;
     },
     lastLocation() {
+      // double check for bad location value
+      if (this.state.settings.location === '{}') return null;
+
       const loc = this.state.settings.location
         ? JSON.parse(this.state.settings.location)
         : null;
+
       return loc;
     },
     defaultMapCenter() {
