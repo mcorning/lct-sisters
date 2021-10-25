@@ -862,7 +862,8 @@ export default {
         if (this.sponsor === 'microsoft') {
           this.msg.push(`\tWelcome Microsoft...`);
           const position = {
-            coords: { latitude: 47.6888958, longitude: -122.1517598 },
+            lat: 47.6888958,
+            lng: -122.1517598,
           };
           showPosition(position);
         } else if (center) {
