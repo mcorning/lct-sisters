@@ -171,7 +171,7 @@ export default {
     // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable
     // and far easier to reason over and maintain
     onLogVisit(visit) {
-      const { id: visitId, name, start, end } = visit;
+      const { id: visitId, name, place_id, start, end } = visit;
       // get ref to vue model (to avoid this as Window and buffer below)
       const vm = this;
 
@@ -191,8 +191,9 @@ export default {
       const query = {
         visitId,
         place: name,
-        start: start,
-        end: end,
+        place_id,
+        start,
+        end,
         graphName: this.getGraphName(),
         userID: this.$socket.client.auth.userID,
         sessionID: this.sessionID,

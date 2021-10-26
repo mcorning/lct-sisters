@@ -33,6 +33,7 @@ export const graphMixin = {
       const {
         id,
         name,
+        place_id,
         start,
         end,
         loggedVisitId,
@@ -43,10 +44,11 @@ export const graphMixin = {
         username: this.username,
         userID: this.$socket.client.auth.userID,
         selectedSpace: name,
-        start: start,
-        end: end,
+        place_id,
+        start,
+        end,
         date: new Date(start).toDateString(),
-        interval: interval,
+        interval,
         loggedVisitId,
         graphName,
       };

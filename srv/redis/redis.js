@@ -85,15 +85,12 @@ function getSessionID(param, ack) {
 function getVisitedPaths(userID, ack) {
   const q = `MATCH p=(:visitor{userID:'${userID}'})-[v:visited]->(s:space) RETURN p`;
   let paths = [];
-  console.log(q);
   Graph.query(q).then((res) => {
     while (res.hasNext()) {
       let record = res.next();
       let p = record.get('p');
-      console.log(printJson(p));
       paths = [...paths, p];
     }
-    console.log(paths);
     if (ack) {
       ack(paths);
     }
@@ -108,7 +105,6 @@ function getVisitedSpacesForUser(userID, ack) {
     while (res.hasNext()) {
       let record = res.next();
       let v = record.get('v');
-      console.log(printJson(v.id));
       visits = [
         ...visits,
         {
@@ -145,7 +141,6 @@ function matchQuery(ack) {
       while (res.hasNext()) {
         let record = res.next();
         let userID = record.get('v.userID');
-        console.log(printJson(userID));
         s.add({ userID });
       }
       if (ack) {
@@ -254,18 +249,24 @@ function changeGraph(graphName) {
   Graph = new RedisGraph(graphName, null, null, options);
   console.log(highlight(`Graph now using ${graphName}`));
 }
+function getExposureQuery(userID) {
+  const now = Date.now();
+
+  return `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
+    WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
+    AND exposed.userID <> carrier.userID    
+    RETURN exposed.userID,  id(exposed), s.place_id, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
+}
 
 //#region LAB
 async function matchNamedPathsQuery(userID, ack) {
-  console.log(userID);
-  const now = Date.now();
+  console.log(
+    info(
+      `Searching graph ${currentGraphName} for ${userID}'s potential exposures.'`
+    )
+  );
   // Named paths matching.
-  const q = `MATCH (carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
-    WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
-    AND exposed.userID <> carrier.userID    
-    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
-  console.log(userID);
-  console.log(Graph._graphId);
+  const q = getExposureQuery(userID);
   console.log(q);
 
   const s = new Set();
@@ -277,7 +278,8 @@ async function matchNamedPathsQuery(userID, ack) {
     const start = record.get('e.start');
     const end = record.get('e.end');
     const space = record.get('s.name');
-    const payload = { userID, start, end, space };
+    const placeID = record.get('s.place_id');
+    const payload = { userID, start, end, space, placeID };
     console.log(printJson(payload));
     s.add(payload);
   }
@@ -329,23 +331,11 @@ async function confirmDates(data, ack) {
 
 //#region READ Graph
 function logVisit(data) {
-  const { visitId, userID, place, start, end, graphName } = data;
-    changeGraph(graphName);
-
-  // if (action.edit) {
-  //   this.deleteVisit({loggedVisitId:visitId})
-  // }
-  function escapeHtml(string) {
-    return String(string).replace(/[&<>"'/]/g, function(s) {
-      // here we just escape strings characters
-      return `\\${s}`;
-      // this is how you escape HTML
-      // return entityMap[s];
-    });
-  }
+  const { visitId, userID, place_id, start, end, graphName } = data;
+  changeGraph(graphName);
 
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 
-      MERGE (s:space{ name: '${escapeHtml(place)}'}) 
+      MERGE (s:space{ place_id:'${place_id}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
       RETURN id(r)`;
   console.log('logVisit():');
@@ -357,7 +347,7 @@ function logVisit(data) {
     const id = results.next().get('id(r)');
     return {
       id,
-      place,
+      place_id,
       graphName,
       visitId,
       logged: true,
@@ -377,83 +367,90 @@ function logVisit(data) {
 }
 
 // see if an alerted visitor has potential alerts to share
-function findExposedVisitors(userID, subject = false) {
+// function findExposedVisitors(userID, subject = false) {
+function findExposedVisitors(userID) {
   return new Promise(function(resolve) {
     // be sure we have only valid visits to query
     deleteExpiredVisits().then(() =>
+      //original query left out details:
       Graph.query(
         `MATCH (a:visitor{userID:'${userID}'})-[v:visited]->(s:space)
-    RETURN a.userID, a.name, id(a), s.name, id(s), v.start, v.end, id(v), id(s)`
-      ).then((res) => {
-        if (!res._results.length) {
-          console.log(userID, 'exposed nobody');
-          return resolve(userID);
-        }
+      RETURN a.userID, a.name, id(a), s.name, id(s), v.start, v.end, id(v), id(s)`
+      )
+        // Graph.query(getExposureQuery(userID))
+        .then((res) => {
+          if (!res._results.length) {
+            console.log(userID, 'exposed nobody');
+            return resolve(userID);
+          }
 
-        printExposedVisitors(res);
-        const others = [
-          ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
-        ];
-        resolve(others);
-      })
+          // printExposedVisitors(res);
+          const others = [
+            ...new Set(res._results.map((v) => v._values).map((v) => v[0])),
+          ];
+          console.log('Exposed visitors:', others);
+          resolve(others);
+        })
     );
   });
 
-  function printExposedVisitors(res) {
-    console.log(success(`\n${subject ? 'Patient Zero' : 'Exposed'}:`));
-    const rec = res._results[0];
-    console.log(rec.get('id(a)'), userID, rec.get('a.name'), 'visited:');
+  // function printExposedVisitors(res) {
+  //   console.log(success(`\n${subject ? 'Patient Zero' : 'Exposed'}:`));
+  //   const rec = res._results[0];
+  //   console.log(rec.get('id(a)'), userID, rec.get('a.name'), 'visited:');
 
-    while (res.hasNext()) {
-      let record = res.next();
-      let start = new Date(record.get('v.start') / 1).toLocaleString();
-      let end = new Date(record.get('v.end') / 1).toLocaleString();
-      let vid = record.get('id(v)');
-      let sid = record.get('id(s)');
+  //   while (res.hasNext()) {
+  //     let record = res.next();
+  //     let start = new Date(record.get('v.start') / 1).toLocaleString();
+  //     let end = new Date(record.get('v.end') / 1).toLocaleString();
+  //     let vid = record.get('id(v)');
+  //     let sid = record.get('id(s)');
 
-      console.log(
-        ' '.repeat(19),
-        vid < 10 ? ' ' : '',
-        vid,
-        ' '.repeat(vid / 100),
-        record.get('v.start'),
-        '=',
-        start,
-        ' '.repeat(25 - start.length),
+  //     console.log(
+  //       ' '.repeat(19),
+  //       vid < 10 ? ' ' : '',
+  //       vid,
+  //       ' '.repeat(vid / 100),
+  //       record.get('v.start'),
+  //       '=',
+  //       start,
+  //       ' '.repeat(25 - start.length),
 
-        record.get('v.end'),
-        '=',
-        end,
-        ' '.repeat(25 - end.length),
+  //       record.get('v.end'),
+  //       '=',
+  //       end,
+  //       ' '.repeat(25 - end.length),
 
-        sid < 10 ? ' ' : '',
-        sid,
-        record.get('s.name')
-      );
-    }
-  }
+  //       sid < 10 ? ' ' : '',
+  //       sid,
+  //       record.get('s.name')
+  //     );
+  //   }
+  // }
 }
 
 // find any visitor who's start time is between the carrier's start and end times
-function onExposureWarning({graphName, userID}) {
-    changeGraph(graphName);
+function onExposureWarning({ graphName, userID }) {
+  changeGraph(graphName);
 
-  console.log(info(`Searching graph ${currentGraphName} with ${userID}`));
+  console.log(
+    info(`Searching graph ${currentGraphName} for exposures to ${userID}`)
+  );
   // TODO Be sure currentGraphName is appropriate for the visitor and not simply the default graph from the environment
-  const now = Date.now();
+  // const now = Date.now();
   // TODO refactor so this function and getExposures() uses the same query string
-  const getQuery = (userID) => {
-    return `MATCH p=(carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)
-    WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
-    AND exposed.userID <> carrier.userID    
-    RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
-  };
+  // const getQuery = (userID) => {
+  //   return `MATCH p=(carrier:visitor{userID:'${userID}'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor)
+  //   WHERE NOT (e.end<=c.start OR e.start>=c.end) AND c.start<${now}
+  //   AND exposed.userID <> carrier.userID
+  //   RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e) `;
+  // };
   const getUserIDs = (results, fnc) => [...new Set(results.map(fnc))];
 
-  console.log(highlight(getQuery(userID)));
+  console.log(highlight(getExposureQuery(userID)));
 
   const updateGraph = () => {
-    return Graph.query(getQuery(userID))
+    return Graph.query(getExposureQuery(userID))
       .toEither()
       .cata({
         // ok: (userIDs) => userIDs,
@@ -481,7 +478,7 @@ function deleteVisit(data) {
     graphName,
     Graph._graphId
   );
-  changeGraph(graphName)
+  changeGraph(graphName);
   // Graph.query() arg
   let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
 
