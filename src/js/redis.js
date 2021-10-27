@@ -1,6 +1,8 @@
 import { success, warn, printJson } from '@/utils/helpers';
-export const testMixin = {
-  name: 'testFunctions',
+import { nullable } from 'pratica';
+
+export const redisMixin = {
+  name: 'redisMonitor',
 
   methods: {
     //#region Lab
@@ -28,10 +30,10 @@ export const testMixin = {
       this.emitFromClient('getVisitedPaths', userID, this.verifyData);
     },
 
-    deleteVisitNode(loggedVisitId) {
+    deleteVisitNode(node) {
       const query = {
-        loggedVisitId, // use the same name as the delete query does on RedisGraph
-        graphName: this.$defaultGraphName,
+        loggedVisitId: node.id, // use the same name as the delete query does on RedisGraph
+        graphName: node.graphName,
       };
       this.emitFromClient(
         'deleteVisit',
@@ -43,26 +45,44 @@ export const testMixin = {
       );
     },
 
+    /**
+     * Synchronize local storage with Redisgraph
+     * Redisgraph will be invalid if, while offline, we remove one, more, or all events
+     * @param {*} fromGraph
+     * nodes from Redis graph
+     */
     compareVisitData(fromGraph) {
       console.log('Validating Visit Data');
       console.log(warn('fromGraph:', printJson(fromGraph)));
       const localVisits = this.getVisits();
 
-      // ensure each graph visit is stored locally...
+      // if no local visits, delete all nodes on graph
+      if (!localVisits) {
+        fromGraph.forEach((node) => {
+          this.deleteVisitNode(node);
+        });
+        return;
+      }
+      // else ensure each graph visit is found in localstorage...
       const orphanNodes = fromGraph.reduce((a, c) => {
-        console.log('edge.id:', c.id);
-        const graphNodeInLocalStorage = localVisits.find(
-          (v) => v.loggedVisitId === c.id
-        );
-        if (!graphNodeInLocalStorage) {
-          return a.push(c.id);
+        console.log('graph edge.id:', c.id);
+        const deletGraphNode =
+          localVisits.find((v) => v.loggedVisitId === c.id) ?? true;
+        console.log('deletGraphNode', deletGraphNode);
+        console.log('a', a);
+        if (deletGraphNode) {
+          a.push(c);
         }
+        return a;
       }, []);
+
       // ...otherwise delete the graphed event
       if (orphanNodes) {
-        console.log(warn(`deleting ${orphanNodes} orphaned graph events`));
-        orphanNodes.forEach((id) => {
-          this.deleteVisitNode(id);
+        console.log(
+          warn(`deleting ${orphanNodes.length ?? 0} orphaned graph events`)
+        );
+        orphanNodes.forEach((node) => {
+          this.deleteVisitNode(node);
         });
       } else {
         console.log(success('Your graph has only valid visits'));
@@ -79,38 +99,64 @@ export const testMixin = {
       );
     },
 
-    //#endregion Lab
+    /**
+     * Called by Redis.vue when monitored visitor changes
+     * getVisitTimes returns start and end for all used graphs
+     */
     validateVisits(userID = this.$socket.client.auth.userID) {
-      this.emitFromClient('getVisitedSpaces', userID, this.compareVisitData);
-    },
-
-    // sent by testCard.vue
-    getVisitors() {
-      // send message to server
+      const graphNames = this.getGraphs();
       this.emitFromClient(
-        'getVisitors',
-        null,
-        // and handle the callback
-        (res) => {
-          const { msg, results } = res;
-          if (Array.isArray(results)) {
-            console.log(success(`${msg}:`));
-            results.forEach((element) => {
-              console.log(printJson(element));
-            });
-          } else {
-            console.log(success(`${msg}:`, results));
-          }
-          this.$emit('visitors', res);
-        }
+        'getVisitTimes',
+        { graphNames, userID },
+        this.compareVisitData
       );
+    },
+    //#endregion Lab
+
+    getGraphs() {
+      // visits can have more than one graphName
+      return nullable(this.getVisits().map((v) => v.graphName)).cata({
+        Just: (names) => names,
+        Nothing: () => console.log(warn(`No visits`)),
+      });
+    },
+    // sent by testCard.vue to get userID for all visitors' in a (set of) given graph(s)
+    getVisitors() {
+      const send = (graphNames) =>
+        // send message to server
+        this.emitFromClient(
+          'getVisitors',
+          graphNames,
+          // and handle the callback
+          (res) => {
+            const { msg, results } = res;
+            if (Array.isArray(results)) {
+              console.log(success(`${msg}:`));
+              results.forEach((element) => {
+                console.log(printJson(element));
+              });
+            } else {
+              console.log(success(`${msg}:`, results));
+            }
+            this.$emit('visitors', res);
+          }
+        );
+
+      nullable(this.getVisits().map((v) => v.graphName)).cata({
+        Just: (graphNames) => send(graphNames),
+        Nothing: () => console.log(warn(`No visits`)),
+      });
     },
 
     getExposures(userID) {
+      const graphNames = this.getGraphs();
+      if (!graphNames) {
+        return;
+      }
       // send message to server
       this.emitFromClient(
         'getExposures',
-        userID,
+        { graphNames, userID },
         // and handle the callback
         (res) => {
           const { msg, results } = res;
@@ -127,9 +173,9 @@ export const testMixin = {
       );
     },
 
-    getVisitedSpaces(userID) {
+    getVisitTimes(userID) {
       this.emitFromClient(
-        'getVisitedSpaces',
+        'getVisitTimes',
         userID,
         // and handle the callback
         (res) => {

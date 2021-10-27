@@ -199,7 +199,7 @@ export default {
     usernumber: Number,
     getVisits: Function,
     isConnected: Boolean,
-    updateVisitOnGraphWithParm: Function,
+    updateGraphVisit: Function,
   },
   components: {
     VueQRCodeComponent,
@@ -444,26 +444,25 @@ export default {
     },
 
     onCloseDateTimeCard(dto) {
-      const { date, start, end } = dto;
-      if (dto) {
-        this.selectedEvent.date = date;
-        this.selectedEvent.start = start;
-        this.selectedEvent.end = end;
-        this.update('cache');
-
-        const id = this.selectedEvent.loggedVisitId;
-        const query = [
-          'MATCH ()-[v:visited]->()',
-          'WHERE id(v)=$id',
-          'set v.start=$start, v.end=$end',
-        ];
-        const param = { id, start, end };
-        this.log(printJson(param));
-        this.updateVisitOnGraphWithParm(query, param, (msg) => {
-          this.log(msg);
-        });
-      }
       this.seePickers = false;
+
+      if (dto === 0) {
+        return;
+      }
+      const { date, start, end } = dto;
+      this.selectedEvent.date = date;
+      this.selectedEvent.start = start;
+      this.selectedEvent.end = end;
+
+      this.update('cache');
+
+      const graphName = this.selectedEvent.graphName;
+      const id = this.selectedEvent.loggedVisitId;
+      const param = { id, start, end, graphName };
+      this.log(printJson(param));
+      this.updateGraphVisit(param).then((msg) => {
+        this.log(msg);
+      });
     },
 
     getMailToString() {

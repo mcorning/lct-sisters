@@ -13,7 +13,7 @@ import { timeMixin } from '@/js/time';
 import { graphMixin } from '@/js/graph';
 import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
-import { testMixin } from '@/js/test';
+import { redisMixin } from '@/js/redis';
 
 import { highlight, success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
@@ -22,7 +22,7 @@ import { Some } from '@/fp/monads/Maybe.js';
 export default {
   props: {},
 
-  mixins: [graphMixin, spaceMixin, testMixin, timeMixin, warningMixin],
+  mixins: [graphMixin, spaceMixin, redisMixin, timeMixin, warningMixin],
 
   computed: {
     // preferredGraphName() {
@@ -31,8 +31,6 @@ export default {
     isConnected() {
       return !!this.$socket.connected;
     },
-
-
 
     isDefaultGraph() {
       return this.graphName === this.$defaultGraphName;
@@ -118,7 +116,10 @@ export default {
     },
 
     onExposureWarning(riskScore) {
-      this.emitFromClient('exposureWarning', {graphName:this.$defaultGraphName, riskScore});
+      this.emitFromClient('exposureWarning', {
+        graphName: this.$defaultGraphName,
+        riskScore,
+      });
     },
 
     // TODO has this abstract approach been superseded by time.js and space.js?
@@ -156,7 +157,7 @@ export default {
       this.onLogVisit(this.selectedEvent);
     },
 
-// 10.25.21 now we log all visits (even future ones). this code is obsolete
+    // 10.25.21 now we log all visits (even future ones). this code is obsolete
     // called when there are unlogged visits
     // logVisits() {
     //   return new Promise((resolve) => {
@@ -348,10 +349,9 @@ export default {
     setSpecial(vals) {
       this.updateSetting({ id: 1, ...vals });
     },
-    setPreferredGraph(graphName){
+    setPreferredGraph(graphName) {
       this.updateSetting({ id: 1, preferredGraph: graphName });
-
-    }
+    },
   },
 
   watch: {
@@ -417,7 +417,7 @@ export default {
       isConnected: this.isConnected,
       needsUsername: this.needsUsername,
       setSpecial: this.setSpecial,
-      setPreferredGraph:this.setPreferredGraph,
+      setPreferredGraph: this.setPreferredGraph,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
@@ -441,7 +441,7 @@ export default {
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
       visitExists: this.visitExists,
-      updateVisitOnGraphWithParm: this.updateVisitOnGraphWithParm,
+      updateGraphVisit: this.updateGraphVisit,
 
       //Warning assets
       visitCount: this.visitCount,
@@ -455,7 +455,7 @@ export default {
       // Test assets
       getVisitors: this.getVisitors,
       getExposures: this.getExposures,
-      getVisitedSpaces: this.getVisitedSpaces,
+      getVisitTimes: this.getVisitTimes,
       validateVisits: this.validateVisits,
     });
   },

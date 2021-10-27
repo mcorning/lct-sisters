@@ -93,25 +93,18 @@ export const graphMixin = {
         }
       });
     },
-    updateVisitOnGraphWithParm(query, param) {
-      // example param: {id:'134345'}
-      console.log('query to update graph:', printJson(query));
+    updateGraphVisit(param) {
       console.log('query params:', printJson(param));
       return new Promise((resolve, reject) => {
         // send message to server
         try {
           this.emitFromClient(
             'updateVisit',
-            { query, param },
+            param,
             // and handle the callback
-            (results) => {
-              console.log(
-                success(
-                  'updateVisitOnGraphWithParm() results:',
-                  printJson(results)
-                )
-              );
-              resolve(results);
+            (msg) => {
+              console.log(success('updateGraphVisit() results:', msg));
+              resolve(msg);
             }
           );
         } catch (error) {

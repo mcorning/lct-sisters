@@ -12,7 +12,7 @@
 
 <script>
 // Test.vue calls this card
-import testCard from './cards/testCard.vue';
+import testCard from './cards/redis.vue';
 export default {
   components: { testCard },
   props: {
@@ -42,11 +42,13 @@ export default {
   },
   methods: {
     onSelectedChanged(userID) {
+      // in redis.js
       this.getExposures(userID);
-      this.validateVisits(userID)
+      this.validateVisits(userID);
     },
   },
   mounted() {
+
     this.getVisitors();
   },
 };

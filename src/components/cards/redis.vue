@@ -45,12 +45,17 @@
             v-if="hasExposures"
             :headers="exposureHeaders"
             :items="exposures"
-            group-by="userID"
-            ><template v-slot:[`item.start`]="{ item }">
-              <v-subheader v-text="getDate(item.start)" />
+            group-by="placeID"
+          >
+            <template v-slot:[`item.userID`]="{ item }">
+              <v-subheader v-text="item.userID" />
+            </template>
+            <template v-slot:[`item.start`]="{ item }">
+              <v-subheader v-text="getDate(time.start)" />
+              <v-subheader v-text="getTime(item.start)" />
             </template>
             <template v-slot:[`item.end`]="{ item }">
-              <v-subheader v-text="getDate(item.end)" />
+              <v-subheader v-text="getTime(item.end)" />
             </template>
           </v-data-table>
         </v-col>
@@ -64,7 +69,7 @@
 </template>
 
 <script>
-import { formatSmallTime } from '@/utils/luxonHelpers';
+import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
 
 // Redis.vue calls this card
 // visitors
@@ -110,7 +115,7 @@ export default {
           align: 'start',
           value: 'userID',
         },
-        { text: 'Space', value: 'space' },
+        { text: 'Space', value: 'place_id' },
         { text: 'Start', value: 'start' },
         { text: 'End', value: 'end' },
       ],
@@ -120,29 +125,18 @@ export default {
       snackbar: false,
       selectedItemIndex: null,
       param: {},
-      items: [
-        {
-          query: 'matchQuery',
-          label: 'UserIDs of everybody on the graph',
-          paramName: '',
-        },
-        {
-          query: 'matchAllSpacesQuery',
-          label: 'Name(s) of visited space(s)',
-          paramName: '',
-        },
-
-        {
-          query: 'matchNamedPathsQuery',
-          label: 'All visitors exposed by this visitor',
-          paramName: '',
-        },
-      ],
     };
   },
 
   methods: {
     getDate(ms) {
+      const dt = new DateTime()
+        .fromMillis(ms)
+        .toLocaleString(DateTime.DATE_SHORT);
+      return dt;
+    },
+
+    getTime(ms) {
       try {
         const dt = formatSmallTime(ms);
         console.log('dt', dt);

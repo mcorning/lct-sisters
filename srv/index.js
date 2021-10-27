@@ -56,9 +56,9 @@ const {
   onExposureWarning,
   getVisitors,
   getExposures,
-  getVisitedSpaces,
+  getVisitTimes,
   getVisitedPaths,
-  matchQueryWithParamsQuery,
+  setStartEnd,
   confirmDates,
 } = require('./redis/redis');
 
@@ -208,11 +208,8 @@ io.on('connection', (socket) => {
       .catch((error) => console.error(err(error)));
   });
 
-  socket.on('updateVisit', ({ query, param }, ack) => {
-    matchQueryWithParamsQuery({ query, param }, ack);
-    if (ack) {
-      ack();
-    }
+  socket.on('updateVisit', (param, ack) => {
+    setStartEnd(param, ack);
   });
 
   socket.on('logVisit', (data, ack) => {
@@ -306,14 +303,14 @@ io.on('connection', (socket) => {
   //#endregion
 
   //#region Graph testing
-  socket.on('getVisitors', (query, ack) => {
-    getVisitors(ack);
+  socket.on('getVisitors', (graphNames, ack) => {
+    getVisitors(graphNames, ack);
   });
   socket.on('getExposures', (param, ack) => {
     getExposures(param, ack);
   });
-  socket.on('getVisitedSpaces', (param, ack) => {
-    getVisitedSpaces(param, ack);
+  socket.on('getVisitTimes', ({ graphNames, userID }, ack) => {
+    getVisitTimes({ graphNames, userID }, ack);
   });
   socket.on('confirmDates', (data, ack) => {
     confirmDates(data, ack);
@@ -323,7 +320,7 @@ io.on('connection', (socket) => {
   //#region Lab
   socket.on('validateVisits', (userID, ack) => {
     console.log('validateVisits:', userID, ack);
-    getVisitedSpaces(userID, (spaces) => {
+    getVisitTimes(userID, (spaces) => {
       if (ack) {
         ack([...spaces]);
       }

@@ -1,6 +1,6 @@
 // import { highlight, success, printJson } from '@/utils/helpers';
 import Visit from '@/models/Visit';
-
+import { success, printJson } from '@/utils/helpers';
 // import '@/fp/monads/EitherAsync';
 import 'either-async';
 
@@ -24,7 +24,7 @@ export const timeMixin = {
         graphName,
         color: 'primary', // use parameter if we need a different color for Sandbox graph
       };
-      console.log('updateLoggedVisitId() data:', data);
+      console.log('updateLoggedVisitId() data:', printJson(data));
 
       // this is the original EitherAsync used by the pre refactored Model.visitLogged()
       Visit.updateLoggedVisitId(data)
@@ -34,41 +34,11 @@ export const timeMixin = {
           error: (results) =>
             console.log(
               'error updating Visit entity',
-              JSON.stringify({
+              printJson({
                 results,
                 isConnected: this.isConnected,
               })
             ),
-        });
-    },
-
-    updateLoggedVisitIdOld({ redisResult, resolve, reject }) {
-      console.log('redisResult', redisResult);
-      const { id, place, logged } = redisResult;
-
-      // this is the Promisified/EitherAsync version with a single resolve() condition and two reject() opportunities
-      if (!logged || id < 0) {
-        reject(`Redis could not log Visit to  ${place}`);
-      }
-      const { graphName, visitId } = redisResult;
-      const data = {
-        visitId: visitId,
-        loggedVisitId: id,
-        graphName,
-        color: 'primary', // use parameter if we need a different color for Sandbox graph
-      };
-      console.log('updateLoggedVisitIdOld() data:', data);
-
-      // this is the original EitherAsync used by the pre refactored Model.visitLogged()
-      Visit.updateLoggedVisitId(data)
-        .toEither()
-        .cata({
-          ok: (results) => resolve(results),
-          error: (results) =>
-            reject({
-              results,
-              isConnected: this.isConnected,
-            }),
         });
     },
 
@@ -83,7 +53,7 @@ export const timeMixin = {
         .map((visits) =>
           allOrNone(visits).match({
             Some: (value) => {
-              console.log(JSON.stringify(value, null, 3));
+              console.log(printJson(value));
               return value;
             },
             None: () => console.log(`There is no visit to update `),
@@ -94,11 +64,11 @@ export const timeMixin = {
             firstOrNone(v).match({
               Some: (v) => {
                 const query = { ...v };
-                console.log(`updateVisit().cata: ${query}`);
-                this.$router.push({
-                  name: 'Time',
-                  params: query,
-                });
+                console.log(success(`updateVisit().cata: ${printJson(query)}`));
+                // this.$router.push({
+                //   name: 'Time',
+                //   params: query,
+                // });
               },
               None: () => console.log(`NOOP`),
             }),

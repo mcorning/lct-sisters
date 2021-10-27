@@ -104,9 +104,6 @@ export default {
   methods: {
     //#region called by date-time-card
     onCloseDateTimeCard(newDateTimes) {
-      if (newDateTimes===0) {
-        return
-      }
       this.$emit('closeDateTimeCard', newDateTimes);
     },
     //#endregion called by date-time-card

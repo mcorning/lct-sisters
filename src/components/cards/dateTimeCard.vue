@@ -139,7 +139,7 @@ export default {
   },
   methods: {
     close() {
-      this.$emit('closeDateTimeCard',0);
+      this.$emit('closeDateTimeCard', 0);
     },
     update() {
       // send the date as string
@@ -147,21 +147,22 @@ export default {
       const dt = DateTime.fromISO(this.dateStruct.dateString);
       const start = dt.set({
         hours:
-          this.dateStruct.start.amPm === 'PM' && this.dateStruct.start.hr!=='12'
+          this.dateStruct.start.amPm === 'PM' &&
+          this.dateStruct.start.hr !== '12'
             ? Number(this.dateStruct.start.hr) + 12
             : this.dateStruct.start.hr,
         minutes: this.dateStruct.start.min,
       });
       const end = dt.set({
         hours:
-          this.dateStruct.end.amPm === 'PM' && this.dateStruct.start.hr!=='12'
+          this.dateStruct.end.amPm === 'PM' && this.dateStruct.end.hr !== '12'
             ? Number(this.dateStruct.end.hr) + 12
             : this.dateStruct.end.hr,
         minutes: this.dateStruct.end.min,
       });
       console.log(
-        start.toLocaleString(DateTime.TIME_SIMPLE),
-        end.toLocaleString(DateTime.TIME_SIMPLE)
+        JSON.stringify(start.toLocaleString(DateTime.TIME_SIMPLE), null, 3),
+        JSON.stringify(end.toLocaleString(DateTime.TIME_SIMPLE), null, 3)
       );
       this.$emit('closeDateTimeCard', {
         date: dt.toLocaleString(),
@@ -171,21 +172,18 @@ export default {
     },
 
     fixDates() {
-      this.newDate = this.currTimes.present
-        ? 'Today'
-        : this.currTimes.past
-        ? 'Yesterday'
-        : 'Tomorrow';
+      const { start, end, past, present } = this.currTimes;
+      this.newDate = present ? 'Today' : past ? 'Yesterday' : 'Tomorrow';
       this.convertNewDate();
 
-      const startHour = this.currTimes.start.split(':')[0];
+      const startHour = start.split(':')[0];
       this.dateStruct.start.hr = startHour > 12 ? startHour - 12 : startHour;
-      this.dateStruct.start.min = this.currTimes.start.split(':')[1];
+      this.dateStruct.start.min = start.split(':')[1];
       this.dateStruct.start.amPm = startHour >= 12 ? 'PM' : 'AM';
 
-      const endHour = this.currTimes.end.split(':')[0];
+      const endHour = end.split(':')[0];
       this.dateStruct.end.hr = endHour > 12 ? endHour - 12 : endHour;
-      this.dateStruct.end.min = this.currTimes.end.split(':')[1];
+      this.dateStruct.end.min = end.split(':')[1];
       this.dateStruct.end.amPm = endHour >= 12 ? 'PM' : 'AM';
 
       this.hr = this.dateStruct.start.hr;

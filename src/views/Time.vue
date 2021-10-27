@@ -11,7 +11,7 @@
         getGraphName,
         usernumber,
         getVisits,
-        updateVisitOnGraphWithParm,
+        updateGraphVisit,
       }"
     >
       <!-- Step 3/4: assign slotted props to component's props -->
@@ -25,7 +25,7 @@
         :confirmations="confirmations"
         :usernumber="usernumber"
         :getVisits="getVisits"
-        :updateVisitOnGraphWithParm="updateVisitOnGraphWithParm"
+        :updateGraphVisit="updateGraphVisit"
       />
     </div>
   </Model>
