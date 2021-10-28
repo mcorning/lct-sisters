@@ -24,32 +24,16 @@ export const redisMixin = {
      * @returns userID for all visitors' in a (set of) given graph(s)
      */
     getVisitors() {
-      const send = (graphNames) =>
-        // send message to server
-        this.emitFromClient(
-          'getVisitors',
-          graphNames,
-          // and handle the callback
-          (res) => {
-            const { msg, results } = res;
-            if (Array.isArray(results)) {
-              console.log(success(`${msg}:`));
-              results.forEach((element) => {
-                console.log(printJson(element));
-              });
-            } else {
-              console.log(success(`${msg}:`, results));
-            }
-            this.$emit('visitors', res);
-          }
-        );
-
-      nullable(this.getVisits().map((v) => v.graphName))
-        .map((graphNames) => [...graphNames])
-        .cata({
-          Just: (graphNames) => send(graphNames),
-          Nothing: () => console.log(warn(`No visits`)),
-        });
+      const graphNames = this.getGraphs();
+      // send message to server
+      this.emitFromClient(
+        'getVisitors',
+        graphNames,
+        // and pass results on to the callback in Monitor.vue
+        ({ msg, visitors }) => {
+          this.$emit('visitors', { msg, visitors });
+        }
+      );
     },
 
     //#region functions called by Redis.vue onSelectionChanged
@@ -84,7 +68,7 @@ export const redisMixin = {
      */
     validateVisits(userID = this.$socket.client.auth.userID) {
       const graphNames = this.getGraphs();
-        const vm = this;
+      const vm = this;
 
       function compareVisitData(fromGraph) {
         console.log('Validating Visit Data');

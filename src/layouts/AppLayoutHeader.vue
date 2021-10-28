@@ -16,7 +16,7 @@
         >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
       </v-icon>
       <span>{{ shortUserID }}</span>
-      <v-btn icon @click="open('Test')">
+      <v-btn icon @click="open('Monitor')">
         <v-icon>mdi-monitor-dashboard</v-icon>
       </v-btn>
       <!-- Begin Options Menu-->

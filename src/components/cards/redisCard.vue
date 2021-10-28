@@ -13,26 +13,32 @@
             >See how many others would be at risk if you sent an Exposure
             Warning</v-card-subtitle
           >
-          <v-card-title>
-            <v-text-field
-              v-model="search"
-              append-icon="mdi-magnify"
-              label="Search"
-              single-line
-              hide-details
-            ></v-text-field>
-          </v-card-title>
-          <v-data-table
-            v-model="selected"
-            :search="search"
-            :headers="visitorHeaders"
-            :items="visitors"
-            :single-select="singleSelect"
-            show-select
-            dense
-            mobile-breakpoint
+
+          <v-card-title
+            ><h6>Your userID: {{ selected }}</h6></v-card-title
           >
-          </v-data-table>
+          <v-card-title><h6>Other visitors on these graph(s)</h6></v-card-title>
+          <v-list>
+            <v-list-group
+              v-for="item in visitors"
+              :key="item.title"
+              v-model="item.active"
+              prepend-icon="mdi-graphql"
+              no-action
+            >
+              <template v-slot:activator>
+                <v-list-item-content>
+                  <v-list-item-title v-text="item.title"></v-list-item-title>
+                </v-list-item-content>
+              </template>
+
+              <v-list-item v-for="child in item.items" :key="child.title">
+                <v-list-item-content>
+                  <v-list-item-title v-text="child.title"></v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-group>
+          </v-list>
         </v-col>
 
         <!-- Exposures table -->
@@ -75,7 +81,7 @@ import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
 // visitors
 // exposures
 export default {
-  name: 'testCard',
+  name: 'redisCard',
   props: {
     visitors: Object,
     exposures: Object,
@@ -100,31 +106,9 @@ export default {
   data() {
     return {
       ready: false,
-      singleSelect: true,
       selected: [{ userID: this.$socket.client.auth.userID }],
-      visitorHeaders: [
-        {
-          text: 'ID',
-          align: 'start',
-          value: 'userID',
-        },
-      ],
-      exposureHeaders: [
-        {
-          text: 'Exposed Visitor ID',
-          align: 'start',
-          value: 'userID',
-        },
-        { text: 'Space', value: 'place_id' },
-        { text: 'Start', value: 'start' },
-        { text: 'End', value: 'end' },
-      ],
-      search: this.$socket.client.auth.userID,
 
-      pVal: '',
-      snackbar: false,
-      selectedItemIndex: null,
-      param: {},
+      search: this.$socket.client.auth.userID,
     };
   },
 

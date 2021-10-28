@@ -10,6 +10,7 @@ const {
   info,
   highlight,
   success,
+  logVisitors,
 } = require('../../src/utils/helpers');
 // const { DateTime } = require('../../src/utils/luxonHelpers');
 
@@ -177,31 +178,42 @@ async function matchAllSpacesQuery(param, ack) {
 
 function getVisitors(graphNames, ack) {
   const query = 'MATCH (v:visitor) RETURN v.userID';
-  const results = new Map();
+  let promises = [];
 
-  console.log('matchQuery(', query, ')');
-  console.log('graphNames:', printJson(graphNames));
+  const p = (title) => {
+    // this code is optimized to work with vuetify Lists
+    return new Promise((resolve, reject) => {
+      changeGraph(title);
+      let items = [];
+      Graph.query(query)
+        .then((res) => {
+          while (res.hasNext()) {
+            let record = res.next();
+            let title = record.get('v.userID');
+            items = [...items, { title }];
+          }
+          resolve({ title, items });
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  };
 
-  graphNames.forEach((g) => {
-    changeGraph(g);
+  graphNames.forEach((graphName) => {
+    promises = [...promises, p(graphName)];
+  });
+  const results = Promise.all(promises);
+  results.then((visitors) => {
+    // r is an array of Map results, one Map from each resolved Promise
+    const msg = `UserIDs in all ${graphNames.length} used graph${
+      graphNames.length > 1 ? 's' : ''
+    }`;
+    console.log(logVisitors(printJson(visitors)));
 
-    Graph.query(query)
-      .then((res) => {
-        while (res.hasNext()) {
-          let record = res.next();
-          let userID = record.get('v.userID');
-          results.set(g, userID);
-        }
-        if (ack) {
-          ack({
-            msg: 'UserIDs of everybody on all used graphs',
-            results: [...results],
-          });
-        }
-      })
-      .catch((e) => {
-        console.error(e);
-      });
+    if (ack) {
+      ack({ msg, visitors });
+    }
   });
 }
 

@@ -452,7 +452,7 @@ export default {
       incrementWarningsReceived: this.incrementWarningsReceived,
       setVaccinationStatus: this.setVaccinationStatus,
 
-      // Test assets
+      // Monitor assets
       getVisitors: this.getVisitors,
       getExposures: this.getExposures,
       getVisitTimes: this.getVisitTimes,

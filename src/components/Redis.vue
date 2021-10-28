@@ -1,20 +1,22 @@
 <template>
   <div>
-    <test-card
+    <redis-card
       :visitors="visitors"
       :exposures="exposures"
       :getVisits="getVisits"
       :visitExists="visitExists"
       @selectedChanged="onSelectedChanged"
-    ></test-card>
+    ></redis-card>
   </div>
 </template>
 
 <script>
-// Test.vue calls this card
-import testCard from './cards/redis.vue';
+// Monitor.vue calls this card
+
+import RedisCard from './cards/redisCard.vue';
+
 export default {
-  components: { testCard },
+  components: { RedisCard },
   props: {
     getVisitors: {
       type: Function,

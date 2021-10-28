@@ -5,7 +5,15 @@
     @visitors="onVisitors"
     @exposures="onExposures"
   >
-    <div slot-scope="{ getVisitors, getExposures, getVisits, visitExists, validateVisits, }">
+    <div
+      slot-scope="{
+        getVisitors,
+        getExposures,
+        getVisits,
+        visitExists,
+        validateVisits,
+      }"
+    >
       <redis
         :visitors="visitors"
         :exposures="exposures"
@@ -14,7 +22,7 @@
         :getExposures="getExposures"
         :getVisits="getVisits"
         :visitExists="visitExists"
-        :validateVisits=validateVisits
+        :validateVisits="validateVisits"
       />
     </div>
   </Model>
@@ -26,7 +34,7 @@ import Model from '@/components/renderless/Model.vue';
 import Redis from '../components/Redis.vue';
 
 export default {
-  name: 'Test',
+  name: 'Monitor',
 
   components: {
     Model,
@@ -39,6 +47,7 @@ export default {
   },
   data() {
     return {
+      visitorsMap: null,
       visitors: {},
       exposures: {},
       spaces: {},
@@ -54,10 +63,9 @@ export default {
       throw error;
     },
 
-    onVisitors(res) {
-      const { msg, results } = res;
-      this.visitors = results;
-      console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
+    onVisitors({ msg, visitors }) {
+      this.visitors = visitors;
+      console.log(`${msg}: ${JSON.stringify(visitors, null, 3)}`);
     },
 
     onExposures(res) {
@@ -74,20 +82,20 @@ export default {
 
   watch: {
     ready() {},
-    visitors(n, o) {
-      console.log('visitors', n, o);
+    visitors(n) {
+      console.log('visitors:', JSON.stringify(n, null, 3));
     },
-    exposures(n, o) {
-      console.log('exposures', n, o);
+    exposures(n) {
+      console.log('exposures:', JSON.stringify(n, null, 3));
     },
-    spaces(n, o) {
-      console.log('spaces', n, o);
+    spaces(n) {
+      console.log('spaces:', JSON.stringify(n, null, 3));
     },
   },
 
   async mounted() {
     this.ready = true;
-    console.log('\tTEST.vue mounted');
+    console.log('\tMONITOR.vue mounted');
   },
 
   // TODO Figure out how to unsub events

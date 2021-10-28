@@ -13,6 +13,7 @@ const bgMagenta = clc.bgMagenta;
 const special = clc.red.bold.bgYellow;
 const url = clc.black.bold.bgCyanBright;
 const heading = clc.bold.black.bgWhite;
+const logVisitors = clc.greenBright;
 const columns = clc.columns;
 
 function printJson(json) {
@@ -59,4 +60,5 @@ module.exports = {
   bgMagenta,
   special,
   url,
+  logVisitors,
 };
