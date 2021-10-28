@@ -41,7 +41,7 @@
         </v-menu>
       </v-toolbar>
 
-      <v-sheet class="Calendar">
+      <v-sheet :class="checkEmergency">
         <v-calendar
           id="calendar-target"
           ref="calendar"
@@ -165,14 +165,18 @@
         </template>
       </v-snackbar>
     </v-col>
-    <v-col v-if="emergency" no-gutters
-      ><v-col>
-        <span class="text-subtitle-1">Diagnostics</span>
-        <v-btn class="ml-10" icon @click="emailDiagnostics"
-          ><v-icon>email</v-icon></v-btn
+    <v-col v-if="emergency" no-gutters>
+      <v-card flat>
+        <v-btn absolute top right icon @click="emergency = false"
+          ><v-icon>close</v-icon></v-btn
         >
-        <pre>{{ diagnosticOutput }}</pre>
-      </v-col>
+        <v-btn plain text @click="emailDiagnostics" large class="mt-3"
+          >Diagnostics</v-btn
+        >
+        <v-card-text>
+          <pre>{{ diagnostics }}</pre>
+        </v-card-text>
+      </v-card>
     </v-col>
   </v-row>
 </template>
@@ -316,7 +320,7 @@ export default {
   },
   data() {
     return {
-      emergency: false,
+      emergency: true,
       diagnostics: [],
       enlargeQR: false,
 
@@ -460,8 +464,11 @@ export default {
       const id = this.selectedEvent.loggedVisitId;
       const param = { id, start, end, graphName };
       this.log(printJson(param));
-      this.updateGraphVisit(param).then((msg) => {
-        this.log(msg);
+      // graph.js wraps event to server in a Promise
+      // result is always an object so we can easily add/change contents
+      // without chaning the API
+      this.updateGraphVisit(param).then((result) => {
+        this.log(result.msg);
       });
     },
 
@@ -676,6 +683,9 @@ export default {
   },
 
   watch: {
+    emergency(val) {
+      console.log(val);
+    },
     mailToString(val) {
       this.setStatus(`email: ${val}`);
     },
@@ -804,5 +814,13 @@ export default {
 .EmergencyH {
   width: 100vw;
   height: 50vh;
+}
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
 }
 </style>

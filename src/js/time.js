@@ -65,10 +65,10 @@ export const timeMixin = {
               Some: (v) => {
                 const query = { ...v };
                 console.log(success(`updateVisit().cata: ${printJson(query)}`));
-                // this.$router.push({
-                //   name: 'Time',
-                //   params: query,
-                // });
+                this.$router.push({
+                  name: 'Time',
+                  params: query,
+                });
               },
               None: () => console.log(`NOOP`),
             }),

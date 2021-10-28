@@ -218,7 +218,7 @@ io.on('connection', (socket) => {
     console.log(ack);
     console.log(highlight('Visit to log:', printJson(data)));
 
-    function handleAck(results) {
+    function safeAck(results) {
       if (ack) {
         const x = results || 'no results';
         console.log(highlight('acknowledging client', printJson(x)));
@@ -231,31 +231,43 @@ io.on('connection', (socket) => {
     // delegate to redis/redis.js
     logVisit(data)
       .toEither()
-      // TODO all inspect() to either-async
       .map((x) => {
         console.log(info('logVisit.map():', JSON.stringify(data, null, 3)));
         return x;
       })
       .cata({
-        // ok: (results) => socket.emit('visitLogged', results),
-        ok: (results) => handleAck(results),
+        ok: (results) => safeAck(results),
         error: (results) => {
           console.error(err(results, 'Issues calling redis.logVisit()'));
         },
       });
   });
 
-  socket.on('deleteVisit', (data, ack) => {
+  // (note: using 'params' suggests an object of parameters
+  //        using 'param' suggests a single primitive parameter
+  socket.on('deleteVisit', (params, ack) => {
+    console.log(printJson(params));
+
+    const safeAck = (results) => {
+      if (ack) {
+        ack(results);
+      }
+    };
     // call the graph
-    console.log(printJson(data));
-    deleteVisit(data)
-      .then((res) => {
-        console.log('Results of delete:', res);
-        ack(res);
+    deleteVisit(params)
+      .toEither()
+      .map((results) => {
+        console.log('Results of delete:', results);
+        return results;
       })
-      .catch((error) => ack(error));
+      .cata({
+        ok: (results) => safeAck(results),
+        error: (results) => {
+          console.error(err(results, 'Issues calling redis.logVisit()'));
+        },
+      });
   });
-  //#endregion
+  //#endregion Visit API
 
   //#region Utility handlers
   socket.on('userFeedback', (data) => {
@@ -302,7 +314,7 @@ io.on('connection', (socket) => {
   });
   //#endregion
 
-  //#region Graph testing
+  //#region Redis Monitor functions
   socket.on('getVisitors', (graphNames, ack) => {
     getVisitors(graphNames, ack);
   });
@@ -315,9 +327,7 @@ io.on('connection', (socket) => {
   socket.on('confirmDates', (data, ack) => {
     confirmDates(data, ack);
   });
-  //#endregion Graph testing
 
-  //#region Lab
   socket.on('validateVisits', (userID, ack) => {
     console.log('validateVisits:', userID, ack);
     getVisitTimes(userID, (spaces) => {
@@ -334,5 +344,5 @@ io.on('connection', (socket) => {
       }
     });
   });
-  //#endregion
+  //#endregion Redis Monitor functions
 });

@@ -120,14 +120,16 @@
       ><v-col>
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
       ><v-col v-if="emergency">
-        <v-card>
+        <v-card flat>
           <v-btn absolute top right icon @click="emergency = false"
             ><v-icon>close</v-icon></v-btn
           >
           <v-btn plain text @click="emailDiagnostics" large class="mt-3"
             >Diagnostics</v-btn
           >
-          <pre class="ml-5">{{ diagnostics }}</pre>
+          <v-card-text>
+            <pre class="ml-5">{{ diagnostics }}</pre>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -1058,5 +1060,13 @@ body {
 .EmergencyH {
   width: 100vw;
   height: 50vh;
+}
+pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
 }
 </style>

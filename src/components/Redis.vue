@@ -48,7 +48,7 @@ export default {
     },
   },
   mounted() {
-
+    // called only once to get all visitors on the graphs used by the Visitor
     this.getVisitors();
   },
 };

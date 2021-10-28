@@ -198,7 +198,6 @@ function getVisitors(graphNames, ack) {
             results: [...results],
           });
         }
-        console.log(res.getStatistics().queryExecutionTime());
       })
       .catch((e) => {
         console.error(e);
@@ -246,8 +245,9 @@ function getVisitTimes({ graphNames, userID }, ack) {
   let visits = [];
   console.log(q);
 
-  const query = () => {
+  const query = (g) => {
     Graph.query(q).then((res) => {
+      console.log(g);
       while (res.hasNext()) {
         let record = res.next();
         let v = record.get('v');
@@ -257,10 +257,11 @@ function getVisitTimes({ graphNames, userID }, ack) {
             id: v.id,
             start: v.properties.start,
             end: v.properties.end,
+            graphName: g,
           },
         ];
       }
-      console.log(visits);
+      console.log('visits:', printJson(visits));
       if (ack) {
         ack(visits);
       }
@@ -269,7 +270,7 @@ function getVisitTimes({ graphNames, userID }, ack) {
 
   graphNames.forEach((g) => {
     changeGraph(g);
-    query();
+    query(g);
   });
 }
 
@@ -288,41 +289,55 @@ function getExposureQuery(userID) {
 }
 
 //#region LAB
-async function confirmDates(data, ack) {
+function confirmDates(data, ack) {
   const { userID, dates } = data;
+  let m;
   console.log(dates);
+  console.log('currentGraphName:', currentGraphName);
   const q = `MATCH p=(:visitor{userID:'${userID}'})-[e:visited]->(:space) return e`;
-  const res = await Graph.query(q).catch((e) =>
-    console.error('error in confirmDates():', e)
-  );
+  console.log('confirmDates query:', q);
+  const processResults = (res) => {
+    while (res.hasNext()) {
+      let record = res.next();
+      const e = record.get('e');
+      const d = dates.find((v) => v.id === e.id);
+      console.log(warn('local dates:', d.id, d.start, d.end));
+      console.log('graph edge:', e.id, e.properties.start, e.properties.end);
+      if (e.properties.start !== d.start) {
+        const setQ = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.start=${d.start}`;
+        console.log(setQ);
+        Graph.query(setQ)
+          .then((res) => {
+            console.log(success(res._statistics._raw));
+            return (m = [...m, { msg: res._statistics._raw }]);
+          })
+          .catch((e) => console.error('error in confirmDates():', e));
+      }
 
-  while (res.hasNext()) {
-    let record = res.next();
-    const e = record.get('e');
-    const d = dates.find((v) => v.id === e.id);
-    console.log(warn('local dates:', d.id, d.start, d.end));
-    console.log('graph edge:', e.id, e.properties.start, e.properties.end);
-    if (e.properties.start !== d.start) {
-      const setQ = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.start=${d.start}`;
-      console.log(setQ);
-      const res = await Graph.query(setQ).catch((e) =>
-        console.error('error in confirmDates():', e)
-      );
-      console.log(success(res._statistics._raw));
+      if (e.properties.end !== d.end) {
+        const setQ2 = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.end=${d.end}`;
+        console.log(setQ2);
+        Graph.query(setQ2)
+          .then((res) => {
+            console.log(success(res._statistics._raw));
+            return (m = [...m, { msg: res._statistics._raw }]);
+          })
+          .catch((e) => console.error('error in confirmDates():', e));
+      }
     }
-
-    if (e.properties.end !== d.end) {
-      const setQ2 = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.end=${d.end}`;
-      console.log(setQ2);
-      const res = await Graph.query(setQ2).catch((e) =>
-        console.error('error in confirmDates():', e)
-      );
-      console.log(success(res._statistics._raw));
-    }
-  }
-  if (ack) {
-    ack();
-  }
+  };
+  Graph.query(q)
+    .then((res) => {
+      processResults(res);
+      const msgs = m ?? 'No changes';
+      return { msgs };
+    })
+    .then((results) => {
+      if (ack) {
+        ack(results);
+      }
+    })
+    .catch((e) => console.error('error in confirmDates():', e));
 }
 //#endregion LAB
 
@@ -430,16 +445,10 @@ function onExposureWarning({ graphName, userID }) {
 //#endregion READ Graph
 
 //#region DELETE Graph Nodes
-// delegated in index.js to handle socket.on('deleteVisit')
-function deleteVisit(data) {
-  const { loggedVisitId, graphName } = data;
-  console.log(
-    'Ensuring intented graph gets updated:',
-    graphName,
-    Graph._graphId
-  );
+// delegated by index.js to handle socket.on('deleteVisit')
+function deleteVisit(params) {
+  const { loggedVisitId, graphName } = params;
   changeGraph(graphName);
-  // Graph.query() arg
   let query = `MATCH ()-[v:visited]->() WHERE id(v)=${loggedVisitId}  DELETE v`;
 
   // return this either-async to client

@@ -102,9 +102,9 @@ export const graphMixin = {
             'updateVisit',
             param,
             // and handle the callback
-            (msg) => {
-              console.log(success('updateGraphVisit() results:', msg));
-              resolve(msg);
+            (result) => {
+              console.log(success('updateGraphVisit() results:', result.msg));
+              resolve(result);
             }
           );
         } catch (error) {
