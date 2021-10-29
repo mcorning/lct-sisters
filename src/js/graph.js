@@ -19,7 +19,7 @@ export const graphMixin = {
             success('deleteVisitOnGraph results:', printJson(results))
           );
           this.$emit('updatedModel', {
-            place: loggedVisitId,
+            loggedVisitId,
             graphName,
             deleted: true,
           });

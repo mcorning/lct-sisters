@@ -183,16 +183,16 @@ export default {
       const vm = this;
 
       function redisGraphCallback(results) {
-        const { id, place, graphName, logged } = results;
+        const { id,  graphName, logged } = results;
         console.log(
           success(
             'redisGraphCallback:updateVisitOnGraph results:',
             printJson(results)
           )
         );
-        vm.$emit('updatedModel', { place, graphName, id, logged });
+        vm.$emit('updatedModel', { name, place_id, graphName, id, logged });
         // now update Visit entity (picking up the visitId from the closure)
-        vm.updateLoggedVisitId({ visitId, place, graphName, id, logged });
+        vm.updateLoggedVisitId({ visitId, name, graphName, id, logged });
       }
 
       const query = {

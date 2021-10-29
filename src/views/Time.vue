@@ -56,25 +56,31 @@ export default {
       throw error;
     },
 
+    /** Event handler that composes a confirmation message when user changes a visit
+     * 
+     * @param updateResults - examples:
+     *                         logging a visit uses:          { name, place_id, graphName, id, logged }
+     *                         delete a visit in cache uses:  { id, deleted: true }
+     *                         delete a visit graph uses:     { loggedVisitId, graphName, deleted: true, }
+     */
     onUpdatedModel(updateResults) {
       console.log(JSON.stringify(updateResults, null, 3));
 
       // interpret update results function
       const getMsg = (updateResults) => {
-        // TODO test that graphName is correct
-        const { place, graphName, id, logged, deleted } = updateResults;
+        const { name,  place_id, graphName, loggedVisitId, id, logged, deleted } = updateResults;
         const msg = logged
           ? {
               logged: true,
               loggedVisitId: id,
               confirmationColor: 'success',
-              confirmationMessage: `<strong>${place}</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`,
+              confirmationMessage: `<strong>${name} (${place_id})</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`,
             }
           : deleted
           ? {
               deleted: true,
               confirmationColor: 'success',
-              confirmationMessage: `Visit ID ${place} deleted from ${graphName} graph`,
+              confirmationMessage: `Visit ID ${loggedVisitId} deleted from ${graphName} graph`,
             }
           : 'Neither log nor delete operation results available';
         console.log('sending message to Calendar:', msg);
