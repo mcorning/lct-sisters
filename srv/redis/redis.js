@@ -216,41 +216,99 @@ function getVisitors(graphNames, ack) {
     }
   });
 }
-
 function getExposures({ graphNames, userID }, ack) {
-  // Named paths matching.
-  const q = getExposureQuery(userID);
-  console.log('Exposure query:', q);
+  const query = getExposureQuery(userID);
+  console.log('Exposure query:', query);
 
-  const results = new Map();
-  graphNames.map((g) => {
-    console.log(
-      info(
-        `Searching graph ${currentGraphName} for ${userID}'s potential exposures.'`
-      )
-    );
-    changeGraph(g);
-    Graph.query(q).then((res) => {
-      while (res.hasNext()) {
-        const record = res.next();
-        const userID = record.get('exposed.userID');
-        const start = record.get('e.start');
-        const end = record.get('e.end');
-        const placeID = record.get('s.place_id');
-        const payload = { userID, start, end, placeID };
-        console.log(printJson(payload));
-        results.set(g, payload);
-      }
-    });
-  });
-  if (ack) {
-    // test.js handles callback
-    ack({
-      msg: 'ID(s) of all exposed visitors:',
-      results: [...results],
-    });
+  let promises = [];
+  function getDate(start) {
+    const date = new Date(start);
+    const formatted_date =
+      date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+    return formatted_date;
   }
+  const p = (graphName) => {
+    // this code is optimized to work with vuetify Lists
+    return new Promise((resolve, reject) => {
+      changeGraph(graphName);
+      let exposures = [];
+      Graph.query(query)
+        .then((res) => {
+          while (res.hasNext()) {
+            const record = res.next();
+            const userID = record.get('exposed.userID');
+            const start = record.get('e.start');
+            const end = record.get('e.end');
+            const placeID = record.get('s.place_id');
+            const date = getDate(start);
+            exposures = [
+              ...exposures,
+              { graphName, userID, date, start, end, placeID },
+            ];
+          }
+          resolve(exposures);
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
+  };
+
+  graphNames.forEach((graphName) => {
+    promises = [...promises, p(graphName)];
+  });
+  const results = Promise.all(promises);
+  results.then((r) => {
+    // r is an array of arrays of results, one top level element from each resolved Promise
+    // so let's flatten r
+    const exposures = r.flat();
+    const msg =
+      graphNames.length > 1
+        ? `All userIDs in all ${graphNames.length} graphs used`
+        : `All ${exposures.length} userIDs in ${graphNames[0]} graph`;
+    console.log(logVisitors('Exposures:'));
+    console.log(logVisitors(printJson(exposures)));
+
+    if (ack) {
+      ack({ msg, exposures });
+    }
+  });
 }
+
+// function getExposuresX({ graphNames, userID }, ack) {
+//   // Named paths matching.
+//   const q = getExposureQuery(userID);
+//   console.log('Exposure query:', q);
+
+//   const results = new Map();
+//   graphNames.map((g) => {
+//     console.log(
+//       info(
+//         `Searching graph ${currentGraphName} for ${userID}'s potential exposures.'`
+//       )
+//     );
+//     changeGraph(g);
+//     Graph.query(q).then((res) => {
+//       while (res.hasNext()) {
+//         const record = res.next();
+//         const userID = record.get('exposed.userID');
+//         const start = record.get('e.start');
+//         const end = record.get('e.end');
+//         const placeID = record.get('s.place_id');
+//         const payload = { userID, start, end, placeID };
+//         console.log(printJson(payload));
+//         results.set(g, payload);
+//       }
+//     });
+//   });
+//   if (ack) {
+//     // test.js handles callback
+//     ack({
+//       msg: 'ID(s) of all exposed visitors:',
+//       results: [...results],
+//     });
+//   }
+// }
 
 function getVisitTimes({ graphNames, userID }, ack) {
   const q = `MATCH p=(:visitor{userID:'${userID}'})-[v:visited]->(s:space) RETURN v`;
@@ -301,10 +359,9 @@ function getExposureQuery(userID) {
 }
 
 //#region LAB
-function confirmDates(data, ack) {
-  const { userID, dates } = data;
+function confirmDates({ userID, dates }, ack) {
   let m;
-  console.log(dates);
+  console.log('Confirming dates:', printJson(dates));
   console.log('currentGraphName:', currentGraphName);
   const q = `MATCH p=(:visitor{userID:'${userID}'})-[e:visited]->(:space) return e`;
   console.log('confirmDates query:', q);

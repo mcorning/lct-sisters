@@ -318,14 +318,14 @@ io.on('connection', (socket) => {
   socket.on('getVisitors', (graphNames, ack) => {
     getVisitors(graphNames, ack);
   });
-  socket.on('getExposures', (param, ack) => {
-    getExposures(param, ack);
+  socket.on('getExposures', ({ graphNames, userID }, ack) => {
+    getExposures({ graphNames, userID }, ack);
   });
   socket.on('getVisitTimes', ({ graphNames, userID }, ack) => {
     getVisitTimes({ graphNames, userID }, ack);
   });
-  socket.on('confirmDates', (data, ack) => {
-    confirmDates(data, ack);
+  socket.on('confirmDates', ({ userID, dates }, ack) => {
+    confirmDates({ userID, dates }, ack);
   });
 
   socket.on('validateVisits', (userID, ack) => {

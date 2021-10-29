@@ -1,4 +1,4 @@
-import { success, warn, printJson } from '@/utils/helpers';
+import { warn, printJson } from '@/utils/helpers';
 import { nullable } from 'pratica';
 
 /**
@@ -47,17 +47,8 @@ export const redisMixin = {
         'getExposures',
         { graphNames, userID },
         // and handle the callback
-        (res) => {
-          const { msg, results } = res;
-          if (Array.isArray(results)) {
-            console.log(success(`${msg}:`));
-            results.forEach((element) => {
-              console.log(printJson(element));
-            });
-          } else {
-            console.log(success(`${msg}:`, results));
-          }
-          this.$emit('exposures', res);
+        ({ msg, exposures }) => {
+          this.$emit('exposures', { msg, exposures });
         }
       );
     },
@@ -101,7 +92,7 @@ export const redisMixin = {
             } else {
               const missingNodesCt = localVisits.length !== fromGraph.length;
               if (missingNodesCt) {
-                console.log(`Graph is missing ${missingNodesCt} visit nodes`);
+                console.log(`Graph is missing visit nodes`);
                 // to be safe, first delete all nodes
                 deleteAllNodes();
 
@@ -118,9 +109,11 @@ export const redisMixin = {
         }
 
         function confirmDates(dates) {
-          vm.emitFromClient('confirmDates', dates, (result) =>
-            console.log(printJson(result))
-          );
+          if (dates) {
+            vm.emitFromClient('confirmDates', dates, (result) =>
+              console.log(printJson(result))
+            );
+          }
         }
 
         // now ensure that start/end diads are equal

@@ -68,11 +68,11 @@ export default {
       console.log(`${msg}: ${JSON.stringify(visitors, null, 3)}`);
     },
 
-    onExposures(res) {
-      const { msg, results } = res;
-      this.exposures = results;
-      console.log(`${msg}: ${JSON.stringify(results, null, 3)}`);
+    onExposures({ msg, exposures }) {
+      this.exposures = exposures;
+      console.log(`${msg}: ${JSON.stringify(exposures, null, 3)}`);
     },
+    
     onSpaces(res) {
       const { msg, results } = res;
       this.spaces = results;
