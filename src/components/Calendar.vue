@@ -320,7 +320,7 @@ export default {
   },
   data() {
     return {
-      emergency: true,
+      emergency: false,
       diagnostics: [],
       enlargeQR: false,
 
