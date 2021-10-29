@@ -107,6 +107,12 @@ export default {
       const x = Visit.query().get();
       return x;
     },
+    getPlaces() {
+      const x = this.getVisits().map((v) => {
+        return { name: v.name, placeID: v.place_id };
+      });
+      return x;
+    },
     getUnloggedVisits() {
       // return this.visits.filter((v) => !v.loggedVisitId);
       const x = Visit.query()
@@ -440,6 +446,7 @@ export default {
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
+      getPlaces:this.getPlaces,
       visitExists: this.visitExists,
       updateGraphVisit: this.updateGraphVisit,
 

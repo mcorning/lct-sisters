@@ -10,6 +10,7 @@
         getVisitors,
         getExposures,
         getVisits,
+        getPlaces,
         visitExists,
         validateVisits,
       }"
@@ -20,6 +21,7 @@
         :spaces="spaces"
         :getVisitors="getVisitors"
         :getExposures="getExposures"
+        :getPlaces=getPlaces
         :getVisits="getVisits"
         :visitExists="visitExists"
         :validateVisits="validateVisits"
@@ -72,7 +74,7 @@ export default {
       this.exposures = exposures;
       console.log(`${msg}: ${JSON.stringify(exposures, null, 3)}`);
     },
-    
+
     onSpaces(res) {
       const { msg, results } = res;
       this.spaces = results;

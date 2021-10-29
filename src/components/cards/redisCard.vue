@@ -1,21 +1,29 @@
 <template>
   <v-container fluid>
     <v-card class="mx-auto">
-      <v-card-title>Redis Monitor</v-card-title>
+      <v-row dense
+        ><v-col cols="12" sm="6">
+          <v-card-title class="text-h5">
+            CoVid Early Warning System
+          </v-card-title>
+        </v-col>
+        <v-col>
+          <v-card-title
+            ><h6>Your ID: {{ search }}</h6></v-card-title
+          >
+        </v-col></v-row
+      >
 
       <v-divider></v-divider>
-      <v-card-title
-        ><h6>Your ID: {{ search }}</h6></v-card-title
-      >
+
       <v-row>
-        <!-- Visitor table -->
-        <v-col v-if="hasVisitors">
-          <v-card-title><h6>Visitor Exposure Warning</h6></v-card-title>
-          <v-card-subtitle
-            >See how many others would be at risk if you sent an Exposure
-            Warning</v-card-subtitle
-          >
-          <v-card-title><h6>Other visitors on these graph(s)</h6></v-card-title>
+        <!-- Visitor list -->
+        <v-col v-if="hasVisitors" cols="12" md="3">
+          <v-card-title><h6>Participation</h6></v-card-title>
+          <v-card-subtitle>Other visitors on graphs you use</v-card-subtitle>
+        <v-card-text class=text-caption>The Visitor was in these geographic areas. 
+          Each area lists all the visitors in that space. 
+          The Virus Exposures section limits visitors who shared the same spacetime.</v-card-text>
           <v-list>
             <v-list-group
               v-for="item in visitors"
@@ -42,20 +50,23 @@
 
         <!-- Exposures table -->
         <v-col>
+          <v-card-title><h6>Virus Exposures</h6></v-card-title>
           <v-card-subtitle
             >Other visitors shared the same spacetimes with visitor:
             {{ selectedUserID.userID }}</v-card-subtitle
           >
+        <v-card-text class=text-caption>If the Visitor bits the Big Red Button, these people will receive exposure alerts.</v-card-text>
           <v-data-table
             v-if="hasExposures"
             :headers="exposureHeaders"
             :items="exposures"
-            group-by="placeID"
+            group-by="name"
             show-group-by
             sort-by="userID"
+            mobile-breakpoint
           >
-            <template v-slot:[`item.placeID`]="{ item }">
-              <v-subheader v-text="item.placeID" />
+            <template v-slot:[`item.name`]="{ item }">
+              <v-subheader v-text="item.name" />
             </template>
             <template v-slot:[`item.userID`]="{ item }">
               <v-subheader v-text="item.userID" />
@@ -64,24 +75,20 @@
               <v-subheader v-text="item.date" />
             </template>
             <template v-slot:[`item.start`]="{ item }">
-              <v-subheader v-text="getTime(item.start)" />
+              <v-subheader v-text="formatTime(item.start)" />
             </template>
             <template v-slot:[`item.end`]="{ item }">
-              <v-subheader v-text="getTime(item.end)" />
+              <v-subheader v-text="formatTime(item.end)" />
             </template>
           </v-data-table>
         </v-col>
       </v-row>
     </v-card>
-    <v-row
-      ><v-col>hasVisitors:{{ hasVisitors }}</v-col
-      ><v-col>hasExposures:{{ hasExposures }}</v-col></v-row
-    >
   </v-container>
 </template>
 
 <script>
-import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
+import { formatSmallTime } from '@/utils/luxonHelpers';
 import { printJson } from '@/utils/helpers';
 
 // Redis.vue calls this card
@@ -112,17 +119,9 @@ export default {
 
   data() {
     return {
-      // exposedVisitors: [
-      //   {
-      //     graphName: 'Sisters OR',
-      //     userID: 'f25cfbbfd99b5741',
-      //     start: 1635439500000,
-      //     end: 1635441300000,
-      //     placeID: 'ChIJFWkctxkxv1QRLhhGQdCn4gE',
-      //   },
-      // ],
       ready: false,
       exposureHeaders: [
+        { text: 'Place Name', value: 'name' },
         { text: 'Place', value: 'placeID' },
         { text: 'ID', value: 'userID' },
         { text: 'Date', value: 'date' },
@@ -136,26 +135,11 @@ export default {
   },
 
   methods: {
+    formatTime(ms) {
+      return formatSmallTime(ms);
+    },
     selectID(e) {
       console.log(e);
-    },
-
-    getDate(ms) {
-      const dt = new DateTime()
-        .fromMillis(ms)
-        .toLocaleString(DateTime.DATE_SHORT);
-      return dt;
-    },
-
-    getTime(ms) {
-      try {
-        const dt = formatSmallTime(ms);
-        console.log('dt', dt);
-        return dt;
-      } catch (e) {
-        console.error(e);
-        return '';
-      }
     },
   },
 

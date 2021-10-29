@@ -42,12 +42,23 @@ export const redisMixin = {
       if (!graphNames) {
         return;
       }
+      const getPlaceName = (placeID) => {
+        console.log(placeID);
+        const x = this.getPlaces().find((v) => v.placeID === placeID);
+        return x.name;
+      };
+      
       // send message to server
       this.emitFromClient(
         'getExposures',
         { graphNames, userID },
         // and handle the callback
         ({ msg, exposures }) => {
+          // insert the place names
+          exposures.forEach((element) => {
+            element.name = getPlaceName(element.placeID);
+          });
+          console.log('named exposures', exposures);
           this.$emit('exposures', { msg, exposures });
         }
       );
