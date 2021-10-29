@@ -35,8 +35,9 @@
         :setPoi="setPoi"
         :getPoi="getPoi"
         :setDefaultMapCenter="setDefaultMapCenter"
-        :setPreferredGraph=setPreferredGraph
+        :setPreferredGraph="setPreferredGraph"
         :usernumber="usernumber"
+        :emergency="emergency"
       />
     </div>
   </Model>
@@ -52,6 +53,9 @@ export default {
   components: {
     Spaces,
     Model,
+  },
+  props: {
+    emergency: Boolean,
   },
 
   data() {

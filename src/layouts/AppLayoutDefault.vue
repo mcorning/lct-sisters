@@ -25,10 +25,11 @@
         :incrementWarningsReceived="incrementWarningsReceived"
       />
       <CaptureErrorSnackbar>
-        <slot :getVisitors="getVisitors" />
+        <!-- one of the main vues goes here -->
+        <slot :getVisitors="getVisitors" :emergency="emergency" />
       </CaptureErrorSnackbar>
 
-      <AppLayoutFooter /></div
+      <AppLayoutFooter @openDiagnostics="onOpenDiagnostics" /></div
   ></Model>
 </template>
 <script>
@@ -68,6 +69,7 @@ export default {
   },
   data() {
     return {
+      emergency: false,
       namespace: 'Sisters',
       ready: false,
       inSession: '',
@@ -78,7 +80,11 @@ export default {
       this.inSession = sessionID;
     },
   },
-  methods: {},
+  methods: {
+    onOpenDiagnostics() {
+      this.emergency = true;
+    },
+  },
   watch: {
     ready() {
       console.log('ready');

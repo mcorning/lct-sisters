@@ -3,7 +3,8 @@
     <v-card class="mx-auto">
       <v-row dense
         ><v-col cols="12" sm="6">
-          <v-card-title class="text-h5">
+           <!-- TODO use these breakpoints all over the app -->
+          <v-card-title class="text-xs-h6 text-sm-h5">
             CoVid Early Warning System
           </v-card-title>
         </v-col>
@@ -21,9 +22,11 @@
         <v-col v-if="hasVisitors" cols="12" md="3">
           <v-card-title><h6>Participation</h6></v-card-title>
           <v-card-subtitle>Other visitors on graphs you use</v-card-subtitle>
-        <v-card-text class=text-caption>The Visitor was in these geographic areas. 
-          Each area lists all the visitors in that space. 
-          The Virus Exposures section limits visitors who shared the same spacetime.</v-card-text>
+          <v-card-text class="text-caption"
+            >The Visitor was in these geographic areas. Each area lists all the
+            visitors in that space. The Virus Exposures section limits visitors
+            who shared the same spacetime.</v-card-text
+          >
           <v-list>
             <v-list-group
               v-for="item in visitors"
@@ -55,7 +58,10 @@
             >Other visitors shared the same spacetimes with visitor:
             {{ selectedUserID.userID }}</v-card-subtitle
           >
-        <v-card-text class=text-caption>If the Visitor bits the Big Red Button, these people will receive exposure alerts.</v-card-text>
+          <v-card-text class="text-caption"
+            >If the Visitor bits the Big Red Button, these people will receive
+            exposure alerts.</v-card-text
+          >
           <v-data-table
             v-if="hasExposures"
             :headers="exposureHeaders"
@@ -171,3 +177,4 @@ export default {
   },
 };
 </script>
+<style></style>

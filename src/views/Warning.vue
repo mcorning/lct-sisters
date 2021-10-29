@@ -20,7 +20,8 @@
         :logVisits="logVisits"
         :onExposureWarning="onExposureWarning"
         :getUnloggedVisits="getUnloggedVisits"
-        :setVaccinationStatus=setVaccinationStatus
+        :setVaccinationStatus="setVaccinationStatus"
+        :emergency="emergency"
       />
     </div>
   </Model>
@@ -32,7 +33,9 @@ import Exposure from '@/components/Exposure.vue';
 
 export default {
   name: 'Warning',
-
+  props: {
+    emergency: Boolean,
+  },
   components: {
     Model,
     Exposure,

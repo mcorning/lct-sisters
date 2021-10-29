@@ -26,6 +26,7 @@
         :usernumber="usernumber"
         :getVisits="getVisits"
         :updateGraphVisit="updateGraphVisit"
+        :emergency="emergency"
       />
     </div>
   </Model>
@@ -38,6 +39,9 @@ import Model from '@/components/renderless/Model.vue';
 
 export default {
   name: `Time`,
+  props: {
+    emergency: Boolean,
+  },
   components: {
     Calendar,
     Model,

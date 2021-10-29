@@ -3,13 +3,27 @@
     <v-container
       fluid
       class="fill-height "
+      :class="checkEmergency"
       v-if="hasVisits && (isConnected || isDebugging)"
     >
       <v-card color="secondary" class="white--text mx-auto my-12">
-        <v-card-title class="headline">Exposure Warnings</v-card-title>
-        <v-card-subtitle class="white--text"
-          >Dated: {{ dated }}</v-card-subtitle
-        >
+        <v-row align="center"
+          ><v-col>
+            <v-card-title class="headline">Exposure Warnings</v-card-title>
+            <v-card-subtitle class="white--text"
+              >Dated: {{ dated }}</v-card-subtitle
+            ></v-col
+          >
+
+          <v-col cols="2">
+            <v-btn color="primary" icon @click="open('Monitor')">
+              <v-icon>mdi-monitor-dashboard</v-icon>
+            </v-btn>
+            <v-btn icon @click="openDiagnostics = true"
+              ><v-icon>history</v-icon></v-btn
+            >
+          </v-col>
+        </v-row>
         <v-divider />
         <v-card-text class="my-0 pt-1">
           <v-row no-gutters align="center" justify="center">
@@ -140,7 +154,25 @@
         <v-btn text @click="returnToSpaces">OK</v-btn>
       </v-card-actions>
     </v-card>
-
+    <v-sheet v-if="openDiagnostics" no-gutters>
+      <v-card flat>
+        <v-btn
+          color="primary"
+          absolute
+          top
+          right
+          icon
+          @click="openDiagnostics = false"
+          ><v-icon>close</v-icon></v-btn
+        >
+        <v-btn plain text @click="emailDiagnostics" large class="mt-3"
+          >Diagnostics</v-btn
+        >
+        <v-card-text>
+          <pre>{{ diagnostics }}</pre>
+        </v-card-text>
+      </v-card>
+    </v-sheet>
     <confirmation-snackbar
       v-if="confSnackbar"
       :centered="true"
@@ -165,6 +197,7 @@ export default {
     logVisits: Function,
     onExposureWarning: Function,
     setVaccinationStatus: Function,
+    emergency: Boolean,
   },
   components: {
     ConfirmationSnackbar,
@@ -173,7 +206,15 @@ export default {
   },
 
   computed: {
-
+    diagnosticOutput() {
+      return this.diagnostics.join('\n');
+    },
+    checkEmergency() {
+      if (!this.openDiagnostics) {
+        return 'Calendar';
+      }
+      return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
+    },
     getWarningColor() {
       if (this.pctWeight < 25) return 'amber';
       if (this.pctWeight < 75) return 'orange';
@@ -308,6 +349,9 @@ export default {
 
   data() {
     return {
+      openDiagnostics: this.emergency,
+      diagnostics: [],
+
       numberOfShots: [0, 1, 2, 3],
       vaccinationStatus: null,
       isDebugging: true,
@@ -361,12 +405,19 @@ export default {
   },
 
   methods: {
-    logVisitsX(logVisits) {
-      this.dialog = false;
-      const vm = this;
-      this.confirmationMessage = logVisits().then((results) => {
-        vm.confirmationMessage = results;
-        vm.confSnackbar = true;
+    emailDiagnostics() {
+      this.$clipboard(this.msg);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+    },
+    log(diagnostic) {
+      this.diagnostics.push(diagnostic);
+    },
+    open(view) {
+      if (this.$router.currentRoute.name === view) {
+        return;
+      }
+      this.$router.push({
+        name: view,
       });
     },
 
@@ -418,9 +469,11 @@ export default {
   },
 
   watch: {
+    openDiagnostics(val) {
+      console.log(val);
+    },
     ready() {
       console.log('Ready');
-
     },
     vaccinationStatus() {
       console.log(this.vaccinationStatus);
@@ -436,8 +489,19 @@ export default {
 
   mounted() {
     this.ready = true;
+    const query = this.$route.query;
+    this.openDiagnostics = query.d && query.d === '1';
   },
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.EmergencyW {
+  width: 50vw;
+  height: 88vh;
+}
+.EmergencyH {
+  width: 100vw;
+  height: 50vh;
+}
+</style>

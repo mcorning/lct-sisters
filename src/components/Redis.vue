@@ -8,6 +8,7 @@
       @selectedChanged="onSelectedChanged"
     ></redis-card>
   </div>
+  <!-- add diagnostics here -->
 </template>
 
 <script>
@@ -42,6 +43,20 @@ export default {
 
     visitors: Object,
     exposures: Object,
+    emergency: Boolean,
+  },
+  computed: {
+    checkEmergency() {
+      if (!this.openDiagnostics) {
+        return 'Map';
+      }
+      return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
+    },
+  },
+  data() {
+    return {
+      openDiagnostics: this.emergency,
+    };
   },
   methods: {
     onSelectedChanged(userID) {
@@ -53,8 +68,20 @@ export default {
   mounted() {
     // called only once to get all visitors on the graphs used by the Visitor
     this.getVisitors();
+    const query = this.$route.query;
+    this.openDiagnostics = query.d && query.d === '1';
   },
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.EmergencyW {
+  width: 50vw;
+  height: 88vh;
+}
+.EmergencyH {
+  width: 100vw;
+  height: 50vh;
+}
+
+</style>

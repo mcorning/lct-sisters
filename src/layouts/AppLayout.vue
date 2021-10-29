@@ -7,6 +7,8 @@
           :isConnected="isConnected"
           :usernumber="usernumber"
           :getVisitors="getVisitors"
+          :emergency=emergency
+          @openDiagnostics=onOpenDiagnostics
         >
           <slot />
         </component>
@@ -33,6 +35,8 @@ export default {
   data() {
     return {};
   },
-  methods: {},
+  methods: {
+    onOpenDiagnostics(){alert('openDiagnostics')}
+  },
 };
 </script>

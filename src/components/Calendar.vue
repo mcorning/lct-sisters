@@ -39,6 +39,9 @@
             </v-list-item>
           </v-list>
         </v-menu>
+        <v-btn icon @click="openDiagnostics = true"
+          ><v-icon>history</v-icon></v-btn
+        >
       </v-toolbar>
 
       <v-sheet :class="checkEmergency">
@@ -165,9 +168,9 @@
         </template>
       </v-snackbar>
     </v-col>
-    <v-col v-if="emergency" no-gutters>
+    <v-col v-if="openDiagnostics" no-gutters>
       <v-card flat>
-        <v-btn absolute top right icon @click="emergency = false"
+        <v-btn absolute top right icon @click="openDiagnostics = false"
           ><v-icon>close</v-icon></v-btn
         >
         <v-btn plain text @click="emailDiagnostics" large class="mt-3"
@@ -204,6 +207,7 @@ export default {
     getVisits: Function,
     isConnected: Boolean,
     updateGraphVisit: Function,
+    emergency: Boolean,
   },
   components: {
     VueQRCodeComponent,
@@ -214,7 +218,7 @@ export default {
       return this.diagnostics.join('\n');
     },
     checkEmergency() {
-      if (!this.emergency) {
+      if (!this.openDiagnostics) {
         return 'Calendar';
       }
       return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
@@ -320,7 +324,7 @@ export default {
   },
   data() {
     return {
-      emergency: false,
+      openDiagnostics: this.emergency,
       diagnostics: [],
       enlargeQR: false,
 
@@ -728,6 +732,8 @@ export default {
     this.updateTime();
     // log a shared visit (if data was in the route querystring)
     // this.logSharedVisit(this.$route.params);
+    const query = this.$route.query;
+    this.openDiagnostics = query.d && query.d === '1';
     this.ready = true;
   },
 };

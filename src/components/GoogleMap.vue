@@ -79,7 +79,7 @@
               ></v-switch>
               <v-spacer />
               <v-switch
-                v-model="emergency"
+                v-model="openDiagnostics"
                 label="Diagnostics Open"
                 color="primary"
                 @click="menu = false"
@@ -119,9 +119,9 @@
     <v-row no-gutters
       ><v-col>
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
-      ><v-col v-if="emergency">
+      ><v-col v-if="openDiagnostics" @openDiagnostics="onOpenDiagnostics">
         <v-card flat>
-          <v-btn absolute top right icon @click="emergency = false"
+          <v-btn absolute top right icon @click="openDiagnostics = false"
             ><v-icon>close</v-icon></v-btn
           >
           <v-btn plain text @click="emailDiagnostics" large class="mt-3"
@@ -249,7 +249,6 @@ import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
 import InfoWindowCard from './cards/infoWindowCard.vue';
-// import StatusCard from './cards/statusCard.vue';
 import BtnWithTooltip from './misc/btnWithTooltip.vue';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 
@@ -274,17 +273,17 @@ export default {
     getPoi: Function,
     setDefaultMapCenter: Function,
     setPreferredGraph: Function,
+    emergency: Boolean,
   },
   components: {
     InfoWindowCard,
-    // StatusCard,
     BtnWithTooltip,
     ConfirmationSnackbar,
   },
 
   computed: {
     checkEmergency() {
-      if (!this.emergency) {
+      if (!this.openDiagnostics) {
         return 'Map';
       }
       return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
@@ -366,6 +365,8 @@ export default {
   },
   data() {
     return {
+      openDiagnostics: this.emergency,
+
       sponsor: '',
       defaultPosition: {
         lat: parseFloat(process.env.VUE_APP_LAT),
@@ -373,7 +374,6 @@ export default {
       },
       sponsorPosition: this.defaultPosition,
       savedMapCenter: false,
-      emergency: true,
       msg: [],
       workplace: this.state.settings.workplace,
       shift: this.state.settings.shift || 8,
@@ -429,6 +429,9 @@ export default {
     Share
  */
   methods: {
+    onOpenDiagnostics() {
+      alert('GoogleMap saw diagnostic aler');
+    },
     changeMapCenter(val) {
       const center = val ? this.getMapCenter() : null;
       this.setDefaultMapCenter(center);
@@ -859,7 +862,7 @@ export default {
               vm.msg.push('\tReverting to default position:');
               vm.msg.push(`\t${printJson(vm.defaultPosition)}`);
               map.setCenter(vm.defaultPosition);
-              vm.emergency = true;
+              vm.openDiagnostics = true;
               vm.ready = true;
             },
           });
@@ -886,7 +889,7 @@ export default {
           this.panToCurrentLocation();
         }
       } catch (error) {
-        this.emergency = true;
+        this.openDiagnostics = true;
 
         throw 'Sorry. Error loading map: ' + error.message;
       }
@@ -922,7 +925,7 @@ export default {
             self.showPosition(pos);
             self.msg.push(`Disabling geolocation service.`);
             self.msg.push(`\t${error}`);
-            self.emergency = true;
+            self.openDiagnostics = true;
           }
         },
         self.positionOptions
@@ -960,6 +963,9 @@ export default {
   },
 
   watch: {
+    emergency(val) {
+      console.log(val);
+    },
     group() {
       this.drawer = false;
     },
@@ -990,8 +996,8 @@ export default {
     const query = this.$route.query;
 
     self.sponsor = query.sponsor;
-    self.emergency = query.d && query.d === '1';
-    self.msg.push(`${self.emergency ? 'Enabled diagnostics' : ''}`);
+    self.openDiagnostics = query.d && query.d === '1';
+    self.msg.push(`${self.openDiagnostics ? 'Enabled diagnostics' : ''}`);
 
     if (self.sponsor) {
       self.snackbarThanks = true;
@@ -1061,6 +1067,7 @@ body {
   width: 100vw;
   height: 50vh;
 }
+
 pre {
   overflow-x: auto;
   white-space: pre-wrap;

@@ -21,10 +21,11 @@
         :spaces="spaces"
         :getVisitors="getVisitors"
         :getExposures="getExposures"
-        :getPlaces=getPlaces
+        :getPlaces="getPlaces"
         :getVisits="getVisits"
         :visitExists="visitExists"
         :validateVisits="validateVisits"
+        :emergency="emergency"
       />
     </div>
   </Model>
@@ -37,7 +38,9 @@ import Redis from '../components/Redis.vue';
 
 export default {
   name: 'Monitor',
-
+  props: {
+    emergency: Boolean,
+  },
   components: {
     Model,
     Redis,
