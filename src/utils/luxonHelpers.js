@@ -8,6 +8,14 @@ const t = () => {
   // using Luxon Presets
   return DateTime.now();
 };
+const roundTime = (time, down = true) => {
+  const roundTo = 15; // minutes
+  const roundDownTime = roundTo * 60 * 1000;
+
+  return down
+    ? time - (time % roundDownTime)
+    : time + (roundDownTime - (time % roundDownTime));
+};
 
 const tPlusOne = (avgStay = 30) => {
   // using Luxon Presets
@@ -16,6 +24,9 @@ const tPlusOne = (avgStay = 30) => {
 const getNow = () => {
   // using Luxon Presets
   return DateTime.now().toLocaleString(DateTime.TIME_24_WITH_SECONDS);
+};
+const getNowAsMillis = () => {
+  return DateTime.now().toMillis();
 };
 
 const getNowAsIso = () => {
@@ -160,6 +171,7 @@ const formatDateAsISO = (jsDate) => {
 module.exports = {
   DateTime,
   getNow,
+  getNowAsMillis,
   getNowAsIso,
   inFuture,
   isToday,
@@ -169,6 +181,7 @@ module.exports = {
   formatTime,
   formatVisitedDate,
   getVisitDate,
+  roundTime,
   showCurrentMilitaryTime,
   updateTime,
   t,

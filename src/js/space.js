@@ -1,8 +1,13 @@
 import Place from '@/models/Place';
 import 'either-async';
 
-import { roundTime } from '@/utils/helpers';
-import { DateTime, getNow } from '@/utils/luxonHelpers';
+import {
+  DateTime,
+  getNow,
+  tPlusOne,
+  getNowAsMillis,
+  roundTime,
+} from '@/utils/luxonHelpers';
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
 // import Place from '@/models/Place';
@@ -30,12 +35,14 @@ export const spaceMixin = {
     onSharePlace(decoded) {
       const route = this.$route.query;
       const place_id = decoded || route.place_id;
-      const start = Number(route.start);
+
+      const start = Number(route.start) || roundTime(getNowAsMillis());
       const end = route.shift
         ? DateTime.fromMillis(start)
             .plus({ hours: Number(route.shift) })
             .toMillis()
-        : Number(route.end);
+        : Number(route.end) || roundTime(tPlusOne().toMillis());
+
       // replace the "escaped" underscores with spaces
       const name = route.name.replace(/_/g, ' ');
       const shared = true;

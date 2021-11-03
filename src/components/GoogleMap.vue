@@ -140,6 +140,7 @@
         </v-card>
       </v-col>
     </v-row>
+
     <info-window-card
       ref="infowin"
       id="infowin"
@@ -148,6 +149,7 @@
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
     ></info-window-card>
+
     <v-snackbar
       color="green darken-2"
       v-model="snackbarThanks"
@@ -203,6 +205,7 @@
         </v-card-actions>
       </v-card>
     </v-snackbar>
+
     <v-snackbar v-model="snackbar" color="orange" centered>
       <v-card-title>{{ title }}</v-card-title>
       <v-card color="orange" flat>
@@ -218,6 +221,7 @@
         </v-btn>
       </template>
     </v-snackbar>
+
     <v-snackbar
       v-model="snackbarPrompt"
       centered
@@ -247,6 +251,8 @@
       :confirmationMessage="confirmationMessage"
       :bottome="confBottom"
     />
+
+
   </v-sheet>
 </template>
 
@@ -288,9 +294,11 @@ export default {
     InfoWindowCard,
     BtnWithTooltip,
     ConfirmationSnackbar,
+    
   },
 
   computed: {
+
     diagnosticOutput() {
       return this.diagnostics.join('\n');
     },
@@ -377,6 +385,8 @@ export default {
   },
   data() {
     return {
+      enlargeQR: false,
+
       openDiagnostics: this.emergency,
       diagnostics: [],
       sponsor: '',
@@ -1005,9 +1015,10 @@ export default {
 
       this.log('Map component ready');
       if (query.place_id) {
-        console.log('Detected a shared event:', query.place_id);
-        this.setStatus(`Detected a shared event: ${query.place_id}`);
-        this.setStatus(printJson(query) + '\n\n');
+        query.date
+          ? this.log(`Detected a shared event: ${query.date}`)
+          : this.log(`Detected a shared place: ${query.name}`);
+        this.log(printJson(query) + '\n\n');
         // in space.js
         this.onSharePlace();
       }
