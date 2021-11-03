@@ -22,8 +22,49 @@
       </v-card-actions>
       <v-card-actions>
         <v-btn class=" text-caption " @click="toggle">
-          {{ showPostions ? 'Hide' : 'Show' }} Positions
+          Positions
+          <!-- {{ showPostions ? 'Hide' : 'Show' }} Positions -->
         </v-btn>
+        <v-spacer />
+        <v-dialog v-model="enlargeQR" width="500">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn icon v-bind="attrs" v-on="on">
+              <v-icon>qr_code_2</v-icon>
+            </v-btn>
+          </template>
+
+          <v-card>
+            <v-btn icon absolute top right @click="enlargeQR = false"
+              ><v-icon>close</v-icon></v-btn
+            >
+            <v-card-title>QR for {{ name }}</v-card-title>
+
+            <v-card-text>
+              <v-row>
+                <v-spacer />
+                <v-col class="text-center">
+                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                  </VueQRCodeComponent>
+                </v-col>
+                <v-spacer />
+              </v-row>
+              <v-row
+                ><v-col
+                  ><span class="text-caption"
+                    >Right-click and "Save image as..." then print QR for
+                    customer convenience.</span
+                  ></v-col
+                ></v-row
+              >
+            </v-card-text>
+            <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
+            <v-card-text class="text-caption text-sm-body-2">{{
+              decodedUri
+            }}</v-card-text>
+
+            <v-divider></v-divider>
+          </v-card>
+        </v-dialog>
         <v-spacer />
         <v-btn @click="deleteMarker">Delete</v-btn>
         <div v-if="showPostions">
@@ -38,7 +79,10 @@
 </template>
 
 <script>
+import VueQRCodeComponent from 'vue-qr-generator';
+
 export default {
+  name: 'InfowindowCard',
   props: {
     info: {
       type: Object,
@@ -46,9 +90,26 @@ export default {
     },
     onVisitPlace: Function,
   },
-  filters: {},
+  components: {
+    VueQRCodeComponent,
+  },
 
   computed: {
+    decodedUri() {
+      // the QR code generator needs to use the decoded URI
+      const d = decodeURIComponent(this.mailToUri);
+      return d;
+    },
+
+    mailToUri() {
+      const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
+      // do normal url encoding for the rest of the args
+      // we will reverse this edit in space.js (but see note above in decodedUri())
+      const uri = encodeURIComponent(
+        `place_id=${this.placeId}&name=${escapedName}`
+      );
+      return `${window.location.origin}/?${uri}`;
+    },
     isGathering() {
       return this.name === 'Gathering';
     },
@@ -80,6 +141,7 @@ export default {
   },
   data() {
     return {
+      enlargeQR: false,
       showPostions: false,
       gatheringName: '',
     };
