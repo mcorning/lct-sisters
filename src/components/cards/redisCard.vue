@@ -2,15 +2,15 @@
   <v-container fluid>
     <v-card class="mx-auto">
       <v-row dense
-        ><v-col cols="12" sm="6">
-           <!-- TODO use these breakpoints all over the app -->
-          <v-card-title class="text-xs-h6 text-sm-h5">
-            CoVid Early Warning System
+        ><v-col cols="12" sm="8">
+          <!-- TODO use these breakpoints all over the app -->
+          <v-card-title class="text-subtitle-1 text-sm-h5">
+            CoVid Early Warning System (CVEW)
           </v-card-title>
         </v-col>
         <v-col>
-          <v-card-title
-            ><h6>Your ID: {{ search }}</h6></v-card-title
+          <v-card-subtitle class="text-subtitle-2 text-sm-subtitle-1"
+            >Your ID: {{ search }}</v-card-subtitle
           >
         </v-col></v-row
       >
