@@ -53,37 +53,51 @@
                           hide-details
                         ></v-text-field> </v-col></v-row
                   ></v-list-item>
-                </v-list>
-                <span class="text-caption ml-4"
-                  >Default map center is: {{ showMapCenter() }}</span
-                >
-              </v-col></v-row
-            >
+                </v-list> </v-col
+            ></v-row>
             <v-divider></v-divider>
             <v-card-actions>
-              <v-switch
-                v-model="saveMapCenter"
-                label="Map center saved"
-                color="primary"
-              ></v-switch>
-
-              <v-btn icon @click="changeMapCenter"><v-icon>save</v-icon></v-btn>
-
+              <v-tooltip top>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="changeMapCenter"
+                    icon
+                    color="primary"
+                  >
+                    <v-icon>save</v-icon>
+                  </v-btn>
+                </template>
+                <span>Save map center</span>
+              </v-tooltip>
+              <span class="text-caption pl-2"
+                >Default location: {{ showMapCenter() }}</span
+              >
               <v-spacer />
-              <v-switch
-                v-model="openDiagnostics"
-                label="Diagnostics Open"
-                color="primary"
-                @click="menu = false"
-              ></v-switch>
             </v-card-actions>
             <v-card-actions>
-              <v-btn text @click="clearMyLocationSettings"
-                >Clear location</v-btn
-              >
+              <v-tooltip top>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="clearMyLocationSettings"
+                    icon
+                    color="primary"
+                  >
+                    <v-icon>gps_off</v-icon>
+                  </v-btn>
+                </template>
+                <span>Temporarily clears default location setting</span>
+              </v-tooltip>
               <v-spacer />
               <v-btn text @click="volunteer">
                 Volunteer
+              </v-btn>
+              <v-spacer />
+              <v-btn color="primary" icon @click="onOpenDiagnostics">
+                <v-icon>mdi-monitor-dashboard</v-icon>
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -112,7 +126,7 @@
         <!-- Map container -->
         <!-- map size set in .Map class below -->
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
-      ><v-col v-if="openDiagnostics" @openDiagnostics="onOpenDiagnostics">
+      ><v-col v-if="openDiagnostics">
         <v-card flat>
           <v-btn absolute top right icon @click="openDiagnostics = false"
             ><v-icon>close</v-icon></v-btn
@@ -427,7 +441,8 @@ export default {
  */
   methods: {
     onOpenDiagnostics() {
-      alert('GoogleMap saw diagnostic aler');
+      this.menu = false;
+      this.openDiagnostics = true;
     },
     changeMapCenter() {
       this.setDefaultMapCenter(this.getMapCenter());
@@ -687,7 +702,7 @@ export default {
           this.log('Marker dragged to:');
           this.log(`\t ${printJson({ lat, lng })}`);
           // see space.js
-          this.updateLatLng({place_id,lat,lng})
+          this.updateLatLng({ place_id, lat, lng });
         });
 
         return marker;

@@ -77,6 +77,9 @@ export default {
     },
   },
   watch: {
+    emergency(e) {
+      console.log(e);
+    },
     state() {
       console.log(this.state);
     },
