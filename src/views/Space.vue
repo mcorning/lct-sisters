@@ -18,6 +18,7 @@
         clearLocationSettings,
         setDefaultMapCenter,
         setPreferredGraph,
+        updateLatLng,
       }"
     >
       <Spaces
@@ -38,6 +39,7 @@
         :setPreferredGraph="setPreferredGraph"
         :usernumber="usernumber"
         :emergency="emergency"
+        :updateLatLng=updateLatLng
       />
     </div>
   </Model>

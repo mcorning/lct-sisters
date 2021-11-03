@@ -22,7 +22,7 @@ export const timeMixin = {
         visitId,
         loggedVisitId: id,
         graphName,
-        color: 'primary', // use parameter if we need a different color for Sandbox graph
+        color: 'primary', 
       };
       console.log('updateLoggedVisitId() data:', printJson(data));
 

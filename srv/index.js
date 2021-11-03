@@ -51,7 +51,7 @@ const {
   currentGraphName, // mapped to client nsp (aka namespace or community name)
   host,
   deleteVisit,
-  findExposedVisitors,
+  // findExposedVisitors,
   logVisit,
   onExposureWarning,
   getVisitors,
@@ -169,41 +169,48 @@ io.on('connection', (socket) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
-    // alerts is an array of userIDs
-    const alertOthers = (socket, alerts, riskScore) => {
-      const sendExposureAlert = (to, riskScore) => {
-        console.log('Alerting:', to); // to is a userID (of the exposed visitor)
-        socket.to(to).emit(
-          'exposureAlert',
-          riskScore //,
-          // ack((socket.id) => {
-          //   console.log(success(socket.id, 'confirms'));
-          // })
-        );
-      };
-
-      alerts.forEach((to) => {
-        if (io.sockets.adapter.rooms.has(to)) {
-          sendExposureAlert(to, riskScore);
-          deleteCacheItem('alerts', to);
-        } else {
-          setCacheItem('alerts', to, {
-            cached: new Date(),
-            riskScore,
-          });
-        }
-      });
+    const sendExposureAlert = (to, riskScore) => {
+      console.log('Alerting:', to); // to is a userID (of the exposed visitor)
+      socket.to(to).emit('exposureAlert', riskScore);
     };
+    // alerts is an array of userIDs
+    // const alertOthers = (socket, alerts, riskScore) => {
+    //   sendExposureAlert(to, riskScore);
+
+    //   alerts.forEach((to) => {
+    //     if (io.sockets.adapter.rooms.has(to)) {
+    //       sendExposureAlert(to, riskScore);
+    //       deleteCacheItem('alerts', to);
+    //     } else {
+    //       setCacheItem('alerts', to, {
+    //         cached: new Date(),
+    //         riskScore,
+    //       });
+    //     }
+    //   });
+    // };
 
     const userID = socket.handshake.auth.userID;
     onExposureWarning({ graphName, userID })
       .then((exposed) => {
         exposed.forEach((userID) => {
           console.log(warn('Processing '), userID);
-          findExposedVisitors(userID).then((userIDs) =>
-            alertOthers(socket, userIDs, riskScore, ack)
-          );
+          // findExposedVisitors(userID).then((userIDs) =>
+          //   alertOthers(socket, userIDs, riskScore, ack)
+          // );
+          if (io.sockets.adapter.rooms.has(userID)) {
+            sendExposureAlert(userID, riskScore);
+            deleteCacheItem('alerts', userID);
+          } else {
+            setCacheItem('alerts', userID, {
+              cached: new Date(),
+              riskScore,
+            });
+          }
         });
+        if (ack) {
+          ack(exposed);
+        }
       })
       .catch((error) => console.error(err(error)));
   });
@@ -220,7 +227,7 @@ io.on('connection', (socket) => {
 
     function safeAck(results) {
       if (ack) {
-        const x = results || 'no results';
+        const x = results ?? 'no results';
         console.log(highlight('acknowledging client', printJson(x)));
         ack(results);
         return;
@@ -322,10 +329,46 @@ io.on('connection', (socket) => {
     getExposures({ graphNames, userID }, ack);
   });
   socket.on('getVisitTimes', ({ graphNames, userID }, ack) => {
-    getVisitTimes({ graphNames, userID }, ack);
+    getVisitTimes({ graphNames, userID })
+      .then((results) => results.flat())
+      .then((all) => {
+        if (all.length) {
+          console.log('visit dates:', all);
+          const graphName = all[0]['_graph']._graphId;
+          const visits = all[0]['_results'].map((c) => {
+            let v = c.get('v');
+            return {
+              id: v.id,
+              start: v.properties.start,
+              end: v.properties.end,
+              graphName: graphName,
+            };
+          });
+
+          if (ack) {
+            ack(visits);
+          }
+        } else {
+          if (ack) {
+            ack(all);
+          }
+        }
+      });
   });
+
   socket.on('confirmDates', ({ userID, dates }, ack) => {
-    confirmDates({ userID, dates }, ack);
+    confirmDates({ userID, dates })
+      .then((res) => {
+        const results = res.map((v, i) => ({
+          loggedVisitId: dates[i].id,
+          propertiesSet: v.getStatistics().propertiesSet(),
+        }));
+        console.log(results);
+        if (ack) {
+          ack(results);
+        }
+      })
+      .catch((e) => console.error(e));
   });
 
   socket.on('validateVisits', (userID, ack) => {
@@ -336,6 +379,7 @@ io.on('connection', (socket) => {
       }
     });
   });
+
   socket.on('getVisitedPaths', (userID, ack) => {
     console.log('getVisitedPaths:', userID, ack);
     getVisitedPaths(userID, (paths) => {

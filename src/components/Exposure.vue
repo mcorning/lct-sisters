@@ -78,7 +78,7 @@
               <v-select
                 v-model="vaccinationStatus"
                 :items="numberOfShots"
-                label="Injections:"
+                label="Doses:"
               >
               </v-select>
             </v-col>
@@ -176,7 +176,10 @@
     <confirmation-snackbar
       v-if="confSnackbar"
       :centered="true"
+      :top="true"
+      :confirmationTitle="confirmationTitle"
       :confirmationMessage="confirmationMessage"
+      :confirmationIcon="confirmationIcon"
     />
   </v-sheet>
 </template>
@@ -201,8 +204,6 @@ export default {
   },
   components: {
     ConfirmationSnackbar,
-
-    // tooltip,
   },
 
   computed: {
@@ -356,7 +357,9 @@ export default {
       vaccinationStatus: null,
       isDebugging: true,
       ready: false,
+      confirmationTitle: '',
       confirmationMessage: '',
+      confirmationIcon: '',
       confSnackbar: false,
       // trick when using compound predicate for dialog (note we use :value not v-model when using compound predicates)
       dialog: true,
@@ -448,13 +451,30 @@ export default {
 
       this.dialog = true;
       console.log(this.score, this.pctWeight);
-      this.onExposureWarning({
-        score: this.score,
-        reliability: this.pctWeight,
-      });
-      this.confirmationMessage =
-        'Well done. You have done your duty in our war against COVID-19. Now, get well soon.';
-      this.confSnackbar = true;
+      this.onExposureWarning(
+        {
+          score: this.score,
+          reliability: this.pctWeight,
+        },
+        (results) => {
+          console.log('Exposure alerts sent:', results);
+          if (results.length > 0) {
+            this.confirmationIcon = 'cloud_done';
+            this.confirmationMessage = `Well done. You alerted ${
+              results.length
+            } other${
+              results.length === 1 ? '' : 's'
+            } that the virus is lurking in your community. Soon, there will be no where for them to hide.`;
+          } else {
+            this.confirmationIcon = 'thumb_up_alt';
+            this.confirmationMessage =
+              'Good news! You exposed no one else at the places you visited.';
+          }
+          this.confirmationTitle = 'Results of Exposure Warning';
+          console.log(this.confirmationIcon);
+          this.confSnackbar = true;
+        }
+      );
     },
   },
 

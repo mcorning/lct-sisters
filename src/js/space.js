@@ -42,6 +42,19 @@ export const spaceMixin = {
       this.callVisitUpdate({ place_id, start, end, name, shared });
     },
 
+    updateLatLng({ place_id, lat, lng }) {
+      Place.updateLatLng({ place_id, lat, lng })
+        .toEither()
+        .cata({
+          ok: (result) => result, // marker rendered (without a label) from inside EitherAsync
+          error: (err) => {
+            // let global error handler take over so we see the error in the snackbar.
+            err.message = +'Place.updateLatLng() had issues';
+            throw err;
+          },
+        });
+    },
+
     callVisitUpdate({ place_id, start, end, name, shared, gatheringName }) {
       let visit = {
         id: randomId(),

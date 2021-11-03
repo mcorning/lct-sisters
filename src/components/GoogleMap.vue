@@ -39,30 +39,20 @@
                   <v-list-item>
                     <v-row dense
                       ><v-col cols="8">
-                        <!-- <v-list-item>
-                            <v-list-item-action> -->
                         <v-select
                           v-model="workplace"
                           :items="places"
                           :menu-props="{ top: true, offsetY: true }"
                           label="Workplace"
-                        ></v-select>
-                        <!-- </v-list-item-action>
-                          </v-list-item>--> </v-col
+                        ></v-select> </v-col
                       ><v-col cols="4">
-                        <!-- <v-list-item>
-                            <v-list-item-action> -->
                         <v-text-field
                           v-model="shift"
                           label="Shift:"
                           placeholder="(in hours)"
                           hide-details
-                        ></v-text-field>
-                        <!-- </v-list-item-action>
-                          </v-list-item>  -->
-                      </v-col></v-row
-                    ></v-list-item
-                  >
+                        ></v-text-field> </v-col></v-row
+                  ></v-list-item>
                 </v-list>
                 <span class="text-caption ml-4"
                   >Default map center is: {{ showMapCenter() }}</span
@@ -72,11 +62,13 @@
             <v-divider></v-divider>
             <v-card-actions>
               <v-switch
-                v-model="savedMapCenter"
+                v-model="saveMapCenter"
                 label="Map center saved"
                 color="primary"
-                @change="changeMapCenter"
               ></v-switch>
+
+              <v-btn icon @click="changeMapCenter"><v-icon>save</v-icon></v-btn>
+
               <v-spacer />
               <v-switch
                 v-model="openDiagnostics"
@@ -114,10 +106,11 @@
         icon="mdi-crosshairs-gps"
       />
     </v-toolbar>
-    <!-- Map container -->
-    <!-- map size set in .Map class below -->
+
     <v-row no-gutters
       ><v-col>
+        <!-- Map container -->
+        <!-- map size set in .Map class below -->
         <div :class="checkEmergency" width="100%" ref="map"></div> </v-col
       ><v-col v-if="openDiagnostics" @openDiagnostics="onOpenDiagnostics">
         <v-card flat>
@@ -128,7 +121,7 @@
             >Diagnostics</v-btn
           >
           <v-card-text>
-            <pre class="ml-5">{{ diagnostics }}</pre>
+            <pre class="text-body-2 ml-5">{{ diagnosticOutput }}</pre>
           </v-card-text>
         </v-card>
       </v-col>
@@ -157,7 +150,8 @@
         >
         <v-card-subtitle class="pt-1"
           >Thank you for taking the time to look at our work so far. LCT is in
-          beta, so expect a few improvements. Help Wanted.</v-card-subtitle
+          beta, so expect improvements as we learn more. Help
+          Wanted.</v-card-subtitle
         >
 
         <v-card-text>
@@ -273,6 +267,7 @@ export default {
     getPoi: Function,
     setDefaultMapCenter: Function,
     setPreferredGraph: Function,
+    updateLatLng: Function,
     emergency: Boolean,
   },
   components: {
@@ -282,6 +277,9 @@ export default {
   },
 
   computed: {
+    diagnosticOutput() {
+      return this.diagnostics.join('\n');
+    },
     checkEmergency() {
       if (!this.openDiagnostics) {
         return 'Map';
@@ -306,8 +304,8 @@ export default {
         ? JSON.parse(this.state.settings.default_map_center)
         : null;
     },
-    diagnostics() {
-      return this.msg.join('\n');
+    diagnosticsOutpus() {
+      return this.diagnostics.join('\n');
     },
 
     places() {
@@ -366,15 +364,14 @@ export default {
   data() {
     return {
       openDiagnostics: this.emergency,
-
+      diagnostics: [],
       sponsor: '',
       defaultPosition: {
         lat: parseFloat(process.env.VUE_APP_LAT),
         lng: parseFloat(process.env.VUE_APP_LNG),
       },
       sponsorPosition: this.defaultPosition,
-      savedMapCenter: false,
-      msg: [],
+      saveMapCenter: false,
       workplace: this.state.settings.workplace,
       shift: this.state.settings.shift || 8,
 
@@ -432,12 +429,11 @@ export default {
     onOpenDiagnostics() {
       alert('GoogleMap saw diagnostic aler');
     },
-    changeMapCenter(val) {
-      const center = val ? this.getMapCenter() : null;
-      this.setDefaultMapCenter(center);
+    changeMapCenter() {
+      this.setDefaultMapCenter(this.getMapCenter());
     },
     emailDiagnostics() {
-      this.$clipboard(this.msg);
+      this.$clipboard(this.diagnostics);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
     },
     goToPolicies() {
@@ -552,6 +548,7 @@ export default {
           title,
           position,
           place_id,
+          draggable: true,
         });
         this.selectedMarker = marker;
         marker.setMap(map);
@@ -676,11 +673,21 @@ export default {
           title,
           position,
           place_id,
+          draggable: true,
         });
         marker.setMap(map);
         marker.addListener(`click`, (event) => {
           event.stop();
           showInfoWindow({ map, markedPlace, marker, infowindow });
+        });
+        marker.addListener(`dragend`, (event) => {
+          event.stop();
+          const lat = event.latLng.lat();
+          const lng = event.latLng.lng();
+          this.log('Marker dragged to:');
+          this.log(`\t ${printJson({ lat, lng })}`);
+          // see space.js
+          this.updateLatLng({place_id,lat,lng})
         });
 
         return marker;
@@ -692,7 +699,7 @@ export default {
         });
         console.log(`Rendered ${markers.length} markers`);
         this.setStatus('1) Markers ready');
-        this.msg.push(`1) Rendered ${markers.length} markers`);
+        this.log(`1) Rendered ${markers.length} markers`);
 
         return { google, map, markers };
       };
@@ -773,7 +780,7 @@ export default {
         this.setStatus('2) Autocomplete setup');
         const toolbar = document.getElementById('autocompleteToolbar');
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(toolbar);
-        this.msg.push('2) Autocomplete setup');
+        this.log('2) Autocomplete setup');
 
         return { google, map };
       };
@@ -784,20 +791,20 @@ export default {
           let city = poi.address_components.find((v) =>
             v.types.includes('locality')
           );
-          this.msg.push(
+          vm.log(
             `\tc) ${
               city ? 'Found' : 'Could not find'
             } locality address component`
           );
           if (!city) {
-            this.msg.push('Looking for postal_town type, instead.');
+            vm.log('Looking for postal_town type, instead.');
             city = poi.address_components.find((v) =>
               v.types.includes('postal_town')
             );
-            this.msg.push(printJson(city));
+            vm.log(printJson(city));
             if (!city) {
-              this.msg.push('Listing available address_component types:');
-              this.msg.push(
+              vm.log('Listing available address_component types:');
+              vm.log(
                 `\t${printJson(poi.address_components.map((v) => v.types))})`
               );
             }
@@ -816,8 +823,8 @@ export default {
         console.log(`\t${latLng}`);
         const location = latLng;
         console.log('\t', printJson(location));
-        vm.msg.push(`\tb) showPosition(): calling geocoder`);
-        vm.msg.push(`\t\twith location: ${printJson(location)}`);
+        vm.log(`\tb) showPosition(): calling geocoder`);
+        vm.log(`\t\twith location: ${printJson(location)}`);
         geocoder
           .geocode({ location })
           .toEither()
@@ -831,12 +838,12 @@ export default {
             const namespace = locality ? locality : 'NA';
             this.setPreferredGraph(namespace); // e.g., 'Sisters' or 'Redmond'
             console.log('Preferred graph:', namespace);
-            vm.msg.push(`\t\tand preferred graph: ${namespace}`);
+            vm.log(`\t\tand preferred graph: ${namespace}`);
 
             const geometry = poi.geometry;
             const { location, viewport } = geometry;
-            vm.msg.push('\td) Geocode geometry results:');
-            vm.msg.push(`\t${printJson(geometry)}`);
+            vm.log('\td) Geocode geometry results:');
+            vm.log(`\t${printJson(geometry)}`);
             map.setCenter(location);
             map.setZoom(vm.defaultZoom - 2);
             const err = vm.setPoi({
@@ -845,22 +852,22 @@ export default {
               viewport: JSON.stringify(viewport),
             });
             const msg = err ? err : '\te) Saved location settings';
-            vm.msg.push(msg);
+            vm.log(msg);
 
             vm.ready = true;
           })
           .cata({
             ok: () => {
-              vm.msg.push('\td) Leaving geocoder in showPosition() ');
+              vm.log('\td) Leaving geocoder in showPosition() ');
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
-              vm.msg.push(`!!!! showPosition():error: ${results} !!!!`);
-              vm.msg.push(
+              vm.log(`!!!! showPosition():error: ${results} !!!!`);
+              vm.log(
                 `Your location setting is: ${this.state.settings.location}`
               );
-              vm.msg.push('\tReverting to default position:');
-              vm.msg.push(`\t${printJson(vm.defaultPosition)}`);
+              vm.log('\tReverting to default position:');
+              vm.log(`\t${printJson(vm.defaultPosition)}`);
               map.setCenter(vm.defaultPosition);
               vm.openDiagnostics = true;
               vm.ready = true;
@@ -874,18 +881,18 @@ export default {
       // final step in loading map:
       try {
         this.map = map;
-        this.msg.push('3) Getting default location:');
+        this.log('3) Getting default location:');
         const center = this.defaultMapCenter || this.lastLocation;
         if (this.sponsor === 'microsoft') {
-          this.msg.push(`\tWelcome Microsoft...`);
+          this.log(`\tWelcome Microsoft...`);
           showPosition(this.sponsorPosition);
         } else if (center) {
-          this.msg.push(`\ta) found saved center:`);
-          this.msg.push(`\t${printJson(center)}`);
+          this.log(`\ta) found saved center:`);
+          this.log(`\t${printJson(center)}`);
 
           showPosition(center);
         } else {
-          this.msg.push(`\ta) panning to current location`);
+          this.log(`\ta) panning to current location`);
           this.panToCurrentLocation();
         }
       } catch (error) {
@@ -923,8 +930,8 @@ export default {
               location: JSON.stringify(pos),
             });
             self.showPosition(pos);
-            self.msg.push(`Disabling geolocation service.`);
-            self.msg.push(`\t${error}`);
+            self.log(`Disabling geolocation service.`);
+            self.log(`\t${error}`);
             self.openDiagnostics = true;
           }
         },
@@ -960,6 +967,9 @@ export default {
       window.location =
         'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';
     },
+    log(diagnostic) {
+      this.diagnostics.push(diagnostic);
+    },
   },
 
   watch: {
@@ -978,8 +988,7 @@ export default {
     ready() {
       const query = this.$route.query;
 
-      this.savedMapCenter = this.defaultMapCenter;
-      this.msg.push('Map component ready');
+      this.log('Map component ready');
       if (query.place_id) {
         console.log('Detected a shared event:', query.place_id);
         this.setStatus(`Detected a shared event: ${query.place_id}`);
@@ -997,7 +1006,7 @@ export default {
 
     self.sponsor = query.sponsor;
     self.openDiagnostics = query.d && query.d === '1';
-    self.msg.push(`${self.openDiagnostics ? 'Enabled diagnostics' : ''}`);
+    self.log(`${self.openDiagnostics ? 'Enabled diagnostics' : ''}`);
 
     if (self.sponsor) {
       self.snackbarThanks = true;
@@ -1025,7 +1034,7 @@ export default {
             position: google.maps.ControlPosition.LEFT_BOTTOM,
           },
         });
-        this.msg.push('0) Initialized google map');
+        this.log('0) Initialized google map');
         return { google, map };
       })
       .then(({ google, map }) => this.onMounted({ google, map }))
@@ -1035,7 +1044,7 @@ export default {
           'If you are inside a building, you may not have internet connection. Try again outside.';
         this.confSnackbar = true;
         this.confBottom = true;
-        this.msg.push(`gmapsInit().catch() ${this.confirmationTitle}`);
+        this.log(`gmapsInit().catch() ${this.confirmationTitle}`);
       })
       .finally(() => {
         console.timeEnd('Mounted GoogleMaps');

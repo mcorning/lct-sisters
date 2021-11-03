@@ -1,14 +1,27 @@
 <template>
   <div>
     <redis-card
+      :class="checkEmergency"
       :visitors="visitors"
       :exposures="exposures"
       :getVisits="getVisits"
       :visitExists="visitExists"
       @selectedChanged="onSelectedChanged"
     ></redis-card>
+    <v-col v-if="openDiagnostics" no-gutters>
+      <v-card flat>
+        <v-btn absolute top right icon @click="openDiagnostics = false"
+          ><v-icon>close</v-icon></v-btn
+        >
+        <v-btn plain text @click="emailDiagnostics" large class="mt-3 "
+          >Diagnostics</v-btn
+        >
+        <v-card-text>
+          <pre class="text-body-2">{{ diagnosticOutput }}</pre>
+        </v-card-text>
+      </v-card>
+    </v-col>
   </div>
-  <!-- add diagnostics here -->
 </template>
 
 <script>
@@ -43,9 +56,14 @@ export default {
 
     visitors: Object,
     exposures: Object,
+    diagnostics: Object,
     emergency: Boolean,
   },
   computed: {
+
+    diagnosticOutput() {
+      return this.diagnostics.join('\n');
+    },
     checkEmergency() {
       if (!this.openDiagnostics) {
         return 'Map';
@@ -59,10 +77,24 @@ export default {
     };
   },
   methods: {
-    onSelectedChanged(userID) {
+    // TODO why isn't this in Model?
+    emailDiagnostics() {
+      this.$clipboard(this.msg);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+    },
+
+    // TODO TEST: Does FireFox handle default args?
+    onSelectedChanged(userID = this.$socket.client.auth.userID) {
+      console.log('userID', userID);
       // in redis.js
       this.getExposures(userID);
       this.validateVisits(userID);
+    },
+  },
+  watch: {
+    diagnostics(val) {
+      console.log('Diagnostic:', val);
+      this.openDiagnostics = true;
     },
   },
   mounted() {
@@ -83,5 +115,4 @@ export default {
   width: 100vw;
   height: 50vh;
 }
-
 </style>

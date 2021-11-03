@@ -61,6 +61,7 @@ export default {
 
   data() {
     return {
+      diagnostics:[],
       test: null,
       state: {},
       avgStay: 1000 * 60 * 30,
@@ -69,6 +70,7 @@ export default {
       pendingVisits: new Map(),
       loading: true,
       graphName: '',
+      
       // TODO send this data down to Calendar
       /* combinations of update
        *   Add Visit (category==='You')
@@ -95,7 +97,6 @@ export default {
 
   methods: {
     visitExists(loggedVisitId) {
-      // return this.visits.filter((v) => !v.loggedVisitId);
       console.log(loggedVisitId);
       const x = Visit.query()
         .where('loggedVisitId', loggedVisitId)
@@ -114,18 +115,21 @@ export default {
       return x;
     },
     getUnloggedVisits() {
-      // return this.visits.filter((v) => !v.loggedVisitId);
       const x = Visit.query()
         .where('loggedVisitId', '')
         .get();
       return x;
     },
 
-    onExposureWarning(riskScore) {
-      this.emitFromClient('exposureWarning', {
-        graphName: this.$defaultGraphName,
-        riskScore,
-      });
+    onExposureWarning(riskScore, ack) {
+      this.emitFromClient(
+        'exposureWarning',
+        {
+          graphName: this.$defaultGraphName,
+          riskScore,
+        },
+        ack
+      );
     },
 
     // TODO has this abstract approach been superseded by time.js and space.js?
@@ -150,8 +154,8 @@ export default {
     graph(deleteVisit) {
       if (deleteVisit) {
         this.onDeleteNode(
-          this.selectedEvent.loggedVisitId,
-          this.getGraphName()
+          this.selectedEvent.graphName,
+          this.selectedEvent.loggedVisitId
         );
         // if we deleted the graph node, then we should delete the cache entry, too
         // but we assume the node delete operation succeeds. what if it doesn't?
@@ -163,27 +167,13 @@ export default {
       this.onLogVisit(this.selectedEvent);
     },
 
-    // 10.25.21 now we log all visits (even future ones). this code is obsolete
-    // called when there are unlogged visits
-    // logVisits() {
-    //   return new Promise((resolve) => {
-    //     const x = this.unloggedVisits.length;
-    //     this.unloggedVisits.forEach((visit) => {
-    //       this.onLogVisit(visit);
-    //     });
-    //     resolve(`Logged ${x} visits.`);
-    //   });
-    // },
-
-    // NOTE: compared to the original onLogVisit(), reducing LOC from 40 to 10 is admirable
-    // and far easier to reason over and maintain
     onLogVisit(visit) {
       const { id: visitId, name, place_id, start, end } = visit;
       // get ref to vue model (to avoid this as Window and buffer below)
       const vm = this;
 
       function redisGraphCallback(results) {
-        const { id,  graphName, logged } = results;
+        const { id, graphName, logged } = results;
         console.log(
           success(
             'redisGraphCallback:updateVisitOnGraph results:',
@@ -201,7 +191,7 @@ export default {
         place_id,
         start,
         end,
-        graphName: this.getGraphName(),
+        graphName: this.getPoi().namespace,
         userID: this.$socket.client.auth.userID,
         sessionID: this.sessionID,
       };
@@ -214,12 +204,6 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    // TODO Why isn't this a computed prop?
-    getGraphName() {
-      // graphName set in GoogleMaps.vue based on sponsor
-      // return this.graphName || this.$defaultGraphName;
-      return this.$defaultGraphName;
-    },
     clearLocationSettings() {
       this.setPoi({
         namespace: '',
@@ -367,7 +351,6 @@ export default {
     loading() {
       console.log(success('\tMODEL mounted'));
       console.log('Visits: ', this.state.visits.length);
-      console.log('Default Graph:', this.getGraphName());
       Visit.convertLoggedVisitId();
     },
   },
@@ -424,6 +407,7 @@ export default {
       needsUsername: this.needsUsername,
       setSpecial: this.setSpecial,
       setPreferredGraph: this.setPreferredGraph,
+      diagnostics: this.diagnostics,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
@@ -438,15 +422,15 @@ export default {
       getPoi: this.getPoi,
       clearLocationSettings: this.clearLocationSettings,
       setDefaultMapCenter: this.setDefaultMapCenter,
+      updateLatLng:this.updateLatLng,
 
       // Time assets
       changeEvent: this.changeEvent,
       onUpdate: this.onUpdate,
-      getGraphName: this.getGraphName,
       setDefaultGraphName: this.setDefaultGraphName,
       updateLoggedVisitId: this.updateLoggedVisitId,
       getVisits: this.getVisits,
-      getPlaces:this.getPlaces,
+      getPlaces: this.getPlaces,
       visitExists: this.visitExists,
       updateGraphVisit: this.updateGraphVisit,
 

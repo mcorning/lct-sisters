@@ -38,6 +38,15 @@ export default class Place extends Model {
       data: place,
     });
   }
+  static updateLatLng({ place_id, lat, lng }) {
+    return this.$update({
+      where: place_id,
+      data: {
+        lat,
+        lng,
+      },
+    });
+  }
 
   static delete(val) {
     return this.$delete(val);

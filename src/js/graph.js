@@ -3,7 +3,7 @@ export const graphMixin = {
   name: 'graphHelpers',
 
   methods: {
-    onDeleteNode(loggedVisitId, graphName) {
+    onDeleteNode(graphName, loggedVisitId) {
       const query = {
         loggedVisitId,
         graphName,

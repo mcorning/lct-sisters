@@ -13,20 +13,32 @@
       vertical
       color="blue-grey darken-3"
     >
-      <div
-        v-if="confirmationTitle"
-        class="grey--text text--lighten-1 text-subtitle-1 mb-2"
-      >
-        {{ confirmationTitle }}
-      </div>
-      <div class="grey--text text--lighten-1 text-body-2 mb-4">
-        {{ confirmationMessage }}
-      </div>
-      <template v-slot:action="{ attrs }">
-        <v-btn color="error" text v-bind="attrs" @click="snackbar = false">
-          Close
-        </v-btn>
-      </template>
+      <v-row align="center"
+        ><v-col cols="2"
+          ><v-icon large>{{ confirmationIcon }}</v-icon>
+        </v-col>
+        <v-col cols="10">
+          <div
+            v-if="confirmationTitle"
+            class="grey--text text--lighten-1 text-subtitle-1 mb-2"
+          >
+            {{ confirmationTitle }}
+          </div>
+          <div class="grey--text text--lighten-1 text-body-2 mb-4">
+            {{ confirmationMessage }}
+          </div>
+          <v-btn
+            absolute
+            bottom
+            right
+            color="error"
+            text
+            @click="snackbar = false"
+          >
+            Close
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-snackbar>
   </div>
 </template>
@@ -37,6 +49,7 @@ export default {
   props: {
     confirmationTitle: String,
     confirmationMessage: String,
+    confirmationIcon: String,
     timeout: {
       type: Number,
       default: -1,
@@ -74,6 +87,7 @@ export default {
   data() {
     return { snackbar: true };
   },
+  watch: {},
   mounted() {
     console.log('Snackbar mounted');
   },

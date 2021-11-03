@@ -13,6 +13,7 @@
         getPlaces,
         visitExists,
         validateVisits,
+        diagnostics,
       }"
     >
       <redis
@@ -26,6 +27,8 @@
         :visitExists="visitExists"
         :validateVisits="validateVisits"
         :emergency="emergency"
+:diagnostics=diagnostics
+
       />
     </div>
   </Model>
@@ -77,6 +80,7 @@ export default {
       this.exposures = exposures;
       console.log(`${msg}: ${JSON.stringify(exposures, null, 3)}`);
     },
+
 
     onSpaces(res) {
       const { msg, results } = res;

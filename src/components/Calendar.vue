@@ -177,7 +177,7 @@
           >Diagnostics</v-btn
         >
         <v-card-text>
-          <pre>{{ diagnostics }}</pre>
+          <pre class="text-body-2">{{ diagnosticOutput }}</pre>
         </v-card-text>
       </v-card>
     </v-col>
@@ -201,7 +201,6 @@ export default {
     state: Object,
     onUpdate: Function,
     setDefaultGraphName: Function,
-    getGraphName: Function,
     confirmations: Object,
     usernumber: Number,
     getVisits: Function,
@@ -235,9 +234,6 @@ export default {
         : 'Indoor events may need a room ID';
     },
 
-    graphSelectLabel() {
-      return `Exposure Graphs (${this.getGraphName()})`;
-    },
     decodedUri() {
       // the QR code generator needs to use the decoded URI
       const d = decodeURIComponent(this.mailToUri);
@@ -283,13 +279,6 @@ export default {
       }See you then...${this.newLine}${this.toName}`;
     },
 
-    // selectedGraphIsDefault() {
-    //   return this.selectedGraph === this.$defaultGraphName;
-    // },
-    // changingDefault() {
-    //   const x = this.$defaultGraphName !== this.selectedGraph;
-    //   return x;
-    // },
     currentGraphName() {
       return this.state.currentGraphName;
     },
@@ -348,10 +337,6 @@ export default {
       toName: '',
       newLine: '%0a',
       updateTimeInterval: null,
-      graphChanged: false,
-      selectedGraph: '', //this.getGraphName(),
-      graphs: [this.$defaultGraphName, 'Sandbox'],
-      promptGraph: false,
       cal: null,
       value: '',
 
@@ -392,6 +377,7 @@ export default {
   },
 
   methods: {
+    // TODO why isn't this in Model?
     emailDiagnostics() {
       this.$clipboard(this.msg);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
@@ -720,7 +706,7 @@ export default {
         const age = userSince(then);
         if (age < 8) {
           this.confirmationMessage +=
-            '<br/>Oh, and congratulations for adopting LCT. Stay safe out there.';
+            '<br/>Oh, and congratulations for adopting LCT. Stay safe out there...';
         }
       }
       this.snackbar = true;

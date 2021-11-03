@@ -8,7 +8,6 @@
         state,
         onUpdate,
         setDefaultGraphName,
-        getGraphName,
         usernumber,
         getVisits,
         updateGraphVisit,
@@ -21,7 +20,6 @@
         :state="state"
         :onUpdate="onUpdate"
         :setDefaultGraphName="setDefaultGraphName"
-        :getGraphName="getGraphName"
         :confirmations="confirmations"
         :usernumber="usernumber"
         :getVisits="getVisits"
