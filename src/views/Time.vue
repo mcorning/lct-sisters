@@ -55,7 +55,7 @@ export default {
     },
 
     /** Event handler that composes a confirmation message when user changes a visit
-     * 
+     *
      * @param updateResults - examples:
      *                         logging a visit uses:          { name, place_id, graphName, id, logged }
      *                         delete a visit in cache uses:  { id, deleted: true }
@@ -66,7 +66,15 @@ export default {
 
       // interpret update results function
       const getMsg = (updateResults) => {
-        const { name,  place_id, graphName, loggedVisitId, id, logged, deleted } = updateResults;
+        const {
+          name,
+          place_id,
+          graphName,
+          loggedVisitId,
+          id,
+          logged,
+          deleted,
+        } = updateResults;
         const msg = logged
           ? {
               logged: true,
@@ -77,8 +85,10 @@ export default {
           : deleted
           ? {
               deleted: true,
-              confirmationColor: 'success',
-              confirmationMessage: `Visit ID ${loggedVisitId} deleted from ${graphName} graph`,
+              confirmationColor: loggedVisitId ? 'success' : 'warning',
+              confirmationMessage: loggedVisitId
+                ? `Visit ID ${loggedVisitId} deleted from ${graphName} graph`
+                : 'You are offline. The graph will update when you connect.',
             }
           : 'Neither log nor delete operation results available';
         console.log('sending message to Calendar:', msg);

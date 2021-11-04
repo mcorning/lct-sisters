@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card v-if="info">
+    <v-card class="mx-auto" max-width="344">
       <v-card-text class="text-h6 pb-0">
         <div v-if="!isGathering">{{ name }}</div>
         <v-text-field
@@ -9,23 +9,23 @@
           label="Enter a name for your gathering"
         />
       </v-card-text>
+
       <v-card-subtitle
-        >{{ address }}<br /><span v-if="info.url" v-html="placeLink"></span
+        >{{ address }}<br /><span v-if="placeLink" v-html="placeLink"></span
       ></v-card-subtitle>
+
+      <v-btn
+        block
+        color="primary"
+        @click="onVisitPlace({ placeId, gatheringName })"
+        >Mark Calendar</v-btn
+      >
       <v-card-actions>
-        <v-btn
-          block
-          color="primary"
-          @click="onVisitPlace({ placeId, gatheringName })"
-          >Mark Calendar</v-btn
-        >
-      </v-card-actions>
-      <v-card-actions>
-        <v-btn class=" text-caption " @click="toggle">
+        <v-btn text color="primary" @click="reveal = true">
           Positions
-          <!-- {{ showPostions ? 'Hide' : 'Show' }} Positions -->
         </v-btn>
         <v-spacer />
+
         <v-dialog v-model="enlargeQR" width="500">
           <template v-slot:activator="{ on, attrs }">
             <v-btn icon v-bind="attrs" v-on="on">
@@ -34,7 +34,13 @@
           </template>
 
           <v-card>
-            <v-btn icon absolute top right @click="enlargeQR = false"
+            <v-btn
+              icon
+              absolute
+              top
+              right
+              color="primary"
+              @click="enlargeQR = false"
               ><v-icon>close</v-icon></v-btn
             >
             <v-card-title>QR for {{ name }}</v-card-title>
@@ -66,14 +72,27 @@
           </v-card>
         </v-dialog>
         <v-spacer />
-        <v-btn @click="deleteMarker">Delete</v-btn>
-        <div v-if="showPostions">
-          {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
-          {{ `PlaceID:    ${placeId}` }}<br />
-          {{ `GlobalCode: ${globalCode}` }}
-          }}
-        </div>
+        <v-btn text plain color="primary" @click="deleteMarker">Delete</v-btn>
       </v-card-actions>
+
+      <v-expand-transition>
+        <v-card
+          v-if="reveal"
+          class="transition-fast-in-fast-out v-card--reveal"
+          style="height: 100%;"
+        >
+          <v-card-text class="pb-0">
+            {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
+            {{ `PlaceID:    ${placeId}` }}<br />
+            {{ `GlobalCode: ${globalCode}` }}<br />
+          </v-card-text>
+          <v-card-actions class="pt-0">
+            <v-btn text color="primary" @click="reveal = false">
+              Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-expand-transition>
     </v-card>
   </div>
 </template>
@@ -88,8 +107,10 @@ export default {
       type: Object,
       require: true,
     },
+
     onVisitPlace: Function,
   },
+
   components: {
     VueQRCodeComponent,
   },
@@ -115,34 +136,38 @@ export default {
     },
     latLng: () => {
       return this.info
-        ? `Lat: ${this.info.position.lat} Lng:  ${this.info.position.lng}`
+        ? `Lat: ${this.info?.position.lat ?? ''} Lng:  ${this.info?.position
+            .lng ?? ''}`
         : '';
     },
     name() {
-      return this.info.name;
+      return this.info?.name ?? '';
     },
     position() {
-      return this.info.position;
+      return this.info?.position ?? '';
     },
 
     placeId() {
-      return this.info.place_id;
+      return this.info?.place_id ?? '';
     },
     globalCode() {
       // TODO make globalCode the primary index in graph for space nodes
-      return this.info.global_code;
+      return this.info?.global_code ?? '';
     },
     placeLink() {
+      if (!this.info) {
+        return '';
+      }
       return `<a href="${this.info.url}">Show place details on Googlemap</a>`;
     },
     address() {
-      return this.info.formatted_address;
+      return this.info?.formatted_address ?? '';
     },
   },
   data() {
     return {
+      reveal: false,
       enlargeQR: false,
-      showPostions: false,
       gatheringName: '',
     };
   },
@@ -150,14 +175,17 @@ export default {
     deleteMarker() {
       this.$emit('deleteMarker');
     },
-    toggle() {
-      this.showPostions = !this.showPostions;
-    },
   },
 
   watch: {},
-  mounted() {
-    console.log();
-  },
+  mounted() {},
 };
 </script>
+<style>
+.v-card--reveal {
+  bottom: 0;
+  opacity: 1 !important;
+  position: absolute;
+  width: 100%;
+}
+</style>
