@@ -42,10 +42,22 @@
             <v-card-title>QR for {{ name }}</v-card-title>
 
             <v-card-text>
+              <v-text-field
+                v-model="startShift"
+                label="Start shift"
+                placeholder="Leave blank for visitor QR"
+              />
+              <v-text-field
+                v-model="endShift"
+                label="End shift"
+                placeholder="Leave blank for visitor QR"
+              />
+            </v-card-text>
+            <v-card-text>
               <v-row>
                 <v-spacer />
                 <v-col class="text-center">
-                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedShiftUri">
                   </VueQRCodeComponent>
                 </v-col>
                 <v-spacer />
@@ -61,7 +73,7 @@
             </v-card-text>
             <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
             <v-card-text class="text-caption text-sm-body-2">{{
-              decodedUri
+              decodedShiftUri
             }}</v-card-text>
 
             <v-divider></v-divider>
@@ -123,9 +135,10 @@ export default {
   },
 
   computed: {
-    decodedUri() {
+    decodedShiftUri() {
       // the QR code generator needs to use the decoded URI
-      const d = decodeURIComponent(this.mailToUri);
+      const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
+      const d = decodeURIComponent(uri);
       return d;
     },
 
@@ -173,9 +186,12 @@ export default {
   },
   data() {
     return {
+      tab: null,
       reveal: false,
       enlargeQR: false,
       gatheringName: '',
+      startShift: '08:00AM',
+      endShift: '06:00PM',
     };
   },
   methods: {

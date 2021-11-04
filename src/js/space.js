@@ -32,20 +32,47 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
+    getTimeToday(val, x) {
+      console.log('getTime():', val, x);
+      if (typeof val === 'string') {
+        if (val.includes(':')) {
+          const hrs = Number(val.slice(0, 2));
+          const ampm = val.slice(5).toLowerCase();
+          const hr24 =
+            ampm === 'am'
+              ? hrs === 12
+                ? 0
+                : hrs
+              : hrs === 12
+              ? hrs
+              : hrs + 12;
+          const mins = Number(val.slice(3, 5));
+
+          const dt = new DateTime.fromObject({
+            hours: hr24,
+            minutes: mins,
+          });
+          console.log(dt.toString());
+          return dt.toMillis();
+        }
+        return Number(val);
+      }
+      const dt = x
+        ? roundTime(tPlusOne().toMillis())
+        : roundTime(getNowAsMillis());
+      return dt;
+    },
+
     onSharePlace(decoded) {
       const route = this.$route.query;
       const place_id = decoded || route.place_id;
-
-      const start = Number(route.start) || roundTime(getNowAsMillis());
-      const end = route.shift
-        ? DateTime.fromMillis(start)
-            .plus({ hours: Number(route.shift) })
-            .toMillis()
-        : Number(route.end) || roundTime(tPlusOne().toMillis());
+      const start = this.getTimeToday(route.start);
+      const end = this.getTimeToday(route.end, 1);
 
       // replace the "escaped" underscores with spaces
       const name = route.name.replace(/_/g, ' ');
       const shared = true;
+
       this.callVisitUpdate({ place_id, start, end, name, shared });
     },
 
@@ -90,7 +117,7 @@ export const spaceMixin = {
       const currentPlace = Place.getPlace(placeId);
       const { name, place_id } = currentPlace;
       const start = roundTime(Date.now());
-      const end = start + this.avgStay;
+      const end = start + this.avgStay; // avgStay is ms (in Model.vue)
       this.callVisitUpdate({
         place_id,
         start,
