@@ -34,7 +34,7 @@ export const spaceMixin = {
 
     getTimeToday(val, x) {
       console.log('getTime():', val, x);
-      if (typeof val === 'string') {
+      if (val && typeof val === 'string') {
         if (val.includes(':')) {
           const hrs = Number(val.slice(0, 2));
           const ampm = val.slice(5).toLowerCase();

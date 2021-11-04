@@ -15,7 +15,6 @@
       }"
     >
       <AppLayoutHeader
-        :namespace="namespace"
         :isConnected="isConnected"
         :state="state"
         :updateLoggedVisitId="updateLoggedVisitId"
@@ -26,7 +25,7 @@
       />
       <CaptureErrorSnackbar>
         <!-- one of the main vues goes here -->
-        <slot :getVisitors="getVisitors" :emergency="emergency" />
+        <slot :getVisitors="getVisitors" />
       </CaptureErrorSnackbar>
 
       <AppLayoutFooter @openDiagnostics="onOpenDiagnostics" /></div
@@ -69,8 +68,6 @@ export default {
   },
   data() {
     return {
-      emergency: false,
-      namespace: 'Sisters',
       ready: false,
       inSession: '',
     };
@@ -80,11 +77,7 @@ export default {
       this.inSession = sessionID;
     },
   },
-  methods: {
-    onOpenDiagnostics() {
-      this.emergency = true;
-    },
-  },
+  methods: {},
   watch: {
     ready() {
       console.log('ready');

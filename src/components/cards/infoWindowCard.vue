@@ -40,18 +40,24 @@
               ><v-icon>close</v-icon></v-btn
             >
             <v-card-title>QR for {{ name }}</v-card-title>
-
+            <v-card-subtitle>{{ context }}</v-card-subtitle>
             <v-card-text>
-              <v-text-field
-                v-model="startShift"
-                label="Start shift"
-                placeholder="Leave blank for visitor QR"
-              />
-              <v-text-field
-                v-model="endShift"
-                label="End shift"
-                placeholder="Leave blank for visitor QR"
-              />
+              <v-row
+                ><v-col cols="6">
+                  <v-text-field
+                    v-model="startShift"
+                    clearable
+                    label="Start shift"
+                    placeholder="Leave blank for visitor QR"
+                  /> </v-col
+                ><v-col cols="6">
+                  <v-text-field
+                    v-model="endShift"
+                    clearable
+                    label="End shift"
+                    placeholder="Leave blank for visitor QR"
+                  /> </v-col
+              ></v-row>
             </v-card-text>
             <v-card-text>
               <v-row>
@@ -70,13 +76,34 @@
                   ></v-col
                 ></v-row
               >
-            </v-card-text>
-            <v-card-title class="mb-0 pb-1">Event URL:</v-card-title>
-            <v-card-text class="text-caption text-sm-body-2">{{
-              decodedShiftUri
-            }}</v-card-text>
+              <v-divider class="my-3"></v-divider>
 
-            <v-divider></v-divider>
+              <v-btn block @click="copyLink"
+                ><v-icon left>content_copy</v-icon>Copy event link</v-btn
+              >
+              <v-card-text class="text-caption text-sm-body-2">{{
+                decodedShiftUri
+              }}</v-card-text>
+              <v-sheet
+                v-if="showConf"
+                class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
+                color="blue-grey darken-3"
+                dark
+                width="100%"
+              >
+                <div class="grey--text text--lighten-1 text-body-2 mb-4">
+                  Link copied
+                </div>
+                <v-btn
+                  color="grey"
+                  plain
+                  class="ma-1"
+                  @click="showConf = false"
+                >
+                  Close
+                </v-btn>
+              </v-sheet>
+            </v-card-text>
           </v-card>
         </v-dialog>
 
@@ -135,6 +162,10 @@ export default {
   },
 
   computed: {
+    context() {
+      return this.startShift ? 'Enterprise' : 'Visitor';
+    },
+
     decodedShiftUri() {
       // the QR code generator needs to use the decoded URI
       const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
@@ -186,15 +217,19 @@ export default {
   },
   data() {
     return {
-      tab: null,
+      showConf: false,
       reveal: false,
       enlargeQR: false,
       gatheringName: '',
-      startShift: '08:00AM',
-      endShift: '06:00PM',
+      startShift: '07:00AM',
+      endShift: '05:00PM',
     };
   },
   methods: {
+    copyLink() {
+      this.$clipboard(this.decodedShiftUri);
+      this.showConf = true;
+    },
     deleteMarker() {
       this.$emit('deleteMarker');
     },
