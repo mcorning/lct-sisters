@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card class="mx-auto" max-width="344">
+    <v-card v-if="info" class="mx-auto" max-width="344">
       <v-card-text class="text-h6 pb-0">
         <div v-if="!isGathering">{{ name }}</div>
         <v-text-field
@@ -21,14 +21,9 @@
         >Mark Calendar</v-btn
       >
       <v-card-actions>
-        <v-btn text color="primary" @click="reveal = true">
-          Positions
-        </v-btn>
-        <v-spacer />
-
         <v-dialog v-model="enlargeQR" width="500">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn icon v-bind="attrs" v-on="on">
+            <v-btn color="primary" icon v-bind="attrs" v-on="on">
               <v-icon>qr_code_2</v-icon>
             </v-btn>
           </template>
@@ -39,6 +34,7 @@
               absolute
               top
               right
+              large
               color="primary"
               @click="enlargeQR = false"
               ><v-icon>close</v-icon></v-btn
@@ -71,8 +67,18 @@
             <v-divider></v-divider>
           </v-card>
         </v-dialog>
+
         <v-spacer />
-        <v-btn text plain color="primary" @click="deleteMarker">Delete</v-btn>
+
+        <v-btn text color="primary" @click="reveal = true">
+          Positions
+        </v-btn>
+
+        <v-spacer />
+
+        <v-btn icon plain color="primary" @click="deleteMarker"
+          ><v-icon>delete</v-icon></v-btn
+        >
       </v-card-actions>
 
       <v-expand-transition>
@@ -80,7 +86,8 @@
           v-if="reveal"
           class="transition-fast-in-fast-out v-card--reveal"
           style="height: 100%;"
-        >
+          ><v-card-title>{{ name }}</v-card-title>
+          <v-card-subtitle>Position values:</v-card-subtitle>
           <v-card-text class="pb-0">
             {{ `Lat: ${info.position.lat} Lng: ${info.position.lng}` }}<br />
             {{ `PlaceID:    ${placeId}` }}<br />
