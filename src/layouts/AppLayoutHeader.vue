@@ -71,7 +71,8 @@
             <v-card-text class="text-caption text-sm-body-2">{{
               decodedUri
             }}</v-card-text>
-            <v-sheet
+            <!-- Disabled until copyToClipboard is idempontent -->
+            <!-- <v-sheet
               v-if="showConf"
               class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
               color="blue-grey darken-3"
@@ -84,7 +85,7 @@
               <v-btn color="grey" plain class="ma-1" @click="showConf = false">
                 Close
               </v-btn>
-            </v-sheet>
+            </v-sheet> -->
           </v-card-text>
         </v-card>
       </v-dialog>
