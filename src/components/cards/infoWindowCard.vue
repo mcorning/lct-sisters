@@ -43,12 +43,7 @@
             <v-card-title>QR for {{ name }}</v-card-title>
 
             <v-card-text>
-              <v-tabs
-                v-model="tab"
-                background-color="transparent"
-                color="basil"
-                grow
-              >
+              <v-tabs v-model="tab" background-color="transparent" grow>
                 <v-tab v-for="item in items" :key="item.tab">
                   {{ item.tab }}
                 </v-tab>
@@ -194,22 +189,6 @@ export default {
         ? this.decodedShiftUri
         : this.mailToUri;
     },
-
-    decodedShiftUri() {
-      // the QR code generator needs to use the decoded URI
-      const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
-      const d = decodeURIComponent(uri);
-      return d;
-    },
-    sponsorUri() {
-      // the QR code generator needs to use the decoded URI
-      const uri = `${
-        window.location.origin
-      }/?sponsor=${this.sponsor.toLowerCase()}`;
-      const d = decodeURIComponent(uri);
-      return d;
-    },
-
     mailToUri() {
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
@@ -219,6 +198,21 @@ export default {
       );
       return `${window.location.origin}/?${uri}`;
     },
+    sponsorUri() {
+      // the QR code generator needs to use the decoded URI
+      const uri = `${
+        window.location.origin
+      }/?sponsor=${this.sponsor.toLowerCase()}`;
+      const d = decodeURIComponent(uri);
+      return d;
+    },
+    decodedShiftUri() {
+      // the QR code generator needs to use the decoded URI
+      const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
+      const d = decodeURIComponent(uri);
+      return d;
+    },
+
     isGathering() {
       return this.name === 'Gathering';
     },

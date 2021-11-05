@@ -1,14 +1,102 @@
 <template>
   <div>
     <v-system-bar color="primary" app dark window>
-      <v-tooltip top>
+      <v-dialog v-model="enlargeQR" width="500">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn color="primary" icon v-bind="attrs" v-on="on">
+            <v-icon>qr_code_2</v-icon>
+          </v-btn>
+        </template>
+
+        <v-card>
+          <v-btn
+            icon
+            absolute
+            top
+            right
+            large
+            color="primary"
+            @click="enlargeQR = false"
+            ><v-icon>close</v-icon></v-btn
+          >
+
+          <v-card-title>Share Local Contact Tracing</v-card-title>
+
+          <v-card-text>
+            <v-tabs v-model="tab" background-color="transparent" grow>
+              <v-tab v-for="item in items" :key="item.tab">
+                {{ item.tab }}
+              </v-tab>
+            </v-tabs>
+            <v-tabs-items v-model="tab">
+              <v-tab-item v-for="item in items" :key="item.tab">
+                <v-card flat>
+                  <v-select
+                    v-if="item.tab === 'Sponsored URLs'"
+                    v-model="sponsor"
+                    :items="sponsors"
+                    label="Sponsors"
+                  ></v-select>
+
+                  <v-card-text v-else
+                    >Share the link widely. Stop this virus cold.</v-card-text
+                  >
+                </v-card>
+              </v-tab-item>
+            </v-tabs-items>
+          </v-card-text>
+          <v-card-text>
+            <v-row>
+              <v-spacer />
+              <v-col class="text-center">
+                <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                </VueQRCodeComponent>
+              </v-col>
+              <v-spacer />
+            </v-row>
+            <v-row
+              ><v-col
+                ><span class="text-caption"
+                  >Right-click and "Save image as..." then print QR for customer
+                  convenience.</span
+                ></v-col
+              ></v-row
+            >
+            <v-divider class="my-3"></v-divider>
+
+            <!-- <v-btn block @click="copyLink"
+                ><v-icon left>content_copy</v-icon>Copy event link</v-btn
+              > -->
+            <v-card-title>Event Link</v-card-title>
+            <v-card-text class="text-caption text-sm-body-2">{{
+              decodedUri
+            }}</v-card-text>
+            <v-sheet
+              v-if="showConf"
+              class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
+              color="blue-grey darken-3"
+              dark
+              width="100%"
+            >
+              <div class="grey--text text--lighten-1 text-body-2 mb-4">
+                Link copied
+              </div>
+              <v-btn color="grey" plain class="ma-1" @click="showConf = false">
+                Close
+              </v-btn>
+            </v-sheet>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+      {{ toolbarTitle }}
+      <!-- <v-tooltip top>
         <template v-slot:activator="{ on, attrs }">
           <span v-bind="attrs" v-on="on" @click="toggleQr"
             >{{ toolbarTitle }}
           </span>
         </template>
         <span>Click to share LCT</span>
-      </v-tooltip>
+      </v-tooltip> -->
       <v-spacer></v-spacer>
 
       {{ $version }}
@@ -26,6 +114,7 @@
       />
       <!-- End Options Menu-->
     </v-system-bar>
+
     <v-dialog v-model="showCvewQR" max-width="400">
       <v-card class="dialog;">
         <v-row justify="space-around">
@@ -62,6 +151,7 @@ import { getNow } from '@/utils/luxonHelpers';
 import { info, success, warn, printJson } from '@/utils/helpers';
 import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
+import VueQRCodeComponent from 'vue-qr-generator';
 
 export default {
   name: 'AppLayoutHeader',
@@ -78,8 +168,21 @@ export default {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
     PromptBanner,
     FeedbackCard,
+    VueQRCodeComponent,
   },
   computed: {
+    decodedUri() {
+      return this.tab === 0 ? this.sponsorUri : window.location.origin;
+    },
+
+    sponsorUri() {
+      // the QR code generator needs to use the decoded URI
+      const uri = `${
+        window.location.origin
+      }/?sponsor=${this.sponsor.toLowerCase()}`;
+      const d = decodeURIComponent(uri);
+      return d;
+    },
     shortUserID() {
       if (this.$socket.connected) {
         const id = this.$socket.client.auth.userID.slice(12);
@@ -122,6 +225,12 @@ export default {
 
   data() {
     return {
+      enlargeQR: false,
+
+      sponsor: '',
+      sponsors: ['Microsoft', 'Sisters', 'Manchester'],
+      tab: null,
+      items: [{ tab: 'Sponsored URLs' }, { tab: 'Base URL' }],
       showCvewQR: false,
       handledSessionEvent: false,
       graphName: '',

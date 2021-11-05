@@ -54,6 +54,9 @@
               >
               <v-spacer />
             </v-card-actions>
+
+            <v-divider></v-divider>
+
             <v-card-actions>
               <v-tooltip top>
                 <template v-slot:activator="{ on, attrs }">
