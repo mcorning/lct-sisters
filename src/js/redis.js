@@ -152,7 +152,6 @@ export const redisMixin = {
                 ? `   Needed to fix ${changed} dates.`
                 : '   All dates on graph were correct already.';
               vm.log(msg);
-              vm.log(printJson(changed));
             });
           }
         }

@@ -176,6 +176,7 @@ async function matchAllSpacesQuery(param, ack) {
 }
 
 function getVisitors(graphNames, ack) {
+  console.log('getVisitors(): graphNames', graphNames);
   const query = 'MATCH (v:visitor) RETURN v.userID';
   let promises = [];
 

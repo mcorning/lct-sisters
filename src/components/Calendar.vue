@@ -379,8 +379,8 @@ export default {
   methods: {
     // TODO why isn't this in Model?
     emailDiagnostics() {
-      this.$clipboard(this.msg);
-      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+      this.$clipboard(this.diagnostics);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
     log(diagnostic) {
       this.diagnostics.push(diagnostic);

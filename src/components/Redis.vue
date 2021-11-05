@@ -1,26 +1,39 @@
 <template>
   <div>
     <redis-card
-      :class="checkEmergency"
+      class="SplitHorizontal"
       :visitors="visitors"
       :exposures="exposures"
       :getVisits="getVisits"
       :visitExists="visitExists"
       @selectedChanged="onSelectedChanged"
     ></redis-card>
-    <v-col v-if="openDiagnostics" no-gutters>
-      <v-card flat>
-        <v-btn absolute top right icon @click="openDiagnostics = false"
-          ><v-icon>close</v-icon></v-btn
-        >
-        <v-btn plain text @click="emailDiagnostics" large class="mt-3 "
-          >Diagnostics</v-btn
-        >
-        <v-card-text>
-          <pre class="text-body-2">{{ diagnosticOutput }}</pre>
-        </v-card-text>
-      </v-card>
-    </v-col>
+    <v-card flat v-if="openDiagnostics">
+      <v-btn absolute top right icon @click="openDiagnostics = false"
+        ><v-icon>close</v-icon></v-btn
+      >
+      <v-tooltip top>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            v-bind="attrs"
+            v-on="on"
+            @click="emailDiagnostics"
+            color="primary"
+            large
+            text
+            class="mt-3"
+          >
+            <v-icon left>email</v-icon>
+            Diagnostics
+          </v-btn>
+        </template>
+        <span>Email diagnostics to LCT Dev Lead</span>
+      </v-tooltip>
+
+      <v-card-text>
+        <pre class="text-body-2">{{ diagnosticOutput }}</pre>
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
@@ -30,6 +43,7 @@
 import RedisCard from './cards/redisCard.vue';
 
 export default {
+  name: 'Redis',
   components: { RedisCard },
   props: {
     getVisitors: {
@@ -60,27 +74,21 @@ export default {
     emergency: Boolean,
   },
   computed: {
-
     diagnosticOutput() {
       return this.diagnostics.join('\n');
-    },
-    checkEmergency() {
-      if (!this.openDiagnostics) {
-        return 'Map';
-      }
-      return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
     },
   },
   data() {
     return {
-      openDiagnostics: this.emergency,
+      openDiagnostics: true,
+      // openDiagnostics: this.emergency,
     };
   },
   methods: {
     // TODO why isn't this in Model?
     emailDiagnostics() {
-      this.$clipboard(this.msg);
-      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+      this.$clipboard(this.diagnosticOutput);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
 
     // TODO TEST: Does FireFox handle default args?
@@ -107,11 +115,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.EmergencyW {
-  width: 50vw;
-  height: 88vh;
-}
-.EmergencyH {
+// .EmergencyW {
+//   width: 50vw;
+//   height: 88vh;
+// }
+.SplitHorizontal {
   width: 100vw;
   height: 50vh;
 }

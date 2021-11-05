@@ -26,9 +26,7 @@
         :getVisits="getVisits"
         :visitExists="visitExists"
         :validateVisits="validateVisits"
-        :emergency="emergency"
-:diagnostics=diagnostics
-
+        :diagnostics="diagnostics"
       />
     </div>
   </Model>
@@ -41,9 +39,7 @@ import Redis from '../components/Redis.vue';
 
 export default {
   name: 'Monitor',
-  props: {
-    emergency: Boolean,
-  },
+  props: {},
   components: {
     Model,
     Redis,
@@ -80,7 +76,6 @@ export default {
       this.exposures = exposures;
       console.log(`${msg}: ${JSON.stringify(exposures, null, 3)}`);
     },
-
 
     onSpaces(res) {
       const { msg, results } = res;

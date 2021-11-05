@@ -409,7 +409,7 @@ export default {
 
   methods: {
     emailDiagnostics() {
-      this.$clipboard(this.msg);
+      this.$clipboard(this.diagnostics);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
     },
     log(diagnostic) {

@@ -131,9 +131,23 @@
           <v-btn absolute top right icon @click="openDiagnostics = false"
             ><v-icon>close</v-icon></v-btn
           >
-          <v-btn plain text @click="emailDiagnostics" large class="mt-3"
-            >Diagnostics</v-btn
-          >
+          <v-tooltip top>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                v-bind="attrs"
+                v-on="on"
+                @click="emailDiagnostics"
+                color="primary"
+                large
+                text
+                class="mt-3"
+              >
+                <v-icon left>email</v-icon>
+                Diagnostics
+              </v-btn>
+            </template>
+            <span>Email diagnostics to LCT Dev Lead</span>
+          </v-tooltip>
           <v-card-text>
             <pre class="text-body-2 ml-5">{{ diagnosticOutput }}</pre>
           </v-card-text>
@@ -251,8 +265,6 @@
       :confirmationMessage="confirmationMessage"
       :bottome="confBottom"
     />
-
-
   </v-sheet>
 </template>
 
@@ -294,11 +306,9 @@ export default {
     InfoWindowCard,
     BtnWithTooltip,
     ConfirmationSnackbar,
-    
   },
 
   computed: {
-
     diagnosticOutput() {
       return this.diagnostics.join('\n');
     },
@@ -458,8 +468,8 @@ export default {
       this.setDefaultMapCenter(this.getMapCenter());
     },
     emailDiagnostics() {
-      this.$clipboard(this.diagnostics);
-      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
+      this.$clipboard(this.diagnosticOutput);
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
     goToPolicies() {
       window.open(
