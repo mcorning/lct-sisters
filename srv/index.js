@@ -54,6 +54,7 @@ const {
   // findExposedVisitors,
   logVisit,
   onExposureWarning,
+  getGraphs,
   getVisitors,
   getExposures,
   getVisitTimes,
@@ -322,6 +323,9 @@ io.on('connection', (socket) => {
   //#endregion
 
   //#region Redis Monitor functions
+  socket.on('getGraphs', (_, ack) => {
+  ack(getGraphs());
+  });
   socket.on('getVisitors', (graphNames, ack) => {
     getVisitors(graphNames, ack);
   });

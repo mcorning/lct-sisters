@@ -28,7 +28,7 @@
         <slot :getVisitors="getVisitors" />
       </CaptureErrorSnackbar>
 
-      <AppLayoutFooter @openDiagnostics="onOpenDiagnostics" /></div
+      <AppLayoutFooter /></div
   ></Model>
 </template>
 <script>

@@ -33,28 +33,6 @@
                 </v-btn></v-col
               >
             </v-row>
-            <v-row>
-              <v-col cols="auto">
-                <v-list>
-                  <v-list-item>
-                    <v-row dense
-                      ><v-col cols="8">
-                        <v-select
-                          v-model="workplace"
-                          :items="places"
-                          :menu-props="{ top: true, offsetY: true }"
-                          label="Workplace"
-                        ></v-select> </v-col
-                      ><v-col cols="4">
-                        <v-text-field
-                          v-model="shift"
-                          label="Shift:"
-                          placeholder="(in hours)"
-                          hide-details
-                        ></v-text-field> </v-col></v-row
-                  ></v-list-item>
-                </v-list> </v-col
-            ></v-row>
             <v-divider></v-divider>
             <v-card-actions>
               <v-tooltip top>
@@ -301,6 +279,8 @@ export default {
     setPreferredGraph: Function,
     updateLatLng: Function,
     emergency: Boolean,
+    getGraphs: Function,
+    getRedisGraphs: Function,
   },
   components: {
     InfoWindowCard,
@@ -309,6 +289,9 @@ export default {
   },
 
   computed: {
+    graphs() {
+      return this.getRedisGraphs();
+    },
     diagnosticOutput() {
       return this.diagnostics.join('\n');
     },
@@ -395,6 +378,7 @@ export default {
   },
   data() {
     return {
+      graph: '',
       enlargeQR: false,
 
       openDiagnostics: this.emergency,
@@ -406,8 +390,6 @@ export default {
       },
       sponsorPosition: this.defaultPosition,
       saveMapCenter: false,
-      workplace: this.state.settings.workplace,
-      shift: this.state.settings.shift || 8,
 
       confSnackbar: false,
       confirmationTitle: '',
@@ -492,10 +474,7 @@ export default {
         'noopener noreferrer'
       );
     },
-    saveSpecial() {
-      this.setSpecial({ workplace: this.workplace, shift: this.shift });
-      this.menu = false;
-    },
+
     clearMyLocationSettings() {
       this.clearLocationSettings();
     },
@@ -1014,12 +993,7 @@ export default {
     group() {
       this.drawer = false;
     },
-    workplace() {
-      this.saveSpecial();
-    },
-    shift() {
-      this.saveSpecial();
-    },
+
     ready() {
       const query = this.$route.query;
 

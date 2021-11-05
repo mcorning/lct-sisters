@@ -19,6 +19,11 @@ export const redisMixin = {
         Nothing: () => console.log(warn(`No visits`)),
       });
     },
+    getRedisGraphs() {
+      return this.emitFromClient('getGraphs', null, (graphs) =>
+        console.log('graphs :>> ', graphs)
+      );
+    },
 
     /** Called by Redis.vue
      * @returns userID for all visitors' in a (set of) given graph(s)

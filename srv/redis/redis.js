@@ -53,6 +53,7 @@ module.exports = {
   logVisit,
   onExposureWarning,
   options,
+  getGraphs,
   getVisitors,
   getExposures,
   getVisitTimes,
@@ -173,6 +174,10 @@ async function matchAllSpacesQuery(param, ack) {
       results: [...s],
     });
   }
+}
+
+function getGraphs() {
+  return 'In development. Meantime, use LCT locally.';
 }
 
 function getVisitors(graphNames, ack) {

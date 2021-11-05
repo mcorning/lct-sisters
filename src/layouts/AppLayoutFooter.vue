@@ -55,16 +55,6 @@
     </v-btn>
     <v-spacer />
     <!-- </v-bottom-navigation> -->
-    <v-btn
-      x-small
-      color="primary"
-      absolute
-      bottom
-      right
-      plain
-      @click="openDiagnostics"
-    >
-    </v-btn>
   </v-footer>
 </template>
 
@@ -89,10 +79,6 @@ export default {
     };
   },
   methods: {
-    openDiagnostics() {
-      this.$emit('openDiagnostics');
-    },
-
     // TODO NOTE: an alternative design uses Model here and passes data and functions to props.
     // At this writing, we have Space and Time vue files that wrap the map and calendars in their own Model reference
     // One could argue that the router should be in charge of what view is current and what data that view needs.

@@ -61,7 +61,7 @@ export default {
 
   data() {
     return {
-      diagnostics:[],
+      diagnostics: [],
       test: null,
       state: {},
       avgStay: 1000 * 60 * 30,
@@ -70,7 +70,7 @@ export default {
       pendingVisits: new Map(),
       loading: true,
       graphName: '',
-      
+
       // TODO send this data down to Calendar
       /* combinations of update
        *   Add Visit (category==='You')
@@ -408,6 +408,8 @@ export default {
       setSpecial: this.setSpecial,
       setPreferredGraph: this.setPreferredGraph,
       diagnostics: this.diagnostics,
+      getGraphs: this.getGraphs,
+      getRedisGraphs: this.getRedisGraphs,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,
@@ -422,7 +424,7 @@ export default {
       getPoi: this.getPoi,
       clearLocationSettings: this.clearLocationSettings,
       setDefaultMapCenter: this.setDefaultMapCenter,
-      updateLatLng:this.updateLatLng,
+      updateLatLng: this.updateLatLng,
 
       // Time assets
       changeEvent: this.changeEvent,

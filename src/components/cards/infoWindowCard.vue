@@ -39,31 +39,55 @@
               @click="enlargeQR = false"
               ><v-icon>close</v-icon></v-btn
             >
+
             <v-card-title>QR for {{ name }}</v-card-title>
-            <v-card-subtitle>{{ context }}</v-card-subtitle>
+
             <v-card-text>
-              <v-row
-                ><v-col cols="6">
-                  <v-text-field
-                    v-model="startShift"
-                    clearable
-                    label="Start shift"
-                    placeholder="Leave blank for visitor QR"
-                  /> </v-col
-                ><v-col cols="6">
-                  <v-text-field
-                    v-model="endShift"
-                    clearable
-                    label="End shift"
-                    placeholder="Leave blank for visitor QR"
-                  /> </v-col
-              ></v-row>
+              <v-tabs
+                v-model="tab"
+                background-color="transparent"
+                color="basil"
+                grow
+              >
+                <v-tab v-for="item in items" :key="item.tab">
+                  {{ item.tab }}
+                </v-tab>
+              </v-tabs>
+              <v-tabs-items v-model="tab">
+                <v-tab-item v-for="item in items" :key="item.tab">
+                  <v-card flat>
+                    <v-select
+                      v-if="item.tab === 'Sponsor'"
+                      v-model="sponsor"
+                      :items="sponsors"
+                      label="Sponsors"
+                    ></v-select>
+                    <v-row v-if="item.content === 'Shift'"
+                      ><v-col cols="6">
+                        <v-text-field
+                          v-model="startShift"
+                          clearable
+                          label="Start shift"
+                          placeholder="Leave blank for visitor QR"
+                        /> </v-col
+                      ><v-col cols="6">
+                        <v-text-field
+                          v-model="endShift"
+                          clearable
+                          label="End shift"
+                          placeholder="Leave blank for visitor QR"
+                        /> </v-col
+                    ></v-row>
+                    <v-card-text v-else v-text="item.content"></v-card-text>
+                  </v-card>
+                </v-tab-item>
+              </v-tabs-items>
             </v-card-text>
             <v-card-text>
               <v-row>
                 <v-spacer />
                 <v-col class="text-center">
-                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedShiftUri">
+                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
                   </VueQRCodeComponent>
                 </v-col>
                 <v-spacer />
@@ -78,11 +102,12 @@
               >
               <v-divider class="my-3"></v-divider>
 
-              <v-btn block @click="copyLink"
+              <!-- <v-btn block @click="copyLink"
                 ><v-icon left>content_copy</v-icon>Copy event link</v-btn
-              >
+              > -->
+              <v-card-title>Event Link</v-card-title>
               <v-card-text class="text-caption text-sm-body-2">{{
-                decodedShiftUri
+                decodedUri
               }}</v-card-text>
               <v-sheet
                 v-if="showConf"
@@ -162,8 +187,12 @@ export default {
   },
 
   computed: {
-    context() {
-      return this.startShift ? 'Enterprise' : 'Visitor';
+    decodedUri() {
+      return this.tab === 0
+        ? this.sponsorUri
+        : this.tab === 1
+        ? this.decodedShiftUri
+        : this.mailToUri;
     },
 
     decodedShiftUri() {
@@ -172,11 +201,19 @@ export default {
       const d = decodeURIComponent(uri);
       return d;
     },
+    sponsorUri() {
+      // the QR code generator needs to use the decoded URI
+      const uri = `${
+        window.location.origin
+      }/?sponsor=${this.sponsor.toLowerCase()}`;
+      const d = decodeURIComponent(uri);
+      return d;
+    },
 
     mailToUri() {
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
-      // we will reverse this edit in space.js (but see note above in decodedUri())
+      // we will reverse this edit in space.js
       const uri = encodeURIComponent(
         `place_id=${this.placeId}&name=${escapedName}`
       );
@@ -217,6 +254,14 @@ export default {
   },
   data() {
     return {
+      sponsor: '',
+      sponsors: ['Microsoft', 'Sisters', 'Manchester'],
+      tab: null,
+      items: [
+        { tab: 'Sponsor' },
+        { tab: 'Employees', content: 'Shift' },
+        { tab: 'Visitors', content: 'Visit defaults to current time' },
+      ],
       showConf: false,
       reveal: false,
       enlargeQR: false,
@@ -226,16 +271,21 @@ export default {
     };
   },
   methods: {
+    // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
     copyLink() {
-      this.$clipboard(this.decodedShiftUri);
-      this.showConf = true;
+      const copied = this.$clipboard(this.decodedUri);
+      this.showConf = copied;
     },
     deleteMarker() {
       this.$emit('deleteMarker');
     },
   },
 
-  watch: {},
+  watch: {
+    tab(val) {
+      console.log(val);
+    },
+  },
   mounted() {},
 };
 </script>

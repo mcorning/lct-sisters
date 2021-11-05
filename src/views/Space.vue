@@ -19,6 +19,8 @@
         setDefaultMapCenter,
         setPreferredGraph,
         updateLatLng,
+        getGraphs,
+        getRedisGraphs,
       }"
     >
       <Spaces
@@ -39,7 +41,9 @@
         :setPreferredGraph="setPreferredGraph"
         :usernumber="usernumber"
         :emergency="emergency"
-        :updateLatLng=updateLatLng
+        :updateLatLng="updateLatLng"
+        :getGraphs="getGraphs"
+        :getRedisGraphs="getRedisGraphs"
       />
     </div>
   </Model>
