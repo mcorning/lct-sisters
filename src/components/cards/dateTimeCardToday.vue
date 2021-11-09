@@ -1,91 +1,90 @@
 <template>
   <v-container fluid>
-    <v-row dense align="center">
-      <v-col>
-        <v-card-text class="text-center">
-          Share Event: {{ newDateTime }}
-        </v-card-text>
-      </v-col>
-      <v-col cols="1">
-        <v-btn icon @click="edit = !edit"><v-icon>edit</v-icon></v-btn></v-col
-      >
-    </v-row>
-    <v-container v-if="edit">
-      <v-row align="stretch"
-        ><v-col
-          ><v-btn-toggle v-model="isEndTime">
-            <v-btn
-              active-class="primary white--text pa-0"
-              :block="$vuetify.breakpoint.smAndUp"
-              >Start time</v-btn
-            ><v-btn
-              active-class="primary white--text"
-              :block="$vuetify.breakpoint.smAndUp"
-              >Ending time</v-btn
-            >
-          </v-btn-toggle></v-col
-        ></v-row
-      >
-
-      <v-row
-        v-if="ready"
-        align="center"
-        :style="{
-          'font-size': `${fontSize}px`,
-        }"
-      >
-        <v-col
-          ><scroll-picker
-            v-model="newDate"
-            :options="dateList"
-            ref="picker"
-          ></scroll-picker>
+    <v-card outlined>
+      <v-row dense align="center">
+        <v-col>
+          <v-card-text class="text-center">
+            Share Event: {{ eventSummary }}
+          </v-card-text>
         </v-col>
         <v-col cols="2">
-          <scroll-picker
-            v-model="hr"
-            :options="[
-              '01',
-              '02',
-              '03',
-              '04',
-              '05',
-              '06',
-              '07',
-              '08',
-              '09',
-              '10',
-              '11',
-              '12',
-            ]"
-          ></scroll-picker></v-col
-        ><v-col cols="2"
-          ><scroll-picker
-            v-model="min"
-            :options="['00', '15', '30', '45']"
-          ></scroll-picker>
-        </v-col>
-        <v-col cols="2"
-          ><scroll-picker
-            v-model="meridiem"
-            :options="['AM', 'PM']"
-          ></scroll-picker
-        ></v-col>
+          <v-btn icon @click="edit = !edit"><v-icon>edit</v-icon></v-btn></v-col
+        >
       </v-row>
-    </v-container>
+      <v-container v-if="edit">
+        <v-row align="stretch"
+          ><v-col
+            ><v-btn-toggle v-model="isEndTime">
+              <v-btn
+                active-class="primary white--text pa-0"
+                :block="$vuetify.breakpoint.smAndUp"
+                >Start time</v-btn
+              ><v-btn
+                active-class="primary white--text"
+                :block="$vuetify.breakpoint.smAndUp"
+                >Ending time</v-btn
+              >
+            </v-btn-toggle></v-col
+          ></v-row
+        >
 
-    <!-- TODO CONSIDER: making this responsive for phones -->
-    <!-- <v-row
-      ><v-col>
-        <span class="px-3">Font Size: {{ fontSize }}px</span>
-        <input
-          type="range"
-          :min="16"
-          :max="32"
-          :step="4"
-          v-model="fontSize"
-          @input="$refs.picker.resize()"/></v-col
-    ></v-row> -->
+        <v-row
+          align="center"
+          :style="{
+            'font-size': `${fontSize}px`,
+          }"
+        >
+          <v-col
+            ><scroll-picker
+              v-model="newDate"
+              :options="dateList"
+              ref="picker"
+            ></scroll-picker>
+          </v-col>
+          <v-col cols="2">
+            <scroll-picker
+              v-model="hr"
+              :options="[
+                '01',
+                '02',
+                '03',
+                '04',
+                '05',
+                '06',
+                '07',
+                '08',
+                '09',
+                '10',
+                '11',
+                '12',
+              ]"
+            ></scroll-picker></v-col
+          ><v-col cols="2"
+            ><scroll-picker
+              v-model="min"
+              :options="['00', '15', '30', '45']"
+            ></scroll-picker>
+          </v-col>
+          <v-col cols="2"
+            ><scroll-picker
+              v-model="meridiem"
+              :options="['AM', 'PM']"
+            ></scroll-picker
+          ></v-col>
+        </v-row>
+        <v-row
+          ><v-col>
+            <span class="px-3">Scroll Size: {{ fontSize }}px</span>
+            <input
+              type="range"
+              :min="12"
+              :max="28"
+              :step="4"
+              v-model="fontSize"
+              @input="$refs.picker.resize()"/></v-col
+        ></v-row>
+      </v-container>
+    </v-card>
   </v-container>
 </template>
 
@@ -110,6 +109,11 @@ export default {
   },
   components: { ScrollPicker },
   computed: {
+    defaultFontSize() {
+      const s = this.size ?? 28;
+      const x = this.$vuetify.breakpoint.smAndUp ? s : 12;
+      return x;
+    },
     isSmOrMore() {
       const x = this.$vuetify.breakpoint.smAndUp;
       return x;
@@ -129,10 +133,11 @@ export default {
   },
   data() {
     return {
+      fontSize: this.size,
       edit: false,
       fromFormat: 'DD hh mm a',
       toFormat: 'ff',
-      fontSize: this.size,
+
       startDateTime: null,
       endDateTime: null,
       start: { date: '', hr: '', min: '', meridiem: '' },
@@ -142,13 +147,13 @@ export default {
 
       isEndTime: 0, // this is a toggle value: start=0 end=1
       newDate: 'Today',
-      hr: '03',
+      hr: '',
       min: '',
       meridiem: '',
 
       dateString: '',
       ready: false,
-      newDateTime: '',
+      eventSummary: '',
     };
   },
   methods: {
@@ -182,7 +187,7 @@ export default {
     update() {
       const startString = this.getDateString(this.start);
       const endString = this.getDateString(this.end);
-      this.newDateTime = this.updateNewDateTime();
+      this.eventSummary = this.updateNewDateTime();
       this.$emit('closeDateTimeCard', { startString, endString });
     },
 
@@ -214,6 +219,7 @@ export default {
   },
   watch: {
     ready() {
+      this.fontSize = this.defaultFontSize;
       console.log(this.ready, this.hr);
     },
     hr() {

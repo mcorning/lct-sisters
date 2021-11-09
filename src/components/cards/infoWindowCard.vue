@@ -59,7 +59,7 @@
                   <v-card flat>
                     <v-row v-if="item.content === 'Shift'">
                       <date-time-card-today
-                        :size="16"
+                        :size="28"
                         @closeDateTimeCard="onCloseDateTimeCard"
                       />
                     </v-row>
