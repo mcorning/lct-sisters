@@ -13,7 +13,9 @@
       <v-card-subtitle
         >{{ address }}<br /><span v-if="placeLink" v-html="placeLink"></span
       ></v-card-subtitle>
-
+      <v-btn text color="primary" @click="reveal = true">
+        Show location details
+      </v-btn>
       <v-btn
         block
         color="primary"
@@ -21,6 +23,10 @@
         >Mark Calendar</v-btn
       >
       <v-card-actions>
+        <v-btn icon plain color="primary" @click="deleteMarker"
+          ><v-icon>delete</v-icon></v-btn
+        >
+        <v-spacer />
         <v-dialog v-model="enlargeQR" width="500">
           <template v-slot:activator="{ on, attrs }">
             <v-btn color="primary" icon v-bind="attrs" v-on="on">
@@ -36,103 +42,103 @@
               right
               large
               color="primary"
-              @click="enlargeQR = false"
+              @click="closeDialog"
               ><v-icon>close</v-icon></v-btn
             >
 
-            <v-card-title class="text-subtitle-1 text-sm-h5">{{
-              name
-            }}</v-card-title>
-            <v-card-subtitle class="text-subtitle-2 mr-6"
-              >Use this dialog to share this public place with visitors or
-              employees.</v-card-subtitle
-            >
+            <div id="targetDiv">
+              <v-card-title class="text-subtitle-1 text-sm-h5">{{
+                name
+              }}</v-card-title>
+              <v-card-subtitle class="text-subtitle-2 mr-6">{{
+                dialogSubtitle
+              }}</v-card-subtitle>
 
-            <v-card-text>
-              <v-tabs v-model="tab" grow background-color="transparent">
-                <v-tab v-for="item in items" :key="item.tab">
-                  {{ item.tab }}
-                </v-tab>
-              </v-tabs>
-              <v-tabs-items v-model="tab">
-                <v-tab-item v-for="item in items" :key="item.tab">
-                  <v-card flat>
-                    <v-row v-if="item.content === 'Shift'">
-                      <date-time-card-today
-                        :size="28"
-                        @closeDateTimeCard="onCloseDateTimeCard"
-                      />
-                    </v-row>
-                    <v-card-text v-else v-text="item.content"></v-card-text>
-                  </v-card>
-                </v-tab-item>
-              </v-tabs-items>
-            </v-card-text>
-            <v-card-text>
-              <v-row>
-                <v-spacer />
-                <v-col class="text-center">
-                  <VueQRCodeComponent
-                    id="qr"
-                    ref="qr"
-                    :text="decodedUri"
-                    :size="128"
-                  >
-                  </VueQRCodeComponent>
-                </v-col>
-                <v-spacer />
-              </v-row>
-              <v-row
-                ><v-col
-                  ><span class="text-caption"
-                    >Right-click and "Save image as..." then print QR for
-                    customer convenience.</span
-                  ></v-col
-                ></v-row
-              >
-              <v-divider class="my-3"></v-divider>
+              <v-card-text v-if="!printing">
+                <v-tabs v-model="tab" grow background-color="transparent">
+                  <v-tab v-for="item in items" :key="item.tab">
+                    {{ item.tab }}
+                  </v-tab>
+                </v-tabs>
+                <v-tabs-items v-model="tab">
+                  <v-tab-item v-for="item in items" :key="item.tab">
+                    <v-card flat>
+                      <v-row v-if="item.content === 'Shift'">
+                        <date-time-card-today
+                          :size="28"
+                          :edit="edit"
+                          @closeDateTimeCard="onCloseDateTimeCard"
+                        />
+                      </v-row>
+                      <v-card-text v-else v-text="item.content"></v-card-text>
+                    </v-card>
+                  </v-tab-item>
+                </v-tabs-items>
+              </v-card-text>
+              <v-card-text>
+                <v-row>
+                  <v-spacer />
+                  <v-col class="text-center">
+                    <VueQRCodeComponent
+                      id="qr"
+                      ref="qr"
+                      :text="decodedUri"
+                      :size="128"
+                    >
+                    </VueQRCodeComponent>
+                  </v-col>
+                  <v-spacer />
+                </v-row>
 
-              <!-- <v-btn block @click="copyLink"
-                ><v-icon left>content_copy</v-icon>Copy event link</v-btn
-              > -->
-              <v-card-title>Event Link</v-card-title>
-              <v-card-text class="text-caption text-sm-body-2">{{
-                decodedUri
-              }}</v-card-text>
-              <v-sheet
-                v-if="showConf"
-                class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
-                color="blue-grey darken-3"
-                dark
-                width="100%"
-              >
-                <div class="grey--text text--lighten-1 text-body-2 mb-4">
-                  Link copied
-                </div>
-                <v-btn
-                  color="grey"
-                  plain
-                  class="ma-1"
-                  @click="showConf = false"
+                <v-divider class="my-3"></v-divider>
+
+                <!-- <v-btn block @click="copyLink"
+                  ><v-icon left>content_copy</v-icon>Copy event link</v-btn
+                > -->
+                <v-card-title>Event Link</v-card-title>
+                <v-card-text class="text-caption text-sm-body-2">{{
+                  decodedUri
+                }}</v-card-text>
+                <v-sheet
+                  v-if="showConf"
+                  class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
+                  color="blue-grey darken-3"
+                  dark
+                  width="100%"
                 >
-                  Close
-                </v-btn>
-              </v-sheet>
-            </v-card-text>
+                  <div class="grey--text text--lighten-1 text-body-2 mb-4">
+                    Link copied
+                  </div>
+                  <v-btn
+                    color="grey"
+                    plain
+                    class="ma-1"
+                    @click="showConf = false"
+                  >
+                    Close
+                  </v-btn>
+                </v-sheet>
+              </v-card-text>
+            </div>
+            <v-card-actions v-if="!printing">
+              <v-btn color="primary" icon @click="edit = !edit"
+                ><v-icon>edit</v-icon></v-btn
+              >
+
+              <v-spacer />
+              <v-btn color="primary" icon @click="printing = true"
+                ><v-icon>print</v-icon></v-btn
+              >
+            </v-card-actions>
+            <v-card-actions v-else>
+              <v-btn text color="primary" plain @click="printing = false"
+                >Cancel</v-btn
+              >
+              <v-spacer />
+              <v-btn text color="primary" plain @click="printMe">OK</v-btn>
+            </v-card-actions>
           </v-card>
         </v-dialog>
-
-        <v-spacer />
-
-        <v-btn text color="primary" @click="reveal = true">
-          Positions
-        </v-btn>
-
-        <v-spacer />
-
-        <v-btn icon plain color="primary" @click="deleteMarker"
-          ><v-icon>delete</v-icon></v-btn
-        >
       </v-card-actions>
 
       <v-expand-transition>
@@ -181,6 +187,15 @@ export default {
   },
 
   computed: {
+    dialogSubtitle() {
+      const text = this.printing
+        ? this.tab === 0
+          ? 'Sign in to work with the LCT QR code.'
+          : 'Help us do our part to beat the virus. Scan QR to open our Local Contact Tracing app and log your visit today.'
+        : 'Use this dialog to share this public place with visitors or employees.';
+      return text;
+    },
+
     decodedUri() {
       return this.tab === 0 ? this.decodedShiftUri : this.mailToUri;
     },
@@ -236,6 +251,8 @@ export default {
   },
   data() {
     return {
+      edit: false,
+      printing: false,
       tab: null,
       items: [
         { tab: 'Employees', content: 'Shift' },
@@ -250,9 +267,18 @@ export default {
     };
   },
   methods: {
-    onCloseDateTimeCard({ startString, endString }) {
-      this.startShift = startString;
-      this.endShift = endString;
+    closeDialog() {
+      this.enlargeQR = false;
+      this.printing = false;
+    },
+    getDateString(x) {
+      const { hour, minute } = x;
+      const meridiem = hour < 12 ? 'AM' : 'PM';
+      return `${hour}:${minute} ${meridiem}`;
+    },
+    onCloseDateTimeCard({ start, end }) {
+      this.startShift = this.getDateString(start);
+      this.endShift = this.getDateString(end);
     },
 
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
@@ -262,6 +288,9 @@ export default {
     },
     deleteMarker() {
       this.$emit('deleteMarker');
+    },
+    printMe() {
+      window.print();
     },
   },
 
@@ -275,5 +304,16 @@ export default {
   opacity: 1 !important;
   position: absolute;
   width: 100%;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #targetDiv,
+  #targetDiv * {
+    visibility: visible;
+    border: none;
+  }
 }
 </style>
