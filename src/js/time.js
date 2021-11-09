@@ -22,7 +22,7 @@ export const timeMixin = {
         visitId,
         loggedVisitId: id,
         graphName,
-        color: 'primary', 
+        color: 'primary',
       };
       console.log('updateLoggedVisitId() data:', printJson(data));
 
@@ -65,10 +65,12 @@ export const timeMixin = {
               Some: (v) => {
                 const query = { ...v };
                 console.log(success(`updateVisit().cata: ${printJson(query)}`));
-                this.$router.push({
-                  name: 'Time',
-                  params: query,
-                });
+                if (this.$router.currentRoute.name !== 'Time') {
+                  this.$router.push({
+                    name: 'Time',
+                    params: query,
+                  });
+                }
               },
               None: () => console.log(`NOOP`),
             }),

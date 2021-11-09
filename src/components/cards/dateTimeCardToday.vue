@@ -7,9 +7,6 @@
             Share Event: {{ eventSummary }}
           </v-card-text>
         </v-col>
-        <v-col cols="2">
-          <v-btn icon @click="edit = !edit"><v-icon>edit</v-icon></v-btn></v-col
-        >
       </v-row>
       <v-container v-if="edit">
         <v-row align="stretch"
@@ -106,6 +103,7 @@ export default {
 
   props: {
     size: { type: Number, default: () => 28 },
+    edit: Boolean,
   },
   components: { ScrollPicker },
   computed: {
@@ -114,10 +112,7 @@ export default {
       const x = this.$vuetify.breakpoint.smAndUp ? s : 12;
       return x;
     },
-    isSmOrMore() {
-      const x = this.$vuetify.breakpoint.smAndUp;
-      return x;
-    },
+
     formattedDate() {
       return this.dateString
         ? formatDateWithToken(this.dateString, DateTime.DATE_MED)
@@ -133,8 +128,8 @@ export default {
   },
   data() {
     return {
+      eventSummary: '',
       fontSize: this.size,
-      edit: false,
       fromFormat: 'DD hh mm a',
       toFormat: 'ff',
 
@@ -153,7 +148,6 @@ export default {
 
       dateString: '',
       ready: false,
-      eventSummary: '',
     };
   },
   methods: {
@@ -185,10 +179,12 @@ export default {
 
     // give infoWindowCard that data it needs to update the QR code and the URI
     update() {
-      const startString = this.getDateString(this.start);
-      const endString = this.getDateString(this.end);
       this.eventSummary = this.updateNewDateTime();
-      this.$emit('closeDateTimeCard', { startString, endString });
+      this.$emit('closeDateTimeCard', {
+        date: this.formattedDate,
+        start: this.newStart,
+        end: this.newEnd,
+      });
     },
 
     fixDates() {
@@ -264,7 +260,6 @@ export default {
   },
   mounted() {
     this.fixDates();
-    console.log(this.start);
   },
 };
 </script>

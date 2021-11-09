@@ -5,7 +5,7 @@
         <v-icon @click="close">close</v-icon>
       </v-col>
       <v-col cols="auto">
-        <span class="text-h7 text-center">Change from: {{ currDate }}</span>
+        <span class="text-h7 text-center">Change from: {{ eventSummary }}</span>
       </v-col>
       <v-col cols="1">
         <v-icon @click="update">check</v-icon>
@@ -14,7 +14,15 @@
     <v-row dense
       ><v-spacer /><v-col
         ><v-btn-toggle v-model="isEndTime" rounded>
-          <v-btn>Start time</v-btn><v-btn>Ending time</v-btn>
+          <v-btn
+            active-class="primary white--text pa-0"
+            :block="$vuetify.breakpoint.smAndUp"
+            >Start time</v-btn
+          ><v-btn
+            active-class="primary white--text pa-0"
+            :block="$vuetify.breakpoint.smAndUp"
+            >Ending time</v-btn
+          >
         </v-btn-toggle></v-col
       ><v-spacer
     /></v-row>
@@ -29,28 +37,12 @@
       <v-col
         ><scroll-picker
           v-model="newDate"
-          :options="readyDateList"
+          :options="dateList"
           ref="picker"
         ></scroll-picker>
       </v-col>
       <v-col cols="2">
-        <scroll-picker
-          v-model="hr"
-          :options="[
-            '01',
-            '02',
-            '03',
-            '04',
-            '05',
-            '06',
-            '07',
-            '08',
-            '09',
-            '10',
-            '11',
-            '12',
-          ]"
-        ></scroll-picker></v-col
+        <scroll-picker v-model="hr" :options="hoursList"></scroll-picker></v-col
       ><v-col cols="2"
         ><scroll-picker
           v-model="min"
@@ -58,18 +50,23 @@
         ></scroll-picker>
       </v-col>
       <v-col cols="2"
-        ><scroll-picker v-model="amPm" :options="['AM', 'PM']"></scroll-picker
+        ><scroll-picker
+          v-model="meridiem"
+          :options="['AM', 'PM']"
+        ></scroll-picker
       ></v-col>
     </v-row>
 
-    <v-card-subtitle class="text-center">to: {{ newDateTime }}</v-card-subtitle>
+    <v-card-subtitle class="text-center"
+      >to: {{ eventSummary }}</v-card-subtitle
+    >
     <v-row
       ><v-col>
         <span class="px-3">Font Size: {{ fontSize }}px</span>
         <input
           type="range"
-          :min="16"
-          :max="32"
+          :min="12"
+          :max="28"
           :step="4"
           v-model="fontSize"
           @input="$refs.picker.resize()"/></v-col
@@ -82,119 +79,164 @@ import 'vue-scroll-picker/dist/style.css';
 import { ScrollPicker } from 'vue-scroll-picker';
 import {
   DateTime,
+  datesBack,
+  datesAhead,
   todayAsISO,
   yesterdayAsISO,
   tomorrowAsISO,
-  formatDateWithToken,
   formatDateAsISO,
+  formatDateWithToken,
+  t,
+  tPlusOne,
+  roundTime,
 } from '@/utils/luxonHelpers';
 
 export default {
   name: 'dateTimeCard',
 
   props: {
-    currDate: String,
-    currTimes: { type: Object, required: true },
     size: { type: Number, default: () => 28 },
-    dateList: Array,
-    today: Boolean,
+    selectedEventParsed: Object,
   },
   components: { ScrollPicker },
   computed: {
-    formattedDate() {
-      return this.dateStruct.dateString
-        ? formatDateWithToken(this.dateStruct.dateString, DateTime.DATE_MED)
-        : '';
-    },
-    readyDateList() {
-      if (!this.ready) {
-        return [];
-      }
-      return this.dateList;
-    },
-
-    newDateTime() {
-      const x = `${this.formattedDate} from ${this.dateStruct.start.hr}:${this.dateStruct.start.min} ${this.dateStruct.start.amPm} to ${this.dateStruct.end.hr}:${this.dateStruct.end.min} ${this.dateStruct.end.amPm}`;
+    defaultFontSize() {
+      const s = this.size ?? 28;
+      const x = this.$vuetify.breakpoint.smAndUp ? s : 12;
       return x;
     },
+
+    formattedDate() {
+      return this.dateString
+        ? formatDateWithToken(this.dateString, DateTime.DATE_MED)
+        : '';
+    },
+
+    dateList() {
+      const backDates = datesBack(7);
+      return [
+        ...backDates,
+        'Yesterday',
+        'Today',
+        'Tomorrow',
+        ...datesAhead(30),
+      ];
+    },
+
+    currTimes() {
+      if (!this.selectedEventParsed) {
+        return null;
+      }
+      const start = this.selectedEventParsed.start.time;
+      const end = this.selectedEventParsed?.end.time;
+      const past = this.selectedEventParsed.start.past;
+      const present = this.selectedEventParsed.start.present;
+      const future = this.selectedEventParsed.start.future;
+      return {
+        start,
+        end,
+        past,
+        present,
+        future,
+      };
+    },
+
     hoursList() {
       return [...Array(12).keys()].map((v) => (v + 1).toString());
     },
   },
   data() {
     return {
+      eventSummary: '',
       fontSize: this.size,
-      dateStruct: {
-        dateString: '',
-        start: { hr: '', min: '', amPm: '' },
-        end: { hr: '', min: '', amPm: '' },
-        startTime: 0,
-        endTime: 0,
-      },
-      ready: false,
+      edit: false,
+      fromFormat: 'DD hh mm a',
+      toFormat: 'ff',
+
+      startDateTime: null,
+      endDateTime: null,
+      start: { date: '', hr: '', min: '', meridiem: '' },
+      end: { date: '', hr: '', min: '', meridiem: '' },
+      endNew: null,
+      startNew: null,
+
       isEndTime: 0, // this is a toggle value: start=0 end=1
       newDate: 'Today',
       hr: '',
       min: '',
-      amPm: '',
+      meridiem: '',
+
+      dateString: '',
+      ready: false,
     };
   },
   methods: {
+    updateNewDateTime() {
+      if (this.ready) {
+        let string = `${this.start.date} ${this.start.hr} ${this.start.min} ${this.start.meridiem}`;
+        this.newStart = DateTime.fromFormat(string, this.fromFormat);
+
+        string = `${this.end.date} ${this.end.hr} ${this.end.min} ${this.end.meridiem}`;
+        this.newEnd = DateTime.fromFormat(string, this.fromFormat);
+
+        const diff = this.newEnd.diff(this.newStart, 'hours').as('hours');
+
+        const x = `From ${this.newStart.toFormat(
+          this.toFormat
+        )} to ${this.newEnd.toFormat(this.toFormat)} [${diff} hours]`;
+
+        return x;
+      }
+      return this.formattedDate;
+    },
     close() {
       this.$emit('closeDateTimeCard', 0);
     },
+    getDateString(x) {
+      const { hr, min, meridiem } = x;
+      return `${hr}:${min} ${meridiem}`;
+    },
+
+    // give eventEditCard then Calendar data needed to update the Event
     update() {
-      // send the date as string
-      // create ms for start and end based on picker
-      const dt = DateTime.fromISO(this.dateStruct.dateString);
-      const start = dt.set({
-        hours:
-          this.dateStruct.start.amPm === 'PM' &&
-          this.dateStruct.start.hr !== '12'
-            ? Number(this.dateStruct.start.hr) + 12
-            : this.dateStruct.start.hr,
-        minutes: this.dateStruct.start.min,
-      });
-      const end = dt.set({
-        hours:
-          this.dateStruct.end.amPm === 'PM' && this.dateStruct.end.hr !== '12'
-            ? Number(this.dateStruct.end.hr) + 12
-            : this.dateStruct.end.hr,
-        minutes: this.dateStruct.end.min,
-      });
-      console.log(
-        JSON.stringify(start.toLocaleString(DateTime.TIME_SIMPLE), null, 3),
-        JSON.stringify(end.toLocaleString(DateTime.TIME_SIMPLE), null, 3)
-      );
+      this.eventSummary = this.updateNewDateTime();
       this.$emit('closeDateTimeCard', {
-        date: dt.toLocaleString(),
-        start: start.toMillis(),
-        end: end.toMillis(),
+        date: this.formattedDate,
+        start: this.newStart.toMillis(),
+        end: this.newEnd.toMillis(),
       });
     },
 
     fixDates() {
-      const { start, end, past, present } = this.currTimes;
+      const { past, present } = this.currTimes;
       this.newDate = present ? 'Today' : past ? 'Yesterday' : 'Tomorrow';
       this.convertNewDate();
+      this.startDateTime = DateTime.fromMillis(roundTime(t()));
+      this.endDateTime = DateTime.fromMillis(roundTime(tPlusOne()));
+      this.newStart = this.startDateTime;
+      this.newEnd = this.endDateTime;
 
-      const startHour = start.split(':')[0];
-      this.dateStruct.start.hr = startHour > 12 ? startHour - 12 : startHour;
-      this.dateStruct.start.min = start.split(':')[1];
-      this.dateStruct.start.amPm = startHour >= 12 ? 'PM' : 'AM';
+      this.start = {
+        date: this.startDateTime.toFormat('DD'),
+        hr: this.startDateTime.toFormat('hh'),
+        min: this.startDateTime.toFormat('mm'),
+        meridiem: this.startDateTime.toFormat('a'),
+      };
 
-      const endHour = end.split(':')[0];
-      this.dateStruct.end.hr = endHour > 12 ? endHour - 12 : endHour;
-      this.dateStruct.end.min = end.split(':')[1];
-      this.dateStruct.end.amPm = endHour >= 12 ? 'PM' : 'AM';
+      this.end = {
+        date: this.endDateTime.toFormat('DD'),
+        hr: this.endDateTime.toFormat('hh'),
+        min: this.endDateTime.toFormat('mm'),
+        meridiem: this.endDateTime.toFormat('a'),
+      };
+      this.hr = this.start.hr;
+      this.min = this.start.min;
+      this.dateString = todayAsISO();
 
-      this.hr = this.dateStruct.start.hr;
-      this.min = this.dateStruct.start.min;
-      this.amPm = this.dateStruct.start.amPm;
       this.ready = true;
     },
     convertNewDate() {
-      this.dateStruct.dateString =
+      this.dateString =
         this.newDate === 'Today'
           ? todayAsISO()
           : this.newDate === 'Yesterday'
@@ -205,42 +247,47 @@ export default {
     },
   },
   watch: {
+    ready() {
+      this.fontSize = this.defaultFontSize;
+      console.log(this.ready, this.hr);
+    },
     hr() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.dateStruct.end.hr = this.hr;
+        this.end.hr = this.hr;
       } else {
-        this.dateStruct.start.hr = this.hr;
+        this.start.hr = this.hr;
       }
+      this.update();
     },
     min() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.dateStruct.end.min = this.min;
+        this.end.min = this.min;
       } else {
-        this.dateStruct.start.min = this.min;
+        this.start.min = this.min;
       }
+      this.update();
     },
-    amPm() {
+    meridiem() {
       // end is when isEndTime
       if (this.isEndTime) {
-        this.dateStruct.end.amPm = this.amPm;
+        this.end.meridiem = this.meridiem;
       } else {
-        this.dateStruct.start.amPm = this.amPm;
+        this.start.meridiem = this.meridiem;
       }
+      this.update();
     },
-    newDate() {
-      this.convertNewDate();
-    },
-    isEndTime(isEndTime) {
-      if (isEndTime) {
-        this.min = this.dateStruct.end.min;
-        this.hr = this.dateStruct.end.hr;
-        this.amPm = this.dateStruct.end.amPm;
+
+    isEndTime() {
+      if (this.isEndTime) {
+        this.min = this.end.min;
+        this.hr = this.end.hr;
+        this.meridiem = this.end.meridiem;
       } else {
-        this.min = this.dateStruct.start.min;
-        this.hr = this.dateStruct.start.hr;
-        this.amPm = this.dateStruct.start.amPm;
+        this.min = this.start.min;
+        this.hr = this.start.hr;
+        this.meridiem = this.start.meridiem;
       }
     },
   },

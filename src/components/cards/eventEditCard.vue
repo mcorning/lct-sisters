@@ -13,15 +13,13 @@
           </div>
         </v-expand-transition>
 
-        <v-btn class=text-right text @click="$emit('enlargeQR')">
+        <v-btn class="text-right" text @click="$emit('enlargeQR')">
           <v-icon>qr_code_2</v-icon>
         </v-btn>
       </v-toolbar>
     </v-hover>
     <date-time-card
-      :currDate="currDate"
-      :currTimes="currTimes"
-      :dateList="dateList"
+      :selectedEventParsed="selectedEventParsed"
       @closeDateTimeCard="onCloseDateTimeCard"
     ></date-time-card>
     <v-card-actions>
@@ -45,7 +43,6 @@
 <script>
 import 'vue-scroll-picker/dist/style.css';
 import DateTimeCard from './dateTimeCard.vue';
-import { DateTime, datesBack, datesAhead } from '@/utils/luxonHelpers';
 
 export default {
   name: 'eventEditCard',
@@ -55,33 +52,7 @@ export default {
     isConnected: Boolean,
   },
   components: { DateTimeCard },
-  computed: {
-    dateList() {
-      const backDates = datesBack(7);
-      return [...backDates, 'Yesterday', 'Today', 'Tomorrow', ...datesAhead(30)];
-    },
-    currDate() {
-      return DateTime.now().toFormat("ccc ',' DD");
-    },
-
-    currTimes() {
-      if (!this.selectedEventParsed) {
-        return null;
-      }
-      const start = this.selectedEventParsed.start.time;
-      const end = this.selectedEventParsed?.end.time;
-      const past = this.selectedEventParsed.start.past;
-      const present = this.selectedEventParsed.start.present;
-      const future = this.selectedEventParsed.start.future;
-      return {
-        start,
-        end,
-        past,
-        present,
-        future,
-      };
-    },
-  },
+  computed: {},
   data() {
     return {
       prefersClock: false,
@@ -122,7 +93,6 @@ export default {
       this.picked = index;
       this.dirty = dirty;
     },
-
 
     share() {
       this.dirty = false;

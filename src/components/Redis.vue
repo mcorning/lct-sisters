@@ -70,7 +70,7 @@ export default {
 
     visitors: Object,
     exposures: Object,
-    diagnostics: Object,
+    diagnostics: Array,
     emergency: Boolean,
   },
   computed: {
