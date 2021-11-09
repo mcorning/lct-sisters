@@ -95,7 +95,9 @@ export default {
   props: {
     currDate: String,
     currTimes: { type: Object, required: true },
+    size: { type: Number, default: () => 28 },
     dateList: Array,
+    today: Boolean,
   },
   components: { ScrollPicker },
   computed: {
@@ -121,7 +123,7 @@ export default {
   },
   data() {
     return {
-      fontSize: 28,
+      fontSize: this.size,
       dateStruct: {
         dateString: '',
         start: { hr: '', min: '', amPm: '' },

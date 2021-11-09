@@ -8,13 +8,26 @@ const t = () => {
   // using Luxon Presets
   return DateTime.now();
 };
-const roundTime = (time, down = true) => {
+const roundTime = (time = DateTime.now(), down = true) => {
   const roundTo = 15; // minutes
   const roundDownTime = roundTo * 60 * 1000;
 
   return down
     ? time - (time % roundDownTime)
     : time + (roundDownTime - (time % roundDownTime));
+};
+
+const startRounded = () => {
+  return roundTime(t().toMillis());
+};
+const endRounded = () => {
+  return roundTime(tPlusOne().toMillis());
+};
+const startTimeString = () => {
+  return formatSmallTime();
+};
+const endTimeString = () => {
+  return formatSmallTime(tPlusOne().toMillis());
 };
 
 const tPlusOne = (avgStay = 30) => {
@@ -194,4 +207,8 @@ module.exports = {
   datesAhead,
   formatDateWithToken,
   formatDateAsISO,
+  startRounded,
+  endRounded,
+  startTimeString,
+  endTimeString,
 };

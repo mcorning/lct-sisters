@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card v-if="info" class="mx-auto" max-width="344">
-      <v-card-text class="text-h6 pb-0">
+      <v-card-text class="text-subtitle-2  mr-5 pb-0">
         <div v-if="!isGathering">{{ name }}</div>
         <v-text-field
           v-else
@@ -24,7 +24,7 @@
         <v-dialog v-model="enlargeQR" width="500">
           <template v-slot:activator="{ on, attrs }">
             <v-btn color="primary" icon v-bind="attrs" v-on="on">
-              <v-icon>qr_code_2</v-icon>
+              <v-icon>share</v-icon>
             </v-btn>
           </template>
 
@@ -40,10 +40,16 @@
               ><v-icon>close</v-icon></v-btn
             >
 
-            <v-card-title>QR for {{ name }}</v-card-title>
+            <v-card-title class="text-subtitle-1 text-sm-h5">{{
+              name
+            }}</v-card-title>
+            <v-card-subtitle class="text-subtitle-2 mr-6"
+              >Use this dialog to share this public place with visitors or
+              employees.</v-card-subtitle
+            >
 
             <v-card-text>
-              <v-tabs v-model="tab" background-color="transparent" grow>
+              <v-tabs v-model="tab" grow background-color="transparent">
                 <v-tab v-for="item in items" :key="item.tab">
                   {{ item.tab }}
                 </v-tab>
@@ -51,28 +57,12 @@
               <v-tabs-items v-model="tab">
                 <v-tab-item v-for="item in items" :key="item.tab">
                   <v-card flat>
-                    <v-select
-                      v-if="item.tab === 'Sponsor'"
-                      v-model="sponsor"
-                      :items="sponsors"
-                      label="Sponsors"
-                    ></v-select>
-                    <v-row v-if="item.content === 'Shift'"
-                      ><v-col cols="6">
-                        <v-text-field
-                          v-model="startShift"
-                          clearable
-                          label="Start shift"
-                          placeholder="Leave blank for visitor QR"
-                        /> </v-col
-                      ><v-col cols="6">
-                        <v-text-field
-                          v-model="endShift"
-                          clearable
-                          label="End shift"
-                          placeholder="Leave blank for visitor QR"
-                        /> </v-col
-                    ></v-row>
+                    <v-row v-if="item.content === 'Shift'">
+                      <date-time-card-today
+                        :size="16"
+                        @closeDateTimeCard="onCloseDateTimeCard"
+                      />
+                    </v-row>
                     <v-card-text v-else v-text="item.content"></v-card-text>
                   </v-card>
                 </v-tab-item>
@@ -82,7 +72,12 @@
               <v-row>
                 <v-spacer />
                 <v-col class="text-center">
-                  <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                  <VueQRCodeComponent
+                    id="qr"
+                    ref="qr"
+                    :text="decodedUri"
+                    :size="128"
+                  >
                   </VueQRCodeComponent>
                 </v-col>
                 <v-spacer />
@@ -164,7 +159,10 @@
 </template>
 
 <script>
+// https://www.npmjs.com/package/vue-qr-generator
 import VueQRCodeComponent from 'vue-qr-generator';
+
+import DateTimeCardToday from './dateTimeCardToday.vue';
 
 export default {
   name: 'InfowindowCard',
@@ -179,15 +177,12 @@ export default {
 
   components: {
     VueQRCodeComponent,
+    DateTimeCardToday,
   },
 
   computed: {
     decodedUri() {
-      return this.tab === 0
-        ? this.sponsorUri
-        : this.tab === 1
-        ? this.decodedShiftUri
-        : this.mailToUri;
+      return this.tab === 0 ? this.decodedShiftUri : this.mailToUri;
     },
     mailToUri() {
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
@@ -198,14 +193,7 @@ export default {
       );
       return `${window.location.origin}/?${uri}`;
     },
-    sponsorUri() {
-      // the QR code generator needs to use the decoded URI
-      const uri = `${
-        window.location.origin
-      }/?sponsor=${this.sponsor.toLowerCase()}`;
-      const d = decodeURIComponent(uri);
-      return d;
-    },
+
     decodedShiftUri() {
       // the QR code generator needs to use the decoded URI
       const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
@@ -248,11 +236,8 @@ export default {
   },
   data() {
     return {
-      sponsor: '',
-      sponsors: ['Microsoft', 'Sisters', 'Manchester'],
       tab: null,
       items: [
-        { tab: 'Sponsor' },
         { tab: 'Employees', content: 'Shift' },
         { tab: 'Visitors', content: 'Visit defaults to current time' },
       ],
@@ -260,11 +245,16 @@ export default {
       reveal: false,
       enlargeQR: false,
       gatheringName: '',
-      startShift: '07:00AM',
-      endShift: '05:00PM',
+      startShift: '',
+      endShift: '',
     };
   },
   methods: {
+    onCloseDateTimeCard({ startString, endString }) {
+      this.startShift = startString;
+      this.endShift = endString;
+    },
+
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
     copyLink() {
       const copied = this.$clipboard(this.decodedUri);
@@ -275,11 +265,7 @@ export default {
     },
   },
 
-  watch: {
-    tab(val) {
-      console.log(val);
-    },
-  },
+  watch: {},
   mounted() {},
 };
 </script>

@@ -48,3 +48,4 @@ qrCodes/SistersDental.bc
 srv/redisGraphResults.json
 srv/redisGraphResultsEdges.json
 lab/
+src/utils/lab.js

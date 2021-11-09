@@ -58,7 +58,7 @@ export default {
   computed: {
     dateList() {
       const backDates = datesBack(7);
-      return [...backDates, 'Yesterday', 'Today', 'Tomorrow', ...datesAhead(7)];
+      return [...backDates, 'Yesterday', 'Today', 'Tomorrow', ...datesAhead(30)];
     },
     currDate() {
       return DateTime.now().toFormat("ccc ',' DD");

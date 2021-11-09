@@ -189,7 +189,6 @@ import EventEditCard from '@/components/cards/eventEditCard';
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import { DateTime, makeTimes, userSince } from '@/utils/luxonHelpers';
-import { head } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
 export default {
@@ -283,9 +282,22 @@ export default {
       return this.state.currentGraphName;
     },
 
+    // TODO PRI2 REFACTOR: all three events should be a cascading async-either that deletes expired events along the way
     // TODO NOTE: Classic ViewModel property here: Model provides primitive values
     // and relevantEvents transforms them for the UI as an array of two entities.
     // further refinement such as events in a date range would be handled as computed property or filter.
+    expiredEvents() {
+      // TODO should this property include all visits or only those for the selected day?
+      try {
+        const cutoffDateTime = DateTime.now()
+          .minus({ days: 10 })
+          .toMillis();
+        const x = this.getVisits().filter((v) => v.start < cutoffDateTime);
+        return x;
+      } catch (error) {
+        return [];
+      }
+    },
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
       try {
@@ -299,6 +311,10 @@ export default {
         return [];
       }
     },
+    unloggedEvents() {
+      return this.relevantEvents.filter((v) => Object.is(v.loggedVisitId, NaN));
+    },
+
     intervalCount() {
       return this.range * (60 / this.intervalMinutes) + 2;
     },
@@ -379,9 +395,10 @@ export default {
   methods: {
     // TODO why isn't this in Model?
     emailDiagnostics() {
-      this.$clipboard(this.diagnostics);
+      this.copyStatus();
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
+
     log(diagnostic) {
       this.diagnostics.push(diagnostic);
     },
@@ -389,19 +406,16 @@ export default {
     toggleStatus() {
       this.showStatus = !this.showStatus;
     },
-    setStatus(msg) {
-      this.status += `${msg}
-      `;
-    },
+
     copyStatus() {
-      this.setStatus(
-        `Copied Status to clipboard, ${this.$clipboard(this.status)}` // this.$clipboard copy any String/Array/Object you want
+      this.log(
+        `Copied Status to clipboard, ${this.$clipboard(this.diagnosticOutput)}` // this.$clipboard copy any String/Array/Object you want
       );
     },
 
     cutStatus() {
-      this.$clipboard(this.status);
-      this.status = 'Status cut to clipboard';
+      this.$clipboard(this.diagnostics);
+      this.diagnostics = 'Status cut to clipboard';
     },
 
     openBanner() {
@@ -484,22 +498,27 @@ export default {
 
     emailEvent() {
       const mailToString = this.getMailToString();
-      this.setStatus(`Setting window.location to:`);
-      this.setStatus(`${mailToString}`);
+      this.log(`Setting window.location to:`);
+      this.log(`${mailToString}`);
       window.location = mailToString;
       this.seePickers = false;
       this.selectedEvent.name += `: ${this.room}`;
       this.update('cache');
     },
 
-    delete(target) {
+    delete(target, event = this.selectedEvent) {
+      this.onUpdate(target, event, { delete: true });
+      this.selectedOpen = false;
+    },
+    // TODO URGENT: rethink this management scheme now that we have to delete more than one expired event at once
+    deleteExpired(target) {
       this.onUpdate(target, this.selectedEvent, { delete: true });
       this.selectedOpen = false;
     },
     update(target) {
-      this.setStatus(`Updating cache with:`);
+      this.log(`Updating cache with:`);
       const { name, date, start, end, id } = this.selectedEvent;
-      this.setStatus(printJson({ name, date, start, end, id }));
+      this.log(printJson({ name, date, start, end, id }));
       this.onUpdate(target, this.selectedEvent);
       this.selectedOpen = false;
     },
@@ -534,7 +553,7 @@ export default {
         // this.firstTime = `${String(
         //   Number(this.openAt.split(':')[0]) - 1
         // ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
-        this.setStatus(
+        this.log(
           `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${this.range}  intervalCount: ${this.intervalCount} `
         );
       } else {
@@ -544,14 +563,14 @@ export default {
     viewDay({ date }) {
       this.focus = date;
       console.log(`Going to ${date}`);
-      this.setStatus(`Going to ${date}`);
+      this.log(`Going to ${date}`);
       this.type = 'day';
       this.currentDate = date;
     },
     setToday() {
       this.focus = '';
       this.viewDay(Date.now());
-      this.setStatus(`Going back to today`);
+      this.log(`Going back to today`);
     },
 
     prev() {
@@ -604,7 +623,7 @@ export default {
       // selectedEventParsed used for past/future events (not included in cal.getVisibleEvents())
       this.selectedEventParsed = this.$refs.calendar.parseEvent(event);
 
-      this.setStatus(
+      this.log(
         `Selected calendar event ${this.atWorkOrVisiting} ${event.name} [${id}]`
       );
     },
@@ -643,31 +662,44 @@ export default {
     },
 
     // used all the time now to ensure every event is logged to the graph
-    start(data) {
+    openVue() {
+      let x = userSince(new Date(this.usernumber));
+      this.log(`Visior active for: ${Math.round(x, 0)} days`);
+
       if (!this.isConnected) {
         this.log('0) Visitor is offline');
         this.confirmationColor = 'orange';
         this.confirmationMessage =
           'You are offline. We will log your visit as soon as you get connected.';
         this.snackbar = true;
+        return;
       }
-      if (data) {
-        this.log('1) Logging an event');
-        this.log(printJson(data));
-        this.selectedEvent = data;
-        // in Model.vue
-        this.onUpdate('graph', this.selectedEvent);
-      }
-    },
 
-    findUnloggedVisits() {
-      head(
-        this.relevantEvents.filter((v) => Object.is(v.loggedVisitId, NaN))
-      ).cata({
-        Just: (unlogged) => this.start(unlogged),
-        Nothing: (err) => {
-          this.setStatus(err);
-        },
+      this.log('All events in calendar:');
+      this.log(printJson(this.getVisits()));
+
+      this.log('All relevant events (younger than 10 days):');
+      this.log(printJson(this.relevantEvents));
+
+      let ct = 0;
+      this.expiredEvents.forEach((event) => {
+        this.log('Deleting', event.name, 'from storage and graph');
+        this.delete('graph', event);
+        ct = +1;
+      });
+      if (ct > 0) {
+        this.log(`Deleted ${this.ct} expired visits`);
+
+        this.log(
+          'All events in calendar (should now match all events in graph):'
+        );
+        this.log(printJson(this.getVisits()));
+      }
+
+      this.unloggedEvents.forEach((event) => {
+        this.log(`Logging an event to graph ${event.graphName}`);
+        // in Model.vue
+        this.onUpdate('graph', event);
       });
     },
   },
@@ -677,13 +709,11 @@ export default {
       console.log(val);
     },
     mailToString(val) {
-      this.setStatus(`email: ${val}`);
+      this.log(`email: ${val}`);
     },
 
     ready() {
-      this.findUnloggedVisits();
-      let x = userSince(new Date(this.usernumber));
-      this.setStatus(`Active for: ${Math.round(x, 0)} days`);
+      this.openVue();
     },
 
     confirmations(msg) {
@@ -698,7 +728,7 @@ export default {
       this.confirmationMessage = confirmationMessage;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
-        this.setStatus(`Deleted visit to ${this.selectedEvent.name}`);
+        this.log(`Deleted visit to ${this.selectedEvent.name}`);
       } else {
         this.selectedEvent.color = logged ? 'primary' : 'secondary';
         this.selectedEvent.loggedVisitId = loggedVisitId;
@@ -706,7 +736,7 @@ export default {
         const age = userSince(then);
         if (age < 8) {
           this.confirmationMessage +=
-            '<br/>Oh, and congratulations for adopting LCT. Stay safe out there...';
+            '<br/>Oh, and welcome to the LCT community. Stay safe out there...';
         }
       }
       this.snackbar = true;
