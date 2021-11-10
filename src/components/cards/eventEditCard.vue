@@ -5,10 +5,10 @@
       <v-spacer />
       <v-btn @click="onCloseDateTimeCard(0)" icon><v-icon>close</v-icon></v-btn>
     </v-toolbar>
-    <date-time-card-today
+    <date-time-card
       :selectedEventParsed="selectedEventParsed"
       @closeDateTimeCard="onCloseDateTimeCard"
-    ></date-time-card-today>
+    ></date-time-card>
     <v-card-actions>
       <v-btn icon color="secondary" @click="deleteEvent">
         <v-icon>delete</v-icon>
@@ -30,7 +30,7 @@
 
 <script>
 import 'vue-scroll-picker/dist/style.css';
-import dateTimeCardToday from './dateTimeCardToday.vue';
+import dateTimeCard from './dateTimeCard.vue';
 
 export default {
   name: 'eventEditCard',
@@ -39,7 +39,7 @@ export default {
     mailToUri: String,
     isConnected: Boolean,
   },
-  components: { dateTimeCardToday },
+  components: { dateTimeCard },
   computed: {},
   data() {
     return {

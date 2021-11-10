@@ -3,12 +3,12 @@
     <v-card>
       <v-row dense align="start">
         <v-col>
-          <strong>Shift starts</strong>
+          <strong>{{ eventLabel }} starts</strong>
           <br />
           {{ shiftStart }}
         </v-col>
         <v-col co>
-          <strong>Shift ends</strong>
+          <strong>{{ eventLabel }} ends</strong>
           <br />
           {{ shiftEnd }}
         </v-col>
@@ -116,7 +116,7 @@ import {
 } from '@/utils/luxonHelpers';
 
 export default {
-  name: 'dateTimeCardToday',
+  name: 'dateTimeCard',
 
   props: {
     selectedEventParsed: Object,
@@ -124,6 +124,10 @@ export default {
   },
   components: { ScrollPicker },
   computed: {
+    eventLabel() {
+      return this.selectedEventParsed ? 'Visit' : 'Shift';
+    },
+
     shiftStart() {
       return this.startDateTimeNew?.toFormat(this.toFormat);
     },

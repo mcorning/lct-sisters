@@ -70,7 +70,7 @@
 
                       <!-- <v-row v-if="item.content === 'Shift'"> -->
                       <v-row v-if="employee">
-                        <date-time-card-today
+                        <date-time-card
                           :size="28"
                           :edit="edit"
                           @closeDateTimeCard="onCloseDateTimeCard"
@@ -172,7 +172,7 @@
 // https://www.npmjs.com/package/vue-qr-generator
 import VueQRCodeComponent from 'vue-qr-generator';
 
-import DateTimeCardToday from './dateTimeCardToday.vue';
+import dateTimeCard from './dateTimeCard.vue';
 import { asHour, asMinute } from '@/utils/luxonHelpers';
 export default {
   name: 'InfowindowCard',
@@ -187,7 +187,7 @@ export default {
 
   components: {
     VueQRCodeComponent,
-    DateTimeCardToday,
+    dateTimeCard,
   },
 
   computed: {
