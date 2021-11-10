@@ -63,14 +63,19 @@
                 <v-tabs-items v-model="tab">
                   <v-tab-item v-for="item in items" :key="item.tab">
                     <v-card flat>
-                      <v-row v-if="item.content === 'Shift'">
+                      <v-card-text
+                        v-if="!employee"
+                        v-text="item.content"
+                      ></v-card-text>
+
+                      <!-- <v-row v-if="item.content === 'Shift'"> -->
+                      <v-row v-if="employee">
                         <date-time-card-today
                           :size="28"
                           :edit="edit"
                           @closeDateTimeCard="onCloseDateTimeCard"
                         />
                       </v-row>
-                      <v-card-text v-else v-text="item.content"></v-card-text>
                     </v-card>
                   </v-tab-item>
                 </v-tabs-items>
@@ -99,6 +104,8 @@
                 <v-card-text class="text-caption text-sm-body-2">{{
                   decodedUri
                 }}</v-card-text>
+
+                <!-- confirmation screen -->
                 <v-sheet
                   v-if="showConf"
                   class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
@@ -121,14 +128,11 @@
               </v-card-text>
             </div>
             <v-card-actions v-if="!printing">
-              <v-btn color="primary" icon @click="edit = !edit"
-                ><v-icon>edit</v-icon></v-btn
-              >
-
               <v-spacer />
               <v-btn color="primary" icon @click="printing = true"
                 ><v-icon>print</v-icon></v-btn
               >
+              <v-spacer />
             </v-card-actions>
             <v-card-actions v-else>
               <v-btn text color="primary" plain @click="printing = false"
@@ -169,7 +173,7 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import DateTimeCardToday from './dateTimeCardToday.vue';
-
+import { asHour, asMinute } from '@/utils/luxonHelpers';
 export default {
   name: 'InfowindowCard',
   props: {
@@ -187,12 +191,16 @@ export default {
   },
 
   computed: {
+    employee() {
+      return this.tab === 0;
+    },
+
     dialogSubtitle() {
       const text = this.printing
         ? this.tab === 0
           ? 'Sign in to work with the LCT QR code.'
           : 'Help us do our part to beat the virus. Scan QR to open our Local Contact Tracing app and log your visit today.'
-        : 'Use this dialog to share this public place with visitors or employees.';
+        : 'Use this dialog to log in at work or to share this public place with visitors.';
       return text;
     },
 
@@ -255,8 +263,8 @@ export default {
       printing: false,
       tab: null,
       items: [
-        { tab: 'Employees', content: 'Shift' },
-        { tab: 'Visitors', content: 'Visit defaults to current time' },
+        { tab: 'Employees', content: 'Log in your shift' },
+        { tab: 'Visitors', content: 'Shared visits default to current time' },
       ],
       showConf: false,
       reveal: false,
@@ -272,9 +280,10 @@ export default {
       this.printing = false;
     },
     getDateString(x) {
-      const { hour, minute } = x;
-      const meridiem = hour < 12 ? 'AM' : 'PM';
-      return `${hour}:${minute} ${meridiem}`;
+      const data = { dateTime: x, padded: true };
+      const hour = asHour(data);
+      const minute = asMinute(data);
+      return `${hour}:${minute}`;
     },
     onCloseDateTimeCard({ start, end }) {
       this.startShift = this.getDateString(start);

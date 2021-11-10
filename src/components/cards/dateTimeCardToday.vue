@@ -1,13 +1,30 @@
 <template>
   <v-container fluid>
-    <v-card outlined>
-      <v-row dense align="center">
+    <v-card>
+      <v-row dense align="start">
         <v-col>
-          <v-card-text class="text-center">
-            Share Event: {{ eventSummary }}
-          </v-card-text>
+          <strong>Shift starts</strong>
+          <br />
+          {{ shiftStart }}
         </v-col>
+        <v-col co>
+          <strong>Shift ends</strong>
+          <br />
+          {{ shiftEnd }}
+        </v-col>
+        <v-col cols="3">
+          <strong>Duration</strong>
+          <br />
+          <strong>{{ shiftDuration }}</strong>
+        </v-col>
+        <v-col cols="2" sm="1">
+          <v-btn color="primary" icon @click="edit = !edit"
+            ><v-icon>edit</v-icon></v-btn
+          ></v-col
+        >
       </v-row>
+      <v-divider />
+
       <v-container v-if="edit">
         <v-row align="stretch"
           ><v-col
@@ -103,10 +120,22 @@ export default {
 
   props: {
     size: { type: Number, default: () => 28 },
-    edit: Boolean,
   },
   components: { ScrollPicker },
   computed: {
+    shiftStart() {
+      return this.startDateTimeNew?.toFormat(this.toFormat);
+    },
+    shiftEnd() {
+      return this.endDateTimeNew?.toFormat(this.toFormat);
+    },
+    shiftDuration() {
+      const diff = this.endDateTimeNew
+        ?.diff(this.startDateTimeNew, this.nominalTime)
+        .as(this.nominalTime);
+      return `${diff} ${this.nominalTime}`;
+    },
+
     defaultFontSize() {
       const s = this.size ?? 28;
       const x = this.$vuetify.breakpoint.smAndUp ? s : 12;
@@ -128,17 +157,20 @@ export default {
   },
   data() {
     return {
+      edit: false,
+      nominalTime: 'hours',
       eventSummary: '',
       fontSize: this.size,
-      fromFormat: 'DD hh mm a',
-      toFormat: 'ff',
+      fromFormat: 'DD hh mm a', // used only in updateNewDateTime() [may be a better way]
+      toFormat: 'ff', //less short localized date and time: e.g., Nov 10, 2021, 1:07 PM
 
       startDateTime: null,
       endDateTime: null,
+      startDateTimeNew: null,
+      endDateTimeNew: null,
+
       start: { date: '', hr: '', min: '', meridiem: '' },
       end: { date: '', hr: '', min: '', meridiem: '' },
-      endNew: null,
-      startNew: null,
 
       isEndTime: 0, // this is a toggle value: start=0 end=1
       newDate: 'Today',
@@ -154,16 +186,20 @@ export default {
     updateNewDateTime() {
       if (this.ready) {
         let string = `${this.start.date} ${this.start.hr} ${this.start.min} ${this.start.meridiem}`;
-        this.newStart = DateTime.fromFormat(string, this.fromFormat);
+        this.startDateTimeNew = DateTime.fromFormat(string, this.fromFormat);
 
         string = `${this.end.date} ${this.end.hr} ${this.end.min} ${this.end.meridiem}`;
-        this.newEnd = DateTime.fromFormat(string, this.fromFormat);
+        this.endDateTimeNew = DateTime.fromFormat(string, this.fromFormat);
 
-        const diff = this.newEnd.diff(this.newStart, 'hours').as('hours');
+        const diff = this.endDateTimeNew
+          .diff(this.startDateTimeNew, this.nominalTime)
+          .as(this.nominalTime);
 
-        const x = `From ${this.newStart.toFormat(
-          this.toFormat
-        )} to ${this.newEnd.toFormat(this.toFormat)} [${diff} hours]`;
+        const x = `Log your shift from <br/>
+        ${this.startDateTimeNew.toFormat(this.toFormat)} to <br/>
+        ${this.endDateTimeNew.toFormat(this.toFormat)} [<strong>${diff} ${
+          this.nominalTime
+        }</strong>]`;
 
         return x;
       }
@@ -182,16 +218,16 @@ export default {
       this.eventSummary = this.updateNewDateTime();
       this.$emit('closeDateTimeCard', {
         date: this.formattedDate,
-        start: this.newStart,
-        end: this.newEnd,
+        start: this.startDateTimeNew,
+        end: this.endDateTimeNew,
       });
     },
 
     fixDates() {
       this.startDateTime = DateTime.fromMillis(roundTime(t()));
-      this.endDateTime = DateTime.fromMillis(roundTime(tPlusOne()));
-      this.newStart = this.startDateTime;
-      this.newEnd = this.endDateTime;
+      this.endDateTime = DateTime.fromMillis(roundTime(tPlusOne(30 * 16)));
+      this.startDateTimeNew = this.startDateTime;
+      this.endDateTimeNew = this.endDateTime;
 
       this.start = {
         date: this.startDateTime.toFormat('DD'),

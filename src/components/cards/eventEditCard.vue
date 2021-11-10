@@ -1,31 +1,19 @@
 <template>
   <v-card>
-    <v-hover v-slot="{ hover }">
-      <v-toolbar :color="selectedEventParsed.input.color" dark dense>
-        <v-toolbar-title v-html="selectedEventParsed.input.name" />
-        <v-spacer />
-        <v-expand-transition>
-          <div
-            v-if="hover"
-            class="d-flex transition-fast-in-fast-out primary darken-2 v-card--reveal text-body2 white--text ma-3 pa-3"
-          >
-            Enlarge Event's QR code
-          </div>
-        </v-expand-transition>
-
-        <v-btn class="text-right" text @click="$emit('enlargeQR')">
-          <v-icon>qr_code_2</v-icon>
-        </v-btn>
-      </v-toolbar>
-    </v-hover>
-    <date-time-card
+    <v-toolbar :color="selectedEventParsed.input.color" dark dense>
+      <v-toolbar-title v-html="selectedEventParsed.input.name" />
+      <v-spacer />
+      <v-btn @click="onCloseDateTimeCard(0)" icon><v-icon>close</v-icon></v-btn>
+    </v-toolbar>
+    <date-time-card-today
       :selectedEventParsed="selectedEventParsed"
       @closeDateTimeCard="onCloseDateTimeCard"
-    ></date-time-card>
+    ></date-time-card-today>
     <v-card-actions>
       <v-btn icon color="secondary" @click="deleteEvent">
         <v-icon>delete</v-icon>
       </v-btn>
+
       <v-spacer />
 
       <v-tooltip top>
@@ -42,7 +30,7 @@
 
 <script>
 import 'vue-scroll-picker/dist/style.css';
-import DateTimeCard from './dateTimeCard.vue';
+import dateTimeCardToday from './dateTimeCardToday.vue';
 
 export default {
   name: 'eventEditCard',
@@ -51,7 +39,7 @@ export default {
     mailToUri: String,
     isConnected: Boolean,
   },
-  components: { DateTimeCard },
+  components: { dateTimeCardToday },
   computed: {},
   data() {
     return {

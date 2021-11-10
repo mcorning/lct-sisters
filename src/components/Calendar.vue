@@ -77,7 +77,7 @@
         </v-calendar>
       </v-sheet>
 
-      <v-bottom-sheet v-model="seePickers" max-width="400">
+      <v-bottom-sheet v-model="seePickers" max-width="424">
         <v-sheet>
           <event-edit-card
             v-if="!banner"

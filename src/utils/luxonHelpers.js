@@ -181,8 +181,21 @@ const formatDateAsISO = (jsDate) => {
   const dt = DateTime.fromJSDate(jsDate).toISO();
   return dt;
 };
+const asHour = ({ dateTime, padded = true, military }) => {
+  const format = military ? 'HH' : padded ? 'hh' : 'h';
+  const res = dateTime.toFormat(format);
+  return res;
+};
+const asMinute = ({ dateTime, padded = true, military }) => {
+  const format = military ? 'mm' : padded ? 'mm a' : 'm a';
+  const res = dateTime.toFormat(format);
+  return res;
+};
+
 module.exports = {
   DateTime,
+  asHour,
+  asMinute,
   getNow,
   getNowAsMillis,
   getNowAsIso,
