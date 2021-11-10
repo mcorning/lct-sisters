@@ -12,7 +12,7 @@
           <br />
           {{ shiftEnd }}
         </v-col>
-        <v-col cols="3">
+        <v-col cols="3" class="text-center">
           <strong>Duration</strong>
           <br />
           <strong>{{ shiftDuration }}</strong>
@@ -119,6 +119,7 @@ export default {
   name: 'dateTimeCardToday',
 
   props: {
+    selectedEventParsed: Object,
     size: { type: Number, default: () => 28 },
   },
   components: { ScrollPicker },
@@ -186,6 +187,7 @@ export default {
     updateNewDateTime() {
       if (this.ready) {
         let string = `${this.start.date} ${this.start.hr} ${this.start.min} ${this.start.meridiem}`;
+
         this.startDateTimeNew = DateTime.fromFormat(string, this.fromFormat);
 
         string = `${this.end.date} ${this.end.hr} ${this.end.min} ${this.end.meridiem}`;
@@ -213,7 +215,8 @@ export default {
       return `${hr}:${min} ${meridiem}`;
     },
 
-    // give infoWindowCard that data it needs to update the QR code and the URI
+    // give infoWindowCard or Calendar that data needed to update the QR code and the URI or the event and graph
+
     update() {
       this.eventSummary = this.updateNewDateTime();
       this.$emit('closeDateTimeCard', {
@@ -224,8 +227,15 @@ export default {
     },
 
     fixDates() {
-      this.startDateTime = DateTime.fromMillis(roundTime(t()));
-      this.endDateTime = DateTime.fromMillis(roundTime(tPlusOne(30 * 16)));
+      const startMillis = this.selectedEventParsed
+        ? this.selectedEventParsed.input.start
+        : roundTime(t());
+      const endMillis = this.selectedEventParsed
+        ? this.selectedEventParsed.input.end
+        : roundTime(tPlusOne(30 * 16));
+      this.startDateTime = DateTime.fromMillis(startMillis);
+      this.endDateTime = DateTime.fromMillis(endMillis);
+
       this.startDateTimeNew = this.startDateTime;
       this.endDateTimeNew = this.endDateTime;
 

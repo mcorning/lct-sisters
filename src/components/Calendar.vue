@@ -77,7 +77,7 @@
         </v-calendar>
       </v-sheet>
 
-      <v-bottom-sheet v-model="seePickers" max-width="424">
+      <v-bottom-sheet v-model="seePickers" max-width="500">
         <v-sheet>
           <event-edit-card
             v-if="!banner"
@@ -452,15 +452,14 @@ export default {
     },
 
     onCloseDateTimeCard(dto) {
-      this.seePickers = false;
-
       if (dto === 0) {
+        this.seePickers = false;
         return;
       }
       const { date, start, end } = dto;
       this.selectedEvent.date = date;
-      this.selectedEvent.start = start;
-      this.selectedEvent.end = end;
+      this.selectedEvent.start = start.toMillis();
+      this.selectedEvent.end = end.toMillis();
 
       this.update('cache');
 
