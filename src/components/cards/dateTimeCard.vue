@@ -132,9 +132,10 @@ export default {
         return null;
       }
       // convert this ISO date format into localizedFormat
-      const startDateString = new DateTime.fromISO(
-        this.selectedEventParsed.input.date
-      ).toFormat(this.abbreviatedMonthDateFormat);
+      // const startDateString = new DateTime.fromISO(
+      //   this.selectedEventParsed.input.date
+      // ).toFormat(this.abbreviatedMonthDateFormat);
+      const startDateString = this.selectedEventParsed.input.date;
       const startTime = this.selectedEventParsed.input.start;
       const endTime = this.selectedEventParsed.input.end;
 
@@ -221,6 +222,9 @@ export default {
     };
   },
   methods: {
+    printJson(json) {
+      return JSON.stringify(json, null, 3);
+    },
     getEventDateString(val) {
       switch (val) {
         case 'Today':
@@ -245,17 +249,29 @@ export default {
       This gets called when we start up where the start.date is ISO format, so convert to localizedFormat before it gets here
       */
       if (this.ready) {
-        let string = `${this.start.date} ${this.start.hr} ${this.start.min} ${this.start.meridiem}`;
+        let string = `${this.getEventDateString(this.start.date)} ${
+          this.start.hr
+        } ${this.start.min} ${this.start.meridiem}`;
 
         this.startDateTimeNew = DateTime.fromFormat(
           string,
           this.localizedDateFormat
         );
+        console.assert(
+          !this.startDateTime.invalid,
+          this.startDateTime.invalid?.explanation
+        );
 
-        string = `${this.end.date} ${this.end.hr} ${this.end.min} ${this.end.meridiem}`;
+        string = `${this.getEventDateString(this.end.date)} ${this.end.hr} ${
+          this.end.min
+        } ${this.end.meridiem}`;
         this.endDateTimeNew = DateTime.fromFormat(
           string,
           this.localizedDateFormat
+        );
+        console.assert(
+          !this.endDateTime.invalid,
+          this.endDateTime.invalid?.explanation
         );
 
         const diff = this.endDateTimeNew
@@ -284,8 +300,17 @@ export default {
 
     update() {
       this.eventSummary = this.updateNewDateTime();
+      // this.start.date is in localized format. return it to ISO for storage
+      const localDt = DateTime.fromFormat(
+        this.start.date,
+        this.abbreviatedMonthDateFormat
+      );
+      console.assert(!localDt.invalid, localDt.invalid?.explanation);
+
+      const date = localDt.toISODate();
+
       this.$emit('closeDateTimeCard', {
-        date: this.start.date,
+        date,
         start: this.startDateTimeNew,
         end: this.endDateTimeNew,
       });
@@ -302,29 +327,43 @@ export default {
         ? 'Tomorrow'
         : isYesterday(startDateString)
         ? 'Yesterday'
-        : startDateString;
+        : // ultimately we change the ISO date to a localized date string format
+          new DateTime.fromISO(startDateString).toFormat(
+            this.abbreviatedMonthDateFormat
+          );
 
       const startMillis = startTime ?? roundTime(t());
       const endMillis = endTime ?? roundTime(tPlusOne(30 * 16));
       this.startDateTime = DateTime.fromMillis(startMillis);
+      console.assert(
+        !this.startDateTime.invalid,
+        this.startDateTime.invalid?.explanation
+      );
+
       this.endDateTime = DateTime.fromMillis(endMillis);
+      console.assert(
+        !this.endDateTime.invalid,
+        this.endDateTime.invalid?.explanation
+      );
 
       this.startDateTimeNew = this.startDateTime;
       this.endDateTimeNew = this.endDateTime;
 
       this.start = {
-        date: startDateString,
+        date: this.eventDate,
         hr: this.startDateTime.toFormat('hh'),
         min: this.startDateTime.toFormat('mm'),
         meridiem: this.startDateTime.toFormat('a'),
       };
 
       this.end = {
-        date: startDateString, // this is not true if event crosses midnight
+        date: this.eventDate, // this is not true if event crosses midnight
         hr: this.endDateTime.toFormat('hh'),
         min: this.endDateTime.toFormat('mm'),
         meridiem: this.endDateTime.toFormat('a'),
       };
+      console.log('this.start:', this.printJson(this.start));
+      console.log('this.end:', this.printJson(this.end));
 
       this.hr = this.start.hr;
       this.min = this.start.min;
@@ -340,11 +379,12 @@ export default {
     },
     eventDate(val) {
       const dateString = this.getEventDateString(val);
-      if (this.isEndTime) {
-        this.end.date = dateString;
-      } else {
-        this.start.date = dateString;
-      }
+      // for now, we assume start/end dates are the same
+      // if (this.isEndTime) {
+      this.end.date = dateString;
+      // } else {
+      this.start.date = dateString;
+      // }
       this.update();
     },
     hr() {

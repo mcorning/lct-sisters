@@ -51,6 +51,12 @@ const isToday = (dateString) => {
   return dt1.toLocaleString() === DateTime.now().toLocaleString();
 };
 
+/**
+ *
+ * @param {*} dateString is an ISO date string for universal use
+ * @returns true if date is tomorrow
+ */
+
 const isTomorrow = (dateString) => {
   const dayAfterTomorrow = DateTime.now()
     .plus({ day: 2 })
@@ -199,7 +205,7 @@ const tomorrowAsISO = () => {
   return y.toISO();
 };
 const datesBack = (daysBack) => {
-  const dayBeforeYesterday = 2;
+  const dayBeforeYesterday = 1;
   const dates = Array.from({ length: daysBack }, (_, idx) =>
     DateTime.now()
       .minus({ days: daysBack - idx + dayBeforeYesterday })
