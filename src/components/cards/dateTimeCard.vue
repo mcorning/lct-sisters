@@ -50,7 +50,7 @@
         >
           <v-col
             ><scroll-picker
-              v-model="newDate"
+              v-model="eventDate"
               :options="dateList"
               ref="picker"
             ></scroll-picker>
@@ -108,8 +108,10 @@ import 'vue-scroll-picker/dist/style.css';
 import { ScrollPicker } from 'vue-scroll-picker';
 import {
   DateTime,
-  todayAsISO,
-  formatDateWithToken,
+  datesBack,
+  datesAhead,
+  isTomorrow,
+  isYesterday,
   t,
   tPlusOne,
   roundTime,
@@ -124,15 +126,39 @@ export default {
   },
   components: { ScrollPicker },
   computed: {
+    // TODO harden this code against NaN start/end integers
+    currTimes() {
+      if (!this.selectedEventParsed) {
+        return null;
+      }
+      // convert this ISO date format into localizedFormat
+      const startDateString = new DateTime.fromISO(
+        this.selectedEventParsed.input.date
+      ).toFormat(this.abbreviatedMonthDateFormat);
+      const startTime = this.selectedEventParsed.input.start;
+      const endTime = this.selectedEventParsed.input.end;
+
+      const past = this.selectedEventParsed.start.past;
+      const present = this.selectedEventParsed.start.present;
+      const future = this.selectedEventParsed.start.future;
+      return {
+        startDateString,
+        startTime,
+        endTime,
+        past,
+        present,
+        future,
+      };
+    },
     eventLabel() {
       return this.selectedEventParsed ? 'Visit' : 'Shift';
     },
 
     shiftStart() {
-      return this.startDateTimeNew?.toFormat(this.toFormat);
+      return this.startDateTimeNew?.toFormat(this.localizedDateFormat);
     },
     shiftEnd() {
-      return this.endDateTimeNew?.toFormat(this.toFormat);
+      return this.endDateTimeNew?.toFormat(this.localizedDateFormat);
     },
     shiftDuration() {
       const diff = this.endDateTimeNew
@@ -148,12 +174,17 @@ export default {
     },
 
     formattedDate() {
-      return this.dateString
-        ? formatDateWithToken(this.dateString, DateTime.DATE_MED)
-        : '';
+      return this.start?.date ?? '';
     },
     dateList() {
-      return ['today'];
+      const backDates = datesBack(11);
+      return [
+        ...backDates,
+        'Yesterday',
+        'Today',
+        'Tomorrow',
+        ...datesAhead(30),
+      ];
     },
 
     hoursList() {
@@ -166,9 +197,11 @@ export default {
       nominalTime: 'hours',
       eventSummary: '',
       fontSize: this.size,
-      fromFormat: 'DD hh mm a', // used only in updateNewDateTime() [may be a better way]
-      toFormat: 'ff', //less short localized date and time: e.g., Nov 10, 2021, 1:07 PM
 
+      fromEventFormat: 'y-LL-dd hh mm a', // e.g., 2021-11-10 01 00 PM
+      localizedDateFormat: 'DD hh mm a', //shortest localized date and time: e.g., Nov 10, 2021 1:07 PM
+      ISODateFormat: 'y-LL-dd', // e.g., 2021-11-10
+      abbreviatedMonthDateFormat: 'DD',
       startDateTime: null,
       endDateTime: null,
       startDateTimeNew: null,
@@ -178,7 +211,7 @@ export default {
       end: { date: '', hr: '', min: '', meridiem: '' },
 
       isEndTime: 0, // this is a toggle value: start=0 end=1
-      newDate: 'Today',
+      eventDate: '',
       hr: '',
       min: '',
       meridiem: '',
@@ -188,24 +221,52 @@ export default {
     };
   },
   methods: {
+    getEventDateString(val) {
+      switch (val) {
+        case 'Today':
+          return DateTime.now().toFormat(this.abbreviatedMonthDateFormat);
+        case 'Tomorrow':
+          return DateTime.now()
+            .plus({ days: 1 })
+            .toFormat(this.abbreviatedMonthDateFormat);
+        case 'Yesterday':
+          return DateTime.now()
+            .minus({ days: 1 })
+            .toFormat(this.abbreviatedMonthDateFormat);
+
+        default:
+          // val is already in abbreviatedMonthDateFormat
+          return val;
+      }
+    },
+
     updateNewDateTime() {
+      /*
+      This gets called when we start up where the start.date is ISO format, so convert to localizedFormat before it gets here
+      */
       if (this.ready) {
         let string = `${this.start.date} ${this.start.hr} ${this.start.min} ${this.start.meridiem}`;
 
-        this.startDateTimeNew = DateTime.fromFormat(string, this.fromFormat);
+        this.startDateTimeNew = DateTime.fromFormat(
+          string,
+          this.localizedDateFormat
+        );
 
         string = `${this.end.date} ${this.end.hr} ${this.end.min} ${this.end.meridiem}`;
-        this.endDateTimeNew = DateTime.fromFormat(string, this.fromFormat);
+        this.endDateTimeNew = DateTime.fromFormat(
+          string,
+          this.localizedDateFormat
+        );
 
         const diff = this.endDateTimeNew
           .diff(this.startDateTimeNew, this.nominalTime)
           .as(this.nominalTime);
 
         const x = `Log your shift from <br/>
-        ${this.startDateTimeNew.toFormat(this.toFormat)} to <br/>
-        ${this.endDateTimeNew.toFormat(this.toFormat)} [<strong>${diff} ${
-          this.nominalTime
-        }</strong>]`;
+        ${this.startDateTimeNew.toFormat(this.localizedDateFormat)} to <br/>
+        ${this.endDateTimeNew.toFormat(
+          this.localizedDateFormat
+        )} [<strong>${diff} ${this.nominalTime}</strong>]`;
 
         return x;
       }
@@ -224,19 +285,27 @@ export default {
     update() {
       this.eventSummary = this.updateNewDateTime();
       this.$emit('closeDateTimeCard', {
-        date: this.formattedDate,
+        date: this.start.date,
         start: this.startDateTimeNew,
         end: this.endDateTimeNew,
       });
     },
 
+    // only happens once when we open the vue
+    // currTimes will store the date in ISO format, so we need to convert that to picker format
     fixDates() {
-      const startMillis = this.selectedEventParsed
-        ? this.selectedEventParsed.input.start
-        : roundTime(t());
-      const endMillis = this.selectedEventParsed
-        ? this.selectedEventParsed.input.end
-        : roundTime(tPlusOne(30 * 16));
+      const { startDateString, startTime, endTime, present } = this.currTimes;
+
+      this.eventDate = present
+        ? 'Today'
+        : isTomorrow(startDateString)
+        ? 'Tomorrow'
+        : isYesterday(startDateString)
+        ? 'Yesterday'
+        : startDateString;
+
+      const startMillis = startTime ?? roundTime(t());
+      const endMillis = endTime ?? roundTime(tPlusOne(30 * 16));
       this.startDateTime = DateTime.fromMillis(startMillis);
       this.endDateTime = DateTime.fromMillis(endMillis);
 
@@ -244,21 +313,22 @@ export default {
       this.endDateTimeNew = this.endDateTime;
 
       this.start = {
-        date: this.startDateTime.toFormat('DD'),
+        date: startDateString,
         hr: this.startDateTime.toFormat('hh'),
         min: this.startDateTime.toFormat('mm'),
         meridiem: this.startDateTime.toFormat('a'),
       };
 
       this.end = {
-        date: this.endDateTime.toFormat('DD'),
+        date: startDateString, // this is not true if event crosses midnight
         hr: this.endDateTime.toFormat('hh'),
         min: this.endDateTime.toFormat('mm'),
         meridiem: this.endDateTime.toFormat('a'),
       };
+
       this.hr = this.start.hr;
       this.min = this.start.min;
-      this.dateString = todayAsISO();
+      this.meridiem = this.start.meridiem;
 
       this.ready = true;
     },
@@ -267,6 +337,15 @@ export default {
     ready() {
       this.fontSize = this.defaultFontSize;
       console.log(this.ready, this.hr);
+    },
+    eventDate(val) {
+      const dateString = this.getEventDateString(val);
+      if (this.isEndTime) {
+        this.end.date = dateString;
+      } else {
+        this.start.date = dateString;
+      }
+      this.update();
     },
     hr() {
       // end is when isEndTime

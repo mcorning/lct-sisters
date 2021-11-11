@@ -46,22 +46,67 @@ const getNowAsIso = () => {
   return DateTime.now().toISO();
 };
 
-const isToday = (date) => {
-  const dt1 = DateTime.fromISO(date);
+const isToday = (dateString) => {
+  const dt1 = DateTime.fromISO(dateString);
   return dt1.toLocaleString() === DateTime.now().toLocaleString();
+};
+
+const isTomorrow = (dateString) => {
+  const dayAfterTomorrow = DateTime.now()
+    .plus({ day: 2 })
+    .set({ hours: 0, minutes: 0, seconds: 0, millisecond: 0 });
+
+  const tomorrow = DateTime.now()
+    .plus({ day: 1 })
+    .set({
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      millisecond: 0,
+    });
+
+  const testDateTime = DateTime.fromISO(dateString);
+
+  // order matters
+  const x = Interval.fromDateTimes(tomorrow, dayAfterTomorrow).contains(
+    testDateTime
+  );
+  return x;
+};
+
+const isYesterday = (dateString) => {
+  const yesterday = DateTime.now()
+    .minus({ day: 1 })
+    .set({
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      millisecond: 0,
+    });
+  const midnight = DateTime.now().set({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    millisecond: 0,
+  });
+  const testDateTime = DateTime.fromISO(dateString);
+
+  // order matters
+  const x = Interval.fromDateTimes(yesterday, midnight).contains(testDateTime);
+  return x;
+};
+
+const isBetween = (dateString, daysBack) => {
+  let past = DateTime.now().minus({ day: daysBack });
+  let tomorrow = DateTime.now().plus({ day: 1 });
+  return Interval.fromDateTimes(past, tomorrow).contains(
+    DateTime.fromISO(dateString)
+  );
 };
 
 const userSince = (then) => {
   const i = Interval.fromDateTimes(then, DateTime.now());
   return i.length('days');
-};
-
-const isBetween = (date, daysBack) => {
-  let past = DateTime.now().minus({ day: daysBack });
-  let tomorrow = DateTime.now().plus({ day: 1 });
-  return Interval.fromDateTimes(past, tomorrow).contains(
-    DateTime.fromISO(date)
-  );
 };
 
 const formatVisitedDate = (date) => {
@@ -202,6 +247,8 @@ module.exports = {
   inFuture,
   isToday,
   isBetween,
+  isTomorrow,
+  isYesterday,
   formatSmallTime,
   formatSmallTimeBare,
   formatTime,

@@ -77,7 +77,7 @@
         </v-calendar>
       </v-sheet>
 
-      <v-bottom-sheet v-model="seePickers" max-width="500">
+      <v-bottom-sheet v-model="seePickers" max-width="550">
         <v-sheet>
           <event-edit-card
             v-if="!banner"
@@ -458,6 +458,7 @@ export default {
       }
       const { date, start, end } = dto;
       this.selectedEvent.date = date;
+      // TODO DCR use functional code to track invalid/reason/explanation
       this.selectedEvent.start = start.toMillis();
       this.selectedEvent.end = end.toMillis();
 
