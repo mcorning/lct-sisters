@@ -18,31 +18,34 @@
           <strong>{{ shiftDuration }}</strong>
         </v-col>
         <v-col cols="2" sm="1">
-          <v-btn color="primary" icon @click="edit = !edit"
-            ><v-icon>edit</v-icon></v-btn
-          ></v-col
-        >
+          <v-btn
+            v-if="currTimes.todayOnly"
+            color="primary"
+            icon
+            @click="printQR"
+            ><v-icon>print</v-icon></v-btn
+          >
+          <v-btn v-else color="primary" icon @click="update"
+            ><v-icon>check</v-icon></v-btn
+          >
+        </v-col>
       </v-row>
       <v-divider />
 
-      <v-container v-if="edit">
-        <v-row align="stretch"
-          ><v-col
-            ><v-btn-toggle v-model="isEndTime">
-              <v-btn
-                active-class="primary white--text pa-0"
-                :block="$vuetify.breakpoint.smAndUp"
-                >Start time</v-btn
-              ><v-btn
-                active-class="primary white--text"
-                :block="$vuetify.breakpoint.smAndUp"
-                >Ending time</v-btn
-              >
+      <v-container>
+        <v-row align="stretch" no-gutters
+          ><v-col class="text-center"
+            ><v-btn-toggle v-model="isEndTime" rounded mandatory>
+              <v-btn active-class="primary white--text "> Starting Time </v-btn
+              ><v-btn active-class="primary white--text px-4"
+                >Ending Time
+              </v-btn>
             </v-btn-toggle></v-col
           ></v-row
         >
 
         <v-row
+          no-gutters
           align="center"
           :style="{
             'font-size': `${fontSize}px`,
@@ -86,7 +89,7 @@
             ></scroll-picker
           ></v-col>
         </v-row>
-        <v-row
+        <v-row no-gutters
           ><v-col>
             <span class="px-3">Scroll Size: {{ fontSize }}px</span>
             <input
@@ -124,13 +127,27 @@ export default {
     selectedEventParsed: {
       type: Object,
       default: () => {
-        const dt = t();
-        const date = dt.toISODate();
-        const start = dt.toMillis();
-        const end = dt.plus({ minutes: 30 }).toMillis();
+        const startMillis = roundTime(t());
+        const endMillis = roundTime(tPlusOne(30 * 16));
+
+        const startDateTime = DateTime.fromMillis(startMillis);
+        console.assert(
+          !startDateTime.invalid,
+          startDateTime.invalid?.explanation
+        );
+
+        const endDateTime = DateTime.fromMillis(endMillis);
+        console.assert(!endDateTime.invalid, endDateTime.invalid?.explanation);
+
+        const date = startDateTime.toISODate();
+        const start = startDateTime.toMillis();
+        const end = endDateTime.toMillis();
+        const todayOnly = true;
+
         const parsed = {
           input: { date, start, end },
           start: { past: false, present: true, future: false },
+          todayOnly,
         };
         console.log('parsed :>> ', parsed);
         return parsed;
@@ -153,6 +170,8 @@ export default {
       const past = this.selectedEventParsed.start.past;
       const present = this.selectedEventParsed.start.present;
       const future = this.selectedEventParsed.start.future;
+      const todayOnly = this.selectedEventParsed.todayOnly;
+
       return {
         startDateString,
         startTime,
@@ -160,6 +179,7 @@ export default {
         past,
         present,
         future,
+        todayOnly,
       };
     },
     eventLabel() {
@@ -189,6 +209,9 @@ export default {
       return this.start?.date ?? '';
     },
     dateList() {
+      if (this.currTimes.todayOnly) {
+        return ['Today'];
+      }
       const backDates = datesBack(11);
       return [
         ...backDates,
@@ -205,7 +228,6 @@ export default {
   },
   data() {
     return {
-      edit: false,
       nominalTime: 'hours',
       eventSummary: '',
       fontSize: this.size,
@@ -233,6 +255,9 @@ export default {
     };
   },
   methods: {
+    printQR() {
+      this.$emit('printQR');
+    },
     printJson(json) {
       return JSON.stringify(json, null, 3);
     },
@@ -309,8 +334,14 @@ export default {
 
     // give infoWindowCard or Calendar that data needed to update the QR code and the URI or the event and graph
 
-    update() {
+    updatePanel() {
       this.eventSummary = this.updateNewDateTime();
+      console.log('eventSummary', this.printJson(this.eventSummary));
+      if (this.currTimes.todayOnly) {
+        this.update();
+      }
+    },
+    update() {
       // this.start.date is in localized format. return it to ISO for storage
       const localDt = DateTime.fromFormat(
         this.start.date,
@@ -319,11 +350,10 @@ export default {
       console.assert(!localDt.invalid, localDt.invalid?.explanation);
 
       const date = localDt.toISODate();
-
       this.$emit('closeDateTimeCard', {
         date,
-        start: this.startDateTimeNew,
-        end: this.endDateTimeNew,
+        start: this.startDateTimeNew.toMillis(),
+        end: this.endDateTimeNew.toMillis(),
       });
     },
 
@@ -396,7 +426,7 @@ export default {
       // } else {
       this.start.date = dateString;
       // }
-      this.update();
+      this.updatePanel();
     },
     hr() {
       // end is when isEndTime
@@ -405,7 +435,7 @@ export default {
       } else {
         this.start.hr = this.hr;
       }
-      this.update();
+      this.updatePanel();
     },
     min() {
       // end is when isEndTime
@@ -414,7 +444,7 @@ export default {
       } else {
         this.start.min = this.min;
       }
-      this.update();
+      this.updatePanel();
     },
     meridiem() {
       // end is when isEndTime
@@ -423,7 +453,7 @@ export default {
       } else {
         this.start.meridiem = this.meridiem;
       }
-      this.update();
+      this.updatePanel();
     },
 
     isEndTime() {

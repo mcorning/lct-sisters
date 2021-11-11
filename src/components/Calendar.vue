@@ -459,8 +459,8 @@ export default {
       const { date, start, end } = dto;
       this.selectedEvent.date = date;
       // TODO DCR use functional code to track invalid/reason/explanation
-      this.selectedEvent.start = start.toMillis();
-      this.selectedEvent.end = end.toMillis();
+      this.selectedEvent.start = start;
+      this.selectedEvent.end = end;
 
       this.update('cache');
 

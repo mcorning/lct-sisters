@@ -100,7 +100,7 @@ async function setStartEnd(param, ack) {
   const { id, start, end, graphName } = param;
   changeGraph(graphName);
 
-  console.log('param:', param);
+  console.log('setStartEnd(param):', param);
   const q = `MATCH ()-[v:visited]->() WHERE id(v)=${id} SET v.start=${start}, v.end=${end}`;
   console.log(q);
   Graph.query(q)

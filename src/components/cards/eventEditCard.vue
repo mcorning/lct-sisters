@@ -5,10 +5,39 @@
       <v-spacer />
       <v-btn @click="onCloseDateTimeCard(0)" icon><v-icon>close</v-icon></v-btn>
     </v-toolbar>
+    <v-card-text v-if="!edit">
+      <v-row dense align="start">
+        <v-col>
+          <strong>Visit starts</strong>
+          <br />
+
+          {{ currTimes.startDateTimeFormatted }}
+        </v-col>
+        <v-col co>
+          <strong>Visit ends</strong>
+          <br />
+          {{ currTimes.endDateTimeFormatted }}
+        </v-col>
+        <v-col cols="3" class="text-center">
+          <strong>Duration</strong>
+          <br />
+          <strong>{{ currTimes.duration }}</strong>
+        </v-col>
+        <v-col cols="2" sm="1">
+          <v-btn color="primary" icon @click="edit = !edit"
+            ><v-icon>edit</v-icon></v-btn
+          ></v-col
+        >
+      </v-row>
+    </v-card-text>
+
+    <!-- we pass in an extant event so dateTimeCard acts accordingly -->
     <date-time-card
+      v-else
       :selectedEventParsed="selectedEventParsed"
       @closeDateTimeCard="onCloseDateTimeCard"
     ></date-time-card>
+
     <v-card-actions>
       <v-btn icon color="secondary" @click="deleteEvent">
         <v-icon>delete</v-icon>
@@ -31,6 +60,7 @@
 <script>
 import 'vue-scroll-picker/dist/style.css';
 import dateTimeCard from './dateTimeCard.vue';
+import { DateTime } from '@/utils/luxonHelpers';
 
 export default {
   name: 'eventEditCard',
@@ -40,9 +70,40 @@ export default {
     isConnected: Boolean,
   },
   components: { dateTimeCard },
-  computed: {},
+  computed: {
+    currTimes() {
+      const startDateString = this.selectedEventParsed.input.date;
+      const startTime = this.selectedEventParsed.input.start;
+      const endTime = this.selectedEventParsed.input.end;
+      const startDT = new DateTime.fromMillis(startTime);
+      const endDT = new DateTime.fromMillis(endTime);
+      const startDateTimeFormatted = startDT.toFormat(this.localizedDateFormat);
+      const endDateTimeFormatted = endDT.toFormat(this.localizedDateFormat);
+      const diff = endDT.diff(startDT, this.nominalTime).as(this.nominalTime);
+      const duration = `${diff} ${this.nominalTime}`;
+      const past = this.selectedEventParsed.start.past;
+      const present = this.selectedEventParsed.start.present;
+      const future = this.selectedEventParsed.start.future;
+      return {
+        startDateTimeFormatted,
+        endDateTimeFormatted,
+        duration,
+        startDateString,
+        startTime,
+        endTime,
+        past,
+        present,
+        future,
+      };
+    },
+  },
   data() {
     return {
+      edit: false,
+      localizedDateFormat: 'DD hh mm a', //shortest localized date and time: e.g., Nov 10, 2021 1:07 PM
+      nominalTime: 'hours',
+
+      openDateTimeCard: false,
       prefersClock: false,
       startHr: '10',
       startMin: '30',
@@ -61,8 +122,16 @@ export default {
     };
   },
   methods: {
+    printJson(json) {
+      return JSON.stringify(json, null, 3);
+    },
     //#region called by date-time-card
+    // TODO use destructured params whenever possible
     onCloseDateTimeCard(newDateTimes) {
+      console.log(
+        'onCloseDateTimeCard(newDateTimes):',
+        this.printJson(newDateTimes)
+      );
       this.$emit('closeDateTimeCard', newDateTimes);
     },
     //#endregion called by date-time-card

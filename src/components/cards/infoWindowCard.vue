@@ -27,7 +27,7 @@
           ><v-icon>delete</v-icon></v-btn
         >
         <v-spacer />
-        <v-dialog v-model="enlargeQR" width="500">
+        <v-dialog v-model="enlargeQR" width="520">
           <template v-slot:activator="{ on, attrs }">
             <v-btn color="primary" icon v-bind="attrs" v-on="on">
               <v-icon>share</v-icon>
@@ -71,8 +71,9 @@
                       <!-- <v-row v-if="item.content === 'Shift'"> -->
                       <v-row v-if="employee">
                         <date-time-card
-                          :size="28"
+                          :size="24"
                           :edit="edit"
+                          @printQR="onPrintQR"
                           @closeDateTimeCard="onCloseDateTimeCard"
                         />
                       </v-row>
@@ -96,14 +97,14 @@
                 </v-row>
 
                 <v-divider class="my-3"></v-divider>
-
-                <!-- <v-btn block @click="copyLink"
-                  ><v-icon left>content_copy</v-icon>Copy event link</v-btn
-                > -->
                 <v-card-title>Event Link</v-card-title>
                 <v-card-text class="text-caption text-sm-body-2">{{
                   decodedUri
                 }}</v-card-text>
+
+                <!-- <v-btn block @click="copyLink"
+                  ><v-icon left>content_copy</v-icon>Copy event link</v-btn
+                > -->
 
                 <!-- confirmation screen -->
                 <v-sheet
@@ -127,14 +128,8 @@
                 </v-sheet>
               </v-card-text>
             </div>
-            <v-card-actions v-if="!printing">
-              <v-spacer />
-              <v-btn color="primary" icon @click="printing = true"
-                ><v-icon>print</v-icon></v-btn
-              >
-              <v-spacer />
-            </v-card-actions>
-            <v-card-actions v-else>
+            <v-divider class="my-3"></v-divider>
+            <v-card-actions>
               <v-btn text color="primary" plain @click="printing = false"
                 >Cancel</v-btn
               >
@@ -173,7 +168,7 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import dateTimeCard from './dateTimeCard.vue';
-import { asHour, asMinute } from '@/utils/luxonHelpers';
+import { DateTime, asHour, asMinute } from '@/utils/luxonHelpers';
 export default {
   name: 'InfowindowCard',
   props: {
@@ -198,7 +193,7 @@ export default {
     dialogSubtitle() {
       const text = this.printing
         ? this.tab === 0
-          ? 'Sign in to work with the LCT QR code.'
+          ? 'Use the LCT QR code to sign in to work safely.'
           : 'Help us do our part to beat the virus. Scan QR to open our Local Contact Tracing app and log your visit today.'
         : 'Use this dialog to log in at work or to share this public place with visitors.';
       return text;
@@ -259,6 +254,7 @@ export default {
   },
   data() {
     return {
+      preview: false,
       edit: false,
       printing: false,
       tab: null,
@@ -275,6 +271,10 @@ export default {
     };
   },
   methods: {
+    onPrintQR() {
+      this.printing = true;
+    },
+
     closeDialog() {
       this.enlargeQR = false;
       this.printing = false;
@@ -286,8 +286,9 @@ export default {
       return `${hour}:${minute}`;
     },
     onCloseDateTimeCard({ start, end }) {
-      this.startShift = this.getDateString(start);
-      this.endShift = this.getDateString(end);
+      // start/endshift uses time literal
+      this.startShift = new DateTime.fromMillis(start).toFormat('hh:mm a');
+      this.endShift = new DateTime.fromMillis(end).toFormat('hh:mm a');
     },
 
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
@@ -299,6 +300,7 @@ export default {
       this.$emit('deleteMarker');
     },
     printMe() {
+      this.preview = true;
       window.print();
     },
   },
