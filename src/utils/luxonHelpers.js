@@ -277,4 +277,5 @@ module.exports = {
   endRounded,
   startTimeString,
   endTimeString,
+  parseDate,
 };

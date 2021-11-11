@@ -4,6 +4,7 @@ import 'either-async';
 import {
   DateTime,
   getNow,
+  t,
   tPlusOne,
   getNowAsMillis,
   roundTime,
@@ -34,7 +35,30 @@ export const spaceMixin = {
 
     getTimeToday(val, x) {
       console.log('getTime():', val, x);
+      const test = Number(val);
+      //is test NaN?
+      if (Object.is(test, NaN)) {
+        // assume val is time literal
+        const date = t().toISODate();
+        const dt = new DateTime.fromFormat(`${date} ${val}`, 'y-MM-dd hh:mm a');
+        console.assert(!dt.invalid, dt.invalid?.explanation);
+        return dt.toMillis();
+      }
+      if (!test) {
+        // no useful val, so assume now and return end or start
+        const dt = x
+          ? roundTime(tPlusOne().toMillis())
+          : roundTime(getNowAsMillis());
+        return dt;
+      }
+      // otherwise return the numberic value of val
+      return test;
+    },
+    getTimeTodayOld(val, x) {
+      console.log('getTime():', val, x);
+      // val can be a string integer (timestamp) or a time literal (xx:xx)
       if (val && typeof val === 'string') {
+        // val is a time literal
         if (val.includes(':')) {
           const hrs = Number(val.slice(0, 2));
           const ampm = val.slice(5).toLowerCase();
@@ -55,8 +79,10 @@ export const spaceMixin = {
           console.log(dt.toString());
           return dt.toMillis();
         }
+        // val is a timestamp, so turn it into an integer
         return Number(val);
       }
+      // otherwise get now end or start
       const dt = x
         ? roundTime(tPlusOne().toMillis())
         : roundTime(getNowAsMillis());

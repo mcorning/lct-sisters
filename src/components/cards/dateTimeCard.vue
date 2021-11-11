@@ -121,16 +121,27 @@ export default {
   name: 'dateTimeCard',
 
   props: {
-    selectedEventParsed: Object,
+    selectedEventParsed: {
+      type: Object,
+      default: () => {
+        const dt = t();
+        const date = dt.toISODate();
+        const start = dt.toMillis();
+        const end = dt.plus({ minutes: 30 }).toMillis();
+        const parsed = {
+          input: { date, start, end },
+          start: { past: false, present: true, future: false },
+        };
+        console.log('parsed :>> ', parsed);
+        return parsed;
+      },
+    },
     size: { type: Number, default: () => 28 },
   },
   components: { ScrollPicker },
   computed: {
     // TODO harden this code against NaN start/end integers
     currTimes() {
-      if (!this.selectedEventParsed) {
-        return null;
-      }
       // convert this ISO date format into localizedFormat
       // const startDateString = new DateTime.fromISO(
       //   this.selectedEventParsed.input.date
