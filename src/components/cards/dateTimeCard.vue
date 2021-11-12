@@ -159,10 +159,6 @@ export default {
   computed: {
     // TODO harden this code against NaN start/end integers
     currTimes() {
-      // convert this ISO date format into localizedFormat
-      // const startDateString = new DateTime.fromISO(
-      //   this.selectedEventParsed.input.date
-      // ).toFormat(this.abbreviatedMonthDateFormat);
       const startDateString = this.selectedEventParsed.input.date;
       const startTime = this.selectedEventParsed.input.start;
       const endTime = this.selectedEventParsed.input.end;
@@ -369,7 +365,7 @@ export default {
         : isYesterday(startDateString)
         ? 'Yesterday'
         : // ultimately we change the ISO date to a localized date string format
-          new DateTime.fromISO(startDateString).toFormat(
+          DateTime.fromISO(startDateString).toFormat(
             this.abbreviatedMonthDateFormat
           );
 

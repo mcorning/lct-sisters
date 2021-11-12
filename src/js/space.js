@@ -6,7 +6,7 @@ import {
   getNow,
   t,
   tPlusOne,
-  getNowAsMillis,
+  parseDate,
   roundTime,
 } from '@/utils/luxonHelpers';
 import crypto from 'crypto';
@@ -33,77 +33,34 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
-    getTimeToday(val, x) {
-      console.log('getTime():', val, x);
-      if (!test) {
-        // no useful val, so assume now and return end or start
-        const dt = x
-          ? roundTime(tPlusOne().toMillis())
-          : roundTime(getNowAsMillis());
+    getTimeFromQuery(val, incr) {
+      console.log(`getTimeFromQuery( ${val}, ${incr})`);
+      const today = () => {
+        const dt = incr ? tPlusOne(incr) : t();
         return dt;
-      }
+      };
 
-      const test = Number(val);
-      //is test NaN?
-      if (Object.is(test, NaN)) {
-        // assume val is ISO date
-        let dateTime = new DateTime.fromISO(val);
-        if (dateTime.invalid) {
-          // assume val is time literal
-          const date = t().toISODate();
-          dateTime = new DateTime.fromFormat(
-            `${date} ${val}`,
-            'y-MM-dd hh:mm a'
-          );
-          console.assert(!dateTime.invalid, dateTime.invalid?.explanation);
-        }
-
-        return dateTime.toMillis();
-      }
-
-      // otherwise return the now numberic value of val
-      return test;
-    },
-    getTimeTodayOld(val, x) {
-      console.log('getTime():', val, x);
-      // val can be a string integer (timestamp) or a time literal (xx:xx)
-      if (val && typeof val === 'string') {
-        // val is a time literal
-        if (val.includes(':')) {
-          const hrs = Number(val.slice(0, 2));
-          const ampm = val.slice(5).toLowerCase();
-          const hr24 =
-            ampm === 'am'
-              ? hrs === 12
-                ? 0
-                : hrs
-              : hrs === 12
-              ? hrs
-              : hrs + 12;
-          const mins = Number(val.slice(3, 5));
-
-          const dt = new DateTime.fromObject({
-            hours: hr24,
-            minutes: mins,
-          });
-          console.log(dt.toString());
-          return dt.toMillis();
-        }
-        // val is a timestamp, so turn it into an integer
-        return Number(val);
-      }
-      // otherwise get now end or start
-      const dt = x
-        ? roundTime(tPlusOne().toMillis())
-        : roundTime(getNowAsMillis());
-      return dt;
+      const parsed = parseDate(val).cata({
+        Just: (dateJS) => DateTime.fromJSDate(dateJS),
+        Nothing: () => {
+          console.log('Using default dateTime');
+          if (val) {
+            const date = t().toISODate();
+            const dateString = `${date}T${val}`;
+            console.log(dateString);
+            return DateTime.fromISO(dateString);
+          }
+          return today();
+        },
+      });
+      return roundTime(parsed.toMillis());
     },
 
     onSharePlace(decoded) {
       const route = this.$route.query;
       const place_id = decoded || route.place_id;
-      const start = this.getTimeToday(route.start);
-      const end = this.getTimeToday(route.end, 1);
+      const start = this.getTimeFromQuery(route.start);
+      const end = this.getTimeFromQuery(route.end, route.avgStay);
 
       // replace the "escaped" underscores with spaces
       const name = route.name.replace(/_/g, ' ');

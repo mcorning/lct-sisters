@@ -63,9 +63,13 @@
                 <v-tabs-items v-model="tab">
                   <v-tab-item v-for="item in items" :key="item.tab">
                     <v-card flat>
-                      <v-card-text
-                        v-if="!employee"
-                        v-text="item.content"
+                      <v-card-text v-if="!employee" v-text="item.content">
+                      </v-card-text>
+                      <v-card-text v-if="!employee">
+                        <v-text-field
+                          v-model="avgStay"
+                          label="Visitor average stay (minutes)"
+                        ></v-text-field
                       ></v-card-text>
 
                       <!-- <v-row v-if="item.content === 'Shift'"> -->
@@ -192,7 +196,7 @@ export default {
 
     dialogSubtitle() {
       const text = this.printing
-        ? this.tab === 0
+        ? this.employee
           ? 'Use the LCT QR code to sign in to work safely.'
           : 'Help us do our part to beat the virus. Scan QR to open our Local Contact Tracing app and log your visit today.'
         : 'Use this dialog to log in at work or to share this public place with visitors.';
@@ -200,7 +204,7 @@ export default {
     },
 
     decodedUri() {
-      return this.tab === 0 ? this.decodedShiftUri : this.decodedVisitorUri;
+      return this.employee ? this.decodedShiftUri : this.decodedVisitorUri;
     },
     mailToUri() {
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
@@ -220,7 +224,7 @@ export default {
     },
     decodedVisitorUri() {
       // the QR code generator needs to use the decoded URI
-      const uri = `${this.mailToUri}`;
+      const uri = `${this.mailToUri}&avgStay=${this.avgStay}`;
       const d = decodeURIComponent(uri);
       return d;
     },
@@ -260,6 +264,7 @@ export default {
   },
   data() {
     return {
+      avgStay: 30,
       preview: false,
       edit: false,
       printing: false,
@@ -296,8 +301,8 @@ export default {
       // this.startShift = new DateTime.fromMillis(start).toFormat('hh:mm a');
       // this.endShift = new DateTime.fromMillis(end).toFormat('hh:mm a');
       // space getting in the way. use millis.
-      this.startShift = new DateTime.fromMillis(start);
-      this.endShift = new DateTime.fromMillis(end);
+      this.startShift = new DateTime.fromMillis(start).toISOTime();
+      this.endShift = new DateTime.fromMillis(end).toISOTime();
     },
 
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy

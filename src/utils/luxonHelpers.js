@@ -32,7 +32,13 @@ const endTimeString = () => {
 
 const tPlusOne = (avgStay = 30) => {
   // using Luxon Presets
-  return DateTime.now().plus({ minutes: avgStay });
+  const n = DateTime.now();
+  console.log('n:', n.toLocaleString(DateTime.TIME_SIMPLE));
+  console.log('avgStay:', avgStay);
+  const nplus = n.plus({ minutes: avgStay });
+  console.log('nplus:', nplus.toLocaleString(DateTime.TIME_SIMPLE));
+
+  return nplus;
 };
 const getNow = () => {
   // using Luxon Presets
