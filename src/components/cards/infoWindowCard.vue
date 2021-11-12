@@ -287,8 +287,11 @@ export default {
     },
     onCloseDateTimeCard({ start, end }) {
       // start/endshift uses time literal
-      this.startShift = new DateTime.fromMillis(start).toFormat('hh:mm a');
-      this.endShift = new DateTime.fromMillis(end).toFormat('hh:mm a');
+      // this.startShift = new DateTime.fromMillis(start).toFormat('hh:mm a');
+      // this.endShift = new DateTime.fromMillis(end).toFormat('hh:mm a');
+      // space getting in the way. use millis.
+      this.startShift = new DateTime.fromMillis(start);
+      this.endShift = new DateTime.fromMillis(end);
     },
 
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy

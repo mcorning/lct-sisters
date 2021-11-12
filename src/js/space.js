@@ -38,11 +38,16 @@ export const spaceMixin = {
       const test = Number(val);
       //is test NaN?
       if (Object.is(test, NaN)) {
+        // assume val is ISO date
+        let dateTime=new DateTime.fromISO(val)
+        if (dateTime.invalid) {
         // assume val is time literal
         const date = t().toISODate();
-        const dt = new DateTime.fromFormat(`${date} ${val}`, 'y-MM-dd hh:mm a');
-        console.assert(!dt.invalid, dt.invalid?.explanation);
-        return dt.toMillis();
+        dateTime = new DateTime.fromFormat(`${date} ${val}`, 'y-MM-dd hh:mm a');
+        console.assert(!dateTime.invalid, dateTime.invalid?.explanation);          
+        }
+
+        return dateTime.toMillis();
       }
       if (!test) {
         // no useful val, so assume now and return end or start
@@ -51,7 +56,7 @@ export const spaceMixin = {
           : roundTime(getNowAsMillis());
         return dt;
       }
-      // otherwise return the numberic value of val
+      // otherwise return the now numberic value of val
       return test;
     },
     getTimeTodayOld(val, x) {
