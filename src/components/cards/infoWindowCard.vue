@@ -200,7 +200,7 @@ export default {
     },
 
     decodedUri() {
-      return this.tab === 0 ? this.decodedShiftUri : this.mailToUri;
+      return this.tab === 0 ? this.decodedShiftUri : this.decodedVisitorUri;
     },
     mailToUri() {
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
@@ -215,6 +215,12 @@ export default {
     decodedShiftUri() {
       // the QR code generator needs to use the decoded URI
       const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
+      const d = decodeURIComponent(uri);
+      return d;
+    },
+    decodedVisitorUri() {
+      // the QR code generator needs to use the decoded URI
+      const uri = `${this.mailToUri}`;
       const d = decodeURIComponent(uri);
       return d;
     },

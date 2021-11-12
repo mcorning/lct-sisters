@@ -35,20 +35,6 @@ export const spaceMixin = {
 
     getTimeToday(val, x) {
       console.log('getTime():', val, x);
-      const test = Number(val);
-      //is test NaN?
-      if (Object.is(test, NaN)) {
-        // assume val is ISO date
-        let dateTime=new DateTime.fromISO(val)
-        if (dateTime.invalid) {
-        // assume val is time literal
-        const date = t().toISODate();
-        dateTime = new DateTime.fromFormat(`${date} ${val}`, 'y-MM-dd hh:mm a');
-        console.assert(!dateTime.invalid, dateTime.invalid?.explanation);          
-        }
-
-        return dateTime.toMillis();
-      }
       if (!test) {
         // no useful val, so assume now and return end or start
         const dt = x
@@ -56,6 +42,25 @@ export const spaceMixin = {
           : roundTime(getNowAsMillis());
         return dt;
       }
+
+      const test = Number(val);
+      //is test NaN?
+      if (Object.is(test, NaN)) {
+        // assume val is ISO date
+        let dateTime = new DateTime.fromISO(val);
+        if (dateTime.invalid) {
+          // assume val is time literal
+          const date = t().toISODate();
+          dateTime = new DateTime.fromFormat(
+            `${date} ${val}`,
+            'y-MM-dd hh:mm a'
+          );
+          console.assert(!dateTime.invalid, dateTime.invalid?.explanation);
+        }
+
+        return dateTime.toMillis();
+      }
+
       // otherwise return the now numberic value of val
       return test;
     },
