@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card v-if="info" class="mx-auto" max-width="344">
-      <v-card-text class="text-subtitle-2  mr-5 pb-0">
+      <v-card-text class="text-subtitle-1   pb-0">
         <div v-if="!isGathering">{{ name }}</div>
         <v-text-field
           v-else
@@ -10,14 +10,22 @@
         />
       </v-card-text>
 
-      <v-card-subtitle
+      <v-card-subtitle class="text-sm-subtitle-2 text-caption pb-xs-0"
         >{{ address }}<br /><span v-if="placeLink" v-html="placeLink"></span
       ></v-card-subtitle>
-      <v-btn text color="primary" @click="reveal = true">
-        Show location details
+      <v-btn
+        class="text-caption pt-xs-0"
+        text
+        block
+        color="primary"
+        :small="$vuetify.breakpoint.xs"
+        @click="reveal = true"
+      >
+        {{ locationDetailsText }}
       </v-btn>
       <v-btn
         block
+        :small="$vuetify.breakpoint.xs"
         color="primary"
         @click="onVisitPlace({ placeId, gatheringName })"
         >Mark Calendar</v-btn
@@ -133,7 +141,7 @@
               </v-card-text>
             </div>
             <v-divider class="my-3"></v-divider>
-            <v-card-actions>
+            <v-card-actions v-if="printing">
               <v-btn text color="primary" plain @click="printing = false"
                 >Cancel</v-btn
               >
@@ -190,6 +198,11 @@ export default {
   },
 
   computed: {
+    locationDetailsText() {
+      return this.$vuetify.breakpoint.xs
+        ? 'Location details'
+        : 'Show location details';
+    },
     employee() {
       return this.tab === 0;
     },
@@ -256,7 +269,9 @@ export default {
       if (!this.info) {
         return '';
       }
-      return `<a href="${this.info.url}">Show place details on Googlemap</a>`;
+      return `<a href="${this.info.url}">Show ${
+        this.$vuetify.breakpoint.xs ? '' : 'place details'
+      } on Googlemap</a>`;
     },
     address() {
       return this.info?.formatted_address ?? '';

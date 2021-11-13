@@ -140,6 +140,7 @@
         v-model="snackbar"
         top
         :color="confirmationColor"
+        vertical
         timeout="15000"
       >
         <span v-html="confirmationMessage" />

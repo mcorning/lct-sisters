@@ -13,7 +13,7 @@
           {{ shiftEnd }}
         </v-col>
         <v-col cols="3" class="text-center">
-          <strong>Duration</strong>
+          <strong>{{ durationText }}</strong>
           <br />
           <strong>{{ shiftDuration }}</strong>
         </v-col>
@@ -36,7 +36,8 @@
         <v-row align="stretch" no-gutters
           ><v-col class="text-center"
             ><v-btn-toggle v-model="isEndTime" rounded mandatory>
-              <v-btn active-class="primary white--text "> Starting Time </v-btn
+              <v-btn active-class="primary white--text ">
+                {{ buttonStartText }} </v-btn
               ><v-btn active-class="primary white--text px-4"
                 >Ending Time
               </v-btn>
@@ -157,6 +158,16 @@ export default {
   },
   components: { ScrollPicker },
   computed: {
+    buttonStartText() {
+      return this.$vuetify.breakpoint.xs ? 'Start' : 'Starting Time';
+    },
+    buttonEndText() {
+      return this.$vuetify.breakpoint.xs ? 'End' : 'Ending Time';
+    },
+    durationText() {
+      return this.$vuetify.breakpoint.xs ? 'Hours' : 'Duration';
+    },
+
     // TODO harden this code against NaN start/end integers
     currTimes() {
       const startDateString = this.selectedEventParsed.input.date;
@@ -197,7 +208,7 @@ export default {
 
     defaultFontSize() {
       const s = this.size ?? 28;
-      const x = this.$vuetify.breakpoint.smAndUp ? s : 12;
+      const x = this.$vuetify.breakpoint.smAndUp ? s : 20;
       return x;
     },
 

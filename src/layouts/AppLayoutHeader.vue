@@ -105,9 +105,7 @@
         >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
       </v-icon>
       <span>{{ shortUserID }}</span>
-      <v-btn icon @click="open('Monitor')">
-        <v-icon>mdi-monitor-dashboard</v-icon>
-      </v-btn>
+
       <!-- Begin Options Menu-->
       <nestedMenu
         :menu-items="fileMenuItems"
@@ -205,6 +203,13 @@ export default {
 
     fileMenuItems() {
       const x = [
+        {
+          subtitle: 'Look behind the curtain',
+          name: 'Monitor',
+          action: 'Monitor',
+          icon: 'mdi-monitor-dashboard',
+          color: 'orange',
+        },
         {
           subtitle: 'How are we doing?',
           name: 'Feedback',
@@ -381,6 +386,9 @@ export default {
         return;
       }
       switch (item.action) {
+        case 'Monitor':
+          this.open('Monitor');
+          break;
         case 'Docs':
           window.open(
             'https://lct-docs.netlify.app',
