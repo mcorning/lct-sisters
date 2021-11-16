@@ -322,9 +322,6 @@ export default {
         ? JSON.parse(this.state.settings.default_map_center)
         : null;
     },
-    diagnosticsOutpus() {
-      return this.diagnostics.join('\n');
-    },
 
     places() {
       return this.state.places.map((v) => v.name);

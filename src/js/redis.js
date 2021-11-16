@@ -80,13 +80,26 @@ export const redisMixin = {
       // Phase 2
       // callback for 'getVisitTimes' event
       function compareVisitData(fromGraph) {
-        vm.log('Validating Visit Data:');
+        const userID = vm.$socket.client.auth.userID;
+
+        vm.log('Validating Visit Data for:', userID);
         vm.log(`    Dates from Graph(s):`);
         vm.log(printJson(fromGraph));
-        const localVisits = vm.getVisits();
         vm.log(`    Dates from calendar:`);
+        const localVisits = vm
+          .getVisits()
+          .map((v) => ({
+            id: v.id,
+            name: v.name,
+            place_id: v.place_id,
+            loggedVisitId: v.loggedVisitId,
+            graphName: v.graphName,
+            start: v.start,
+            startDate: new Date(v.start).toString(),
+            end: v.end,
+            endDate: new Date(v.end).toString(),
+          }));
         vm.log(printJson(localVisits));
-        const userID = vm.$socket.client.auth.userID;
 
         function deleteAllNodes() {
           fromGraph.forEach((node) => {

@@ -1,40 +1,45 @@
 <template>
-  <div>
-    <redis-card
-      class="SplitHorizontal"
-      :visitors="visitors"
-      :exposures="exposures"
-      :getVisits="getVisits"
-      :visitExists="visitExists"
-      @selectedChanged="onSelectedChanged"
-    ></redis-card>
-    <v-card flat v-if="openDiagnostics">
-      <v-btn absolute top right icon @click="openDiagnostics = false"
-        ><v-icon>close</v-icon></v-btn
-      >
-      <v-tooltip top>
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn
-            v-bind="attrs"
-            v-on="on"
-            @click="emailDiagnostics"
-            color="primary"
-            large
-            text
-            class="mt-3"
+  <v-container fluid>
+    <v-row>
+      <v-col cols="8">
+        <redis-card
+          :visitors="visitors"
+          :exposures="exposures"
+          :getVisits="getVisits"
+          :visitExists="visitExists"
+          @selectedChanged="onSelectedChanged"
+        ></redis-card>
+      </v-col>
+      <v-col>
+        <v-card flat v-if="openDiagnostics">
+          <v-btn absolute top right icon @click="openDiagnostics = false"
+            ><v-icon>close</v-icon></v-btn
           >
-            <v-icon left>email</v-icon>
-            Diagnostics
-          </v-btn>
-        </template>
-        <span>Email diagnostics to LCT Dev Lead</span>
-      </v-tooltip>
+          <v-tooltip top>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                v-bind="attrs"
+                v-on="on"
+                @click="emailDiagnostics"
+                color="primary"
+                large
+                text
+                class="mt-3"
+              >
+                <v-icon left>email</v-icon>
+                Diagnostics
+              </v-btn>
+            </template>
+            <span>Email diagnostics to LCT Dev Lead</span>
+          </v-tooltip>
 
-      <v-card-text>
-        <pre class="text-body-2">{{ diagnosticOutput }}</pre>
-      </v-card-text>
-    </v-card>
-  </div>
+          <v-card-text>
+            <pre class="text-body-2">{{ diagnosticOutput }}</pre>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -81,7 +86,6 @@ export default {
   data() {
     return {
       openDiagnostics: true,
-      // openDiagnostics: this.emergency,
     };
   },
   methods: {

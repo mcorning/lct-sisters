@@ -105,7 +105,17 @@ export default {
       return x;
     },
     getVisits() {
-      const x = Visit.query().get();
+      const x = Visit.query()
+        .get()
+        .filter(
+          (v) =>
+            !(
+              !v.start ||
+              !v.end ||
+              Number.isNaN(v.start) ||
+              Number.isNaN(v.end)
+            )
+        );
       return x;
     },
     getPlaces() {

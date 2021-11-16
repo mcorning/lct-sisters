@@ -19,7 +19,7 @@
 
     <v-row>
       <!-- Visitor list -->
-      <v-col v-if="hasVisitors" cols="12" md="3">
+      <v-col cols="12" md="3">
         <v-card-title><h6>Participation</h6></v-card-title>
         <v-card-subtitle>Other visitors on graphs you use</v-card-subtitle>
         <v-card-text class="text-caption"
@@ -176,7 +176,7 @@ export default {
     console.log('socket userID:', this.$socket.client.auth.userID);
     this.$emit('selectedChanged', this.selectedUserID);
     this.ready = true;
-    console.log('\tTESTCARD mounted');
+    console.log('\tREDISCARD mounted');
   },
 };
 </script>
