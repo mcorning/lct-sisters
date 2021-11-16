@@ -4,6 +4,23 @@ const { parseDate } = require('pratica');
 const visitFormat = 'HH:mm ccc, DD';
 const calendarFormat = 'yyyy-LL-dd hh:mm';
 
+// TODO Good candidate for pointfree style
+/**
+ *
+ * @param {*} date is ISODate string
+ * @param {*} time can be null or a time literal
+ * @param {*} incr can be null or number of minutes
+ * @returns         rounded milliseconds
+ */
+const safeDateTime = (date, time, incr) => {
+  console.log(date, time, incr);
+  const dateString = time ? `${date}T${time}` : date;
+  // if no time, date is irrelevant because we default to now
+  const dt = time ? DateTime.fromISO(dateString) : t();
+  const dateTime = incr ? dt.plus({ minutes: incr }) : dt;
+  return dateTime;
+};
+
 const t = () => {
   // using Luxon Presets
   return DateTime.now();
@@ -284,4 +301,5 @@ module.exports = {
   startTimeString,
   endTimeString,
   parseDate,
+  safeDateTime,
 };

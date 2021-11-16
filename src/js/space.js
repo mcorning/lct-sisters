@@ -5,9 +5,9 @@ import {
   DateTime,
   getNow,
   t,
-  tPlusOne,
   parseDate,
   roundTime,
+  safeDateTime,
 } from '@/utils/luxonHelpers';
 import crypto from 'crypto';
 const randomId = () => crypto.randomBytes(8).toString('hex');
@@ -33,37 +33,49 @@ export const spaceMixin = {
       alert('onShareGathering is under construction for ' + placeId);
     },
 
-    getTimeFromQuery(val, incr) {
-      console.log(`getTimeFromQuery( ${val}, ${incr})`);
-      const today = () => {
-        const dt = incr ? tPlusOne(incr) : t();
-        return dt;
-      };
-
-      const parsed = parseDate(val).cata({
+    /**
+     * @param {*} date can be null or ISODate
+     * @param {*} time can be ms or time literal
+     * @param {*} incr can be null or number of minutes
+     * @returns         rounded milliseconds
+     */
+    getTimeFromQuery(date, time, incr) {
+      console.log(`getTimeFromQuery( ${date},${time}, ${incr})`);
+      const dateTimeAsDateTime = parseDate(date?Number(time):time).cata({
+        // if time is ms, Just has value
         Just: (dateJS) => DateTime.fromJSDate(dateJS),
+        // otherwise, work harder to produce a DateTime
         Nothing: () => {
-          console.log('Using default dateTime');
-          if (val) {
-            const date = t().toISODate();
-            const dateString = `${date}T${val}`;
-            console.log(dateString);
-            return DateTime.fromISO(dateString);
-          }
-          return today();
+          return safeDateTime(date, time, incr);
         },
       });
-      return roundTime(parsed.toMillis());
+
+      // now round the time and return millis to caller
+      return roundTime(dateTimeAsDateTime.toMillis());
     },
 
+    /*
+     * query comes from three places:
+     *    1) Share an event (ISOdate and ms have value (only use ms))
+     *    2) visitor logs with QR (no date, no time, default to now)
+     *    3) Employee logs in to work (no date, ISOTime)
+     *
+     * always pass a date to getTimeFromQuery()
+     */
     onSharePlace(decoded) {
-      const route = this.$route.query;
-      const place_id = decoded || route.place_id;
-      const start = this.getTimeFromQuery(route.start);
-      const end = this.getTimeFromQuery(route.end, route.avgStay);
+      // apparently destructuring doesn't work with Firefox
+      // const { query } = this.$route.query;
+      const place_id = decoded || this.$route.query.place_id;
+      const date = this.$route.query.date ?? t().toISODate();
+      const start = this.getTimeFromQuery(date, this.$route.query.time);
+      const end = this.getTimeFromQuery(
+        date,
+        this.$route.query.end,
+        this.$route.query.avgStay
+      );
 
       // replace the "escaped" underscores with spaces
-      const name = route.name.replace(/_/g, ' ');
+      const name = this.$route.query.name.replace(/_/g, ' ');
       const shared = true;
 
       this.callVisitUpdate({ place_id, start, end, name, shared });
@@ -93,7 +105,6 @@ export const spaceMixin = {
         end,
         shared,
 
-        category: 'You',
         timed: true,
         marked: getNow(),
         graphName: '', // set at Log time
