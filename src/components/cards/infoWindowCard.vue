@@ -74,11 +74,20 @@
                       <v-card-text v-if="!employee" v-text="item.content">
                       </v-card-text>
                       <v-card-text v-if="!employee">
-                        <v-text-field
-                          v-model="avgStay"
-                          label="Visitor average stay (minutes)"
-                        ></v-text-field
-                      ></v-card-text>
+                        <v-row align="center"
+                          ><v-col cols="5">
+                            <v-text-field
+                              v-model="avgStay"
+                              label="Visitor average stay (minutes)"
+                            ></v-text-field></v-col
+                          ><v-spacer />
+                          <v-col>
+                            <v-btn icon color="primary" plain @click="printMe"
+                              ><v-icon>print</v-icon></v-btn
+                            ></v-col
+                          ></v-row
+                        >
+                      </v-card-text>
 
                       <!-- <v-row v-if="item.content === 'Shift'"> -->
                       <v-row v-if="employee">
