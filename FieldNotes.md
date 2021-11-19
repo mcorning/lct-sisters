@@ -2,7 +2,43 @@
 
 ## Alert Protocol
 
-```
+For two visitors to share an alert, both must be on the same node server (e.g., localhost or cvew) because each server has its own HTTP endpoint for each socket client.
+
+When a visitor hits the BRB, they pass a score to Model that in turns emits `onExposureWarning` the event to the node server, index.js. The server delegates the event to redis.js `onExposureWarning()` method.
+
+The redis server queries each graphName the given userID visited, and returns a list of userIDS that shared the same spacetime.
+
+### CVEW
+
+ID   | Browser | Device
+-----|---------|--------
+456a | Edge/PWA | Surface
+5ff2 | PWA | iPhone
+7610 | Firefox Debug| Surface
+90a8 | PWA | Tablet
+abf6 | PWA | Android
+e8b1 | Chrome | Surface
+e912 | Firefox | Surface
+
+### localhost:3003 DEBUGgered
+
+ID   | Browser | Device
+-----|---------|--------
+d25b | Chrome  | Surface
+d7ff | Firefox Developer | Surface
+
+### localhost:3003
+
+ID   | Browser | Device
+-----|---------|--------
+1fa4 | Firefox | Surface
+5741 | Firefox Developer | Surface
+5ed9 | Edge | Tablet
+60ac | Chrome | Surface
+ac89|Firefox| iPhone
+ad5f | Edge | Surface
+
+```js
 MATCH (carrier:visitor{userID:'f7e7d622acece46e'})-[c:visited]->(s:space)<-[e:visited]-(exposed:visitor) 
     WHERE ((e.start>=c.start AND e.end>=c.end)
     OR (e.start<=c.start AND e.end>=c.start)
@@ -17,10 +53,11 @@ WHERE (e.end>=c.start OR e.start>= c.end)
 AND exposed.userID <> carrier.userID 
 RETURN exposed.userID,  id(exposed), s.name, id(s), c.start, c.end, id(c),  e.start, e.end, id(e)
 
-
+### Example query results
 ```
-exposed.userID | id(exposed) s.name | id(s) | c.start | c.end | id(c) | e.start | e.end | id(e)
----------------|--------------------|-------|---------|-------|-------|---------|-------|------
+
+exposed.userID | id(exposed) |s.name | id(s) | c.start | c.end | id(c) | e.start | e.end | id(e)
+---------------|-------------|-------|-------|---------|-------|-------|---------|-------|------
 2ebbb7d06677456a | 94 | Fika Sisters Coffeehouse 18 | 1634598005865 | 1634616005865 | 34 | 1634603400000 1634605200000 64
 9b7c302f6f1b1fa4 | 98 | Fika Sisters Coffeehouse 18 | 1634598005865 | 1634616005865 | 34 | 1634603400000 1634605200000 36
 

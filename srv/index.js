@@ -27,7 +27,6 @@ const randomId = () => crypto.randomBytes(8).toString('hex');
 const {
   printJson,
   err,
-  warn,
   highlight,
   info,
   success,
@@ -51,7 +50,6 @@ const {
   currentGraphName, // mapped to client nsp (aka namespace or community name)
   host,
   deleteVisit,
-  // findExposedVisitors,
   logVisit,
   onExposureWarning,
   getGraphs,
@@ -134,7 +132,7 @@ io.on('connection', (socket) => {
   console.log(
     '============================ io.on(connection) ================================='
   );
-  console.log(success('Client connected on socket ', socket.id));
+  console.log(success(`Client ${newUserID} connected on socket ${socket.id}`));
 
   if (!sessionID) {
     console.log('Returning session data to client', newSessionID, newUserID);
@@ -170,50 +168,80 @@ io.on('connection', (socket) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
-    const sendExposureAlert = (to, riskScore) => {
-      console.log('Alerting:', to); // to is a userID (of the exposed visitor)
-      socket.to(to).emit('exposureAlert', riskScore);
+    const sendExposureAlert = (to, alert) => {
+      console.log('Alerting:', to, 'with', alert); // to is a userID (of the exposed visitor)
+      socket.to(to).emit('exposureAlert', alert);
     };
-    // alerts is an array of userIDs
-    // const alertOthers = (socket, alerts, riskScore) => {
-    //   sendExposureAlert(to, riskScore);
-
-    //   alerts.forEach((to) => {
-    //     if (io.sockets.adapter.rooms.has(to)) {
-    //       sendExposureAlert(to, riskScore);
-    //       deleteCacheItem('alerts', to);
-    //     } else {
-    //       setCacheItem('alerts', to, {
-    //         cached: new Date(),
-    //         riskScore,
-    //       });
-    //     }
-    //   });
-    // };
 
     const userID = socket.handshake.auth.userID;
+
+    const vMap = (x) => {
+      const { placeID, exposedOn, exposedFor, nominalTime } = x;
+      return { placeID, exposedOn, exposedFor, nominalTime };
+    };
+    const alertMap = (v) => {
+      return v.map((x) => vMap(x));
+    };
+
+    const groupBy = (arr, fn) =>
+      arr
+        .map(typeof fn === 'function' ? fn : (val) => val[fn])
+        .reduce((acc, val, i) => {
+          acc[val] = (acc[val] || []).concat(arr[i]);
+          return acc;
+        }, {});
+
+    // delegate to redis.js
     onExposureWarning({ graphName, userID })
-      .then((exposed) => {
-        exposed.forEach((userID) => {
-          console.log(warn('Processing '), userID);
-          // findExposedVisitors(userID).then((userIDs) =>
-          //   alertOthers(socket, userIDs, riskScore, ack)
-          // );
-          if (io.sockets.adapter.rooms.has(userID)) {
-            sendExposureAlert(userID, riskScore);
-            deleteCacheItem('alerts', userID);
+      .then((exposures) => {
+        // exposed is a Map of userID keys
+        Object.entries(exposures).forEach(([key, value]) => {
+          console.log(`${key}: ${printJson(value)}`);
+          let x = alertMap(value);
+          console.log(x);
+          let alert = groupBy(value, 'placeID');
+          console.log(alert);
+          let data = { alert, riskScore };
+          if (io.sockets.adapter.rooms.has(key)) {
+            sendExposureAlert(key, data);
+            deleteCacheItem('alerts', key);
           } else {
-            setCacheItem('alerts', userID, {
+            setCacheItem('alerts', key, {
               cached: new Date(),
-              riskScore,
+              data,
             });
           }
+          if (ack) {
+            ack('Alerted');
+          }
         });
-        if (ack) {
-          ack(exposed);
-        }
       })
       .catch((error) => console.error(err(error)));
+    // onExposureWarning({ graphName, userID })
+    //   .then((exposed) => {
+    //     // exposed is a Map of userID keys
+    //     exposed.forEach((visitor) => {
+    //       console.log(visitor);
+    //       const exposedID = visitor[0];
+    //       const spaceTime = [...visitor[1]];
+    //       const alert = { spaceTime, riskScore };
+    //       console.log(warn('Processing '), exposedID, alert);
+
+    //       if (io.sockets.adapter.rooms.has(exposedID)) {
+    //         sendExposureAlert(exposedID, alert);
+    //         deleteCacheItem('alerts', exposedID);
+    //       } else {
+    //         setCacheItem('alerts', exposedID, {
+    //           cached: new Date(),
+    //           alert,
+    //         });
+    //       }
+    //     });
+    //     if (ack) {
+    //       ack(exposed);
+    //     }
+    //   })
+    //   .catch((error) => console.error(err(error)));
   });
 
   socket.on('updateVisit', (param, ack) => {
@@ -324,7 +352,7 @@ io.on('connection', (socket) => {
 
   //#region Redis Monitor functions
   socket.on('getGraphs', (_, ack) => {
-  ack(getGraphs());
+    ack(getGraphs());
   });
   socket.on('getVisitors', (graphNames, ack) => {
     getVisitors(graphNames, ack);

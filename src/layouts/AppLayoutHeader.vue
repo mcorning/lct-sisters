@@ -134,10 +134,12 @@
     </v-dialog>
 
     <prompt-banner
-      :riskScore="riskScore"
+      :alert="alert"
+      :riskScore=riskScore
       :refresh="refresh"
       :warningsReceived="warningsReceived"
     ></prompt-banner>
+
     <feedback-card
       v-if="feedbackDialog"
       @endFeedback="feedbackDialog = false"
@@ -241,14 +243,15 @@ export default {
       handledSessionEvent: false,
       graphName: '',
       feedbackDialog: false,
-      riskScore: null,
+      alert: null,
+      riskScore:null,
       showBanner: false,
       refresh: 0,
       warningsReceived: 0,
     };
   },
   sockets: {
-    exposureAlert(riskScore) {
+    exposureAlert({alert,riskScore}) {
       const audio = new AudioContext();
       function beep(vol, freq, duration) {
         const v = audio.createOscillator();
@@ -262,7 +265,8 @@ export default {
         v.stop(audio.currentTime + duration * 0.001);
       }
       beep(100, 520, 200);
-      this.riskScore = riskScore;
+      this.alert = alert;
+      this.riskScore=riskScore
       this.refresh++;
       this.showBanner = true;
       this.incrementWarningsReceived().then((x) => {

@@ -451,29 +451,33 @@ export default {
 
       this.dialog = true;
       console.log(this.score, this.pctWeight);
+
+      // callback for onExposureWarning below
+      const handleExposureWarningResults = (results) => {
+        console.log('Exposure alerts sent:', results);
+        if (results.length > 0) {
+          this.confirmationIcon = 'cloud_done';
+          this.confirmationMessage = `Well done. You alerted ${
+            results.length
+          } other${
+            results.length === 1 ? '' : 's'
+          } that the virus is lurking in your community. Soon, there will be no where for those virions to hide.`;
+        } else {
+          this.confirmationIcon = 'thumb_up_alt';
+          this.confirmationMessage =
+            'Good news! You exposed no one else at the places you visited.';
+        }
+        this.confirmationTitle = 'Results of Exposure Warning';
+        console.log(this.confirmationIcon);
+        this.confSnackbar = true;
+      };
+
       this.onExposureWarning(
         {
           score: this.score,
           reliability: this.pctWeight,
         },
-        (results) => {
-          console.log('Exposure alerts sent:', results);
-          if (results.length > 0) {
-            this.confirmationIcon = 'cloud_done';
-            this.confirmationMessage = `Well done. You alerted ${
-              results.length
-            } other${
-              results.length === 1 ? '' : 's'
-            } that the virus is lurking in your community. Soon, there will be no where for them to hide.`;
-          } else {
-            this.confirmationIcon = 'thumb_up_alt';
-            this.confirmationMessage =
-              'Good news! You exposed no one else at the places you visited.';
-          }
-          this.confirmationTitle = 'Results of Exposure Warning';
-          console.log(this.confirmationIcon);
-          this.confSnackbar = true;
-        }
+        (results) => handleExposureWarningResults(results)
       );
     },
   },

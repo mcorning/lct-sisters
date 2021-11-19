@@ -11,7 +11,8 @@ const {
   highlight,
   logVisitors,
 } = require('../../src/utils/helpers');
-// const { DateTime } = require('../../src/utils/luxonHelpers');
+const { DateTime } = require('../../src/utils/luxonHelpers');
+const nominalTime = 'hours';
 
 let options, currentGraphName, defaultGraphName;
 
@@ -74,7 +75,6 @@ module.exports = {
   host,
   getSessionID,
   deleteVisit,
-  // findExposedVisitors,
   changeGraph,
   logVisit,
   onExposureWarning,
@@ -468,6 +468,14 @@ function logVisit(data) {
 }
 
 // find any visitor who's start time is between the carrier's start and end times
+// this function starts by deleting invalid expired nodes
+// then updateGraph queries for exposed visitors returning a set of userIDs
+// TODO NOTE: we can improve the intel returned to the exposed by including at least the dates
+// of exposure, if not also the place (or vice versa)
+// if the place is Costco, an exposed visitor might discount the risk;
+// from a small coffee shop during a 30 minute stay might increase the perceived exposure risk
+// Also
+// we group by userID so there is only one alert sent, but it has all the exposures in it
 function onExposureWarning({ graphName, userID }) {
   changeGraph(graphName);
 
@@ -475,8 +483,40 @@ function onExposureWarning({ graphName, userID }) {
     info(`Searching graph ${currentGraphName} for exposures to ${userID}`)
   );
 
-  // ok handler
-  const getUserIDs = (fnc, results) => [...new Set(results.map(fnc))];
+  // updateGraph map handler
+  const getResults = (data) => {
+    let exposures = new Array();
+
+    while (data.hasNext()) {
+      let r = data.next();
+      let exposedID = r.get('exposed.userID');
+      let placeID = r.get('s.place_id');
+      let start = DateTime.fromMillis(r.get('e.start'));
+      let end = DateTime.fromMillis(r.get('e.end'));
+      let exposedFor = end.diff(start, nominalTime).as(nominalTime);
+      let exposedOn = start.toLocaleString(DateTime.DATETIME_MED);
+      exposures.push({
+        exposedID,
+        placeID,
+        exposedOn,
+        exposedFor,
+        nominalTime,
+      });
+    }
+    // console.log('exposures', printJson(exposures));
+    console.log(' ');
+    const groupBy = (arr, fn) =>
+      arr
+        .map(typeof fn === 'function' ? fn : (val) => val[fn])
+        .reduce((acc, val, i) => {
+          acc[val] = (acc[val] || []).concat(arr[i]);
+          return acc;
+        }, {});
+    const g = groupBy(exposures, 'exposedID');
+    console.log('redis.js: grouped by userID :>', printJson(g));
+
+    return g;
+  };
 
   console.log(highlight(getExposureQuery(userID)));
 
@@ -484,9 +524,9 @@ function onExposureWarning({ graphName, userID }) {
   const updateGraph = () => {
     return Graph.query(getExposureQuery(userID))
       .toEither()
+      .map((data) => getResults(data))
       .cata({
-        // returned to index.js
-        ok: (res) => getUserIDs((v) => v._values[0], res._results),
+        ok: (res) => res,
         error: (error) => {
           console.log(error, 'ignored by Either');
         },

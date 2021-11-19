@@ -7,8 +7,25 @@
         </v-progress-circular>
       </v-overlay>
     </div>
-
-    <v-toolbar v-show="ready" dense floating id="autocompleteToolbar">
+    <!-- attempted to fix scrolling issue with iPhone, but cannot repro. leaving this for now. -->
+    <!-- <v-btn
+      absolute
+      top
+      right
+      ref="button"
+      color="primary"
+      @click="$vuetify.goTo(target, scrollOptions)"
+    >
+      scroll
+    </v-btn> -->
+    <!-- autocompleteToolbar -->
+    <v-toolbar
+      ref="autocomplete"
+      v-show="ready"
+      dense
+      floating
+      id="autocompleteToolbar"
+    >
       <div class="text-center">
         <v-menu
           v-model="menu"
@@ -259,6 +276,9 @@ import InfoWindowCard from './cards/infoWindowCard.vue';
 import BtnWithTooltip from './misc/btnWithTooltip.vue';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 
+// see scrolling issue noted in template
+// import * as easings from 'vuetify/lib/services/goto/easing-patterns';
+
 export default {
   name: `Map`,
   props: {
@@ -292,6 +312,20 @@ export default {
   },
 
   computed: {
+    // see scrolling issue noted in template
+    // target() {
+    //   const value = this[this.type];
+    //   if (!isNaN(value)) return Number(value);
+    //   else return value;
+    // },
+    // scrollOptions() {
+    //   return {
+    //     duration: this.duration,
+    //     offset: this.offset,
+    //     easing: this.easing,
+    //   };
+    // },
+
     graphs() {
       return this.getRedisGraphs();
     },
@@ -378,6 +412,12 @@ export default {
   },
   data() {
     return {
+      // see scrolling issue noted in template
+      // duration: 300,
+      // offset: 0,
+      // easing: 'easeInOutCubic',
+      // easings: Object.keys(easings),
+
       graph: '',
       enlargeQR: false,
 

@@ -75,13 +75,13 @@
                       </v-card-text>
                       <v-card-text v-if="!employee">
                         <v-row align="center"
-                          ><v-col cols="5">
+                          ><v-col cols="9" sm="5">
                             <v-text-field
                               v-model="avgStay"
                               label="Visitor average stay (minutes)"
                             ></v-text-field></v-col
                           ><v-spacer />
-                          <v-col>
+                          <v-col cols="2">
                             <v-btn icon color="primary" plain @click="printMe"
                               ><v-icon>print</v-icon></v-btn
                             ></v-col

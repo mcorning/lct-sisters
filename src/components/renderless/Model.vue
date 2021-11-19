@@ -131,6 +131,7 @@ export default {
       return x;
     },
 
+
     onExposureWarning(riskScore, ack) {
       this.emitFromClient(
         'exposureWarning',
