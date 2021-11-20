@@ -45,21 +45,34 @@ export default {
 
     alertMessage() {
       const { score, reliability } = this.riskScore;
+      const details = Object.entries(this.alert);
 
-      const currAlert = Object.entries(this.alert)[0][1][0];
-      const msg = `<p>
+      let msg = `<p>
        Their self-reported <br/><strong>Risk Value: ${score}</strong><br/><strong> Relative Risk ${Math.round(
         reliability,
         0
       )}%</strong> of total risk.
       </p>
-      <p>You were exposed at ${currAlert.placeID} on ${
-        currAlert.exposedOn
-      } for approximately <strong>${currAlert.exposedFor} ${
-        currAlert.nominalTime
-      }</strong>.</p>
-  For this reason, please get tested.<br/>
-  Quarantine and warn others, if necessary.`;
+      <p>You were exposed in ${details.length} public places</p><dl>`;
+
+      let map = new Map(Object.entries(details));
+
+      map.forEach((value) => {
+        let map2 = new Map(Object.entries(value));
+        map2.forEach((propVals) => {
+          let s = propVals;
+          if (Array.isArray(s)) {
+            s.forEach((v) => {
+              msg += `<dd class="ml-5">Exposed on: ${v.exposedOn} for ${v.exposedFor} ${v.nominalTime}</dd>`;
+            });
+          } else {
+            msg += `<dt>Place: ${s}</dt>`;
+          }
+        });
+      });
+      msg += `</dl><p>
+      For this reason, please get tested.<br/>
+      Quarantine and warn others, if necessary.</p>`;
       return msg;
     },
   },
