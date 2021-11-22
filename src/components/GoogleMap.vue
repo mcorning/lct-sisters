@@ -269,6 +269,7 @@
 <script>
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
+import { getAddressComponents } from '@/fp/justAddressComponents';
 import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
@@ -937,8 +938,8 @@ export default {
           );
           if (!adminArea) {
             adminArea = poi.address_components.find((v) =>
-            v.types.includes('country')
-          );
+              v.types.includes('country')
+            );
           }
           const locality = `${city.short_name} ${adminArea.short_name}`;
           return locality;
@@ -956,7 +957,7 @@ export default {
           .toEither()
           .map(({ results }) => {
             const poi = results[0];
-
+            getAddressComponents(poi.address_components);
             console.log('\tgeocode results:');
             console.log(printJson(poi));
 
