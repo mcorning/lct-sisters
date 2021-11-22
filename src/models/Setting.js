@@ -36,6 +36,7 @@ export default class Setting extends Model {
       viewport: this.string(),
       global_code: this.string(),
       default_map_center: this.string(),
+      zoom:this.string(),
     };
   }
 

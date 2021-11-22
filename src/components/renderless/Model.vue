@@ -221,6 +221,7 @@ export default {
         location: '',
         viewport: '',
         global_code: '',
+        zoom:'',
       });
     },
     setDefaultMapCenter(center) {
@@ -228,7 +229,7 @@ export default {
       this.updateSetting({ id: 1, default_map_center: centerVal });
     },
 
-    setPoi({ namespace, global_code, location, viewport }) {
+    setPoi({ namespace, global_code, location, viewport, zoom }) {
       try {
         this.updateSetting({
           id: 1,
@@ -236,6 +237,7 @@ export default {
           global_code,
           location,
           viewport,
+          zoom,
         });
         return;
       } catch (error) {
@@ -246,6 +248,7 @@ export default {
       return {
         namespace: this.state.settings.namespace,
         global_code: this.state.settings.global_code,
+        zoom: this.state.settings.zoom,
         location:
           this.state.settings.location &&
           JSON.parse(this.state.settings.location),

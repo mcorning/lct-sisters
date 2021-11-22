@@ -689,6 +689,75 @@ export default {
         });
     },
 
+    // called above in the last step to showing the map
+    panToCurrentLocation() {
+      const self = this;
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // only HTML5 geolocation returns a position object
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          self.map.setCenter(pos);
+          self.map.setZoom(18);
+          self.ready = true;
+          self.setPoi({
+            location: JSON.stringify(pos),
+          });
+        },
+        (error) => {
+          if (error.code === 1) {
+            // default to sponsor or Sisters
+            const pos = self.sponsorPosition || self.defaultPosition;
+            self.map.setCenter(pos);
+            self.map.setZoom(18);
+            self.ready = true;
+            self.setPoi({
+              location: JSON.stringify(pos),
+            });
+            self.showPosition(pos);
+            self.log(`Disabling geolocation service.`);
+            self.log(`\t${error}`);
+            self.openDiagnostics = true;
+          }
+        },
+        self.positionOptions
+      );
+    },
+    //#region Delete Marker code called by template
+    deleteMarker() {
+      if (this.selectedMarker) {
+        this.selectedMarker.setMap(null);
+        this.onDeletePlace(this.selectedMarker.place_id);
+        this.cancelDelete();
+      }
+    },
+    cancelDelete() {
+      this.selectedMarker = null;
+      this.snackbar = false;
+    },
+    //#endregion Delete Marker code
+
+    getMapCenter() {
+      return this.map ? this.map.getCenter() : null;
+    },
+    showMapCenter() {
+      const latLng = this.getMapCenter();
+      return latLng
+        ? `${latLng.lat().toFixed(5)} X ${latLng.lng().toFixed(5)}`
+        : '';
+    },
+
+    volunteer() {
+      this.snackbarThanks = false;
+      window.location =
+        'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';
+    },
+    log(diagnostic) {
+      this.diagnostics.push(diagnostic);
+    },
+
     onMounted({ google, map }) {
       this.setStatus('Mounting map');
       const geocoder = new google.maps.Geocoder();
@@ -863,11 +932,14 @@ export default {
               );
             }
           }
-          // TODO what is the equivalent to state in the UK?
-          // get state
           let adminArea = poi.address_components.find((v) =>
             v.types.includes('administrative_area_level_1')
           );
+          if (!adminArea) {
+            adminArea = poi.address_components.find((v) =>
+            v.types.includes('country')
+          );
+          }
           const locality = `${city.short_name} ${adminArea.short_name}`;
           return locality;
         };
@@ -954,75 +1026,6 @@ export default {
 
         throw 'Sorry. Error loading map: ' + error.message;
       }
-    },
-
-    // called above in the last step to showing the map
-    panToCurrentLocation() {
-      const self = this;
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // only HTML5 geolocation returns a position object
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          self.map.setCenter(pos);
-          self.map.setZoom(18);
-          self.ready = true;
-          self.setPoi({
-            location: JSON.stringify(pos),
-          });
-        },
-        (error) => {
-          if (error.code === 1) {
-            // default to sponsor or Sisters
-            const pos = self.sponsorPosition || self.defaultPosition;
-            self.map.setCenter(pos);
-            self.map.setZoom(18);
-            self.ready = true;
-            self.setPoi({
-              location: JSON.stringify(pos),
-            });
-            self.showPosition(pos);
-            self.log(`Disabling geolocation service.`);
-            self.log(`\t${error}`);
-            self.openDiagnostics = true;
-          }
-        },
-        self.positionOptions
-      );
-    },
-    //#region Delete Marker code called by template
-    deleteMarker() {
-      if (this.selectedMarker) {
-        this.selectedMarker.setMap(null);
-        this.onDeletePlace(this.selectedMarker.place_id);
-        this.cancelDelete();
-      }
-    },
-    cancelDelete() {
-      this.selectedMarker = null;
-      this.snackbar = false;
-    },
-    //#endregion Delete Marker code
-
-    getMapCenter() {
-      return this.map ? this.map.getCenter() : null;
-    },
-    showMapCenter() {
-      const latLng = this.getMapCenter();
-      return latLng
-        ? `${latLng.lat().toFixed(5)} X ${latLng.lng().toFixed(5)}`
-        : '';
-    },
-
-    volunteer() {
-      this.snackbarThanks = false;
-      window.location =
-        'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';
-    },
-    log(diagnostic) {
-      this.diagnostics.push(diagnostic);
     },
   },
 
