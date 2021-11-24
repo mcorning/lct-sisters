@@ -269,7 +269,7 @@
 <script>
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
-import { getAddressComponents } from '@/fp/justAddressComponents';
+import { getNamespace } from '@/fp/lab';
 import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
@@ -910,41 +910,6 @@ export default {
       };
 
       const showPosition = (latLng) => {
-        const getLocality = (poi) => {
-          // get city
-          let city = poi.address_components.find((v) =>
-            v.types.includes('locality')
-          );
-          vm.log(
-            `\tc) ${
-              city ? 'Found' : 'Could not find'
-            } locality address component`
-          );
-          if (!city) {
-            vm.log('Looking for postal_town type, instead.');
-            city = poi.address_components.find((v) =>
-              v.types.includes('postal_town')
-            );
-            vm.log(printJson(city));
-            if (!city) {
-              vm.log('Listing available address_component types:');
-              vm.log(
-                `\t${printJson(poi.address_components.map((v) => v.types))})`
-              );
-            }
-          }
-          let adminArea = poi.address_components.find((v) =>
-            v.types.includes('administrative_area_level_1')
-          );
-          if (!adminArea) {
-            adminArea = poi.address_components.find((v) =>
-              v.types.includes('country')
-            );
-          }
-          const locality = `${city.short_name} ${adminArea.short_name}`;
-          return locality;
-        };
-
         const vm = this;
         console.log('\tshowPosition():');
         console.log(`\t${latLng}`);
@@ -952,55 +917,80 @@ export default {
         console.log('\t', printJson(location));
         vm.log(`\tb) showPosition(): calling geocoder`);
         vm.log(`\t\twith location: ${printJson(location)}`);
+        map.setCenter(location);
+
         geocoder
           .geocode({ location })
           .toEither()
-          .map(({ results }) => {
-            const poi = results[0];
-            getAddressComponents(poi.address_components);
-            console.log('\tgeocode results:');
-            console.log(printJson(poi));
-
-            const locality = getLocality(poi);
-            const namespace = locality ? locality : 'NA';
-            this.setPreferredGraph(namespace); // e.g., 'Sisters' or 'Redmond'
-            console.log('Preferred graph:', namespace);
-            vm.log(`\t\tand preferred graph: ${namespace}`);
-
-            const geometry = poi.geometry;
-            const { location, viewport } = geometry;
-            vm.log('\td) Geocode geometry results:');
-            vm.log(`\t${printJson(geometry)}`);
-            map.setCenter(location);
-            map.setZoom(vm.defaultZoom - 2);
-            const err = vm.setPoi({
-              namespace,
-              location: JSON.stringify(location),
-              viewport: JSON.stringify(viewport),
-            });
-            const msg = err ? err : '\te) Saved location settings';
-            vm.log(msg);
-
-            vm.ready = true;
+          .map((response) => {
+            const { address_components,geometry } = response.results[0];
+            console.log('address components', printJson(address_components));
+            const namespace = getNamespace(address_components);
+            return { namespace, geometry };
           })
           .cata({
-            ok: () => {
-              vm.log('\td) Leaving geocoder in showPosition() ');
+            ok: ({ namespace, geometry }) => {
+              const { location, viewport } = geometry;
+
+              vm.log('\tc) Geocode geometry results:');
+              vm.log(`\t${printJson(geometry)}`);
+              console.log(namespace);
+              const err = vm.setPoi({
+                namespace,
+                location: JSON.stringify(location),
+                viewport: JSON.stringify(viewport),
+              });
+              const msg = err ? err : '\td) Saved location settings';
+              vm.log(msg);
+              vm.log('\te) Leaving geocoder in showPosition() ');
+              vm.log(`\tnamespace: ${printJson(namespace)}`);
+              vm.log('-----');
+              vm.ready = true
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
-              vm.log(`!!!! showPosition():error: ${results} !!!!`);
-              vm.log(
-                `Your location setting is: ${this.state.settings.location}`
-              );
-              vm.log('\tReverting to default position:');
-              vm.log(`\t${printJson(vm.defaultPosition)}`);
-              map.setCenter(vm.defaultPosition);
               vm.openDiagnostics = true;
-              vm.ready = true;
             },
           });
       };
+      // const showPosition = (latLng) => {
+      //       this.setPreferredGraph(namespace); // e.g., 'Sisters' or 'Redmond'
+      //       console.log('Preferred graph:', namespace);
+      //       vm.log(`\t\tand preferred graph: ${namespace}`);
+
+      //       const geometry = poi.geometry;
+      //       const { location, viewport } = geometry;
+      //       vm.log('\td) Geocode geometry results:');
+      //       vm.log(`\t${printJson(geometry)}`);
+      //       map.setZoom(vm.defaultZoom - 2);
+      //       const err = vm.setPoi({
+      //         namespace,
+      //         location: JSON.stringify(location),
+      //         viewport: JSON.stringify(viewport),
+      //       });
+      //       const msg = err ? err : '\te) Saved location settings';
+      //       vm.log(msg);
+
+      //       vm.ready = true;
+      //     })
+      //     .cata({
+      //       ok: () => {
+      //         vm.log('\td) Leaving geocoder in showPosition() ');
+      //       },
+      //       error: (results) => {
+      //         console.log(results, 'Issues in setupGeocoder()');
+      //         vm.log(`!!!! showPosition():error: ${results} !!!!`);
+      //         vm.log(
+      //           `Your location setting is: ${this.state.settings.location}`
+      //         );
+      //         vm.log('\tReverting to default position:');
+      //         vm.log(`\t${printJson(vm.defaultPosition)}`);
+      //         map.setCenter(vm.defaultPosition);
+      //         vm.openDiagnostics = true;
+      //         vm.ready = true;
+      //       },
+      //     });
+      // };
 
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });
@@ -1087,6 +1077,7 @@ export default {
           fullscreenControlOptions: {
             position: google.maps.ControlPosition.LEFT_BOTTOM,
           },
+          zoom: 16,
         });
         this.log('0) Initialized google map');
         return { google, map };
