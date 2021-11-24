@@ -269,7 +269,7 @@
 <script>
 import gmapsInit from '../utils/gmaps';
 import { compose, firstOrNone } from '@/fp/utils';
-import { getNamespace } from '@/fp/lab';
+import { getNamespace } from '@/fp/safeGoogle';
 import { nullable } from 'pratica';
 import { printJson } from '@/utils/helpers';
 
