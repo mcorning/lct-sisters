@@ -63,7 +63,7 @@ export default {
           let s = propVals;
           if (Array.isArray(s)) {
             s.forEach((v) => {
-              msg += `<dd class="ml-5">Exposed on: ${v.exposedOn} for ${v.exposedFor} ${v.nominalTime}</dd>`;
+              msg += `<dd class="ml-5">Exposed on: <strong>${v.exposedOn}</strong> for <strong>${v.exposedFor} ${v.nominalTime}</strong></dd>`;
             });
           } else {
             msg += `<dt>Place: ${s}</dt>`;

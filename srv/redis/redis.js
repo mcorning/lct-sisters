@@ -11,7 +11,7 @@ const {
   highlight,
   logVisitors,
 } = require('../../src/utils/helpers');
-const { DateTime } = require('../../src/utils/luxonHelpers');
+const { DateTime, Interval } = require('../../src/utils/luxonHelpers');
 const nominalTime = 'hours';
 
 let options, currentGraphName, defaultGraphName;
@@ -368,59 +368,6 @@ function confirmDates({ userID, dates }) {
   const promises = dates.map((e) => getGraphQueryPromise(e));
 
   return Promise.all(promises);
-
-  // });
-  // let m;
-
-  // console.log('confirmDates query:', q);
-  // const processResults = (res) => {
-  //   while (res.hasNext()) {
-  //     let record = res.next();
-  //     const e = record.get('e');
-  //     const d = dates.find((v) => v.id === e.id);
-  //     console.log(warn('local dates:', d.id, d.start, d.end));
-  //     console.log('graph edge:', e.id, e.properties.start, e.properties.end);
-  //     if (e.properties.start !== d.start) {
-  //       const setQ = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.start=${d.start}`;
-  //       console.log(setQ);
-  //       Graph.query(setQ)
-  //         .then((res) => {
-  //           console.log(success(res._statistics._raw));
-  //           return (m = [
-  //             ...m,
-  //             {
-  //               msg: res._statistics._raw,
-  //             },
-  //           ]);
-  //         })
-  //         .catch((e) => console.error('error in confirmDates():', e));
-  //     }
-
-  //     if (e.properties.end !== d.end) {
-  //       const setQ2 = `MATCH ()-[e:visited]->()  WHERE id(e)=${e.id} SET e.end=${d.end}`;
-  //       console.log(setQ2);
-  //       Graph.query(setQ2)
-  //         .then((res) => {
-  //           console.log(success(res._statistics._raw));
-  //           return (m = [
-  //             ...m,
-  //             {
-  //               msg: res._statistics._raw,
-  //             },
-  //           ]);
-  //         })
-  //         .catch((e) => console.error('error in confirmDates():', e));
-  //     }
-  //   }
-  // };
-  // Graph.query(q)
-  //   .then((res) => {
-  //     processResults(res);
-  //     const msgs = m ?? 'No changes';
-  //     return { msgs };
-  //   })
-  //   .then((results) => results)
-  //   .catch((e) => console.error('error in confirmDates():', e));
 }
 //#endregion LAB
 
@@ -491,10 +438,29 @@ function onExposureWarning({ graphName, userID }) {
       let r = data.next();
       let exposedID = r.get('exposed.userID');
       let placeID = r.get('s.place_id');
+      // carrier
+      let startC = DateTime.fromMillis(r.get('c.start'));
+      let endC = DateTime.fromMillis(r.get('c.end'));
+      let carrierWasThere = Interval.fromDateTimes(startC, endC);
+
+      // exposed
       let start = DateTime.fromMillis(r.get('e.start'));
       let end = DateTime.fromMillis(r.get('e.end'));
-      let exposedFor = end.diff(start, nominalTime).as(nominalTime);
-      let exposedOn = start.toLocaleString(DateTime.DATETIME_MED);
+      let exposedWasThere = Interval.fromDateTimes(start, end);
+
+      // exposure
+      let exposedOn = exposedWasThere.start.toLocaleString(
+        DateTime.DATE_MED_WITH_WEEKDAY
+      );
+
+      let exposure = carrierWasThere.intersection(exposedWasThere);
+      let exposedFor = exposure.end
+        .diff(exposure.start, nominalTime)
+        .as(nominalTime);
+
+      console.log('exposedOn:', exposedOn);
+      console.log('exposedFor:', exposedFor, nominalTime);
+
       exposures.push({
         exposedID,
         placeID,

@@ -131,12 +131,12 @@ export default {
       return x;
     },
 
-
     onExposureWarning(riskScore, ack) {
+      const graphName = this.getPoi().namespace;
       this.emitFromClient(
         'exposureWarning',
         {
-          graphName: this.$defaultGraphName,
+          graphName,
           riskScore,
         },
         ack
@@ -221,7 +221,7 @@ export default {
         location: '',
         viewport: '',
         global_code: '',
-        zoom:'',
+        zoom: '',
       });
     },
     setDefaultMapCenter(center) {

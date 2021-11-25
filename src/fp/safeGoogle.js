@@ -59,7 +59,7 @@ function getNamespace(components) {
   });
   console.timeEnd('get state');
 
-  return { city, state };
+  return  `${city} ${state}` ;
 }
 
 if (process.env.NODE_ENV !== 'production') {

@@ -31,16 +31,46 @@
         >Mark Calendar</v-btn
       >
       <v-card-actions>
-        <v-btn icon plain color="primary" @click="deleteMarker"
-          ><v-icon>delete</v-icon></v-btn
-        >
-        <v-spacer />
-        <v-dialog v-model="enlargeQR" width="520">
+        <v-tooltip top>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn color="primary" icon v-bind="attrs" v-on="on">
-              <v-icon>share</v-icon>
+            <v-btn
+              v-bind="attrs"
+              v-on="on"
+              @click="deleteMarker"
+              icon
+              color="primary"
+            >
+              <v-icon>delete</v-icon>
             </v-btn>
           </template>
+          <span>Delete selected marker from map</span>
+        </v-tooltip>
+
+        <v-spacer />
+
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              v-on="on"
+              @click="changeMapCenter"
+              icon
+              color="primary"
+            >
+              <v-icon>save</v-icon>
+            </v-btn>
+          </template>
+          <span>Save this marker as your default map center</span>
+        </v-tooltip>
+
+        <v-spacer />
+        <v-dialog v-model="enlargeQR" width="520">
+          <!-- never could figure out how to add a tooltip to an activator button -->
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn color="primary" icon v-bind="attrs" v-on="on">
+                <v-icon>share</v-icon>
+              </v-btn>
+            </template>
 
           <v-card>
             <v-btn
@@ -306,6 +336,9 @@ export default {
     };
   },
   methods: {
+    changeMapCenter() {
+      this.$emit('changeMapCenter');
+    },
     onPrintQR() {
       this.printing = true;
     },

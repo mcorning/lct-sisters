@@ -7,17 +7,6 @@
         </v-progress-circular>
       </v-overlay>
     </div>
-    <!-- attempted to fix scrolling issue with iPhone, but cannot repro. leaving this for now. -->
-    <!-- <v-btn
-      absolute
-      top
-      right
-      ref="button"
-      color="primary"
-      @click="$vuetify.goTo(target, scrollOptions)"
-    >
-      scroll
-    </v-btn> -->
     <!-- autocompleteToolbar -->
     <v-toolbar
       ref="autocomplete"
@@ -160,6 +149,7 @@
       :onVisitPlace="onVisitPlace"
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
+      @changeMapCenter=changeMapCenter
     ></info-window-card>
 
     <v-snackbar
@@ -488,7 +478,8 @@ export default {
       this.openDiagnostics = true;
     },
     changeMapCenter() {
-      this.setDefaultMapCenter(this.getMapCenter());
+      const center = this.getMapCenter();
+      this.setDefaultMapCenter(center);
     },
     emailDiagnostics() {
       this.$clipboard(this.diagnosticOutput);
@@ -923,7 +914,7 @@ export default {
           .geocode({ location })
           .toEither()
           .map((response) => {
-            const { address_components,geometry } = response.results[0];
+            const { address_components, geometry } = response.results[0];
             console.log('address components', printJson(address_components));
             const namespace = getNamespace(address_components);
             return { namespace, geometry };
@@ -945,7 +936,7 @@ export default {
               vm.log('\te) Leaving geocoder in showPosition() ');
               vm.log(`\tnamespace: ${printJson(namespace)}`);
               vm.log('-----');
-              vm.ready = true
+              vm.ready = true;
             },
             error: (results) => {
               console.log(results, 'Issues in setupGeocoder()');
@@ -953,44 +944,6 @@ export default {
             },
           });
       };
-      // const showPosition = (latLng) => {
-      //       this.setPreferredGraph(namespace); // e.g., 'Sisters' or 'Redmond'
-      //       console.log('Preferred graph:', namespace);
-      //       vm.log(`\t\tand preferred graph: ${namespace}`);
-
-      //       const geometry = poi.geometry;
-      //       const { location, viewport } = geometry;
-      //       vm.log('\td) Geocode geometry results:');
-      //       vm.log(`\t${printJson(geometry)}`);
-      //       map.setZoom(vm.defaultZoom - 2);
-      //       const err = vm.setPoi({
-      //         namespace,
-      //         location: JSON.stringify(location),
-      //         viewport: JSON.stringify(viewport),
-      //       });
-      //       const msg = err ? err : '\te) Saved location settings';
-      //       vm.log(msg);
-
-      //       vm.ready = true;
-      //     })
-      //     .cata({
-      //       ok: () => {
-      //         vm.log('\td) Leaving geocoder in showPosition() ');
-      //       },
-      //       error: (results) => {
-      //         console.log(results, 'Issues in setupGeocoder()');
-      //         vm.log(`!!!! showPosition():error: ${results} !!!!`);
-      //         vm.log(
-      //           `Your location setting is: ${this.state.settings.location}`
-      //         );
-      //         vm.log('\tReverting to default position:');
-      //         vm.log(`\t${printJson(vm.defaultPosition)}`);
-      //         map.setCenter(vm.defaultPosition);
-      //         vm.openDiagnostics = true;
-      //         vm.ready = true;
-      //       },
-      //     });
-      // };
 
       makeMarkersFromCache({ google, map, infowindow });
       setupAutocomplete({ google, map, infowindow });

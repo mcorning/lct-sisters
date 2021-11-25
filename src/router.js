@@ -18,10 +18,12 @@ const routes = [
     name: 'Warn',
     component: () => import('@/views/Warning.vue'),
     props: true,
-    // TODO using this layout keeps Warning.vue from mounting more than once. odd...
-    // meta: {
-    //   layout: 'AppLayoutWarn',
-    // },
+  },
+  {
+    path: '/lab',
+    name: 'Lab',
+    component: () => import('@/views/Lab.vue'),
+    props: true,
   },
   {
     path: '/time',

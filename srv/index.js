@@ -168,12 +168,13 @@ io.on('connection', (socket) => {
     let everybody = await io.allSockets();
     console.log('All Online sockets:', printJson([...everybody]));
 
+    //#region Functions called by onExposureWarning() below
+    const userID = socket.handshake.auth.userID;
+
     const sendExposureAlert = (to, alert) => {
       console.log('Alerting:', to, 'with', alert); // to is a userID (of the exposed visitor)
       socket.to(to).emit('exposureAlert', alert);
     };
-
-    const userID = socket.handshake.auth.userID;
 
     const vMap = (x) => {
       const { placeID, exposedOn, exposedFor, nominalTime } = x;
@@ -190,6 +191,7 @@ io.on('connection', (socket) => {
           acc[val] = (acc[val] || []).concat(arr[i]);
           return acc;
         }, {});
+    //#endregion
 
     // delegate to redis.js
     onExposureWarning({ graphName, userID })
@@ -217,31 +219,6 @@ io.on('connection', (socket) => {
         });
       })
       .catch((error) => console.error(err(error)));
-    // onExposureWarning({ graphName, userID })
-    //   .then((exposed) => {
-    //     // exposed is a Map of userID keys
-    //     exposed.forEach((visitor) => {
-    //       console.log(visitor);
-    //       const exposedID = visitor[0];
-    //       const spaceTime = [...visitor[1]];
-    //       const alert = { spaceTime, riskScore };
-    //       console.log(warn('Processing '), exposedID, alert);
-
-    //       if (io.sockets.adapter.rooms.has(exposedID)) {
-    //         sendExposureAlert(exposedID, alert);
-    //         deleteCacheItem('alerts', exposedID);
-    //       } else {
-    //         setCacheItem('alerts', exposedID, {
-    //           cached: new Date(),
-    //           alert,
-    //         });
-    //       }
-    //     });
-    //     if (ack) {
-    //       ack(exposed);
-    //     }
-    //   })
-    //   .catch((error) => console.error(err(error)));
   });
 
   socket.on('updateVisit', (param, ack) => {

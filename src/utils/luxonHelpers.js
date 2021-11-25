@@ -268,6 +268,7 @@ const asMinute = ({ dateTime, padded = true, military }) => {
 
 module.exports = {
   DateTime,
+  Interval,
   asHour,
   asMinute,
   getNow,
