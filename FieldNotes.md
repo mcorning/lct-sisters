@@ -29,9 +29,9 @@ d7ff | Firefox Developer | Surface
 
 ### localhost:3003
 
-ID   | Browser | Device
------|---------|--------
-1fa4 | Firefox | Surface
+ID   | Browser | Device|Comment
+-----|---------|--------|-----
+1fa4 | Firefox | Surface|Singapore
 5741 | Firefox Developer | Surface
 5ed9 | Edge | Tablet
 60ac | Chrome | Surface
