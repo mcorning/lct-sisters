@@ -4,21 +4,28 @@
       <v-card-title>{{ welcome }}</v-card-title>
       <v-card-text v-html="message"> </v-card-text>
       <v-card-actions>
-        <v-card-text v-if="newSponsor">
+        <v-card-text v-if="isSponsor">
           <v-row align="center"
             ><v-col cols="8">
               <v-text-field
-                v-model="id"
+                v-model="business"
                 label="Your business name"
+                clearable
               ></v-text-field>
             </v-col>
             <v-spacer></v-spacer>
             <v-col
-              ><v-btn block color="primary" @click="getVisits">Visits</v-btn>
+              ><v-btn
+                :disabled="!registered"
+                block
+                color="primary"
+                @click="getVisits"
+                >Get Visits</v-btn
+              >
             </v-col>
             <v-col
               ><v-btn
-                :disabled="!id || registered"
+                :disabled="registered"
                 block
                 color="primary"
                 @click="register"
@@ -28,7 +35,7 @@
           </v-row>
         </v-card-text>
         <v-card-text v-else>
-          <v-btn block color="primary" @click="addVisit">Visit</v-btn>
+          <v-btn block color="primary" @click="addVisit">Log Visit</v-btn>
         </v-card-text>
       </v-card-actions>
       <div v-if="registered">
@@ -44,7 +51,7 @@
               ><v-col
                 ><p>
                   Scan this QR code to access our
-                  <strong>{{ id }} Customer Rewards</strong> app.
+                  <strong>{{ business }} Customer Rewards</strong> app.
                 </p>
                 <p>
                   Each time you access the app, you earn points for future
@@ -103,7 +110,7 @@ import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 
 export default {
   name: 'SponsorView',
-  props: {},
+  props: { updateSponsor: Function, sponsor: Object },
   components: { VueQRCodeComponent },
   computed: {
     snackBarAction() {
@@ -112,12 +119,21 @@ export default {
       return action;
     },
     decodedUri() {
-      const d = `${window.location.origin}/sponsor/${this.id}`;
+      const d = `${window.location.origin}/sponsor/${this.business}`;
       return d;
+    },
+    sponsorName() {
+      return this.sponsor.biz;
+    },
+    sponsorID() {
+      return this.sponsor.sid;
+    },
+    isSponsor() {
+      return !this.$route.params.id;
     },
 
     newSponsor() {
-      return !this.$route.params.id;
+      return !this.isSponsor && !this.sponsorID;
     },
     welcome() {
       const msg = this.$route.params.id
@@ -127,9 +143,9 @@ export default {
       return msg;
     },
     message() {
-      const msg = this.$route.params.id
-        ? 'You join our community without sharing any personal identifying information. This gives us the ability to communicate opportunities and news about us.'
-        : 'You can now connect with your customers while protecting their privacy.';
+      const msg = this.newSponsor
+        ? 'You can now connect with your customers while protecting their privacy.'
+        : 'You join our community without sharing any personal identifying information. This gives us the ability to communicate opportunities and news about us.';
       return msg;
     },
 
@@ -144,13 +160,13 @@ export default {
 
   data() {
     return {
-      id: '',
+      business: this.sponsor?.biz ?? '',
+      registered: this.sponsor?.sid ?? false,
       snackBtnText: 'ok',
       snackBarMessage: 'Ready to get started?',
       snackBarActionIndex: 0,
       confirmation: null,
       showMe: false,
-      registered: false,
       printing: false,
       duration: 300,
       offset: 0,
@@ -178,18 +194,19 @@ export default {
     },
     addSponsor() {
       // get the Stream ID for the biz and the ID of the biz owner
-      const sid = this.id;
+      const biz = this.business;
       const oid = this.$socket.client.auth.userID;
       const eventName = 'addSponsor';
 
-      console.log(sid, oid);
-      this.emitFromClient(eventName, { sid, oid }, (res) => {
-        this.snackBarMessage = res;
+      console.log(biz, oid);
+      this.emitFromClient(eventName, { biz, oid }, (sid) => {
+        this.updateSponsor({ biz, sid });
+        this.snackBarMessage = `Your Sponsor ID: ${sid}`;
         this.snackBarActionIndex = 1;
         this.showMe = true;
+        this.registered = true;
       });
 
-      this.registered = true;
       this.showMe = false;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
@@ -218,18 +235,19 @@ export default {
       this.showMe = false;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
-    getVisits() {
-      const sid = this.id;
 
-      if (!sid) {
-        console.log(`Missing sid`);
+    getVisits() {
+      const biz = this.business;
+
+      if (!biz) {
+        console.log(`Missing biz`);
         return;
       }
 
       const eventName = 'getVisits';
       // get the Stream ID for the biz and the ID of the biz owner
-      console.log(sid);
-      this.emitFromClient(eventName,  sid, (res) => {
+      console.log(biz);
+      this.emitFromClient(eventName, biz, (res) => {
         this.snackBarMessage = res;
         this.snackBarActionIndex = 1;
         this.showMe = true;
@@ -240,7 +258,16 @@ export default {
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
   },
-  mounted() {},
+  watch: {
+    business(val) {
+      if (!val) {
+        this.registered = false;
+      }
+    },
+  },
+  mounted() {
+    console.log('SPONSOR mounted');
+  },
 };
 </script>
 

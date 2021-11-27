@@ -51,6 +51,10 @@ export default {
     sessionID() {
       return this.settings.sessionID;
     },
+    sponsor() {
+      const { sid, biz } = this.settings;
+      return { sid, biz };
+    },
     needsUsername() {
       return !this.settings.username;
     },
@@ -340,6 +344,11 @@ export default {
       this.updateSetting({ id: 1, usernumber: userNumber });
       this.updateState({ settings: { usernumber: userNumber } });
     },
+
+    updateSponsor(data) {
+      console.log('Model passing', data, 'to Setting');
+      this.updateSetting({ id: 1, ...data });
+    },
     updateSession(data) {
       console.log('Model passing', data, 'to Setting');
       this.updateSetting({ id: 1, ...data });
@@ -424,6 +433,8 @@ export default {
       diagnostics: this.diagnostics,
       getGraphs: this.getGraphs,
       getRedisGraphs: this.getRedisGraphs,
+      updateSponsor: this.updateSponsor,
+      sponsor: this.sponsor,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

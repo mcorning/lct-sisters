@@ -167,9 +167,9 @@ io.on('connection', (socket) => {
   socket.on('addSponsor', (data, ack) => {
     console.log(data.sid, data.oid);
     // add to the Sponsor Stream
-    addSponsor(data).then((id) => {
+    addSponsor(data).then((sid) => {
       if (ack) {
-        ack(`added sponsor with Stream ID: ${id}`);
+        ack(sid);
       }
     });
   });

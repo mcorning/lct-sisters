@@ -2,7 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
-import Sponsor from '@/views/Sponsor.vue';
+import Commercial from '@/views/Commercial.vue';
 Vue.use(VueRouter);
 
 const routes = [
@@ -15,13 +15,13 @@ const routes = [
   {
     path: '/sponsor/',
     name: 'Sponsor',
-    component: Sponsor,
+    component: Commercial,
     props: true,
   },
   {
     path: '/sponsor/:id',
     name: 'Sponsor',
-    component: Sponsor,
+    component: Commercial,
     props: true,
   },
 
