@@ -1,30 +1,21 @@
-const cacheOptions = require('./options.js');
-const options = {
-  host: cacheOptions.redisCacheHost,
-  port: cacheOptions.redisCachePort,
-  password: cacheOptions.redisCachePassword,
-};
-// async function query(query, params) {
-//   if (params) {
-//     query = this.buildParamsHeader(params) + query;
-//   }
-//   var res = await this._sendCommand('graph.QUERY', [
-//     this._graphId,
-//     query,
-//     '--compact',
-//   ]);
-//   // var resultSet = new ResultSet(this);
-//   return resultSet.parseResponse(res);
-// }
+let options;
+if (process.env.NODE_ENV === 'production') {
+  console.log('Dereferencing process.env');
+  options = {
+    host: process.env.REDIS_CACHE_HOST,
+    port: process.env.REDIS_CACHE_PORT,
+    password: process.env.REDIS_CACHE_PASSWORD,
+  };
+} else {
+  const cacheOptions = require('./options');
+  options = {
+    host: cacheOptions.redisCacheHost,
+    port: cacheOptions.redisCachePort,
+    password: cacheOptions.redisCachePassword,
+  };
+}
 
 const Redis = require('ioredis');
-// const { graphName } = require('./redisGraph.options.js');
 const redis = new Redis(options);
 
-// function callProcedure(procedure, args = new Array(), y = new Array()) {
-//   let q = 'CALL GRAPH.LIST';
-//   return query(q);
-// }
-
-// callProcedure().then((r) => console.log(r));
 module.exports = { redis };
