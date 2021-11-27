@@ -57,9 +57,9 @@ const tPlusOne = (avgStay = 30) => {
 
   return nplus;
 };
-const getNow = () => {
+const getNow = (format = DateTime.TIME_24_WITH_SECONDS) => {
   // using Luxon Presets
-  return DateTime.now().toLocaleString(DateTime.TIME_24_WITH_SECONDS);
+  return DateTime.now().toLocaleString(format);
 };
 const getNowAsMillis = () => {
   return DateTime.now().toMillis();

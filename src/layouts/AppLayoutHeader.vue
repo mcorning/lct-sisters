@@ -135,7 +135,7 @@
 
     <prompt-banner
       :alert="alert"
-      :riskScore=riskScore
+      :riskScore="riskScore"
       :refresh="refresh"
       :warningsReceived="warningsReceived"
     ></prompt-banner>
@@ -193,9 +193,13 @@ export default {
     },
 
     toolbarTitle() {
+      if (this.$route.name === 'Sponsor') {
+        return this.namespace;
+      }
       const t = this.$vuetify.breakpoint.xsOnly
         ? 'LCT'
         : 'Local Contact Tracing';
+
       return `${t} ${this.namespace ? `- ${this.namespace}` : ''}`;
     },
 
@@ -244,14 +248,14 @@ export default {
       graphName: '',
       feedbackDialog: false,
       alert: null,
-      riskScore:null,
+      riskScore: null,
       showBanner: false,
       refresh: 0,
       warningsReceived: 0,
     };
   },
   sockets: {
-    exposureAlert({alert,riskScore}) {
+    exposureAlert({ alert, riskScore }) {
       const audio = new AudioContext();
       function beep(vol, freq, duration) {
         const v = audio.createOscillator();
@@ -266,7 +270,7 @@ export default {
       }
       beep(100, 520, 200);
       this.alert = alert;
-      this.riskScore=riskScore
+      this.riskScore = riskScore;
       this.refresh++;
       this.showBanner = true;
       this.incrementWarningsReceived().then((x) => {
