@@ -28,40 +28,48 @@
           <v-btn block color="primary" @click="register">Visit</v-btn>
         </v-card-text>
       </v-card-actions>
-      <v-card-text v-if="registered" class="text-center">
-        <div id="targetDiv" class="text-center">
-          <v-row v-if="printing"
-            ><v-col
-              ><p>
-                Scan this QR code to access our
-                <strong>{{ id }} Customer Rewards</strong> app.
-              </p>
-              <p>
-                Each time you access the app, you earn points for future
-                discounts.
-              </p></v-col
-            ></v-row
-          >
-          <v-row>
-            <v-spacer />
-            <v-col class="text-center">
-              <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
-              </VueQRCodeComponent>
-            </v-col>
-            <v-spacer />
-          </v-row>
-        </div>
-
-        <v-card-actions v-if="printing">
-          <v-row>
-            <v-btn text color="primary" plain @click="printing = false"
-              >Cancel</v-btn
+      <div v-if="registered">
+        <v-card-title class="text-h6"
+          >To see a preview of your QR card...</v-card-title
+        >
+        <v-card-subtitle>...press the Print button below</v-card-subtitle>
+      </div>
+      <div ref="printDiv">
+        <v-card-text v-if="registered" class="text-center">
+          <div id="targetDiv" ref="targetDiv" class="text-center">
+            <v-row v-if="printing"
+              ><v-col
+                ><p>
+                  Scan this QR code to access our
+                  <strong>{{ id }} Customer Rewards</strong> app.
+                </p>
+                <p>
+                  Each time you access the app, you earn points for future
+                  discounts.
+                </p></v-col
+              ></v-row
             >
-            <v-spacer />
-            <v-btn text color="primary" plain @click="printMe">Print</v-btn>
-          </v-row>
-        </v-card-actions>
-      </v-card-text>
+            <v-row>
+              <v-spacer />
+              <v-col class="text-center">
+                <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                </VueQRCodeComponent>
+              </v-col>
+              <v-spacer />
+            </v-row>
+          </div>
+
+          <v-card-actions v-if="printing">
+            <v-row>
+              <v-btn text color="primary" plain @click="printing = false"
+                >Cancel</v-btn
+              >
+              <v-spacer />
+              <v-btn text color="primary" plain @click="printMe">Print</v-btn>
+            </v-row>
+          </v-card-actions>
+        </v-card-text>
+      </div>
       <v-snackbar
         v-model="showMe"
         centered
@@ -88,6 +96,7 @@
 
 <script>
 import VueQRCodeComponent from 'vue-qr-generator';
+import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 
 export default {
   name: 'SponsorView',
@@ -115,6 +124,13 @@ export default {
         : 'You can now connect with your customers while protecting their privacy.';
       return msg;
     },
+    options() {
+      return {
+        duration: this.duration,
+        offset: this.offset,
+        easing: this.easing,
+      };
+    },
   },
 
   data() {
@@ -125,6 +141,10 @@ export default {
       showMe: false,
       registered: false,
       printing: false,
+      duration: 300,
+      offset: 0,
+      easing: 'easeInOutCubic',
+      easings: Object.keys(easings),
     };
   },
   methods: {
@@ -142,6 +162,7 @@ export default {
     addSponsor() {
       this.registered = true;
       this.showMe = false;
+      this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
   },
   mounted() {},
