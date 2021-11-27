@@ -61,7 +61,7 @@ const {
   confirmDates,
 } = require('./redis/redis');
 
-const { addSponsor } = require('./redis/streams');
+const { addSponsor, addVisit, getVisits } = require('./redis/streams');
 
 const cache = require('./redis/redisJsonCache2');
 cache.connectCache(true).then(() => {
@@ -166,12 +166,31 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
   socket.on('addSponsor', (data, ack) => {
     console.log(data.sid, data.oid);
+    // add to the Sponsor Stream
     addSponsor(data).then((id) => {
       if (ack) {
         ack(`added sponsor with Stream ID: ${id}`);
       }
     });
-    // add to the Sponsor Stream
+  });
+
+  socket.on('addVisit', ({ sid, uid }, ack) => {
+    console.log({ sid, uid });
+    // add to the Visits Stream
+    addVisit({ sid, uid }).then((id) => {
+      if (ack) {
+        ack(`added visit to STREAM with Visit ID: ${id}`);
+      }
+    });
+  });
+
+  socket.on('getVisits', (sid, ack) => {
+    console.log(sid);
+    getVisits(sid).then((visits) => {
+      if (ack) {
+        ack(visits);
+      }
+    });
   });
 
   //#region Visit API

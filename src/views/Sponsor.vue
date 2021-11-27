@@ -14,6 +14,9 @@
             </v-col>
             <v-spacer></v-spacer>
             <v-col
+              ><v-btn block color="primary" @click="getVisits">Visits</v-btn>
+            </v-col>
+            <v-col
               ><v-btn
                 :disabled="!id || registered"
                 block
@@ -25,7 +28,7 @@
           </v-row>
         </v-card-text>
         <v-card-text v-else>
-          <v-btn block color="primary" @click="register">Visit</v-btn>
+          <v-btn block color="primary" @click="addVisit">Visit</v-btn>
         </v-card-text>
       </v-card-actions>
       <div v-if="registered">
@@ -177,8 +180,56 @@ export default {
       // get the Stream ID for the biz and the ID of the biz owner
       const sid = this.id;
       const oid = this.$socket.client.auth.userID;
+      const eventName = 'addSponsor';
+
       console.log(sid, oid);
-      this.emitFromClient('addSponsor', { sid, oid }, (res) => {
+      this.emitFromClient(eventName, { sid, oid }, (res) => {
+        this.snackBarMessage = res;
+        this.snackBarActionIndex = 1;
+        this.showMe = true;
+      });
+
+      this.registered = true;
+      this.showMe = false;
+      this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    },
+
+    addVisit() {
+      const sid = this.$route.params.id;
+      const uid = this.$socket.client.auth.userID;
+
+      if (!sid || !uid) {
+        console.log(
+          `Insufficient parameters: sid provided ${sid} uid provided ${uid}`
+        );
+        return;
+      }
+
+      const eventName = 'addVisit';
+      // get the Stream ID for the biz and the ID of the biz owner
+      console.log(sid, uid);
+      this.emitFromClient(eventName, { sid, uid }, (res) => {
+        this.snackBarMessage = res;
+        this.snackBarActionIndex = 1;
+        this.showMe = true;
+      });
+
+      this.registered = true;
+      this.showMe = false;
+      this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    },
+    getVisits() {
+      const sid = this.id;
+
+      if (!sid) {
+        console.log(`Missing sid`);
+        return;
+      }
+
+      const eventName = 'getVisits';
+      // get the Stream ID for the biz and the ID of the biz owner
+      console.log(sid);
+      this.emitFromClient(eventName,  sid, (res) => {
         this.snackBarMessage = res;
         this.snackBarActionIndex = 1;
         this.showMe = true;
