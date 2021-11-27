@@ -60,6 +60,11 @@ const f = function() {
       });
     });
   });
-  // process.exit(0);
 };
-f();
+
+const addSponsor = ({ sid, oid }) => {
+  const channel = 'sponsors';
+  return redis.xadd(channel, '*', 'sid', sid, 'oid', oid);
+};
+
+module.exports = { addSponsor };

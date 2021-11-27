@@ -61,6 +61,8 @@ const {
   confirmDates,
 } = require('./redis/redis');
 
+const { addSponsor } = require('./redis/streams');
+
 const cache = require('./redis/redisJsonCache2');
 cache.connectCache(true).then(() => {
   console.log(getNow());
@@ -162,6 +164,15 @@ io.on('connection', (socket) => {
     '============================ io.on(connection) ================================='
   );
   //#endregion Handling socket connection
+  socket.on('addSponsor', (data, ack) => {
+    console.log(data.sid, data.oid);
+    addSponsor(data).then((id) => {
+      if (ack) {
+        ack(`added sponsor with Stream ID: ${id}`);
+      }
+    });
+    // add to the Sponsor Stream
+  });
 
   //#region Visit API
   socket.on('exposureWarning', async ({ graphName, riskScore }, ack) => {

@@ -9,7 +9,7 @@
             ><v-col cols="8">
               <v-text-field
                 v-model="id"
-                label="Enter your place of business"
+                label="Your business name"
               ></v-text-field>
             </v-col>
             <v-spacer></v-spacer>
@@ -159,7 +159,18 @@ export default {
       this.showMe = true;
       this.printing = true;
     },
+    emitFromClient(eventName, data, ack) {
+      this.$socket.client.emit(eventName, data, ack);
+    },
     addSponsor() {
+      // get the Stream ID for the biz and the ID of the biz owner
+      const sid = this.id;
+      const oid = this.$socket.client.auth.userID;
+      console.log(sid, oid);
+      this.emitFromClient('addSponsor', { sid, oid }, (res) =>
+        console.log(res)
+      );
+
       this.registered = true;
       this.showMe = false;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
