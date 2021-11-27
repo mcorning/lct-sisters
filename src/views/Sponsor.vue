@@ -77,14 +77,14 @@
         height="100px"
         color="blue-grey darken-3"
       >
-        Ready to get started?
+        {{ snackBarMessage }}
         <template v-slot:action="{ attrs }">
           <v-btn
             v-if="snackBtnText"
             text
             color="#00f500"
             v-bind="attrs"
-            @click.stop="addSponsor"
+            @click.stop="snackBarAction"
           >
             {{ snackBtnText }}
           </v-btn>
@@ -103,6 +103,11 @@ export default {
   props: {},
   components: { VueQRCodeComponent },
   computed: {
+    snackBarAction() {
+      const action =
+        this.snackBarActionIndex === 0 ? this.addSponsor : this.closeSnackbar;
+      return action;
+    },
     decodedUri() {
       const d = `${window.location.origin}/sponsor/${this.id}`;
       return d;
@@ -124,6 +129,7 @@ export default {
         : 'You can now connect with your customers while protecting their privacy.';
       return msg;
     },
+
     options() {
       return {
         duration: this.duration,
@@ -137,6 +143,8 @@ export default {
     return {
       id: '',
       snackBtnText: 'ok',
+      snackBarMessage: 'Ready to get started?',
+      snackBarActionIndex: 0,
       confirmation: null,
       showMe: false,
       registered: false,
@@ -162,14 +170,19 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+    closeSnackbar() {
+      this.showMe = false;
+    },
     addSponsor() {
       // get the Stream ID for the biz and the ID of the biz owner
       const sid = this.id;
       const oid = this.$socket.client.auth.userID;
       console.log(sid, oid);
-      this.emitFromClient('addSponsor', { sid, oid }, (res) =>
-        console.log(res)
-      );
+      this.emitFromClient('addSponsor', { sid, oid }, (res) => {
+        this.snackBarMessage = res;
+        this.snackBarActionIndex = 1;
+        this.showMe = true;
+      });
 
       this.registered = true;
       this.showMe = false;
