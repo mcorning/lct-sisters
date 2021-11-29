@@ -42,25 +42,25 @@ if (process.env.NODE_ENV === 'production') {
 // still not sure how to use pool.
 // this code has created a key on the lctGraph database
 // so i suspect that we should use redisPool to create a redis graph
-var redisPool = require('redis-connection-pool')('myRedisPool', {
-  host: options.host, // default
-  port: options.port, //default
-  // optionally specify full redis url, overrides host + port properties
-  // url: "redis://username:password@host:port"
-  max_clients: 30, // default
-  perform_checks: false, // checks for needed push/pop functionality
-  database: 0, // database number to use
-  options: {
-    auth_pass: options.password,
-  }, //options for createClient of node-redis, optional
-});
-redisPool.set('test-key', 'foobar', function(err) {
-  console.log(err ? err : 'No connection pool errors when set used');
-  redisPool.get('test-key', function(err, reply) {
-    console.log(reply); // 'foobar'
-    console.log(err ? err : 'No connection pool errors when get used');
-  });
-});
+// var redisPool = require('redis-connection-pool')('myRedisPool', {
+//   host: options.host, // default
+//   port: options.port, //default
+//   // optionally specify full redis url, overrides host + port properties
+//   // url: "redis://username:password@host:port"
+//   max_clients: 30, // default
+//   perform_checks: false, // checks for needed push/pop functionality
+//   database: 0, // database number to use
+//   options: {
+//     auth_pass: options.password,
+//   }, //options for createClient of node-redis, optional
+// });
+// redisPool.set('test-key', 'foobar', function(err) {
+//   console.log(err ? err : 'No connection pool errors when set used');
+//   redisPool.get('test-key', function(err, reply) {
+//     console.log(reply); // 'foobar'
+//     console.log(err ? err : 'No connection pool errors when get used');
+//   });
+// });
 //#endregion Redis Connection Pooling code
 
 const host = options.host;
