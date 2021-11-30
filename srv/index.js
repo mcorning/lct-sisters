@@ -60,6 +60,7 @@ const {
   setStartEnd,
   confirmDates,
   enterLottery,
+  earnReward,
 } = require('./redis/redis');
 
 const { addSponsor, addVisit, getVisits } = require('./redis/streams');
@@ -172,6 +173,16 @@ io.on('connection', (socket) => {
     // add to the Lottery Stream
     enterLottery(uid).then((sid) => {
       socket.to(uid).emit('confirmShare', sid);
+      if (ack) {
+        ack(sid);
+      }
+    });
+  });
+
+  socket.on('earnReward', ({bid, uid}, ack) => {
+    // add to the Lottery Stream
+    earnReward({ bid, uid }).then((sid) => {
+      socket.to(uid).emit('confirmRewardEntry', sid);
       if (ack) {
         ack(sid);
       }

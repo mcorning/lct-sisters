@@ -22,6 +22,7 @@
         getGraphs,
         getRedisGraphs,
         enterLottery,
+        earnReward,
       }"
     >
       <Spaces
@@ -46,6 +47,7 @@
         :getGraphs="getGraphs"
         :getRedisGraphs="getRedisGraphs"
         :enterLottery=enterLottery
+        :earnReward=earnReward
       />
     </div>
   </Model>

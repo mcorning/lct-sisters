@@ -370,6 +370,11 @@ export default {
         this.emitFromClient('enterLottery', uid, (sid) => resolve(sid));
       });
     },
+    earnReward({bid, uid}) {
+      return new Promise((resolve) => {
+        this.emitFromClient('earnReward', {bid, uid}, (sid) => resolve(sid));
+      });
+    },
   },
 
   watch: {
@@ -440,7 +445,10 @@ export default {
       getRedisGraphs: this.getRedisGraphs,
       updateSponsor: this.updateSponsor,
       sponsor: this.sponsor,
+
+      // Steam events
       enterLottery: this.enterLottery,
+      earnReward: this.earnReward,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

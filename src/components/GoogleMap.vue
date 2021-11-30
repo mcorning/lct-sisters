@@ -297,6 +297,7 @@ export default {
     getGraphs: Function,
     getRedisGraphs: Function,
     enterLottery: Function,
+    earnReward: Function,
   },
   components: {
     InfoWindowCard,
@@ -994,7 +995,17 @@ export default {
         this.log(printJson(query) + '\n\n');
         // in space.js
         this.onSharePlace();
-      } else if (query.uid) {
+        // reward the business that's sharing LCT
+        this.enterLottery(query.place_id)
+        // thank the customer who is using LCT
+        this.enterLottery(this.$socket.client.auth.userID)
+        // add the user to the business's reward stream
+        const bid=query.place_id
+        const uid=this.$socket.client.auth.userID
+        this.earnReward({bid, uid})
+
+             } else if (query.uid) {
+        // uid is the id of the person who shared the QR
         this.enterLottery(query.uid).then((sid) => {
           this.confirmationTitle = 'Pay it forward: Beat the Virus';
           this.confirmationMessage = `To thank user ${query.uid} for helping all of us beat this virus, they are in the LCT Reward lottery (confirmation nr: ${sid}). If you, too, share the LCT QR code, you can join the same lottery...`;

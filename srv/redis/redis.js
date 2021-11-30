@@ -92,10 +92,14 @@ module.exports = {
   setStartEnd,
   confirmDates,
   enterLottery,
+  earnReward,
 };
 //#endregion Setup
 function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
+}
+function earnReward({bid, uid}) {
+  return redis.xadd(bid, '*', 'uid', uid);
 }
 
 function getSessionID(param, ack) {
