@@ -171,6 +171,7 @@ io.on('connection', (socket) => {
   socket.on('enterLottery', (uid, ack) => {
     // add to the Lottery Stream
     enterLottery(uid).then((sid) => {
+      socket.to(uid).emit('confirmShare', sid);
       if (ack) {
         ack(sid);
       }

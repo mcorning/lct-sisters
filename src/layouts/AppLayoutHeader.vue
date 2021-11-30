@@ -144,6 +144,13 @@
       v-if="feedbackDialog"
       @endFeedback="feedbackDialog = false"
     ></feedback-card>
+    <confirmation-snackbar
+      v-if="confSnackbar"
+      :confirmationTitle="confirmationTitle"
+      :confirmationMessage="confirmationMessage"
+      :confirmationIcon="confirmationIcon"
+      :bottom="confBottom"
+    />
   </div>
 </template>
 
@@ -153,6 +160,7 @@ import { info, success, warn, printJson } from '@/utils/helpers';
 import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
+import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
 
 export default {
   name: 'AppLayoutHeader',
@@ -170,6 +178,7 @@ export default {
     PromptBanner,
     FeedbackCard,
     VueQRCodeComponent,
+    ConfirmationSnackbar,
   },
   computed: {
     decodedUri() {
@@ -256,9 +265,24 @@ export default {
       showBanner: false,
       refresh: 0,
       warningsReceived: 0,
+
+      sid: '',
+
+      confSnackbar: false,
+      confirmationTitle: '',
+      confirmationMessage: 'Welcome to a safer Microsoft Campus',
+      confirmationColor: '',
+      confBottom: true,
     };
   },
   sockets: {
+    confirmShare(sid) {
+      this.confirmationTitle = `Well Done, ${this.$socket.client.auth.userID}`;
+      this.confirmationMessage = `You are now entered in the LCT Reward Lottery (Confirmation number ${sid}). But more important: you are helping keep us all safe.`;
+      this.confSnackbar = true;
+      this.confBottom = true;
+      this.confirmationIcon = 'sentiment_very_satisfied';
+    },
     exposureAlert({ alert, riskScore }) {
       const audio = new AudioContext();
       function beep(vol, freq, duration) {
