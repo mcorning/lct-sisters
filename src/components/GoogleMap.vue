@@ -149,7 +149,7 @@
       :onVisitPlace="onVisitPlace"
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
-      @changeMapCenter=changeMapCenter
+      @changeMapCenter="changeMapCenter"
     ></info-window-card>
 
     <v-snackbar
@@ -251,7 +251,8 @@
       v-if="confSnackbar"
       :confirmationTitle="confirmationTitle"
       :confirmationMessage="confirmationMessage"
-      :bottome="confBottom"
+      :confirmationIcon="confirmationIcon"
+      :bottom="confBottom"
     />
   </v-sheet>
 </template>
@@ -295,6 +296,7 @@ export default {
     emergency: Boolean,
     getGraphs: Function,
     getRedisGraphs: Function,
+    enterLottery: Function,
   },
   components: {
     InfoWindowCard,
@@ -992,6 +994,15 @@ export default {
         this.log(printJson(query) + '\n\n');
         // in space.js
         this.onSharePlace();
+      } else if (query.uid) {
+        this.enterLottery(query.uid).then((sid) => {
+          this.confirmationTitle = 'Pay it forward: Beat the Virus';
+          this.confirmationMessage = `To thank user ${query.uid} for helping all of us beat this virus, they are in the LCT Reward lottery (confirmation nr: ${sid}). If you, too, share the LCT QR code, you can join the same lottery...`;
+          this.confSnackbar = true;
+          this.confBottom = true;
+          this.confirmationIcon = 'sentiment_very_satisfied';
+          this.log(`ready()${this.confirmationMessage}`);
+        });
       }
       this.overlay = false;
     },

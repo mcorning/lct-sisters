@@ -365,6 +365,11 @@ export default {
     setPreferredGraph(graphName) {
       this.updateSetting({ id: 1, preferredGraph: graphName });
     },
+    enterLottery(uid) {
+      return new Promise((resolve) => {
+        this.emitFromClient('enterLottery', uid, (sid) => resolve(sid));
+      });
+    },
   },
 
   watch: {
@@ -435,6 +440,7 @@ export default {
       getRedisGraphs: this.getRedisGraphs,
       updateSponsor: this.updateSponsor,
       sponsor: this.sponsor,
+      enterLottery: this.enterLottery,
 
       // Space assets
       onMarkerClicked: this.onMarkerClicked,

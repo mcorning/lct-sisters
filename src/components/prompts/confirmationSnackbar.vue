@@ -10,6 +10,7 @@
       :bottom="bottom"
       :left="left"
       :right="right"
+      :confirmationIcon=confirmationIcon
       vertical
       color="blue-grey darken-3"
     >

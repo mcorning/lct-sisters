@@ -153,14 +153,17 @@ function consumer() {
     return zipped;
   });
 }
-function test() {
-  const add = true;
+function test1() {
+  const add = false;
+  let now, then, data;
   if (add) {
-    let now = DateTime.now();
-    let then = now.plus({ hours: 1 });
-    const delNow = now;
-    const delThen = then;
-    let data = {
+    //#region Simulate changing event to tomorrow
+    // TODO PROVE:
+    // that LCT records a delete event in the stream for the original event
+    // and adds an event to the stream for the updated event
+    now = DateTime.now();
+    then = now.plus({ hours: 1 });
+    data = {
       placeID: 'ChIJFWkctxkxv1QRLhhGQdCn4gE',
       uid: '2ebbb7d06677456a',
       start: now.toMillis(),
@@ -168,6 +171,27 @@ function test() {
       tag: '+',
     };
     addEvent(data).then((id) => console.log(id));
+
+    data = {
+      placeID: 'ChIJFWkctxkxv1QRLhhGQdCn4gE',
+      uid: '2ebbb7d06677456a',
+      start: now.toMillis(),
+      end: then.toMillis(),
+      tag: '-',
+    };
+    addEvent(data).then((id) => console.log(id));
+
+    now = DateTime.now();
+    then = now.plus({ days: 1 });
+    data = {
+      placeID: 'ChIJFWkctxkxv1QRLhhGQdCn4gE',
+      uid: '2ebbb7d06677456a',
+      start: now.toMillis(),
+      end: then.toMillis(),
+      tag: '+',
+    };
+    addEvent(data).then((id) => console.log(id));
+    //#endregion
 
     now = DateTime.now();
     then = now.plus({ hours: 1 });
@@ -177,15 +201,6 @@ function test() {
       start: now.toMillis(),
       end: then.toMillis(),
       tag: '+',
-    };
-    addEvent(data).then((id) => console.log(id));
-
-    data = {
-      placeID: 'ChIJFWkctxkxv1QRLhhGQdCn4gE',
-      uid: '2ebbb7d06677456a',
-      start: delNow.toMillis(),
-      end: delThen.toMillis(),
-      tag: '-',
     };
     addEvent(data).then((id) => console.log(id));
 
@@ -200,8 +215,19 @@ function test() {
     };
     addEvent(data).then((id) => console.log(id));
   }
-  // get list of all events
-  consumer().then((results) => console.log(success(printJson(results))));
+  // graph all events
+  //   consumer().then((results) => console.log(success(printJson(results))));
 }
-
-test();
+function test2(uid, ack) {
+  redis.xadd('lottery', '*', 'uid', uid).then((confirmed) => {
+    if (ack) ack(confirmed);
+  });
+}
+function test(arg) {
+  if (arg === 1) {
+    test1();
+  } else if (arg === 2) {
+    test2('test');
+  }
+}
+test(2);

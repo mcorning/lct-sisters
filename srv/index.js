@@ -59,6 +59,7 @@ const {
   getVisitedPaths,
   setStartEnd,
   confirmDates,
+  enterLottery,
 } = require('./redis/redis');
 
 const { addSponsor, addVisit, getVisits } = require('./redis/streams');
@@ -164,6 +165,18 @@ io.on('connection', (socket) => {
     '============================ io.on(connection) ================================='
   );
   //#endregion Handling socket connection
+
+  //#region STREAM handlers
+
+  socket.on('enterLottery', (uid, ack) => {
+    // add to the Lottery Stream
+    enterLottery(uid).then((sid) => {
+      if (ack) {
+        ack(sid);
+      }
+    });
+  });
+
   socket.on('addSponsor', (data, ack) => {
     console.log(data.sid, data.oid);
     // add to the Sponsor Stream
@@ -192,6 +205,7 @@ io.on('connection', (socket) => {
       }
     });
   });
+  //#endregion STREAM handlers
 
   //#region Visit API
   socket.on('exposureWarning', async ({ graphName, riskScore }, ack) => {

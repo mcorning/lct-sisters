@@ -21,6 +21,7 @@
         updateLatLng,
         getGraphs,
         getRedisGraphs,
+        enterLottery,
       }"
     >
       <Spaces
@@ -44,6 +45,7 @@
         :updateLatLng="updateLatLng"
         :getGraphs="getGraphs"
         :getRedisGraphs="getRedisGraphs"
+        :enterLottery=enterLottery
       />
     </div>
   </Model>

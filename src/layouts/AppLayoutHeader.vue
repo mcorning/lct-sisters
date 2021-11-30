@@ -173,7 +173,11 @@ export default {
   },
   computed: {
     decodedUri() {
-      return this.tab === 0 ? this.sponsorUri : window.location.origin;
+      return this.tab === 0
+        ? `${window.location.origin}/?uid=${
+            this.$socket.client.connected ? this.$socket.client.auth.userID : ''
+          }`
+        : this.sponsorUri;
     },
 
     sponsorUri() {
@@ -242,7 +246,7 @@ export default {
       sponsor: '',
       sponsors: ['Microsoft', 'Sisters', 'Manchester'],
       tab: null,
-      items: [{ tab: 'Sponsored URLs' }, { tab: 'Base URL' }],
+      items: [{ tab: 'Base URL' }, { tab: 'Sponsored URLs' }],
       showCvewQR: false,
       handledSessionEvent: false,
       graphName: '',

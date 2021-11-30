@@ -68,6 +68,8 @@ const host = options.host;
 console.log(highlight('Redis Options:', printJson(options)));
 
 let Graph = new RedisGraph(currentGraphName, null, null, options);
+const Redis = require('ioredis');
+const redis = new Redis(options);
 
 console.log(info(`At initialization, Redis Graph opened ${currentGraphName}`));
 module.exports = {
@@ -89,8 +91,13 @@ module.exports = {
   matchAllSpacesQuery,
   setStartEnd,
   confirmDates,
+  enterLottery,
 };
 //#endregion Setup
+function enterLottery(uid) {
+  return redis.xadd('lottery', '*', 'uid', uid);
+}
+
 function getSessionID(param, ack) {
   const { userID } = param;
   const q = `MATCH (v:visitor{userID:'${userID}'}) RETURN v.sessionID`;
