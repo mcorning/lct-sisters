@@ -254,6 +254,26 @@
       :confirmationIcon="confirmationIcon"
       :bottom="confBottom"
     />
+
+    <v-row justify="center">
+      <v-dialog v-model="dialog" max-width="290">
+        <v-card>
+          <v-card-title class="text-h6">
+            {{ dialogTitle }}
+          </v-card-title>
+
+          <v-card-text> {{ dialogMessage }} </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+
+            <v-btn color="green darken-1" text @click="dialog = false">
+              Thanks
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </v-sheet>
 </template>
 
@@ -297,7 +317,6 @@ export default {
     getGraphs: Function,
     getRedisGraphs: Function,
     enterLottery: Function,
-    earnReward: Function,
   },
   components: {
     InfoWindowCard,
@@ -411,7 +430,7 @@ export default {
       // offset: 0,
       // easing: 'easeInOutCubic',
       // easings: Object.keys(easings),
-
+      dialog: false,
       graph: '',
       enlargeQR: false,
 
@@ -996,15 +1015,10 @@ export default {
         // in space.js
         this.onSharePlace();
         // reward the business that's sharing LCT
-        this.enterLottery(query.place_id)
+        this.enterLottery(query.place_id);
         // thank the customer who is using LCT
-        this.enterLottery(this.$socket.client.auth.userID)
-        // add the user to the business's reward stream
-        const bid=query.place_id
-        const uid=this.$socket.client.auth.userID
-        this.earnReward({bid, uid})
-
-             } else if (query.uid) {
+        this.enterLottery(this.$socket.client.auth.userID);
+      } else if (query.uid) {
         // uid is the id of the person who shared the QR
         this.enterLottery(query.uid).then((sid) => {
           this.confirmationTitle = 'Pay it forward: Beat the Virus';

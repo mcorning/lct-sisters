@@ -15,7 +15,7 @@ import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 import { redisMixin } from '@/js/redis';
 
-import { highlight, success, printJson } from '@/utils/helpers';
+import { success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
 
@@ -25,9 +25,9 @@ export default {
   mixins: [graphMixin, spaceMixin, redisMixin, timeMixin, warningMixin],
 
   computed: {
-    // preferredGraphName() {
-    //   return this.state.settings.preferredGraph;
-    // },
+    namespace() {
+      return this.settings.namespace;
+    },
     isConnected() {
       return !!this.$socket.connected;
     },
@@ -108,10 +108,9 @@ export default {
       console.log('Visit ID:', loggedVisitId, x ? 'exists' : 'does not exist');
       return x;
     },
-    getVisits() {
+    getActualVisits() {
       const x = Visit.query()
-        .get()
-        .filter(
+        .where(
           (v) =>
             !(
               !v.start ||
@@ -119,7 +118,14 @@ export default {
               Number.isNaN(v.start) ||
               Number.isNaN(v.end)
             )
-        );
+        )
+        .get();
+
+      return x;
+    },
+    getVisits() {
+      const x = Visit.query().all();
+
       return x;
     },
     getPlaces() {
@@ -147,72 +153,18 @@ export default {
       );
     },
 
-    // TODO has this abstract approach been superseded by time.js and space.js?
-    onUpdate(target, selectedEvent, deleteVisit = false) {
-      this.selectedEvent = selectedEvent;
-      const f = this[target];
-      f(deleteVisit);
-    },
-
-    cache(deleteVisit) {
+    onUpdate({ event, deleteVisit }) {
       if (deleteVisit) {
-        const id = this.selectedEvent.id;
+        const id = event.id;
+        const name = event.name;
         this.deleteVisit(id);
-        this.$emit('updatedModel', { id, deleted: true });
-
+        this.$emit('updatedModel', { name, id, deleteVisit });
         return;
       }
-      this.updateVisit(this.selectedEvent);
-    },
 
-    // called by Calendar when logging, editing, or deleting a Visit
-    graph(deleteVisit) {
-      if (deleteVisit) {
-        this.onDeleteNode(
-          this.selectedEvent.graphName,
-          this.selectedEvent.loggedVisitId
-        );
-        // if we deleted the graph node, then we should delete the cache entry, too
-        // but we assume the node delete operation succeeds. what if it doesn't?
-        this.cache(true);
-
-        return;
-      }
-      // TODO actually, this poor man's polymorphism here feels like it needs a functional approach
-      this.onLogVisit(this.selectedEvent);
-    },
-
-    onLogVisit(visit) {
-      const { id: visitId, name, place_id, start, end } = visit;
-      // get ref to vue model (to avoid this as Window and buffer below)
-      const vm = this;
-
-      function redisGraphCallback(results) {
-        const { id, graphName, logged } = results;
-        console.log(
-          success(
-            'redisGraphCallback:updateVisitOnGraph results:',
-            printJson(results)
-          )
-        );
-        vm.$emit('updatedModel', { name, place_id, graphName, id, logged });
-        // now update Visit entity (picking up the visitId from the closure)
-        vm.updateLoggedVisitId({ visitId, name, graphName, id, logged });
-      }
-
-      const query = {
-        visitId,
-        place: name,
-        place_id,
-        start,
-        end,
-        graphName: this.getPoi().namespace,
-        userID: this.$socket.client.auth.userID,
-        sessionID: this.sessionID,
-      };
-      console.log(highlight(`Model.vue's Visit query: ${printJson(query)}`));
-
-      this.emitFromClient('logVisit', query, redisGraphCallback);
+      // see time.js
+      this.updateVisit(event)
+        .then((result) => this.$emit('updatedModel', result));
     },
 
     emitFromClient(eventName, data, ack) {
@@ -370,11 +322,17 @@ export default {
         this.emitFromClient('enterLottery', uid, (sid) => resolve(sid));
       });
     },
-    earnReward({bid, uid}) {
+    earnReward({ bid, uid }) {
       return new Promise((resolve) => {
-        this.emitFromClient('earnReward', {bid, uid}, (sid) => resolve(sid));
+        this.emitFromClient('earnReward', { bid, uid }, (sid) => {
+          console.log('sid', sid);
+          resolve(sid);
+        });
       });
     },
+    getVisitByID(id){
+      return Visit.get(id)
+    }
   },
 
   watch: {
@@ -450,7 +408,7 @@ export default {
       enterLottery: this.enterLottery,
       earnReward: this.earnReward,
 
-      // Space assets
+      // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,
       onMarkerAdded: this.onMarkerAdded,
       onToWork: this.onToWork,
@@ -474,6 +432,7 @@ export default {
       getPlaces: this.getPlaces,
       visitExists: this.visitExists,
       updateGraphVisit: this.updateGraphVisit,
+      getVisitByID:this.getVisitByID,
 
       //Warning assets
       visitCount: this.visitCount,

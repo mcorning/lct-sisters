@@ -172,6 +172,7 @@ io.on('connection', (socket) => {
   socket.on('enterLottery', (uid, ack) => {
     // add to the Lottery Stream
     enterLottery(uid).then((sid) => {
+      // notify the uid who shared the QR that they get credit
       socket.to(uid).emit('confirmShare', sid);
       if (ack) {
         ack(sid);
@@ -179,10 +180,10 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('earnReward', ({bid, uid}, ack) => {
-    // add to the Lottery Stream
+  socket.on('earnReward', ({ bid, uid }, ack) => {
+    // add to the bid's Reward Stream
     earnReward({ bid, uid }).then((sid) => {
-      socket.to(uid).emit('confirmRewardEntry', sid);
+      // socket.to(uid).emit('confirmRewardEntry', {bid,sid});
       if (ack) {
         ack(sid);
       }
@@ -277,6 +278,7 @@ io.on('connection', (socket) => {
       .catch((error) => console.error(err(error)));
   });
 
+  // TODO what is this function? it's called by graph.js, but why?
   socket.on('updateVisit', (param, ack) => {
     setStartEnd(param, ack);
   });
@@ -298,6 +300,7 @@ io.on('connection', (socket) => {
     }
 
     // delegate to redis/redis.js
+    // TODO add a guard in the either-async (e.g., missing graphName)
     logVisit(data)
       .toEither()
       .map((x) => {

@@ -12,6 +12,7 @@
         getPoi,
         incrementWarningsReceived,
         getVisitors,
+        earnReward,
       }"
     >
       <AppLayoutHeader
@@ -25,7 +26,7 @@
       />
       <CaptureErrorSnackbar>
         <!-- one of the main vues goes here -->
-        <slot :getVisitors="getVisitors" />
+        <slot :getVisitors="getVisitors" :earnReward="earnReward" />
       </CaptureErrorSnackbar>
 
       <AppLayoutFooter /></div
@@ -55,6 +56,7 @@ export default {
     isConnected: Boolean,
     getPoi: Function,
     getVisitors: Function,
+    earnReward: Function,
   },
   computed: {
     status() {

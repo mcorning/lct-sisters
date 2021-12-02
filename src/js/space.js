@@ -41,7 +41,7 @@ export const spaceMixin = {
      */
     getTimeFromQuery(date, time, incr) {
       console.log(`getTimeFromQuery( ${date},${time}, ${incr})`);
-      const dateTimeAsDateTime = parseDate(date?Number(time):time).cata({
+      const dateTimeAsDateTime = parseDate(date ? Number(time) : time).cata({
         // if time is ms, Just has value
         Just: (dateJS) => DateTime.fromJSDate(dateJS),
         // otherwise, work harder to produce a DateTime
@@ -78,7 +78,13 @@ export const spaceMixin = {
       const name = this.$route.query.name.replace(/_/g, ' ');
       const shared = true;
 
-      this.callVisitUpdate({ place_id, start, end, name, shared });
+      this.callVisitUpdate({
+        place_id,
+        start,
+        end,
+        name,
+        shared,
+      });
     },
 
     updateLatLng({ place_id, lat, lng }) {
@@ -107,13 +113,25 @@ export const spaceMixin = {
 
         timed: true,
         marked: getNow(),
-        graphName: '', // set at Log time
-        loggedVisitId: '', // this will contain the internal id of the relationship in redisGraph
-        color: this.isDefaultGraph ? 'secondary' : 'sandboxmarked',
+        graphName: this.namespace
       };
-
-      // see time.js
-      this.updateVisit(visit);
+      // onLogVisit() is in graph.js
+      this.onLogVisit(visit).then((graphData) => {
+        // add graphData to visit
+        const loggedVisit = {
+          ...visit,
+          ...graphData,
+        };
+        // see time.js
+        this.updateVisit(loggedVisit).then((results) => {
+          if (this.$router.currentRoute.name !== 'Time') {
+            this.$router.push({
+              name: 'Time',
+              params: results,
+            });
+          }
+        });
+      });
     },
 
     onVisitPlace(data) {

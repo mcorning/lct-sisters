@@ -41,13 +41,14 @@ export default class Visit extends Model {
     return this.find(id);
   }
   static getVisits(active, expiredTimestamp) {
-    return this.query()
+    const x = this.query()
       .where((visit) =>
         active
           ? visit.start >= expiredTimestamp
           : visit.start < expiredTimestamp
       )
       .get();
+    return x;
   }
   static getMyVisits(active, expiredTimestamp) {
     return this.getVisits(active, expiredTimestamp)

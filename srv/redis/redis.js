@@ -98,7 +98,7 @@ module.exports = {
 function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
 }
-function earnReward({bid, uid}) {
+function earnReward({ bid, uid }) {
   return redis.xadd(bid, '*', 'uid', uid);
 }
 
@@ -383,8 +383,7 @@ function confirmDates({ userID, dates }) {
 //#endregion LAB
 
 //#region READ Graph
-function logVisit(data) {
-  const { visitId, userID, place_id, start, end, graphName } = data;
+function logVisit({ visitId, userID, place_id, start, end, graphName }) {
   changeGraph(graphName);
 
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 

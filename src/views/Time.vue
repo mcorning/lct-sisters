@@ -11,6 +11,8 @@
         usernumber,
         getVisits,
         updateGraphVisit,
+        earnReward,
+        getVisitByID,
       }"
     >
       <!-- Step 3/4: assign slotted props to component's props -->
@@ -25,6 +27,8 @@
         :getVisits="getVisits"
         :updateGraphVisit="updateGraphVisit"
         :emergency="emergency"
+        :earnReward="earnReward"
+        :getVisitByID="getVisitByID"
       />
     </div>
   </Model>
@@ -39,6 +43,7 @@ export default {
   name: `Time`,
   props: {
     emergency: Boolean,
+    earnReward: Function,
   },
   components: {
     Calendar,
@@ -61,42 +66,79 @@ export default {
      *                         delete a visit in cache uses:  { id, deleted: true }
      *                         delete a visit graph uses:     { loggedVisitId, graphName, deleted: true, }
      */
-    onUpdatedModel(updateResults) {
-      console.log(JSON.stringify(updateResults, null, 3));
-
+    onUpdatedModel(val) {
+      console.log(val);
+      console.log(' ');
+      this.confirmations = val;
+    },
+    onUpdatedModelOld({
+      name,
+      place_id,
+      graphName,
+      loggedVisitId,
+      id,
+      logged,
+      deleted,
+      shared,
+    }) {
+      console.log('\nIn onUpdatedModel(');
+      console.log(
+        JSON.stringify(
+          {
+            name,
+            place_id,
+            graphName,
+            loggedVisitId,
+            id,
+            logged,
+            deleted,
+            shared,
+          },
+          null,
+          3
+        )
+      );
+      console.log(')');
       // interpret update results function
-      const getMsg = (updateResults) => {
-        const {
-          name,
-          place_id,
-          graphName,
-          loggedVisitId,
-          id,
-          logged,
-          deleted,
-        } = updateResults;
+      const getMsg = ({
+        name,
+        place_id,
+        graphName,
+        loggedVisitId,
+        id,
+        logged,
+        deleted,
+      }) => {
         const msg = logged
-          ? {
-              logged: true,
-              loggedVisitId: id,
-              confirmationColor: 'success',
-              confirmationMessage: `<strong>${name} (${place_id})</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`,
-            }
+          ? `<strong>${name} (${place_id})</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`
           : deleted
-          ? {
-              deleted: true,
-              confirmationColor: loggedVisitId ? 'success' : 'warning',
-              confirmationMessage: loggedVisitId
-                ? `Visit ID ${loggedVisitId} deleted from ${graphName} graph`
-                : 'You are offline. The graph will update when you connect.',
-            }
-          : 'Neither log nor delete operation results available';
+          ? `Visit ID ${loggedVisitId} deleted from ${graphName} graph`
+          : 'You are offline. The graph will update when you connect.';
+
+        //  :'Neither log nor delete operation results available'
+
         console.log('sending message to Calendar:', msg);
         return msg;
       };
 
       // use update results function to set the Calendar prop to display results of log/delete operation
-      this.confirmations = getMsg(updateResults);
+      const msg = getMsg({
+        name,
+        place_id,
+        graphName,
+        loggedVisitId,
+        id,
+        logged,
+        deleted,
+      });
+      this.confirmations = {
+        name,
+        deleted,
+        shared,
+        logged,
+        loggedVisitId,
+        msg,
+      };
     },
   },
 

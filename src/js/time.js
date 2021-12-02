@@ -48,7 +48,7 @@ export const timeMixin = {
 
     updateVisit(visit) {
       // TODO NOTE: For then() to work up here, Visit.update() must return the $create() Promise.
-      Visit.update(visit)
+      return Visit.update(visit)
         .toEither()
         .map((visits) =>
           allOrNone(visits).match({
@@ -65,12 +65,7 @@ export const timeMixin = {
               Some: (v) => {
                 const query = { ...v };
                 console.log(success(`updateVisit().cata: ${printJson(query)}`));
-                if (this.$router.currentRoute.name !== 'Time') {
-                  this.$router.push({
-                    name: 'Time',
-                    params: query,
-                  });
-                }
+                return query;
               },
               None: () => console.log(`NOOP`),
             }),

@@ -207,6 +207,8 @@ export default {
     isConnected: Boolean,
     updateGraphVisit: Function,
     emergency: Boolean,
+    earnReward: Function,
+    getVisitByID: Function,
   },
   components: {
     VueQRCodeComponent,
@@ -305,7 +307,6 @@ export default {
         const cutoffDateTime = DateTime.now()
           .minus({ days: 10 })
           .toMillis();
-        // const x = [...this.state.visits, ...this.state.appointments];
         const x = this.getVisits().filter((v) => v.start > cutoffDateTime);
         return x;
       } catch (error) {
@@ -313,7 +314,10 @@ export default {
       }
     },
     unloggedEvents() {
-      return this.relevantEvents.filter((v) => Object.is(v.loggedVisitId, NaN));
+      const x = this.relevantEvents.filter((v) =>
+        Number.isNaN(v.loggedVisitId)
+      );
+      return x;
     },
 
     intervalCount() {
@@ -431,9 +435,7 @@ export default {
       alert('Failed to copy texts');
     },
     onDeleteEvent() {
-      // delete graph will also delete cache
-      this.delete('graph');
-
+      this.delete();
       this.seePickers = false;
     },
 
@@ -507,20 +509,22 @@ export default {
       this.update('cache');
     },
 
-    delete(target, event = this.selectedEvent) {
-      this.onUpdate(target, event, { delete: true });
+    delete(event = this.selectedEvent) {
+      this.onUpdate({ event, deleteVisit: true });
       this.selectedOpen = false;
     },
     // TODO URGENT: rethink this management scheme now that we have to delete more than one expired event at once
-    deleteExpired(target) {
-      this.onUpdate(target, this.selectedEvent, { delete: true });
+    deleteExpired() {
+      const event = this.selectedEvent;
+      this.onUpdate({ event, deleteVisit: true });
       this.selectedOpen = false;
     },
-    update(target) {
+    update() {
       this.log(`Updating cache with:`);
       const { name, date, start, end, id } = this.selectedEvent;
       this.log(printJson({ name, date, start, end, id }));
-      this.onUpdate(target, this.selectedEvent);
+      const event = this.selectedEvent;
+      this.onUpdate({ event, deleteVisit: false });
       this.selectedOpen = false;
     },
     onStateAvailable() {
@@ -685,7 +689,7 @@ export default {
       let ct = 0;
       this.expiredEvents.forEach((event) => {
         this.log('Deleting', event.name, 'from storage and graph');
-        this.delete('graph', event);
+        this.delete(event);
         ct = +1;
       });
       if (ct > 0) {
@@ -696,12 +700,18 @@ export default {
         );
         this.log(printJson(this.getVisits()));
       }
-
-      this.unloggedEvents.forEach((event) => {
-        this.log(`Logging an event to graph ${event.graphName}`);
-        // in Model.vue
-        this.onUpdate('graph', event);
+      console.log('unloggedEvents', printJson(this.unloggedEvents));
+      const m = this.unloggedEvents.map((event) => {
+        console.log('event', printJson(event));
+        this.onUpdate({ event, deleteVisit: false });
+        return event.shared;
       });
+      console.log(m);
+    },
+
+    showConfirmation(msg) {
+      this.confirmationMessage = msg;
+      this.snackbar = true;
     },
   },
 
@@ -717,16 +727,33 @@ export default {
       this.openVue();
     },
 
-    confirmations(msg) {
-      const {
-        deleted,
-        logged,
-        loggedVisitId,
-        confirmationColor,
-        confirmationMessage,
-      } = msg;
-      this.confirmationColor = confirmationColor;
-      this.confirmationMessage = confirmationMessage;
+    confirmations(val) {
+      this.confirmationColor = 'success';
+
+      console.log(val);
+      console.log(' ');
+      let msg;
+      // const { shared, deleted, name, loggedVisitId } = val;
+      if (val.shared) {
+        this.earnReward({
+          bid: val.name,
+          uid: this.$socket.client.auth.userID,
+        }).then((sid) => {
+          msg = `<p>You are earning LCT Reward points with ${val.name}. (Confirmation number: ${sid})</p>`;
+          this.showConfirmation(msg);
+        });
+      } else if (val.deleteVisit) {
+        this.confirmationColor = 'orange';
+        msg = `Deleted visit to ${val.name}`;
+      } else {
+        msg = `Added visit to ${val.name} in graph returning nodeID: ${val.loggedVisitId}`;
+      }
+      this.showConfirmation(msg);
+    },
+
+    confirmationsOld(val) {
+      const { name, deleted, shared, logged, loggedVisitId } = val;
+      let msg;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
         this.log(`Deleted visit to ${this.selectedEvent.name}`);
@@ -735,12 +762,26 @@ export default {
         this.selectedEvent.loggedVisitId = loggedVisitId;
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);
-        if (age < 8) {
-          this.confirmationMessage +=
-            '<br/>Oh, and welcome to the LCT community. Stay safe out there...';
-        }
+        msg +=
+          age < 8
+            ? '<br/>Oh, and welcome to the LCT community. Stay safe out there...'
+            : '';
       }
-      this.snackbar = true;
+      // this.confirmationColor = confirmationColor;
+      this.confirmationMessage = msg;
+      console.log('confirmationMessage', this.confirmationMessage);
+
+      if (shared) {
+        this.earnReward({
+          bid: name,
+          uid: this.$socket.client.auth.userID,
+        }).then((sid) => {
+          this.confirmationMessage += `<p>You are earning LCT Reward points (Confirmation number: ${sid}</p>`;
+          this.snackbar = true;
+        });
+      } else {
+        this.snackbar = true;
+      }
     },
   },
 
