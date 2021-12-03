@@ -221,26 +221,36 @@ io.on('connection', (socket) => {
   //#endregion STREAM handlers
 
   //#region Visit API
-  socket.on('exposureWarning', async ({ graphName, riskScore }, ack) => {
-    let everybody = await io.allSockets();
-    console.log('All Online sockets:', printJson([...everybody]));
+  socket.on('exposureWarning', ({ graphName, riskScore }, ack) => {
+    // riskScore will make its way into exposure alert message in sendExposureAlert()
+
+    // let everybody = await io.allSockets();
+    // console.log('All Online sockets:', printJson([...everybody]));
 
     //#region Functions called by onExposureWarning() below
     const userID = socket.handshake.auth.userID;
-
+    console.log('exposureWarning() > ', graphName, riskScore, userID);
+    // called when onExposureWarning() Promise resolves below
     const sendExposureAlert = (to, alert) => {
       console.log('Alerting:', to, 'with', alert); // to is a userID (of the exposed visitor)
       socket.to(to).emit('exposureAlert', alert);
     };
 
+    // handler for alerMap below
     const vMap = (x) => {
       const { placeID, exposedOn, exposedFor, nominalTime } = x;
-      return { placeID, exposedOn, exposedFor, nominalTime };
+      return {
+        placeID,
+        exposedOn,
+        exposedFor,
+        nominalTime,
+      };
     };
     const alertMap = (v) => {
       return v.map((x) => vMap(x));
     };
 
+    // onExposureWarning() needs to group alerts by place_id
     const groupBy = (arr, fn) =>
       arr
         .map(typeof fn === 'function' ? fn : (val) => val[fn])
@@ -250,8 +260,11 @@ io.on('connection', (socket) => {
         }, {});
     //#endregion
 
-    // delegate to redis.js
-    onExposureWarning({ graphName, userID })
+    // delegate to Promise in redis.js
+    onExposureWarning({
+      graphName,
+      userID,
+    })
       .then((exposures) => {
         // exposed is a Map of userID keys
         Object.entries(exposures).forEach(([key, value]) => {
@@ -260,7 +273,10 @@ io.on('connection', (socket) => {
           console.log(x);
           let alert = groupBy(value, 'placeID');
           console.log(alert);
-          let data = { alert, riskScore };
+          let data = {
+            alert,
+            riskScore,
+          };
           if (io.sockets.adapter.rooms.has(key)) {
             sendExposureAlert(key, data);
             deleteCacheItem('alerts', key);
@@ -271,11 +287,15 @@ io.on('connection', (socket) => {
             });
           }
           if (ack) {
-            ack('Alerted');
+            ack({ message: exposures.length });
           }
         });
       })
-      .catch((error) => console.error(err(error)));
+      .catch((error) => {
+        if (ack) {
+          ack({ error });
+        }
+      });
   });
 
   // TODO what is this function? it's called by graph.js, but why?

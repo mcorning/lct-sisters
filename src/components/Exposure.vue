@@ -453,7 +453,7 @@ export default {
       console.log(this.score, this.pctWeight);
 
       // callback for onExposureWarning below
-      const handleExposureWarningResults = (results) => {
+      const onExposureWarningResults = (results) => {
         console.log('Exposure alerts sent:', results);
         if (results.length > 0) {
           this.confirmationIcon = 'cloud_done';
@@ -477,7 +477,7 @@ export default {
           score: this.score,
           reliability: this.pctWeight,
         },
-        (results) => handleExposureWarningResults(results)
+        (results) => onExposureWarningResults(results)
       );
     },
   },

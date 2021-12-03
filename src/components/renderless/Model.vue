@@ -141,17 +141,7 @@ export default {
       return x;
     },
 
-    onExposureWarning(riskScore, ack) {
-      const graphName = this.getPoi().namespace;
-      this.emitFromClient(
-        'exposureWarning',
-        {
-          graphName,
-          riskScore,
-        },
-        ack
-      );
-    },
+
 
     onUpdate({ event, deleteVisit }) {
       if (deleteVisit) {

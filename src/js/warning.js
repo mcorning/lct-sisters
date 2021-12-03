@@ -7,6 +7,29 @@ import { firstOrNone } from '@/fp/utils';
 export const warningMixin = {
   name: 'warningMixin',
   methods: {
+    onExposureWarning(riskScore, ack) {
+      const graphName = this.getPoi().namespace;
+      if (!graphName) {
+        this.$emit('error', 'No graphName provided');
+        return;
+      }
+      if (!ack) {
+        this.$emit('error', 'No ack function available');
+        return;
+      }
+      this.emitFromClient(
+        'exposureWarning',
+        { graphName, riskScore },
+        (results) => {
+          if (results.message) {
+            ack(results.message);
+          } else if (results.error) {
+            ack(results.error);
+          }
+        }
+      );
+    },
+
     incrementWarnings() {
       return Setting.incrementWarnings();
     },

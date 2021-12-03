@@ -24,7 +24,7 @@ e912 | Firefox | Surface
 
 ID   | Browser | Device
 -----|---------|--------
-d25b | Chrome  | Surface
+3ee5 | Chrome  | Surface
 d7ff | Firefox Developer | Surface
 
 ### localhost:3003
