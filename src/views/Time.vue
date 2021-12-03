@@ -49,10 +49,15 @@ export default {
     Calendar,
     Model,
   },
+  computed: {},
+
   data() {
     return { confirmations: null };
   },
   methods: {
+    logged(loggedVisitId) {
+      return loggedVisitId >= 0;
+    },
     onError(error) {
       // let the global error handler pick up and display this error
       error.message = `Time.vue error message: ${error.message}`;
@@ -109,7 +114,7 @@ export default {
         logged,
         deleted,
       }) => {
-        const msg = logged
+        const msg = logged(loggedVisitId)
           ? `<strong>${name} (${place_id})</strong> logged to <strong>${graphName}</strong> graph on visit relationship ID <strong>${id}</strong>`
           : deleted
           ? `Visit ID ${loggedVisitId} deleted from ${graphName} graph`

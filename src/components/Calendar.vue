@@ -752,13 +752,13 @@ export default {
     },
 
     confirmationsOld(val) {
-      const { name, deleted, shared, logged, loggedVisitId } = val;
+      const { name, deleted, shared, loggedVisitId } = val;
       let msg;
       if (deleted) {
         // TODO get a better way to refresh state to relevantEvents loses the deleted record
         this.log(`Deleted visit to ${this.selectedEvent.name}`);
       } else {
-        this.selectedEvent.color = logged ? 'primary' : 'secondary';
+        this.selectedEvent.color = loggedVisitId >= 0 ? 'primary' : 'secondary';
         this.selectedEvent.loggedVisitId = loggedVisitId;
         const then = DateTime.fromMillis(this.usernumber);
         const age = userSince(then);

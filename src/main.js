@@ -36,6 +36,9 @@ import { version } from '../package.json';
 Vue.prototype.$version = version;
 Vue.prototype.$defaultGraphName = process.env.VUE_APP_NAMESPACE;
 Vue.prototype.$DEBUG = false;
+Vue.prototype.$namespace = 'Sisters OR';
+Vue.prototype.$userID = '';
+Vue.prototype.$connected = false;
 
 Vue.config.productionTip = false;
 

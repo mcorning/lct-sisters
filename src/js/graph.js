@@ -3,26 +3,51 @@ export const graphMixin = {
   name: 'graphHelpers',
 
   methods: {
+    // called by redis.js
+    onDeleteNode(graphName, loggedVisitId) {
+      const query = {
+        loggedVisitId,
+        graphName,
+      };
+      console.log('query to delete node on graph:', printJson(query));
+      // send message to server
+      this.emitFromClient(
+        'deleteVisit',
+        query,
+        // and handle the callback
+        (results) => {
+          console.log(
+            success('deleteVisitOnGraph results:', printJson(results))
+          );
+          this.$emit('updatedModel', {
+            loggedVisitId,
+            graphName,
+            deleted: true,
+          });
+        }
+      );
+    },
+
     // called by onLogVisit() below
     updateVisitOnGraph(query) {
       console.log('query to update graph:', printJson(query));
       return new Promise((resolve, reject) => {
         // send message to server
-        try {
-          this.emitFromClient(
-            'logVisit',
-            query,
-            // and handle the callback
-            (results) => {
-              console.log(
-                success('updateVisitOnGraph results:', printJson(results))
-              );
+        this.emitFromClient(
+          'logVisit',
+          query,
+          // and handle the callback
+          (results) => {
+            console.log(
+              success('updateVisitOnGraph results:', printJson(results))
+            );
+            if (results.error) {
+              reject(results);
+            } else {
               resolve(results);
             }
-          );
-        } catch (error) {
-          reject(error);
-        }
+          }
+        );
       });
     },
 
@@ -57,14 +82,14 @@ export const graphMixin = {
         // send the visit to the server
         this.updateVisitOnGraph(query)
           .then((redisResult) => {
-            if (!redisResult.logged || !redisResult.id) {
+            if (!(redisResult.id && redisResult.id >= 0)) {
               throw new Error(`Redis could not log Visit to  ${name}`);
             }
             const graphData = {
               name,
               visitId: id,
               loggedVisitId: redisResult.id,
-              graphName: redisResult.graph,
+              graphName: redisResult.graphName,
               color: 'primary',
             };
             console.log('updateVisitOnGraph() graphData:', graphData);

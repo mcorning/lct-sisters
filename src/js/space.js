@@ -113,25 +113,30 @@ export const spaceMixin = {
 
         timed: true,
         marked: getNow(),
-        graphName: this.namespace
+        graphName: this.namespace,
       };
       // onLogVisit() is in graph.js
-      this.onLogVisit(visit).then((graphData) => {
-        // add graphData to visit
-        const loggedVisit = {
-          ...visit,
-          ...graphData,
-        };
-        // see time.js
-        this.updateVisit(loggedVisit).then((results) => {
-          if (this.$router.currentRoute.name !== 'Time') {
-            this.$router.push({
-              name: 'Time',
-              params: results,
-            });
-          }
+      this.onLogVisit(visit)
+        .then((graphData) => {
+          // add graphData to visit
+          const loggedVisit = {
+            ...visit,
+            ...graphData,
+          };
+          // see time.js
+          this.updateVisit(loggedVisit).then((results) => {
+            if (this.$router.currentRoute.name !== 'Time') {
+              this.$router.push({
+                name: 'Time',
+                params: results,
+              });
+            }
+          });
+        })
+        .catch((e) => {
+          // the global error handler UI take over
+          this.$emit('error',e.error);
         });
-      });
     },
 
     onVisitPlace(data) {

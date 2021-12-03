@@ -11,8 +11,6 @@
         usernumber,
         getPoi,
         incrementWarningsReceived,
-        getVisitors,
-        earnReward,
       }"
     >
       <AppLayoutHeader
@@ -25,8 +23,8 @@
         :incrementWarningsReceived="incrementWarningsReceived"
       />
       <CaptureErrorSnackbar>
-        <!-- one of the main vues goes here -->
-        <slot :getVisitors="getVisitors" :earnReward="earnReward" />
+         <!-- send props to components through their master vue files -->
+        <slot />
       </CaptureErrorSnackbar>
 
       <AppLayoutFooter /></div

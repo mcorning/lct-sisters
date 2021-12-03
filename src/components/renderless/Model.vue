@@ -163,8 +163,9 @@ export default {
       }
 
       // see time.js
-      this.updateVisit(event)
-        .then((result) => this.$emit('updatedModel', result));
+      this.updateVisit(event).then((result) =>
+        this.$emit('updatedModel', result)
+      );
     },
 
     emitFromClient(eventName, data, ack) {
@@ -330,9 +331,15 @@ export default {
         });
       });
     },
-    getVisitByID(id){
-      return Visit.get(id)
-    }
+    getVisitByID(id) {
+      return Visit.get(id);
+    },
+    setNamespace(nsp) {
+      this.updateSetting({ id: 1, namespace: nsp });
+    },
+    getNamespace() {
+      return this.namespace;
+    },
   },
 
   watch: {
@@ -362,7 +369,9 @@ export default {
         })
       )
       .cata({
-        ok: () => (this.loading = false),
+        ok: () => {
+          this.loading = false;
+        },
         error: (err) => {
           // let global error handler take over so we see the error in the snackbar.
           this.$emit('error', err);
@@ -422,6 +431,8 @@ export default {
       clearLocationSettings: this.clearLocationSettings,
       setDefaultMapCenter: this.setDefaultMapCenter,
       updateLatLng: this.updateLatLng,
+      setNamespace: this.setNamespace,
+      getNamespace: this.getNamespace,
 
       // Time assets
       changeEvent: this.changeEvent,
@@ -432,7 +443,7 @@ export default {
       getPlaces: this.getPlaces,
       visitExists: this.visitExists,
       updateGraphVisit: this.updateGraphVisit,
-      getVisitByID:this.getVisitByID,
+      getVisitByID: this.getVisitByID,
 
       //Warning assets
       visitCount: this.visitCount,

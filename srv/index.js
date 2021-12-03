@@ -291,12 +291,9 @@ io.on('connection', (socket) => {
 
     function safeAck(results) {
       if (ack) {
-        const x = results ?? 'no results';
-        console.log(highlight('acknowledging client', printJson(x)));
+        console.log(highlight('Acknowledging client', results));
         ack(results);
-        return;
       }
-      console.log('No ack()');
     }
 
     // delegate to redis/redis.js
@@ -309,8 +306,10 @@ io.on('connection', (socket) => {
       })
       .cata({
         ok: (results) => safeAck(results),
-        error: (results) => {
-          console.error(err(results, 'Issues calling redis.logVisit()'));
+        error: (e) => {
+          console.error(err(e.stack, 'Issues calling redis.logVisit()'));
+          const erx = { error: e.stack };
+          ack(erx);
         },
       });
   });

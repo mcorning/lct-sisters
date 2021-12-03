@@ -84,7 +84,7 @@ export default {
 
   data: () => ({
     openMenu: false,
-    graphName: 'Sisters',
+    graphName: 'Sisters OR',
     gender: ['men', 'women'],
   }),
 

@@ -317,6 +317,7 @@ export default {
     getGraphs: Function,
     getRedisGraphs: Function,
     enterLottery: Function,
+    setNamespace: Function,
   },
   components: {
     InfoWindowCard,
@@ -363,6 +364,10 @@ export default {
         : null;
 
       return loc;
+    },
+    namespace() {
+      const nsp = this.state.settings.namespace;
+      return nsp;
     },
     defaultMapCenter() {
       return this.state.settings.default_map_center
@@ -879,6 +884,7 @@ export default {
           const bounds = new google.maps.LatLngBounds();
           places.forEach((place) => {
             // TODO this is a Maybe
+            this.setNamespace(getNamespace(place.address_components))
             if (!place.geometry || !place.geometry.location) {
               console.log('Returned place contains no geometry');
               return;
@@ -974,7 +980,8 @@ export default {
       try {
         this.map = map;
         this.log('3) Getting default location:');
-        const center = this.defaultMapCenter || this.lastLocation;
+        const center =
+          this.defaultMapCenter || this.lastLocation || this.namespace;
         if (this.sponsor === 'microsoft') {
           this.log(`\tWelcome Microsoft...`);
           showPosition(this.sponsorPosition);

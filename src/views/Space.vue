@@ -22,6 +22,7 @@
         getGraphs,
         getRedisGraphs,
         enterLottery,
+        setNamespace,
       }"
     >
       <Spaces
@@ -46,6 +47,7 @@
         :getGraphs="getGraphs"
         :getRedisGraphs="getRedisGraphs"
         :enterLottery="enterLottery"
+        :setNamespace="setNamespace"
       />
     </div>
   </Model>

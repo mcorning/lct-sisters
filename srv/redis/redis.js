@@ -9,6 +9,7 @@ const {
   warn,
   info,
   highlight,
+  err,
   logVisitors,
 } = require('../../src/utils/helpers');
 const { DateTime, Interval } = require('../../src/utils/luxonHelpers');
@@ -385,7 +386,7 @@ function confirmDates({ userID, dates }) {
 //#region READ Graph
 function logVisit({ visitId, userID, place_id, start, end, graphName }) {
   changeGraph(graphName);
-
+  console.log('Using graph', graphName);
   const query = `MERGE (v:visitor{  userID: '${userID}'}) 
       MERGE (s:space{ place_id:'${place_id}'}) 
       MERGE (v)-[r:visited{start:${start}, end:${end}}]->(s)
@@ -397,6 +398,9 @@ function logVisit({ visitId, userID, place_id, start, end, graphName }) {
   // OK event handler that converts redis results into lct object
   function returnResults(results) {
     const id = results.next().get('id(r)');
+    if (id === null) {
+      debugger;
+    }
     return {
       id,
       place_id,
@@ -419,7 +423,7 @@ function logVisit({ visitId, userID, place_id, start, end, graphName }) {
       ok: (results) => returnResults(results),
       error: (results) => {
         // TODO shouldn't this return the same structure as ok (except logged=false)?
-        console.log(results, 'Issues when logging to graph()');
+        throw Error(results);
       },
     });
 }
@@ -530,7 +534,7 @@ function deleteVisit(params) {
     .cata({
       ok: (results) => results._statistics._raw[0],
       error: (results) => {
-        console.log(results, 'Issues when deleting node on graph()');
+        console.log(err(`${results} Issues when deleting node on graph()`));
       },
     });
 }

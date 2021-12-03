@@ -217,7 +217,8 @@ export default {
     },
 
     namespace() {
-      return this.getPoi().namespace;
+      const nsp = this.getPoi().namespace;
+      return nsp;
     },
 
     fileMenuItems() {
