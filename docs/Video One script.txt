@@ -1,0 +1,36 @@
+This is the story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
+
+INTAKE
+Our story opens with Seth as he is starting an intake session with Katy, a new patient.
+
+
+... [open Chrome]
+
+...Seth opens his laptop and clicks on the map marker for his clinic, Step and Spine.
+
+Seth clicks the share button and the Visitor tab and sets the time interval for the meeting.
+Seth says, "Before we get started, Katy, scan this QR code on your phone so we can add this session to your new COVID-safe calendar.
+
+
+... [open FireFox]
+
+Katy's phone opens her new calendar and sees the 45 minute intake meeting is already entered.
+
+Seth says, "Next time you come in, scan this QR again to record your session.
+
+"In the meantime, if anybody who has been here in the last two weeks contracts the virus, your app will warn you to get tested."
+
+
+... [ back to FireFox]
+
+As the meeting ends, Katy says she's going to stop for a coffee at Fika on her way home.
+
+Seth says, "Hold up a second...Click the Space button at the bottom of the screen...good...now, type "Fika" in the search box at the top of the screen.
+
+"When you get to the coffee shop, click the Mark Calendar button to record your visit using the current time when you enter the shop.
+
+"Use your new app this way wherever you spend at least fifteen minutes in the presence of others."
+
+
+
+As Katy leaves, Seth says,"See you next week, Katy. And stay safe out there..."

@@ -311,7 +311,7 @@ io.on('connection', (socket) => {
 
     function safeAck(results) {
       if (ack) {
-        console.log(highlight('Acknowledging client', results));
+        console.log(highlight('Acknowledging client', printJson(results)));
         ack(results);
       }
     }

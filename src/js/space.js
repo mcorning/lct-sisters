@@ -125,6 +125,7 @@ export const spaceMixin = {
           };
           // see time.js
           this.updateVisit(loggedVisit).then((results) => {
+            // pass results from space to time in params for Time.vue
             if (this.$router.currentRoute.name !== 'Time') {
               this.$router.push({
                 name: 'Time',
@@ -135,7 +136,7 @@ export const spaceMixin = {
         })
         .catch((e) => {
           // the global error handler UI take over
-          this.$emit('error',e.error);
+          this.$emit('error', e.error);
         });
     },
 

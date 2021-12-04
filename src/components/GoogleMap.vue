@@ -884,7 +884,7 @@ export default {
           const bounds = new google.maps.LatLngBounds();
           places.forEach((place) => {
             // TODO this is a Maybe
-            this.setNamespace(getNamespace(place.address_components))
+            this.setNamespace(getNamespace(place.address_components));
             if (!place.geometry || !place.geometry.location) {
               console.log('Returned place contains no geometry');
               return;
@@ -1032,7 +1032,7 @@ export default {
           this.confirmationMessage = `To thank user ${query.uid} for helping all of us beat this virus, they are in the LCT Reward lottery (confirmation nr: ${sid}). If you, too, share the LCT QR code, you can join the same lottery...`;
           this.confSnackbar = true;
           this.confBottom = true;
-          this.confirmationIcon = 'sentiment_very_satisfied';
+          this.confirmationIcon = 'lottery';
           this.log(`ready()${this.confirmationMessage}`);
         });
       }
@@ -1063,7 +1063,9 @@ export default {
     gmapsInit()
       .then((google) => {
         const map = new google.maps.Map(this.$refs.map, {
-          mapTypeControl: true,
+          // this contol at the bottom of the screen can't display its contents
+          // and it's not that important, anyway
+          mapTypeControl: false,
           mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: ['roadmap', 'terrain'],

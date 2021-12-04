@@ -66,11 +66,11 @@
         <v-spacer />
         <v-dialog v-model="enlargeQR" width="520">
           <!-- never could figure out how to add a tooltip to an activator button -->
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn color="primary" icon v-bind="attrs" v-on="on">
-                <v-icon>share</v-icon>
-              </v-btn>
-            </template>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn color="primary" icon v-bind="attrs" v-on="on">
+              <v-icon>share</v-icon>
+            </v-btn>
+          </template>
 
           <v-card>
             <v-btn
@@ -140,7 +140,8 @@
                       id="qr"
                       ref="qr"
                       :text="decodedUri"
-                      :size="128"
+                      :size="256"
+                      error-level="L"
                     >
                     </VueQRCodeComponent>
                   </v-col>
@@ -148,7 +149,7 @@
                 </v-row>
 
                 <v-divider class="my-3"></v-divider>
-                <v-card-title>Event Link</v-card-title>
+                <v-card-title @click="copyLink">Event Link</v-card-title>
                 <v-card-text class="text-caption text-sm-body-2">{{
                   decodedUri
                 }}</v-card-text>
@@ -243,7 +244,7 @@ export default {
         : 'Show location details';
     },
     employee() {
-      return this.tab === 0;
+      return this.tab === 1;
     },
 
     dialogSubtitle() {
@@ -324,8 +325,8 @@ export default {
       printing: false,
       tab: null,
       items: [
-        { tab: 'Employees', content: 'Log in your shift' },
         { tab: 'Visitors', content: 'Shared visits default to current time' },
+        { tab: 'Employees', content: 'Log in your shift' },
       ],
       showConf: false,
       reveal: false,
@@ -336,6 +337,9 @@ export default {
     };
   },
   methods: {
+    emailUrl() {
+      alert(this.decodedUri);
+    },
     changeMapCenter() {
       this.$emit('changeMapCenter');
     },
@@ -364,6 +368,7 @@ export default {
 
     // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
     copyLink() {
+      console.log(this.decodedUri);
       const copied = this.$clipboard(this.decodedUri);
       this.showConf = copied;
     },

@@ -282,14 +282,14 @@ export default {
       this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;
       this.confSnackbar = true;
       this.confBottom = false;
-      this.confirmationIcon = 'sentiment_very_satisfied';
+      this.confirmationIcon = 'lottery';
     },
     confirmShare(sid) {
       this.confirmationTitle = `Well Done, ${this.$socket.client.auth.userID}`;
       this.confirmationMessage = `You are now entered in the LCT Reward Lottery (Confirmation number ${sid}). But more important: you are helping keep us all safe.`;
       this.confSnackbar = true;
       this.confBottom = true;
-      this.confirmationIcon = 'sentiment_very_satisfied';
+      this.confirmationIcon = 'lottery';
     },
     exposureAlert({ alert, riskScore }) {
       const audio = new AudioContext();

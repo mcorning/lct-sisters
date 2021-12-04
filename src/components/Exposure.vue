@@ -217,8 +217,15 @@ export default {
       return this.$vuetify.breakpoint.mdAndUp ? 'EmergencyW' : 'EmergencyH';
     },
     getWarningColor() {
-      if (this.pctWeight < 25) return 'amber';
-      if (this.pctWeight < 75) return 'orange';
+      if (this.pctWeight === 0) {
+        return 'green';
+      }
+      if (this.pctWeight < 25) {
+        return 'amber';
+      }
+      if (this.pctWeight < 75) {
+        return 'orange';
+      }
       return 'red';
     },
 
@@ -254,6 +261,10 @@ export default {
       // from 2, 3, 6, 10 (plus 1 for vaccination) we derive these scenarios:
       let msg;
       switch (this.score) {
+        case 0:
+          msg =
+            'This is a drill. This is only a drill. If this was an actual EXPOSURE ALERT you would get tested for COVID. This drill simulates getting such an ALERT. Do not act on this incident.';
+          break;
         case 2:
           msg = `If you received and LCT exposure alert, you SHOULD get tested immediately. If you are positive, hit the Warn button and take care of yourself.`;
           break;
@@ -402,6 +413,15 @@ export default {
           text: 'LCT warned me of exposure',
           type: 'secondary',
           weight: 2,
+        },
+        {
+          divider: true,
+        },
+        {
+          icon: 'grading',
+          text: 'LCT DRILL',
+          type: 'drill',
+          weight: 0,
         },
       ],
     };

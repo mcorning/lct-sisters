@@ -201,7 +201,7 @@ export default {
     state: Object,
     onUpdate: Function,
     setDefaultGraphName: Function,
-    confirmations: Object,
+    confirmations: Object, // = {name, deleted, shared, logged, loggedVisitId, msg, };
     usernumber: Number,
     getVisits: Function,
     isConnected: Boolean,
@@ -334,6 +334,7 @@ export default {
   },
   data() {
     return {
+      confirmationParam: null,
       openDiagnostics: this.emergency,
       diagnostics: [],
       enlargeQR: false,
@@ -509,22 +510,22 @@ export default {
       this.update('cache');
     },
 
-    delete(event = this.selectedEvent) {
-      this.onUpdate({ event, deleteVisit: true });
+    delete(eventToHandle = this.selectedEvent) {
+      this.onUpdate({ eventToHandle, deleteVisit: true });
       this.selectedOpen = false;
     },
     // TODO URGENT: rethink this management scheme now that we have to delete more than one expired event at once
     deleteExpired() {
-      const event = this.selectedEvent;
-      this.onUpdate({ event, deleteVisit: true });
+      const eventToHandle = this.selectedEvent;
+      this.onUpdate({ eventToHandle, deleteVisit: true });
       this.selectedOpen = false;
     },
     update() {
       this.log(`Updating cache with:`);
       const { name, date, start, end, id } = this.selectedEvent;
       this.log(printJson({ name, date, start, end, id }));
-      const event = this.selectedEvent;
-      this.onUpdate({ event, deleteVisit: false });
+      const eventToHandle = this.selectedEvent;
+      this.onUpdate({ eventToHandle, deleteVisit: false });
       this.selectedOpen = false;
     },
     onStateAvailable() {
@@ -687,9 +688,9 @@ export default {
       this.log(printJson(this.relevantEvents));
 
       let ct = 0;
-      this.expiredEvents.forEach((event) => {
-        this.log('Deleting', event.name, 'from storage and graph');
-        this.delete(event);
+      this.expiredEvents.forEach((expiredEvent) => {
+        this.log('Deleting', expiredEvent.name, 'from storage and graph');
+        this.delete(expiredEvent);
         ct = +1;
       });
       if (ct > 0) {
@@ -701,10 +702,10 @@ export default {
         this.log(printJson(this.getVisits()));
       }
       console.log('unloggedEvents', printJson(this.unloggedEvents));
-      const m = this.unloggedEvents.map((event) => {
-        console.log('event', printJson(event));
-        this.onUpdate({ event, deleteVisit: false });
-        return event.shared;
+      const m = this.unloggedEvents.map((expiredEvent) => {
+        console.log('expiredEvent', printJson(expiredEvent));
+        this.onUpdate({ expiredEvent, deleteVisit: false });
+        return expiredEvent.shared;
       });
       console.log(m);
     },
@@ -713,21 +714,7 @@ export default {
       this.confirmationMessage = msg;
       this.snackbar = true;
     },
-  },
-
-  watch: {
-    emergency(val) {
-      console.log(val);
-    },
-    mailToString(val) {
-      this.log(`email: ${val}`);
-    },
-
-    ready() {
-      this.openVue();
-    },
-
-    confirmations(val) {
+    confirm(val) {
       this.confirmationColor = 'success';
 
       console.log(val);
@@ -744,11 +731,34 @@ export default {
         });
       } else if (val.deleteVisit) {
         this.confirmationColor = 'orange';
-        msg = `Deleted visit to ${val.name}`;
+        msg = `Deleted visit to ${val.name} `;
+        // code is acting weird and delete is not seeing the loggedVisitId. investigating...
+        // msg = `Deleted visit to ${val.name} graph visited ID: ${val.loggedVisitId}`;
       } else {
         msg = `Added visit to ${val.name} in graph returning nodeID: ${val.loggedVisitId}`;
       }
       this.showConfirmation(msg);
+    },
+  },
+
+  watch: {
+    emergency(val) {
+      console.log(val);
+    },
+    mailToString(val) {
+      this.log(`email: ${val}`);
+    },
+
+    ready() {
+      this.openVue();
+    },
+
+    confirmations(val) {
+      this.confirm(val);
+    },
+
+    confirmationParam(val) {
+      this.confirm(val);
     },
 
     confirmationsOld(val) {
@@ -790,6 +800,10 @@ export default {
     this.updateTime();
     // log a shared visit (if data was in the route querystring)
     // this.logSharedVisit(this.$route.params);
+    if (Object.keys(this.$route.params).length) {
+      this.confirmationParam = this.$route.params;
+    }
+
     const query = this.$route.query;
     this.openDiagnostics = query.d && query.d === '1';
     this.ready = true;

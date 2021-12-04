@@ -143,17 +143,18 @@ export default {
 
 
 
-    onUpdate({ event, deleteVisit }) {
+    onUpdate({ eventToHandle, deleteVisit }) {
       if (deleteVisit) {
-        const id = event.id;
-        const name = event.name;
+        const id = eventToHandle.id;
+        const name = eventToHandle.name;
+        const graphID=eventToHandle.loggedVisitId
         this.deleteVisit(id);
-        this.$emit('updatedModel', { name, id, deleteVisit });
+        this.$emit('updatedModel', { name, id, graphID, deleteVisit });
         return;
       }
 
       // see time.js
-      this.updateVisit(event).then((result) =>
+      this.updateVisit(eventToHandle).then((result) =>
         this.$emit('updatedModel', result)
       );
     },
