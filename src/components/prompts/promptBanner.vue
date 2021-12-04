@@ -10,6 +10,7 @@
           exposure.</v-card-subtitle
         >
         <v-card-text tile v-html="alertMessage" />
+        <v-card-title v-html="callToAction"></v-card-title>
         <v-card outlined
           ><v-card-text>
             Warnings received to date:
@@ -35,9 +36,17 @@ export default {
     warningsReceived: Number,
   },
   computed: {
+    callToAction() {
+      const { reliability } = this.riskScore;
+      return reliability === 0
+        ? 'This is a drill. This is ONLY A DRILL. <br/>If this had been an actual EXPOSURE ALERT you would get tested for COVID. This drill simulates getting such an ALERT. <br/>DO NOT ACT ON THIS INCIDENT.'
+        : 'For this reason, please get tested now. Time is not our ally.<br/> Quarantine and warn others, if necessary.';
+    },
     getAlertColor() {
       const { reliability } = this.riskScore;
-
+      if (reliability === 0) {
+        return 'green';
+      }
       if (reliability < 25) return 'amber';
       if (reliability < 75) return 'orange';
       return 'red';
@@ -70,9 +79,7 @@ export default {
           }
         });
       });
-      msg += `</dl><p>
-      For this reason, please get tested.<br/>
-      Quarantine and warn others, if necessary.</p>`;
+      msg += `</dl>`;
       return msg;
     },
   },
