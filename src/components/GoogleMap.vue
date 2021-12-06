@@ -254,7 +254,7 @@
       :confirmationIcon="confirmationIcon"
       :bottom="confBottom"
     />
-
+    <!-- 
     <v-row justify="center">
       <v-dialog v-model="dialog" max-width="290">
         <v-card>
@@ -273,7 +273,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-    </v-row>
+    </v-row> -->
   </v-sheet>
 </template>
 

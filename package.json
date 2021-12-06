@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.12.0318",
+  "version": "0.12.0512",
   "scripts": {
     "localhost": "vue-cli-service serve",
     "start": "node srv/index.js",
@@ -39,6 +39,7 @@
     "vue-scroll-picker": "^0.8.0",
     "vue-socket.io-extended": "^4.2.0",
     "vue2-clipboard": "^1.0.1",
+    "vuelidate": "^0.7.6",
     "vuetify": "2.5.3",
     "vuex": "^3.6.2",
     "vuex-orm-localforage": "^0.3.2"

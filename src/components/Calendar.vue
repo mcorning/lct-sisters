@@ -501,13 +501,14 @@ export default {
     },
 
     emailEvent() {
-      const mailToString = this.getMailToString();
-      this.log(`Setting window.location to:`);
-      this.log(`${mailToString}`);
-      window.location = mailToString;
       this.seePickers = false;
       this.selectedEvent.name += `: ${this.room}`;
       this.update('cache');
+
+      const mailToString = this.getMailToString() + ' _blank';
+      this.log(`Setting window.location to:`);
+      this.log(`${mailToString}`);
+      window.location = mailToString;
     },
 
     delete(eventToHandle = this.selectedEvent) {

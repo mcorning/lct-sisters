@@ -472,32 +472,45 @@ export default {
       this.dialog = true;
       console.log(this.score, this.pctWeight);
 
-      // callback for onExposureWarning below
-      const onExposureWarningResults = (results) => {
-        console.log('Exposure alerts sent:', results);
-        if (results.length > 0) {
-          this.confirmationIcon = 'cloud_done';
-          this.confirmationMessage = `Well done. You alerted ${
-            results.length
-          } other${
-            results.length === 1 ? '' : 's'
-          } that the virus is lurking in your community. Soon, there will be no where for those virions to hide.`;
-        } else {
-          this.confirmationIcon = 'thumb_up_alt';
-          this.confirmationMessage =
-            'Good news! You exposed no one else at the places you visited.';
-        }
-        this.confirmationTitle = 'Results of Exposure Warning';
-        console.log(this.confirmationIcon);
-        this.confSnackbar = true;
-      };
-
       this.onExposureWarning(
         {
           score: this.score,
           reliability: this.pctWeight,
         },
-        (results) => onExposureWarningResults(results)
+        (results) => {
+          const alerts = Object.values(results).flat();
+          console.log('exposureWarnings', JSON.stringify(alerts, null, 3));
+          const visits = alerts.length === 1 ? 'place' : 'places';
+          console.log(
+            `${this.$socket.client.auth.userID} sent exposure alerts to ${alerts.length} ${visits}`
+          );
+
+          let places;
+          switch (alerts.length) {
+            case 0:
+              this.confirmationMessage =
+                'Good news! You exposed no one else at the places you visited.';
+              this.confirmationIcon = 'thumb_up_alt';
+              break;
+            case 1:
+              this.confirmationMessage = `Thanks. You sent an exposure alert to ${alerts[0].placeID} warning them that the virus is lurking in your community.`;
+              this.confirmationIcon = 'cloud_done';
+              break;
+
+            default:
+              places = alerts.map((v) => v.placeID);
+              this.confirmationMessage = `Well done. You sent exposure alerts that the virus is lurking in your community to ${
+                alerts.length
+              } ${visits}: ${places.join(
+                ', '
+              )}. Soon, there will be no where for those virions to hide...`;
+              this.confirmationIcon = 'cloud_done';
+              break;
+          }
+
+          this.confirmationTitle = 'Results of Exposure Warning';
+          this.confSnackbar = true;
+        }
       );
     },
   },

@@ -1,0 +1,33 @@
+This is the second installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
+
+Last time we saw Seth show Katy how to share a tool Seth believes can help the residents of Sisters minimize the impact of the virus on their health and the city's economy.
+
+In this episode, Seth shows Katy what happens with rubber meets the road...
+
+EPISODE 3: IT COULD BE WORSE
+
+By now, Katy knows the drill. First, PT. Then another lesson in armchair epidemiology.
+
+"Ok, Katy, today I'll show you how the app not only keeps us safe, but how it can help Google as well.
+"I'm using that old Galaxy again here. As you did when searched for Fika last week, since i don't see Step and Spine listed on the map, I will search for it's location."
+
+Seth types in the search box.
+
+"Good, we are at the top of the list...oops, wrong location. Google maps is wrong. But the app can handle this. I select the marker where it is (in the middle of the grocery store).
+"Then i drag it over here where we are.
+"Now the next time i open the app, our map marker will be in the correct location."
+
+To illustrate how exposure alerts work, Seth says,
+"You already scanned in today. We share the same space at the same time, so I will add an event to my calendar that is fairly close in time to your event on your calendar."
+
+Seth clicks the MARK CALENDAR button
+
+
+
+
+
+
+Seth's closing remarks to Katy are, "Next time I'll show you how you can invite me to your Thursday card games..."
+
+
+As Katy leaves, Seth says,"Until then, Katy, stay safe out there..."

@@ -23,7 +23,7 @@
         :incrementWarningsReceived="incrementWarningsReceived"
       />
       <CaptureErrorSnackbar>
-         <!-- send props to components through their master vue files -->
+        <!-- send props to components through their master vue files -->
         <slot />
       </CaptureErrorSnackbar>
 

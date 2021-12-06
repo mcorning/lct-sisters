@@ -1,36 +1,41 @@
-This is the story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
+This is the second installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
 
-INTAKE
-Our story opens with Seth as he is starting an intake session with Katy, a new patient.
+SHARING IS CARING
+Last time we saw Seth introduce Katy to a tool Seth believes can help the residents of Sisters minimize the impact of the virus on their health and on the city's economy.
+
+As Seth takes Katy's temperature, he watches Katy scan the clinic's QR code and says, "Good job. When we're done today, I'll show you how you can share the app with your friends and family. 
+"Then we can talk more about "crush the virus" lottery."
 
 
-... [open Chrome]
-
-...Seth opens his laptop and clicks on the map marker for his clinic, Step and Spine.
-
-Seth clicks the share button and the Visitor tab and sets the time interval for the meeting.
-Seth says, "Before we get started, Katy, scan this QR code on your phone so we can add this session to your new COVID-safe calendar.
+As Katy cools down after the workout she says, "Ok, show me this lottery thingy."
 
 
 ... [open FireFox]
 
-Katy's phone opens her new calendar and sees the 45 minute intake meeting is already entered.
+Seth tells her to open the app. "See that QR code icon in the upper left corner of the screen?" "Yeah." "Click it."
 
-Seth says, "Next time you come in, scan this QR again to record your session.
+Katy's phone shows a QR code. This time, the only data in the code is Katy's userID. 
 
-"In the meantime, if anybody who has been here in the last two weeks contracts the virus, your app will warn you to get tested."
-
-
-... [ back to FireFox]
-
-As the meeting ends, Katy says she's going to stop for a coffee at Fika on her way home.
-
-Seth says, "Hold up a second...Click the Space button at the bottom of the screen...good...now, type "Fika" in the search box at the top of the screen.
-
-"When you get to the coffee shop, click the Mark Calendar button to record your visit using the current time when you enter the shop.
-
-"Use your new app this way wherever you spend at least fifteen minutes in the presence of others."
+Seth explains, "That random string at the end of the Event Link is the only thing the app needs to be able to alert you later if you get exposed to the virus.
+"Now, next time you are with somebody who wants to crush the virus too, have them scan this QR. Here, let's try it now so you can see what happens."
 
 
+... [open Chrome on an old smart phone laying around]
+Seth scans the code and notes the messages that appear on each phone.
 
-As Katy leaves, Seth says,"See you next week, Katy. And stay safe out there..."
+"I can see that the system is rewarding you for sharing the app, and it suggests i do the same thing so i can enter the lottery.
+"You see the confirmation number that tells you that your chance of winning just went up."
+
+Katy smiles. "Cool."
+
+Seth says, "Sharing this app is vital to its success and to our collective safety. Plus, the more your share the app, the more likely you are to win the lottery."
+
+Katy, "Ok. I'll tell my girlfriends at cards on Thursday. We meet at Fika twice a month. This will help make Fika a safer place in town as well, won't it?"
+
+"If we all use it all the time, yes. If we don't use it and don't share it, we are no better off than we were last year.
+"On Thursday I'll show you how the app works on that day when you get perhaps the worst news of your life..."
+
+
+
+
+As Katy leaves, Seth says,"Until then, Katy, stay safe out there..."

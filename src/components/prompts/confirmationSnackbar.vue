@@ -10,7 +10,7 @@
       :bottom="bottom"
       :left="left"
       :right="right"
-      :confirmationIcon=confirmationIcon
+      :confirmationIcon="confirmationIcon"
       vertical
       color="blue-grey darken-3"
     >
@@ -28,16 +28,18 @@
           <div class="grey--text text--lighten-1 text-body-2 mb-4">
             {{ confirmationMessage }}
           </div>
-          <v-btn
-            absolute
-            bottom
-            right
-            color="error"
-            text
-            @click="snackbar = false"
+          <v-card-actions>
+            <v-btn
+              absolute
+              bottom
+              right
+              color="error"
+              text
+              @click="snackbar = false"
+            >
+              Close
+            </v-btn></v-card-actions
           >
-            Close
-          </v-btn>
         </v-col>
       </v-row>
     </v-snackbar>

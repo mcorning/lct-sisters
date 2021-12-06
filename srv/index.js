@@ -222,6 +222,17 @@ io.on('connection', (socket) => {
 
   //#region Visit API
   socket.on('exposureWarning', ({ graphName, riskScore }, ack) => {
+    // separated to enable unit testing
+    callOnExposureWarning(
+      {
+        graphName,
+        riskScore,
+      },
+      ack
+    );
+  });
+  // TODO do this for all the event handlers
+  const callOnExposureWarning = ({ graphName, riskScore }, ack) => {
     // riskScore will make its way into exposure alert message in sendExposureAlert()
 
     // let everybody = await io.allSockets();
@@ -266,7 +277,7 @@ io.on('connection', (socket) => {
       userID,
     })
       .then((exposures) => {
-        // exposed is a Map of userID keys
+        // TODO Use a Map here. it's much easier to de/serialize across boundaries
         Object.entries(exposures).forEach(([key, value]) => {
           console.log(`${key}: ${printJson(value)}`);
           let x = alertMap(value);
@@ -287,7 +298,7 @@ io.on('connection', (socket) => {
             });
           }
           if (ack) {
-            ack({ message: exposures.length });
+            ack({ message: exposures });
           }
         });
       })
@@ -296,7 +307,7 @@ io.on('connection', (socket) => {
           ack({ error });
         }
       });
-  });
+  };
 
   // TODO what is this function? it's called by graph.js, but why?
   socket.on('updateVisit', (param, ack) => {

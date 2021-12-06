@@ -112,6 +112,17 @@
         @nestedMenu-click="onMenuItemClick"
       />
       <!-- End Options Menu-->
+
+      <!-- TODO work on making this open with an event -->
+      <!-- <v-dialog v-model="showEmail" max-width="290">
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn color="primary" icon v-bind="attrs" v-on="on">
+            <v-icon>email</v-icon>
+          </v-btn>
+        </template>
+        <v-card-title>Email</v-card-title>
+        <valid-mail-to></valid-mail-to>
+      </v-dialog> -->
     </v-system-bar>
 
     <v-dialog v-model="showCvewQR" max-width="400">
@@ -132,7 +143,6 @@
         </v-row>
       </v-card>
     </v-dialog>
-
     <prompt-banner
       :alert="alert"
       :riskScore="riskScore"
@@ -161,6 +171,7 @@ import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
 import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
+import ValidMailTo from '../components/misc/validMailTo.vue';
 
 export default {
   name: 'AppLayoutHeader',
@@ -179,6 +190,7 @@ export default {
     FeedbackCard,
     VueQRCodeComponent,
     ConfirmationSnackbar,
+    ValidMailTo,
   },
   computed: {
     decodedUri() {
@@ -251,6 +263,7 @@ export default {
 
   data() {
     return {
+      showEmail: false,
       enlargeQR: false,
 
       sponsor: '',

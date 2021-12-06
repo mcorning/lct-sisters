@@ -16,7 +16,6 @@
     >
 
     <v-divider></v-divider>
-
     <v-row>
       <!-- Visitor list -->
       <v-col cols="12" md="3">
