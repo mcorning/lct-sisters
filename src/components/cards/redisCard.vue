@@ -105,7 +105,7 @@ export default {
   computed: {
     exposureMessage() {
       return this.hasExposures
-        ? `Other visitors shared the same spacetimes with visitor: ${this.search}}`
+        ? `Other visitors shared the same spacetimes with ${this.search===this.$socket.client.auth.userID?'you':'selected visitor'}`
         : 'Nobody to warn yet...';
     },
     exposureCaption() {

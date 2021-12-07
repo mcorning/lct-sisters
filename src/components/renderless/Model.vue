@@ -124,8 +124,10 @@ export default {
       return x;
     },
     getVisits() {
+      Visit.$delete((v) => {
+        return !v.graphName;
+      });
       const x = Visit.query().all();
-
       return x;
     },
     getPlaces() {
@@ -141,13 +143,11 @@ export default {
       return x;
     },
 
-
-
     onUpdate({ eventToHandle, deleteVisit }) {
       if (deleteVisit) {
         const id = eventToHandle.id;
         const name = eventToHandle.name;
-        const graphID=eventToHandle.loggedVisitId
+        const graphID = eventToHandle.loggedVisitId;
         this.deleteVisit(id);
         this.$emit('updatedModel', { name, id, graphID, deleteVisit });
         return;

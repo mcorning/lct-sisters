@@ -80,7 +80,7 @@ export default {
   },
   computed: {
     diagnosticOutput() {
-      return this.diagnostics.join('\n');
+      return this.diagnostics.join('<br/>');
     },
   },
   data() {
@@ -92,7 +92,7 @@ export default {
     // TODO why isn't this in Model?
     emailDiagnostics() {
       this.$clipboard(this.diagnosticOutput);
-      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
+      window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=${this.diagnosticOutput}\n`;
     },
 
     // TODO TEST: Does FireFox handle default args?

@@ -43,7 +43,7 @@ export const timeMixin = {
     },
 
     deleteVisit(id) {
-      return Visit.delete(id);
+      return Visit.$delete(id);
     },
 
     updateVisit(visit) {

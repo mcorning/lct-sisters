@@ -1,0 +1,23 @@
+{
+  "Dates from Graph(s)": [
+    {
+      "id": 20,
+      "start": 1638901800000,
+      "end": 1638903600000,
+      "graphName": "Sisters OR"
+    }
+  ],
+  "Dates from calendar": [
+    {
+      "id": "efee52617b266f50",
+      "name": "Sisters Coffee Company",
+      "place_id": "ChIJEwMfWko3v1QRCH3s6Ly-udI",
+      "loggedVisitId": 28,
+      "graphName": "Sisters OR",
+      "start": 1638901800000,
+      "startDate": "Tue Dec 07 2021 10:30:00 GMT-0800 (Pacific Standard Time)",
+      "end": 1638903600000,
+      "endDate": "Tue Dec 07 2021 11:00:00 GMT-0800 (Pacific Standard Time)"
+    }
+  ]
+}

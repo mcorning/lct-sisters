@@ -6,11 +6,10 @@
       <v-btn @click="onCloseDateTimeCard(0)" icon><v-icon>close</v-icon></v-btn>
     </v-toolbar>
     <v-card-text v-if="!edit">
-      <v-row dense align="start">
+      <v-row no-gutters align="start">
         <v-col>
           <strong>Visit starts</strong>
           <br />
-
           {{ currTimes.startDateTimeFormatted }}
         </v-col>
         <v-col co>
@@ -18,12 +17,17 @@
           <br />
           {{ currTimes.endDateTimeFormatted }}
         </v-col>
-        <v-col cols="3" class="text-center">
+        <v-col  class="text-center">
           <strong>Duration</strong>
           <br />
           <strong>{{ currTimes.duration }}</strong>
         </v-col>
-        <v-col cols="2" sm="1">
+        <v-col  class="text-center">
+          <strong>Network</strong>
+          <br />
+          <strong>{{ currTimes.graphName }}</strong>
+        </v-col>
+        <v-col cols="1" >
           <v-btn color="primary" icon @click="edit = !edit"
             ><v-icon>edit</v-icon></v-btn
           ></v-col
@@ -77,13 +81,14 @@ export default {
       const endTime = this.selectedEventParsed.input.end;
       const startDT = new DateTime.fromMillis(startTime);
       const endDT = new DateTime.fromMillis(endTime);
-      const startDateTimeFormatted = startDT.toFormat(this.localizedDateFormat);
-      const endDateTimeFormatted = endDT.toFormat(this.localizedDateFormat);
+      const startDateTimeFormatted = startDT.toLocaleString(DateTime.DATETIME_SHORT);
+      const endDateTimeFormatted = endDT.toLocaleString(DateTime.DATETIME_SHORT);
       const diff = endDT.diff(startDT, this.nominalTime).as(this.nominalTime);
       const duration = `${diff} ${this.nominalTime}`;
       const past = this.selectedEventParsed.start.past;
       const present = this.selectedEventParsed.start.present;
       const future = this.selectedEventParsed.start.future;
+      const graphName=this.selectedEventParsed.input.graphName
       return {
         startDateTimeFormatted,
         endDateTimeFormatted,
@@ -94,13 +99,13 @@ export default {
         past,
         present,
         future,
+        graphName,
       };
     },
   },
   data() {
     return {
       edit: false,
-      localizedDateFormat: 'DD hh mm a', //shortest localized date and time: e.g., Nov 10, 2021 1:07 PM
       nominalTime: 'hours',
 
       openDateTimeCard: false,
