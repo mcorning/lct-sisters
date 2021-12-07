@@ -149,35 +149,10 @@
                 </v-row>
 
                 <v-divider class="my-3"></v-divider>
-                <v-card-title @click="copyLink">Event Link</v-card-title>
+                <v-card-title>Event Link</v-card-title>
                 <v-card-text class="text-caption text-sm-body-2">{{
                   decodedUri
                 }}</v-card-text>
-
-                <!-- <v-btn block @click="copyLink"
-                  ><v-icon left>content_copy</v-icon>Copy event link</v-btn
-                > -->
-
-                <!-- confirmation screen -->
-                <v-sheet
-                  v-if="showConf"
-                  class="px-5 pt-5 pb-4 mx-auto text-center d-inline-block"
-                  color="blue-grey darken-3"
-                  dark
-                  width="100%"
-                >
-                  <div class="grey--text text--lighten-1 text-body-2 mb-4">
-                    Link copied
-                  </div>
-                  <v-btn
-                    color="grey"
-                    plain
-                    class="ma-1"
-                    @click="showConf = false"
-                  >
-                    Close
-                  </v-btn>
-                </v-sheet>
               </v-card-text>
             </div>
             <v-divider class="my-3"></v-divider>
@@ -328,7 +303,6 @@ export default {
         { tab: 'Visitors', content: 'Shared visits default to current time' },
         { tab: 'Employees', content: 'Log in your shift' },
       ],
-      showConf: false,
       reveal: false,
       enlargeQR: false,
       gatheringName: '',
@@ -366,12 +340,6 @@ export default {
       this.endShift = new DateTime.fromMillis(end).toISOTime();
     },
 
-    // disabled for lack of idempotency: copied is true, but pasting does not paste last copy
-    copyLink() {
-      console.log(this.decodedUri);
-      const copied = this.$clipboard(this.decodedUri);
-      this.showConf = copied;
-    },
     deleteMarker() {
       this.$emit('deleteMarker');
     },

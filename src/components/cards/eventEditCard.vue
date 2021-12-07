@@ -153,6 +153,7 @@ export default {
 
     share() {
       this.dirty = false;
+      // TODO do we need this?
       this.$emit('share');
     },
     logEvent() {

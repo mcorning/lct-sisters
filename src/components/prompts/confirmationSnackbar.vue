@@ -25,9 +25,10 @@
           >
             {{ confirmationTitle }}
           </div>
-          <div class="grey--text text--lighten-1 text-body-2 mb-4">
-            {{ confirmationMessage }}
-          </div>
+          <div
+            class="grey--text text--lighten-1 text-body-2 mb-4"
+            v-html="confirmationMessage"
+          ></div>
           <v-card-actions>
             <v-btn
               absolute

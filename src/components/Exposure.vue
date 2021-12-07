@@ -108,12 +108,32 @@
           ></v-row>
         </v-card-text>
         <v-divider />
-        <v-card-actions>
-          <v-card-title>Send warning?</v-card-title>
-          <v-spacer />
-          <v-btn color="red darken-2" text @click="warnThem(state)">Yes</v-btn>
-          <v-btn color="green darken-2" text @click="returnToSpaces">No</v-btn>
-        </v-card-actions>
+        <v-sheet color="primary">
+          <v-card-actions class="pt-0">
+            <v-row no-gutters
+              ><v-col
+                ><v-card-title
+                  ><span class="white--text">Send</span></v-card-title
+                ></v-col
+              >
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-btn color="green lighten-2" text @click="warnThem(true)"
+                  >A DRILL</v-btn
+                >
+                <v-spacer />
+                <v-btn color="orange lighten-1" text @click="warnThem()"
+                  >A Warning</v-btn
+                >
+                <v-spacer />
+                <v-btn color="grey" text @click="returnToSpaces"
+                  >Nothing</v-btn
+                ></v-col
+              >
+            </v-row>
+          </v-card-actions>
+        </v-sheet>
       </v-card>
     </v-container>
     <v-card v-else :color="getColor(isConnected)">
@@ -244,7 +264,7 @@ export default {
 
     weight() {
       return this.warnings.reduce((a, c) => {
-        return a + c.weight || 0;
+        return a + c.weight;
       }, 0);
     },
 
@@ -261,10 +281,6 @@ export default {
       // from 2, 3, 6, 10 (plus 1 for vaccination) we derive these scenarios:
       let msg;
       switch (this.score) {
-        case 0:
-          msg =
-            'This is a drill. This is only a drill. If this was an actual EXPOSURE ALERT you would get tested for COVID. This drill simulates getting such an ALERT. Do not act on this incident.';
-          break;
         case 2:
           msg = `If you received and LCT exposure alert, you SHOULD get tested immediately. If you are positive, hit the Warn button and take care of yourself.`;
           break;
@@ -414,15 +430,6 @@ export default {
           type: 'secondary',
           weight: 2,
         },
-        {
-          divider: true,
-        },
-        {
-          icon: 'grading',
-          text: 'LCT DRILL',
-          type: 'drill',
-          weight: 0,
-        },
       ],
     };
   },
@@ -463,10 +470,11 @@ export default {
       });
     },
 
-    warnThem(state) {
+    warnThem(isADrill = false) {
+      const reliability = isADrill ? 0 : this.pctWeight;
       console.log(
-        state.vaccinationStatus || 'no vaccination date',
-        state.recentFluShot || 'no flu shot date'
+        this.state.vaccinationStatus || 'no vaccination date',
+        this.state.recentFluShot || 'no flu shot date'
       );
 
       this.dialog = true;
@@ -475,7 +483,7 @@ export default {
       this.onExposureWarning(
         {
           score: this.score,
-          reliability: this.pctWeight,
+          reliability,
         },
         (results) => {
           const alerts = Object.values(results).flat();
@@ -502,8 +510,8 @@ export default {
               this.confirmationMessage = `Well done. You sent exposure alerts that the virus is lurking in your community to ${
                 alerts.length
               } ${visits}: ${places.join(
-                ', '
-              )}. Soon, there will be no where for those virions to hide...`;
+                '<br/> '
+              )}. <p>Soon, there will be no where for those virions to hide...</p>`;
               this.confirmationIcon = 'cloud_done';
               break;
           }
