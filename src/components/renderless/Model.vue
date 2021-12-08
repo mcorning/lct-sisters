@@ -125,7 +125,12 @@ export default {
     },
     getVisits() {
       Visit.$delete((v) => {
-        return !v.graphName;
+        return !(
+          !v.start ||
+          !v.end ||
+          Number.isNaN(v.start) ||
+          Number.isNaN(v.end)
+        );
       });
       const x = Visit.query().all();
       return x;
