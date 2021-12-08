@@ -51,3 +51,5 @@ lab/
 src/utils/lab.js
 src/components/cards/dateTimeXCard.vue
 src/js/lab.js
+src/views/Lab0.vue
+src/components/cards/test.json

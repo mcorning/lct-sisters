@@ -505,6 +505,7 @@ export default {
       this.openDiagnostics = true;
     },
     changeMapCenter() {
+      this.menu = false;
       const center = this.getMapCenter();
       this.setDefaultMapCenter(center);
     },
@@ -535,6 +536,8 @@ export default {
     },
 
     clearMyLocationSettings() {
+      this.menu = false;
+
       this.clearLocationSettings();
     },
 
@@ -769,6 +772,7 @@ export default {
     },
 
     volunteer() {
+      this.menu = false;
       this.snackbarThanks = false;
       window.location =
         'mailto:mcorning@soteriaInstitute.org?subject=I want to help&body=I can help make Local Contact Tracing better by: [fill in the blank]';

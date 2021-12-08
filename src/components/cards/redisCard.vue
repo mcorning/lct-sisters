@@ -22,9 +22,9 @@
         <v-card-title><h6>Participation</h6></v-card-title>
         <v-card-subtitle>Other visitors on graphs you use</v-card-subtitle>
         <v-card-text class="text-caption"
-          >The Visitor was in these geographic areas. Each area lists all the
-          visitors in that space. The Virus Exposures section limits visitors
-          who shared the same spacetime.</v-card-text
+          >{{ theVisitorPhrase }} in these exposure networks. Each network lists
+          all the visitors in that space. The Virus Exposures section limits
+          visitors who shared the same spacetime.</v-card-text
         >
         <v-list>
           <v-list-group
@@ -103,9 +103,20 @@ export default {
   components: {},
 
   computed: {
+    theVisitorPhrase() {
+      return `${
+        this.search === this.$socket.client.auth.userID
+          ? 'you were'
+          : 'The visitor was'
+      }`;
+    },
     exposureMessage() {
       return this.hasExposures
-        ? `Other visitors shared the same spacetimes with ${this.search===this.$socket.client.auth.userID?'you':'selected visitor'}`
+        ? `Other visitors shared the same spacetimes with ${
+            this.search === this.$socket.client.auth.userID
+              ? 'you'
+              : 'selected visitor'
+          }`
         : 'Nobody to warn yet...';
     },
     exposureCaption() {

@@ -148,7 +148,7 @@ export const redisMixin = {
         // second step
         function getDates(proceed) {
           if (proceed) {
-            vm.log('Getting local visit dates for all graphs used');
+            vm.log('\tGetting local visit dates for all graphs used');
             const dates = localVisits.map((v) => {
               return {
                 graphName: v.graphName,

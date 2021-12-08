@@ -124,14 +124,14 @@ export default {
       return x;
     },
     getVisits() {
-      Visit.$delete((v) => {
-        return !(
-          !v.start ||
-          !v.end ||
-          Number.isNaN(v.start) ||
-          Number.isNaN(v.end)
-        );
-      });
+      // Visit.$delete((v) => {
+      //   return !(
+      //     !v.start ||
+      //     !v.end ||
+      //     Number.isNaN(v.start) ||
+      //     Number.isNaN(v.end)
+      //   );
+      // });
       const x = Visit.query().all();
       return x;
     },

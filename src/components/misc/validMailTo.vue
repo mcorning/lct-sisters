@@ -1,83 +1,50 @@
 <template>
-  <v-card>
-    <form>
-      <v-text-field
-        v-model="email"
-        :error-messages="emailErrors"
-        label="E-mail"
-        required
-        @input="$v.email.$touch()"
-        @blur="$v.email.$touch()"
-      ></v-text-field>
-      <v-select
-        v-model="select"
-        :items="items"
-        :error-messages="selectErrors"
-        label="Item"
-        required
-        @change="$v.select.$touch()"
-        @blur="$v.select.$touch()"
-      ></v-select>
-      <v-checkbox
-        v-model="checkbox"
-        :error-messages="checkboxErrors"
-        label="Do you agree?"
-        required
-        @change="$v.checkbox.$touch()"
-        @blur="$v.checkbox.$touch()"
-      ></v-checkbox>
+  <v-form ref="form" v-model="valid" lazy-validation>
+    <v-text-field
+      v-model="email"
+      :rules="emailRules"
+      label="Email"
+      placeholder="Enter email(s separated by commas)"
+      required
+    ></v-text-field>
+    <v-text-field
+      v-model="subject"
+      label="Subject"
+      required
+    ></v-text-field>
 
-      <v-btn class="mr-4" @click="submit">
-        submit
-      </v-btn>
-      <v-btn @click="clear">
-        clear
-      </v-btn>
-    </form>
-  </v-card>
+    <v-textarea
+      placeholder="Body"
+      type="text"
+      v-model="body"
+      v-on:keyup="updateOutputUrl"
+    ></v-textarea>
+
+    <v-btn :href="outputUrl">
+      Send
+    </v-btn>
+  </v-form>
 </template>
-
 <script>
-import { validationMixin } from 'vuelidate';
-import { required, email } from 'vuelidate/lib/validators';
-
 export default {
   name: 'validMailTo',
 
-  mixins: [validationMixin],
-
-  validations: {
-    email: { required, email },
-    select: { required },
-    checkbox: {
-      checked(val) {
-        return val;
-      },
-    },
-  },
-
   data: () => ({
-    showEmail: this.sendEmail,
+    outputUrl: '',
     email: '',
-    select: null,
-    items: ['Item 1', 'Item 2', 'Item 3', 'Item 4'],
-    checkbox: false,
+    subject:'',
+    body:'',
+    // email: {
+    //   subject: 'Meet me',
+    //   body: 'Details:',
+    // },
+    emailRules: [
+      (v) => !!v || 'Email is required',
+      (v) => /.+@.+\..+/.test(v) || 'Email must be valid',
+    ],
   }),
 
   computed: {
-    checkboxErrors() {
-      const errors = [];
-      if (!this.$v.checkbox.$dirty) return errors;
-      !this.$v.checkbox.checked && errors.push('You must agree to continue!');
-      return errors;
-    },
-    selectErrors() {
-      const errors = [];
-      if (!this.$v.select.$dirty) return errors;
-      !this.$v.select.required && errors.push('Item is required');
-      return errors;
-    },
-
     emailErrors() {
       const errors = [];
       if (!this.$v.email.$dirty) return errors;
@@ -88,14 +55,19 @@ export default {
   },
 
   methods: {
-    submit() {
-      this.$v.$touch();
-    },
-    clear() {
-      this.$v.$reset();
-      this.email = '';
-      this.select = null;
-      this.checkbox = false;
+    updateOutputUrl() {
+      this.outputUrl = 'mailto:' + this.emailId;
+      const emailKeys = Object.keys(this.email);
+      const remaining = emailKeys.filter(
+        (key) => this.email[key].trim().length > 0
+      );
+      if (remaining.length > 0) {
+        this.outputUrl += '?';
+      }
+
+      this.outputUrl += remaining
+        .map((key) => `${key}=${encodeURI(this.email[key].trim())}`)
+        .join('&');
     },
   },
   mounted() {

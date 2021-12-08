@@ -80,7 +80,7 @@ export default {
   },
   computed: {
     diagnosticOutput() {
-      return this.diagnostics.join('<br/>');
+      return this.diagnostics.join('\n');
     },
   },
   data() {

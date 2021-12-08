@@ -100,6 +100,20 @@ export const spaceMixin = {
         });
     },
 
+    callUpdateVisit(visit) {
+      // see time.js
+      this.updateVisit(visit).then((results) => {
+        // pass results from space to time in params for Time.vue
+        if (this.$router.currentRoute.name !== 'Time') {
+          this.$router.push({
+            name: 'Time',
+            params: results,
+          });
+        }
+      });
+    },
+
+    // works when connected and when not connected
     callVisitUpdate({ place_id, start, end, name, shared, gatheringName }) {
       let visit = {
         id: randomId(),
@@ -115,29 +129,24 @@ export const spaceMixin = {
         marked: getNow(),
         graphName: this.namespace,
       };
-      // onLogVisit() is in graph.js
-      this.onLogVisit(visit)
-        .then((graphData) => {
-          // add graphData to visit
-          const loggedVisit = {
-            ...visit,
-            ...graphData,
-          };
-          // see time.js
-          this.updateVisit(loggedVisit).then((results) => {
-            // pass results from space to time in params for Time.vue
-            if (this.$router.currentRoute.name !== 'Time') {
-              this.$router.push({
-                name: 'Time',
-                params: results,
-              });
-            }
+      if (this.$socket.connected) {
+        // onLogVisit() is in graph.js
+        this.onLogVisit(visit)
+          .then((graphData) => {
+            // add graphData to visit
+            const loggedVisit = {
+              ...visit,
+              ...graphData,
+            };
+            this.callUpdateVisit(loggedVisit);
+          })
+          .catch((e) => {
+            // the global error handler UI take over
+            this.$emit('error', e.error);
           });
-        })
-        .catch((e) => {
-          // the global error handler UI take over
-          this.$emit('error', e.error);
-        });
+      } else {
+        this.callUpdateVisit(visit);
+      }
     },
 
     onVisitPlace(data) {
