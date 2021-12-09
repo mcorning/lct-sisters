@@ -215,6 +215,16 @@ export default {
     EventEditCard,
   },
   computed: {
+    // test(){
+    //   const {
+    //     place_id,
+    //     name,
+    //     date,
+    //     start,
+    //     end,
+    //     graphName,
+    //   } = this.selectedEvent;
+    // },
     diagnosticOutput() {
       return this.diagnostics.join('\n');
     },
@@ -242,20 +252,38 @@ export default {
       return d;
     },
 
-    // TODO we shouldn't need this guard
     mailToUri() {
-      if (Object.keys(this.selectedEvent).length === 0) {
+      // check for mounting state
+      if (!this.selectedEvent) {
         return;
       }
-      const { place_id, name, date, start, end } = this.selectedEvent;
-      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
+      // if (Object.keys(this.selectedEvent).length === 0) {
+      //   return;
+      // }
+      const {
+        place_id,
+        name,
+        date,
+        start,
+        end,
+        graphName,
+      } = this.selectedEvent;
+      console.log(
+        'mailToUri()->name, selectedEvent.name',
+        name,
+        this.selectedEvent.name
+      );
+      const printedName = `${name}`;
       const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and');
+      const escapedGraphName = graphName.replace(/ /g, '_');
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js (but see note above in decodedUri())
       const uri = encodeURIComponent(
-        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}`
+        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}&graphName=${escapedGraphName}`
       );
-      return `${this.origin}/?${uri}`;
+      const fullUri = `${this.origin}/?${uri}`;
+      console.log('mailToUri()->uri', fullUri);
+      return fullUri;
     },
 
     mailToString() {
@@ -263,8 +291,8 @@ export default {
         return '';
       }
       const { place_id, name, date, start, end } = this.selectedEvent;
-      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
-
+      const printedName = `${name}`;
+      console.log('mailToString() > printedName', printedName);
       return `mailto:${this.alias}?subject=Join me at ${printedName.replace(
         /&/g,
         'and'
@@ -351,7 +379,8 @@ export default {
       },
       seePickers: false,
       showQR: false,
-      room: '',
+      room: null,
+      hasRoom: false,
       dev: false,
       origin: window.location.origin,
       banner: false,
@@ -381,7 +410,7 @@ export default {
       range: 24,
 
       selectedElement: null,
-      selectedEvent: {},
+      selectedEvent: null,
       selectedEventId: '',
       selectedEventParsed: null,
       selectedOpen: false,
@@ -482,8 +511,8 @@ export default {
 
     getMailToString() {
       const { place_id, name, date, start, end } = this.selectedEvent;
-      const printedName = `${name}${this.room ? `:_${this.room}` : ''}`;
-
+      const printedName = `${name}`;
+      console.log('mailToString() > printedName: ', printedName);
       return `mailto:?subject=Join me at ${printedName.replace(
         /&/g,
         'and'
@@ -499,13 +528,13 @@ export default {
         this.newLine
       }See you then...${this.newLine}${this.toName}`;
     },
-
     emailEvent() {
       this.seePickers = false;
-      this.selectedEvent.name += `: ${this.room}`;
+      this.selectedEvent.name += ' ' + this.room ?? '';
       this.update('cache');
 
-      const mailToString = this.getMailToString() + ' _blank';
+      const mailToString = this.getMailToString();
+      console.log('emailEvent()->mailToString:', mailToString);
       this.log(`Setting window.location to:`);
       this.log(`${mailToString}`);
       window.location = mailToString;
