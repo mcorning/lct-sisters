@@ -105,20 +105,29 @@ function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
 }
 
+function getRewardPoints(bid, uid, lastID) {
+  return redis.xread(['STREAMS', bid, lastID]).then((a) => {
+    let dates = [];
+    const m = new Map(a);
+    m.forEach((val, key) => {
+      val.forEach((val) => {
+        if (val[1][1] === uid) {
+          let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));
+          dates.push(dt.toISO());
+        }
+      });
+    });
+    return dates;
+  });
+}
+
 async function earnReward({ bid, uid, lastID = 0 }) {
   console.log(highlight('bid, uid, lastID', bid, uid, lastID));
   await redis.xadd(bid, '*', 'uid', uid);
-  const x = await redis.xread(['STREAMS', bid, lastID]);
-  console.log(printJson(x));
-  console.log(' ');
-  const f = x.filter((v) => v[1][1][1][1] === uid);
-  let rewards = f[0][1].map((element) => {
-    return new Date(Number(element[0].substr(0, 13)));
-  });
-  console.log(
-    success(`Reward points for visits to ${bid} by ${uid}`, printJson(rewards))
-  );
-  return rewards;
+  const points = await getRewardPoints(bid, uid, lastID);
+  console.log(`Reward Points for ${uid} visiting ${bid}:`);
+  console.log(printJson(points));
+  return points;
 }
 //#endregion
 

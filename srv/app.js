@@ -27,7 +27,7 @@ const Redis = require('ioredis');
 const redis = new Redis(options);
 let Graph = new RedisGraph('lab', null, null, options);
 
-console.log(highlight('Redis Options:', printJson(options)));
+// console.log(highlight('Redis Options:', printJson(options)));
 //#region
 // const redisPool = require('redis-connection-pool')('myRedisPool', {
 //   host: options.host, // default
@@ -123,7 +123,7 @@ function addEvent({ placeID, uid, start, end, tag }) {
     tag
   );
 }
-function xRead(channel, lastID) {
+function xReadP(channel, lastID) {
   console.log(channel, lastID);
   return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
     console.log(JSON.stringify(stream, null, 3));
@@ -225,20 +225,97 @@ function test1() {
     addEvent(data).then((id) => console.log(id));
   }
   // graph all events
-  //   consumer().then((results) => console.log(success(printJson(results))));
+  consumer().then((results) => console.log(success(printJson(results))));
 }
 function test2(uid, ack) {
   redis.xadd('lottery', '*', 'uid', uid).then((confirmed) => {
     if (ack) ack(confirmed);
   });
 }
-function test(arg) {
+async function test(arg) {
   if (arg === 1) {
     test1();
   } else if (arg === 2) {
     test2('test');
   } else if (arg === 3) {
-    xRead('Fika Sisters Coffeehouse', 0);
+    console.log(xReadP('Fika Sisters Coffeehouse', 0));
   }
 }
-test(3);
+async function testRaw(arg) {
+  let a = await redis.xread(['STREAMS', 'Fika Sisters Coffeehouse', '0']);
+  console.log('a length', a[0].length);
+  console.log('a[0] ', printJson(a[0][1][1]));
+  const aa = a.filter((v) => v[1][1][1][1] === 'b564e152f181abf6');
+  console.log('filtered a', printJson(aa));
+
+  let b = await redis.xread([
+    'STREAMS',
+    'Fika Sisters Coffeehouse',
+    '1639100184482',
+  ]);
+  console.log('b', printJson(b));
+  console.log('b length', b[0].length);
+  console.log('b[0] ', printJson(b[0][1][1]));
+  const bb = b.filter((v) => v[1][0][1][1] === 'b564e152f181abf6');
+  console.log('filtered b', printJson(bb));
+
+  let s = [['Gathering', [['1639100997131-0', ['uid', 'ed8de5f32d6d1bff']]]]];
+  console.log('s length', s[0].length);
+  const ss = s.filter((v) => v[1][0][1][1] === 'ed8de5f32d6d1bff');
+  console.log('ss', printJson(ss));
+
+  // console.log('xread all', printJson(a));
+  // console.log('xread two', printJson(b));
+  // console.log('string', printJson(s));
+}
+async function testMap(uid, lastID = 0) {
+  let a = await redis.xread(['STREAMS', 'Fika Sisters Coffeehouse', lastID]);
+  const m = new Map(a);
+  m.forEach((val, key) => {
+    console.log('stream:', key);
+
+    val.forEach((val) => {
+      if (val[1][1] === uid) {
+        let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));
+        console.log(dt.toISO());
+      }
+    });
+  });
+}
+function testMapP(uid, lastID = 0) {
+  redis.xread(['STREAMS', 'Fika Sisters Coffeehouse', lastID]).then((a) => {
+    const m = new Map(a);
+    m.forEach((val, key) => {
+      console.log('stream:', key);
+
+      val.forEach((val) => {
+        if (val[1][1] === uid) {
+          let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));
+          console.log(dt.toISO());
+        }
+      });
+    });
+  });
+}
+function testMapP2(stream, uid, lastID = 0) {
+  return redis.xread(['STREAMS', stream, lastID]).then((a) => {
+    let dates = [];
+    const m = new Map(a);
+    m.forEach((val, key) => {
+      val.forEach((val) => {
+        if (val[1][1] === uid) {
+          let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));
+          dates.push(dt.toISO());
+        }
+      });
+    });
+    return dates;
+  });
+}
+lastID = 0; //'1639100184482'
+const uid = '89da85f7593319ce';
+const stream = 'Fika Sisters Coffeehouse';
+// const uid='b564e152f181abf6'
+// testMapP(uid, lastID);
+testMapP2(stream, uid, lastID).then((dates) => console.log(printJson(dates)));
+// test();

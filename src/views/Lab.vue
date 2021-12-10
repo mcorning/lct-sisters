@@ -12,5 +12,10 @@ export default {
   components: {
     mailToCard,
   },
+  data() {
+    return {
+      key: [['Gathering', [['1639100997131-0', ['uid', 'ed8de5f32d6d1bff']]]]],
+    };
+  },
 };
 </script>
