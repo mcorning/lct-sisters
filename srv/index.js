@@ -182,10 +182,9 @@ io.on('connection', (socket) => {
 
   socket.on('earnReward', ({ bid, uid }, ack) => {
     // add to the bid's Reward Stream
-    earnReward({ bid, uid }).then((sid) => {
-      // socket.to(uid).emit('confirmRewardEntry', {bid,sid});
+    earnReward({ bid, uid }).then((visitedOn) => {
       if (ack) {
-        ack(sid);
+        ack(visitedOn);
       }
     });
   });

@@ -321,9 +321,9 @@ export default {
     },
     earnReward({ bid, uid }) {
       return new Promise((resolve) => {
-        this.emitFromClient('earnReward', { bid, uid }, (sid) => {
-          console.log('sid', sid);
-          resolve(sid);
+        this.emitFromClient('earnReward', { bid, uid }, (visitedOn) => {
+          console.log('visitedOn', visitedOn);
+          resolve(visitedOn);
         });
       });
     },

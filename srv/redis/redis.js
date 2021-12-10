@@ -10,6 +10,7 @@ const {
   info,
   highlight,
   err,
+  success,
   logVisitors,
 } = require('../../src/utils/helpers');
 const { DateTime, Interval } = require('../../src/utils/luxonHelpers');
@@ -73,6 +74,7 @@ const Redis = require('ioredis');
 const redis = new Redis(options);
 
 console.log(info(`At initialization, Redis Graph opened ${currentGraphName}`));
+
 module.exports = {
   currentGraphName,
   host,
@@ -96,12 +98,29 @@ module.exports = {
   earnReward,
 };
 //#endregion Setup
+
+//#region STREAMS
+// SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
 }
-function earnReward({ bid, uid }) {
-  return redis.xadd(bid, '*', 'uid', uid);
+
+async function earnReward({ bid, uid, lastID = 0 }) {
+  console.log(highlight('bid, uid, lastID', bid, uid, lastID));
+  await redis.xadd(bid, '*', 'uid', uid);
+  const x = await redis.xread(['STREAMS', bid, lastID]);
+  console.log(printJson(x));
+  console.log(' ');
+  const f = x.filter((v) => v[1][1][1][1] === uid);
+  let rewards = f[0][1].map((element) => {
+    return new Date(Number(element[0].substr(0, 13)));
+  });
+  console.log(
+    success(`Reward points for visits to ${bid} by ${uid}`, printJson(rewards))
+  );
+  return rewards;
 }
+//#endregion
 
 function getSessionID(param, ack) {
   const { userID } = param;

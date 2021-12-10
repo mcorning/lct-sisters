@@ -141,7 +141,7 @@
         top
         :color="confirmationColor"
         vertical
-        timeout="15000"
+        timeout="-1"
       >
         <span v-html="confirmationMessage" />
         <template v-slot:action="{ attrs }">
@@ -744,6 +744,9 @@ export default {
       this.confirmationMessage = msg;
       this.snackbar = true;
     },
+    convertDateTime(val) {
+      return new DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED);
+    },
     confirm(val) {
       this.confirmationColor = 'success';
 
@@ -755,8 +758,11 @@ export default {
         this.earnReward({
           bid: val.name,
           uid: this.$socket.client.auth.userID,
-        }).then((sid) => {
-          msg = `<p>You are earning LCT Reward points with ${val.name}. (Confirmation number: ${sid})</p>`;
+        }).then((visitedOn) => {
+          const dates = visitedOn.map((v) => this.convertDateTime(v));
+          msg = `<p>You are earning LCT Reward points with ${
+            val.name
+          } with these visits:</p>${dates.join('<br/>')}`;
           this.showConfirmation(msg);
         });
       } else if (val.deleteVisit) {

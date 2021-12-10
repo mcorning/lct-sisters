@@ -54,3 +54,5 @@ src/js/lab.js
 src/views/Lab0.vue
 src/components/cards/test.json
 src/components/misc/OrigMailToCard.vue
+diag.json
+diag2.json

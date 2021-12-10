@@ -1,37 +1,16 @@
 # A COVID Early Warning System
 
-This is the second installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
+This is the fourth installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
 
-Previously...we saw Seth show Katy how to share a tool Seth believes can help the residents of Sisters minimize the impact of the virus on their health and their city's economy.
+Previously...we saw Seth show Katy how to how to correct errors in Google Maps and what to do when she tests positive for COVID-19.
 
-In this episode, Seth shows Katy what happens when the rubber meets the road...
+In this episode, Seth takes Katy deeper into the more sophisticated capabilities of the app that saved Sisters...
 
 ## EPISODE 3: IT COULD BE WORSE
 
-By now, Katy knows the drill. First, PT. Then another lesson in armchair epidemiology.
-
-### Page 1: WHERE IN THE WORLD
-
-"Ok, Katy, today I'll show you how the app not only keeps us safe.
-"But first we need to take a little detour because Google doesn't know which building we are in.
-"I'm using that old Galaxy again here.
-"I don't see Step and Spine listed on the map, so I will search for it's location."
-
-Seth types in the search box.
-
-"Good, there we are at the top of the list...oops, wrong building. 
-"That's OK. the app can handle this:
-"I select the marker where it is (in the middle of the grocery store)...
-"...Then I drag it over here where we are.
-"Now the next time I open the app, our map marker will be in the correct location.
-"So, let's get to the good stuff."
-
---------------------------------------------------------------------------------------
 
 ### Page 2: A Word to the Wise and Otherwise
 
-"Today, Katy, we are going to talk about the crux of the app. We are going to talk about the `Virus Exposure Alert`.
-Since my calendar has no events, when I click the BRB I see a message that tells me I haven't use the app yet, so there's nothing the app can do to crush the virus."
 
 To illustrate how exposure alerts work, Seth says,
 "OK, you already scanned in today.

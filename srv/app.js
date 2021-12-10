@@ -2,7 +2,7 @@ const RedisGraph = require('redisgraph.js').Graph;
 require('either-async');
 
 const { DateTime } = require('../src/utils/luxonHelpers');
-const { success, printJson } = require('../src/utils/helpers');
+const { highlight, printJson } = require('../src/utils/helpers');
 let options;
 
 if (process.env.NODE_ENV === 'production') {
@@ -22,10 +22,12 @@ if (process.env.NODE_ENV === 'production') {
     password: graphOptions.redisPassword,
   };
 }
+
 const Redis = require('ioredis');
 const redis = new Redis(options);
 let Graph = new RedisGraph('lab', null, null, options);
 
+console.log(highlight('Redis Options:', printJson(options)));
 //#region
 // const redisPool = require('redis-connection-pool')('myRedisPool', {
 //   host: options.host, // default
@@ -121,6 +123,13 @@ function addEvent({ placeID, uid, start, end, tag }) {
     tag
   );
 }
+function xRead(channel, lastID) {
+  console.log(channel, lastID);
+  return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
+    console.log(JSON.stringify(stream, null, 3));
+  });
+}
+
 function consumer() {
   return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
     console.log(JSON.stringify(stream, null, 3));
@@ -228,6 +237,8 @@ function test(arg) {
     test1();
   } else if (arg === 2) {
     test2('test');
+  } else if (arg === 3) {
+    xRead('Fika Sisters Coffeehouse', 0);
   }
 }
-test(2);
+test(3);
