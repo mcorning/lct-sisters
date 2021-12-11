@@ -38,8 +38,18 @@ export default class Setting extends Model {
       default_map_center: this.string(),
       zoom: this.string(),
       sid: this.string(), // Sponsor ID
-      biz: this.string(), // Sponsor name
-      oid: this.string(), // userID of the owner of biz. updated by clicking the centerMap button on the biz infowindow. oid gets added to QR URL. system thanks oid when a customer scans the biz qr
+      // place_id if oid has value.
+      // updated by clicking the changeMapCenter() button on the biz infowindow.
+      // right now, only one oid per place_id.
+      // if same person has two restaurants, there needs to be a computer in both stores,
+      // and they need to use the store's computer to generate the store's qr
+      // (so the oid will be different)
+      biz: this.string(),
+      // userID of the owner of biz.
+      // updated by clicking the changeMapCenter() button on the biz infowindow.
+      // oid gets added to QR URL.
+      // system thanks oid when a customer scans the biz qr
+      oid: this.string(),
     };
   }
 

@@ -103,9 +103,9 @@ export default {
   },
 
   methods: {
-    ownThePlace() {
+    ownThePlace({biz}) {
       // assume the caller of this function pressed the centerMap button on the infowindow
-      this.updateSetting({ id: 1, oid: this.$socket.client.auth.userID });
+      this.updateSetting({ id: 1, biz, oid: this.$socket.client.auth.userID });
     },
 
     visitExists(loggedVisitId) {

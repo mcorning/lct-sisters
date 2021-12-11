@@ -18,12 +18,11 @@
           :usernumber="usernumber"
           :getVisitors="getVisitors"
           :earnReward="earnReward"
-            :getNamespace="getNamespace"
-
+          :getNamespace="getNamespace"
         >
           <slot />
         </component>
-        <v-row v-if="!namespace" justify="center">
+        <v-row v-if="firstTime" justify="center">
           <welcome-dialog
             :namespace="namespace"
             :setNamespace="setNamespace"
@@ -50,6 +49,9 @@ export default {
     layout() {
       const layout = this.$route.meta.layout || defaultLayout;
       return () => import(`@/layouts/${layout}.vue`);
+    },
+    firstTime() {
+      return !this.namespace;
     },
   },
 

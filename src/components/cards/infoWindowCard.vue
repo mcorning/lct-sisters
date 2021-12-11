@@ -112,7 +112,7 @@
                             ></v-text-field></v-col
                           ><v-spacer />
                           <v-col cols="2">
-                            <v-btn icon color="primary" plain @click="printMe"
+                            <v-btn icon color="primary" plain @click="onPrintQR"
                               ><v-icon>print</v-icon></v-btn
                             ></v-col
                           ></v-row
@@ -132,6 +132,7 @@
                   </v-tab-item>
                 </v-tabs-items>
               </v-card-text>
+              <!-- VueQRCodeComponent in here -->
               <v-card-text>
                 <v-row>
                   <v-spacer />
@@ -228,8 +229,10 @@ export default {
       const text = this.printing
         ? this.employee
           ? 'Use the LCT QR code to sign in to work safely.'
-          : 'Help us do our part to beat the virus. Scan QR to open our Local Contact Tracing app and log your visit today.'
-        : 'Use this dialog to log in at work or to share this public place with visitors.';
+          : 'Scan QR to log your visit with us today. If your city does not have QR codes for tracking COVID, this QR code will help keep us safer during the pandemic. '
+        : this.employee
+        ? 'Use this dialog to log in at work'
+        : 'Use this dialog to share this public place with friends and family.';
       return text;
     },
 
@@ -239,7 +242,11 @@ export default {
     mailToUri() {
       // TODO oid should be bound to one or more businesses
       // TODO also, do we have to account for more than one oid per biz?
-      const oid = this.state.settings.oid; // if the user has on oid in Settings, use it here and essentially the same value in uid
+      // if the user has on oid in Settings, use it here and essentially the same value in uid
+      const oid =
+        this.state.settings.oid && this.state.settings.biz === this.placeId
+          ? this.state.settings.oid
+          : undefined;
       const uid = this.$socket.client.auth.userID; //otherwise the userID for the visitor sharing the Place
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
@@ -321,7 +328,7 @@ export default {
       alert(this.decodedUri);
     },
     changeMapCenter() {
-      this.ownThePlace();
+      this.ownThePlace({ biz: this.placeId });
       this.$emit('changeMapCenter');
     },
     onPrintQR() {
