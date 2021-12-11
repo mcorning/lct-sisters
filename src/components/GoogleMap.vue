@@ -147,7 +147,7 @@
       id="infowin"
       :info="info"
       :oid="oid"
-      :state=state
+      :state="state"
       :onVisitPlace="onVisitPlace"
       :ownThePlace="ownThePlace"
       @namedGathering="onNamedGathering"
@@ -948,39 +948,54 @@ export default {
         vm.log(`\t\twith location: ${printJson(location)}`);
         map.setCenter(location);
 
-        geocoder
-          .geocode({ location })
-          .toEither()
-          .map((response) => {
-            const { address_components, geometry } = response.results[0];
-            console.log('address components', printJson(address_components));
-            const namespace = getNamespace(address_components);
-            return { namespace, geometry };
-          })
-          .cata({
-            ok: ({ namespace, geometry }) => {
-              const { location, viewport } = geometry;
-
-              vm.log('\tc) Geocode geometry results:');
-              vm.log(`\t${printJson(geometry)}`);
-              console.log(namespace);
-              const err = vm.setPoi({
-                namespace,
-                location: JSON.stringify(location),
-                viewport: JSON.stringify(viewport),
-              });
-              const msg = err ? err : '\td) Saved location settings';
-              vm.log(msg);
-              vm.log('\te) Leaving geocoder in showPosition() ');
-              vm.log(`\tnamespace: ${printJson(namespace)}`);
-              vm.log('-----');
-              vm.ready = true;
-            },
-            error: (results) => {
-              console.log(results, 'Issues in setupGeocoder()');
-              vm.openDiagnostics = true;
-            },
+        // TODO NOTE: this is a stripped down version of either-async (see note below)
+        geocoder.geocode({ location }).then((response) => {
+          console.log('geocode results:', response);
+          const { address_components, geometry } = response.results[0];
+          const namespace = getNamespace(address_components);
+          const { location, viewport } = geometry;
+          const err = vm.setPoi({
+            namespace,
+            location: JSON.stringify(location),
+            viewport: JSON.stringify(viewport),
           });
+          const msg = err ? err : '\td) Saved location settings';
+          vm.log(msg);
+        });
+        // TODO Note: either-async in this case was too hard to debug, and i wasn't getting consistent results for namespace
+        // geocoder
+        //   .geocode({ location })
+        //   .toEither()
+        //   .map((response) => {
+        //     const { address_components, geometry } = response.results[0];
+        //     console.log('address components', printJson(address_components));
+        //     const namespace = getNamespace(address_components);
+        //     return { namespace, geometry };
+        //   })
+        //   .cata({
+        //     ok: ({ namespace, geometry }) => {
+        //       const { location, viewport } = geometry;
+
+        //       vm.log('\tc) Geocode geometry results:');
+        //       vm.log(`\t${printJson(geometry)}`);
+        //       console.log('namespace', namespace);
+        //       const err = vm.setPoi({
+        //         namespace,
+        //         location: JSON.stringify(location),
+        //         viewport: JSON.stringify(viewport),
+        //       });
+        //       const msg = err ? err : '\td) Saved location settings';
+        //       vm.log(msg);
+        //       vm.log('\te) Leaving geocoder in showPosition() ');
+        //       vm.log(`\tnamespace: ${printJson(namespace)}`);
+        //       vm.log('-----');
+        //       vm.ready = true;
+        //     },
+        //     error: (results) => {
+        //       console.log(results, 'Issues in setupGeocoder()');
+        //       vm.openDiagnostics = true;
+        //     },
+        //   });
       };
 
       makeMarkersFromCache({ google, map, infowindow });
