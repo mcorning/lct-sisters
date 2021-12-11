@@ -146,7 +146,10 @@
       ref="infowin"
       id="infowin"
       :info="info"
+      :oid="oid"
+      :state=state
       :onVisitPlace="onVisitPlace"
+      :ownThePlace="ownThePlace"
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
       @changeMapCenter="changeMapCenter"
@@ -303,6 +306,9 @@ export default {
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,
+    oid: Function,
+    state: Object,
+    ownThePlace: Function,
     onSharePlace: Function,
     onMarkerAdded: Function,
     onMarkerClicked: Function,
@@ -1026,6 +1032,7 @@ export default {
         // in space.js
         this.onSharePlace();
         // reward the business that's sharing LCT
+        // see Model.vue
         this.enterLottery(query.place_id);
         // thank the customer who is using LCT
         this.enterLottery(this.$socket.client.auth.userID);

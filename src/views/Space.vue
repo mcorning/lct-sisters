@@ -8,6 +8,8 @@
         onMarkerAdded,
         onToWork,
         onVisitPlace,
+        ownThePlace,
+        oid,
         onSharePlace,
         onShareGathering,
         onDeletePlace,
@@ -32,6 +34,8 @@
         :state="state"
         :onToWork="onToWork"
         :onVisitPlace="onVisitPlace"
+        :ownThePlace="ownThePlace"
+        :oid="oid"
         :onSharePlace="onSharePlace"
         :onShareGathering="onShareGathering"
         :onMarkerAdded="onMarkerAdded"

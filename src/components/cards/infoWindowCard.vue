@@ -203,8 +203,10 @@ export default {
       type: Object,
       require: true,
     },
-
     onVisitPlace: Function,
+    ownThePlace: Function,
+    oid: Function,
+    state: Object,
   },
 
   components: {
@@ -235,11 +237,15 @@ export default {
       return this.employee ? this.decodedShiftUri : this.decodedVisitorUri;
     },
     mailToUri() {
+      // TODO oid should be bound to one or more businesses
+      // TODO also, do we have to account for more than one oid per biz?
+      const oid = this.state.settings.oid; // if the user has on oid in Settings, use it here and essentially the same value in uid
+      const uid = this.$socket.client.auth.userID; //otherwise the userID for the visitor sharing the Place
       const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js
       const uri = encodeURIComponent(
-        `place_id=${this.placeId}&name=${escapedName}`
+        `oid=${oid}&uid=${uid}&place_id=${this.placeId}&name=${escapedName}`
       );
       return `${window.location.origin}/?${uri}`;
     },
@@ -315,6 +321,7 @@ export default {
       alert(this.decodedUri);
     },
     changeMapCenter() {
+      this.ownThePlace();
       this.$emit('changeMapCenter');
     },
     onPrintQR() {

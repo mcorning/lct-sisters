@@ -25,6 +25,9 @@ export default {
   mixins: [graphMixin, spaceMixin, redisMixin, timeMixin, warningMixin],
 
   computed: {
+    oid(){
+      return this.settings.oid;
+    },
     namespace() {
       return this.settings.namespace;
     },
@@ -100,6 +103,11 @@ export default {
   },
 
   methods: {
+    ownThePlace() {
+      // assume the caller of this function pressed the centerMap button on the infowindow
+      this.updateSetting({ id: 1, oid: this.$socket.client.auth.userID });
+    },
+
     visitExists(loggedVisitId) {
       console.log(loggedVisitId);
       const x = Visit.query()
@@ -408,6 +416,8 @@ export default {
       getRedisGraphs: this.getRedisGraphs,
       updateSponsor: this.updateSponsor,
       sponsor: this.sponsor,
+      ownThePlace: this.ownThePlace,
+      odi:this.oid,
 
       // Steam events
       enterLottery: this.enterLottery,

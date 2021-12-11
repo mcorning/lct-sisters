@@ -36,9 +36,10 @@ export default class Setting extends Model {
       viewport: this.string(),
       global_code: this.string(),
       default_map_center: this.string(),
-      zoom:this.string(),
-      sid:this.string(), // Sponsor ID
-      biz:this.string(), // Sponsor name
+      zoom: this.string(),
+      sid: this.string(), // Sponsor ID
+      biz: this.string(), // Sponsor name
+      oid: this.string(), // userID of the owner of biz. updated by clicking the centerMap button on the biz infowindow. oid gets added to QR URL. system thanks oid when a customer scans the biz qr
     };
   }
 
