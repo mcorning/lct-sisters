@@ -1,11 +1,15 @@
 const { Client } = require('@googlemaps/google-maps-services-js');
-const mapOptions = require('./googlemaps.options');
 
 const client = new Client({});
+
+function getMapApi() {
+  const mapOptions = require('./googlemaps.options');
+  return mapOptions.api_key;
+}
 const API_KEY =
   process.env.NODE_ENV === 'production'
     ? process.env.VUE_APP_MAP_API_KEY
-    : mapOptions.api_key;
+    : getMapApi();
 
 const params = { key: API_KEY, place_id: '' };
 
