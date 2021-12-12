@@ -84,6 +84,7 @@
                 </VueQRCodeComponent>
               </v-col>
               <v-spacer />
+              {{decodedUri}}
             </v-row>
           </div>
 
@@ -106,7 +107,7 @@
         :confirmationTitle="confirmationTitle"
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
-        :okAction="approved"
+        okAction="approved"
         @approved="onApproved"
       />
 

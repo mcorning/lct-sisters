@@ -29,7 +29,7 @@
             v-html="confirmationMessage"
           ></div>
           <v-card-actions>
-            <v-btn absolute bottom left color="error" text @click="okAction">
+            <v-btn absolute bottom left color="success" text @click="approve">
               ok
             </v-btn>
             <v-btn
@@ -56,7 +56,7 @@ export default {
     confirmationTitle: String,
     confirmationMessage: String,
     confirmationIcon: String,
-    okAction:String,
+    okAction: String,
     timeout: {
       type: Number,
       default: -1,
