@@ -64,6 +64,7 @@ const {
 } = require('./redis/redis');
 
 const { addSponsor, addVisit, getVisits } = require('./redis/streams');
+const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/redisJsonCache2');
 cache.connectCache(true).then(() => {
@@ -220,6 +221,24 @@ io.on('connection', (socket) => {
   //#endregion STREAM handlers
 
   //#region Visit API
+  socket.on('getPlaceID', ({ address, country }, ack) => {
+    function safeAck(results) {
+      if (ack) {
+        const {formatted_address, place_id}= results
+        console.log(
+          highlight(
+            'Acknowledging client',
+            printJson({ formatted_address, place_id })
+          )
+        );
+        ack({ formatted_address, place_id });
+      }
+    }
+    getPlaceID({ address, country })
+      .then((result) => confirmPlaceID(result))
+      .then((result) => safeAck(result));
+  });
+
   socket.on('exposureWarning', ({ graphName, riskScore }, ack) => {
     // separated to enable unit testing
     callOnExposureWarning(

@@ -1,6 +1,6 @@
 {
   "name": "lct-sisters",
-  "version": "0.12.10.22",
+  "version": "0.12.1118",
   "scripts": {
     "localhost": "vue-cli-service serve",
     "start": "node srv/index.js",
@@ -10,6 +10,7 @@
     "herokuLogsCvew": "heroku logs -a cvew"
   },
   "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.3.4",
     "@vue/composition-api": "^1.2.3",
     "@vuex-orm/core": "^0.36.4",
     "clarify": "^2.1.0",

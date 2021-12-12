@@ -1,19 +1,41 @@
 <template>
   <v-container fluid>
     <v-card max-width="500">
-      <v-card-title>{{ welcome }}</v-card-title>
+      <v-card-title class="text-xs-subtitle-1">{{ welcome }}</v-card-title>
       <v-card-text v-html="message"> </v-card-text>
       <v-card-actions>
         <v-card-text v-if="isSponsor">
           <v-row align="center"
-            ><v-col cols="8">
+            ><v-col>
               <v-text-field
                 v-model="business"
                 label="Your business name"
                 clearable
               ></v-text-field>
+              <v-text-field
+                v-model="address"
+                label="Your business address"
+                placeholder="Minimum: City [and State]"
+                @blur="register"
+                clearable
+              ></v-text-field>
+              <v-select
+                v-model="country"
+                :items="countries"
+                label="Country"
+              ></v-select>
             </v-col>
-            <v-spacer></v-spacer>
+          </v-row>
+          <v-row>
+            <!-- <v-col>
+              <v-btn
+                :disabled="registered"
+                block
+                color="primary"
+                @click="register"
+                >Register</v-btn
+              >
+            </v-col> -->
             <v-col
               ><v-btn
                 :disabled="!registered"
@@ -21,15 +43,6 @@
                 color="primary"
                 @click="getVisits"
                 >Get Visits</v-btn
-              >
-            </v-col>
-            <v-col
-              ><v-btn
-                :disabled="registered"
-                block
-                color="primary"
-                @click="register"
-                >Register</v-btn
               >
             </v-col>
           </v-row>
@@ -62,7 +75,12 @@
             <v-row>
               <v-spacer />
               <v-col class="text-center">
-                <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="decodedUri"
+                  error-level="L"
+                >
                 </VueQRCodeComponent>
               </v-col>
               <v-spacer />
@@ -80,6 +98,18 @@
           </v-card-actions>
         </v-card-text>
       </div>
+
+      <confirmation-snackbar
+        v-if="confSnackbar"
+        :centered="true"
+        :top="false"
+        :confirmationTitle="confirmationTitle"
+        :confirmationMessage="confirmationMessage"
+        :confirmationIcon="confirmationIcon"
+        :okAction="approved"
+        @approved="onApproved"
+      />
+
       <v-snackbar
         v-model="showMe"
         centered
@@ -87,7 +117,7 @@
         height="100px"
         color="blue-grey darken-3"
       >
-        {{ snackBarMessage }}
+        <v-card-text v-html="snackBarMessage" />
         <template v-slot:action="{ attrs }">
           <v-btn
             v-if="snackBtnText"
@@ -100,6 +130,32 @@
           </v-btn>
         </template>
       </v-snackbar>
+
+      <v-snackbar
+        v-model="rewardPoints"
+        centered
+        top
+        timeout="-1"
+        color="blue-grey darken-3"
+        vertical
+        multi-line
+      >
+        <v-card-title class="text-subtitle-1">Well Done</v-card-title>
+        <v-card-text v-html="rewardPointsMessage" />
+        <!-- <template v-slot:action="{ attrs }"> -->
+        <v-card-actions>
+          <v-btn
+            v-if="snackBtnText"
+            text
+            color="#00f500"
+            v-bind="attrs"
+            @click="rewardPoints = false"
+          >
+            {{ snackBtnText }}
+          </v-btn>
+        </v-card-actions>
+        <!-- </template> -->
+      </v-snackbar>
     </v-card>
   </v-container>
 </template>
@@ -107,11 +163,14 @@
 <script>
 import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
-
+import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
+import { DateTime } from '@/utils/luxonHelpers';
+// import { printJson } from '@/utils/helpers';
 export default {
   name: 'SponsorView',
-  props: { updateSponsor: Function, sponsor: Object },
-  components: { VueQRCodeComponent },
+  // sponsor is {sid,biz}
+  props: { updateSponsor: Function, sponsor: Object, earnReward: Function },
+  components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
     snackBarAction() {
       const action =
@@ -160,7 +219,16 @@ export default {
 
   data() {
     return {
+      rewardPoints: false,
+      confSnackbar: false,
+      confirmationTitle: 'Address Confirmation',
+      confirmationMessage: '',
+      confirmationIcon: 'question_mark',
+      place_id: '',
+      countries: ['SG', 'UK', 'US'],
+      country: 'US',
       business: this.sponsor?.biz ?? '',
+      address: '',
       registered: this.sponsor?.sid ?? false,
       snackBtnText: 'ok',
       snackBarMessage: 'Ready to get started?',
@@ -175,6 +243,29 @@ export default {
     };
   },
   methods: {
+    convertDateTime(val) {
+      console.log('date val', val);
+      return new DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED);
+    },
+    onEarnReward() {
+      const vm = this;
+      this.earnReward({
+        bid: this.$route.params.id,
+        uid: this.$socket.client.auth.userID,
+      }).then((visitedOn) => {
+        const dates = visitedOn.map((v) => this.convertDateTime(v));
+        const msg = `<p>You are earning ${
+          vm.$route.params.id
+        } Reward points with these visits:</p>${dates.join('<br/>')}`;
+        console.log('rewards:', msg);
+        vm.rewardPointsMessage = msg;
+        vm.rewardPoints = true;
+      });
+    },
+    onApproved() {
+      this.confSnackbar = false;
+      this.addSponsor();
+    },
     onPrintQR() {
       this.printing = true;
     },
@@ -182,9 +273,18 @@ export default {
       //  this.preview = true;
       window.print();
     },
+
     register() {
-      this.showMe = true;
-      this.printing = true;
+      const address = `${this.business} ${this.address}`;
+      this.emitFromClient(
+        'getPlaceID',
+        { address, country: this.country },
+        ({ formatted_address, place_id }) => {
+          this.place_id = place_id;
+          this.confirmationMessage = `<p>If this address is <strong>correct</strong>, we will register your business. Otherwise, enter a more accurate address:</p>${formatted_address}`;
+          this.confSnackbar = true;
+        }
+      );
     },
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
@@ -196,11 +296,12 @@ export default {
       // get the Stream ID for the biz and the ID of the biz owner
       const biz = this.business;
       const oid = this.$socket.client.auth.userID;
-      const eventName = 'addSponsor';
+      const place_id = this.place_id;
+      console.log(biz, oid, place_id);
 
-      console.log(biz, oid);
-      this.emitFromClient(eventName, { biz, oid }, (sid) => {
-        this.updateSponsor({ biz, sid });
+      const eventName = 'addSponsor';
+      this.emitFromClient(eventName, { biz, oid, place_id }, (sid) => {
+        this.updateSponsor({ biz, sid, place_id });
         this.snackBarMessage = `Your Sponsor ID: ${sid}`;
         this.snackBarActionIndex = 1;
         this.showMe = true;
@@ -258,14 +359,12 @@ export default {
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
   },
-  watch: {
-    business(val) {
-      if (!val) {
-        this.registered = false;
-      }
-    },
-  },
+  watch: {},
+
   mounted() {
+    if (this.$route.params.id) {
+      this.onEarnReward();
+    }
     console.log('SPONSOR mounted');
   },
 };

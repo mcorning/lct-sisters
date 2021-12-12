@@ -11,7 +11,11 @@
         :timeout="timeout"
       >
         <v-card-title>Global Error Handler</v-card-title>
-        <v-card-subtitle>LCT Devs are now aware of this issue.</v-card-subtitle>
+        <v-card-subtitle
+          >Thank you for disabusing our Devs their second-order ignorance of
+          their code. Sorry for the trouble. An update is on the
+          way...</v-card-subtitle
+        >
         <!--TODO refactor according to https://codesandbox.io/s/github/vuejs/vuejs.org/tree/master/src/v2/examples/vue-20-dynamic-components?file=/index.html:741-796 -->
         <v-btn-toggle rounded>
           <v-btn @click="value = message">

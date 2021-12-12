@@ -120,7 +120,12 @@
           <v-card-title>Event QR</v-card-title>
           <v-card-text>
             <v-row justify="space-around">
-              <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+              <VueQRCodeComponent
+                id="qr"
+                ref="qr"
+                :text="decodedUri"
+                error-level="L"
+              >
               </VueQRCodeComponent>
             </v-row>
           </v-card-text>

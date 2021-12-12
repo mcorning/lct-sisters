@@ -56,3 +56,4 @@ src/components/cards/test.json
 src/components/misc/OrigMailToCard.vue
 diag.json
 diag2.json
+srv/googlemaps.options.js

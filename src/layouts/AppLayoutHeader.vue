@@ -49,7 +49,12 @@
             <v-row>
               <v-spacer />
               <v-col class="text-center">
-                <VueQRCodeComponent id="qr" ref="qr" :text="decodedUri">
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="decodedUri"
+                  error-level="L"
+                >
                 </VueQRCodeComponent>
               </v-col>
               <v-spacer />

@@ -10,7 +10,6 @@
       :bottom="bottom"
       :left="left"
       :right="right"
-      :confirmationIcon="confirmationIcon"
       vertical
       color="blue-grey darken-3"
     >
@@ -30,6 +29,9 @@
             v-html="confirmationMessage"
           ></div>
           <v-card-actions>
+            <v-btn absolute bottom left color="error" text @click="okAction">
+              ok
+            </v-btn>
             <v-btn
               absolute
               bottom
@@ -39,8 +41,8 @@
               @click="snackbar = false"
             >
               Close
-            </v-btn></v-card-actions
-          >
+            </v-btn>
+          </v-card-actions>
         </v-col>
       </v-row>
     </v-snackbar>
@@ -54,6 +56,7 @@ export default {
     confirmationTitle: String,
     confirmationMessage: String,
     confirmationIcon: String,
+    okAction:String,
     timeout: {
       type: Number,
       default: -1,
@@ -90,6 +93,11 @@ export default {
 
   data() {
     return { snackbar: true };
+  },
+  methods: {
+    approve() {
+      this.$emit('approved');
+    },
   },
   watch: {},
   mounted() {

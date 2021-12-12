@@ -1,7 +1,7 @@
 <template>
   <Model @error="onError" @exposures="onExposures">
-    <div slot-scope="{ updateSponsor, sponsor }">
-      <Sponsor :updateSponsor="updateSponsor" :sponsor="sponsor" />
+    <div slot-scope="{ updateSponsor, sponsor, earnReward }">
+      <Sponsor :updateSponsor="updateSponsor" :sponsor="sponsor" :earnReward="earnReward" />
     </div>
   </Model>
 </template>
@@ -27,7 +27,9 @@ export default {
       throw error;
     },
   },
-  mounted() {},
+  mounted() {
+    console.log(this.$route.query);
+  },
 };
 </script>
 

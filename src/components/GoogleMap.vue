@@ -307,7 +307,6 @@ export default {
     onShareGethering: Function,
     onVisitPlace: Function,
     oid: Function,
-    state: Object,
     ownThePlace: Function,
     onSharePlace: Function,
     onMarkerAdded: Function,
