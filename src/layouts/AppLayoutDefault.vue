@@ -6,8 +6,8 @@
       slot-scope="{
         isConnected,
         state,
-        updateLoggedVisitId,
         updateSession,
+        updateLoggedVisitId,
         usernumber,
         getPoi,
         incrementWarningsReceived,
@@ -16,8 +16,8 @@
       <AppLayoutHeader
         :isConnected="isConnected"
         :state="state"
-        :updateLoggedVisitId="updateLoggedVisitId"
         :updateSession="updateSession"
+        :updateLoggedVisitId="updateLoggedVisitId"
         :usernumber="usernumber"
         :getPoi="getPoi"
         :incrementWarningsReceived="incrementWarningsReceived"

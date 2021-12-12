@@ -10,6 +10,7 @@
           namespace,
           setNamespace,
           getNamespace,
+          state,
         }"
       >
         <component
@@ -19,6 +20,7 @@
           :getVisitors="getVisitors"
           :earnReward="earnReward"
           :getNamespace="getNamespace"
+          :state=state
         >
           <slot />
         </component>

@@ -1,7 +1,11 @@
 <template>
-  <Model @error="onError" @exposures="onExposures">
+  <Model @error="onError">
     <div slot-scope="{ updateSponsor, sponsor, earnReward }">
-      <Sponsor :updateSponsor="updateSponsor" :sponsor="sponsor" :earnReward="earnReward" />
+      <Sponsor
+        :updateSponsor="updateSponsor"
+        :sponsor="sponsor"
+        :earnReward="earnReward"
+      />
     </div>
   </Model>
 </template>

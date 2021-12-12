@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-card max-width="500">
-      <v-card-title class="text-xs-subtitle-1">{{ welcome }}</v-card-title>
+      <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
       <v-card-text v-html="message"> </v-card-text>
       <v-card-actions>
         <v-card-text v-if="isSponsor">
@@ -118,17 +118,14 @@
         color="blue-grey darken-3"
       >
         <v-card-text v-html="snackBarMessage" />
-        <template v-slot:action="{ attrs }">
-          <v-btn
-            v-if="snackBtnText"
-            text
-            color="#00f500"
-            v-bind="attrs"
-            @click.stop="snackBarAction"
-          >
-            {{ snackBtnText }}
-          </v-btn>
-        </template>
+        <v-btn
+          v-if="snackBtnText"
+          text
+          color="#00f500"
+          @click.stop="snackBarAction"
+        >
+          {{ snackBtnText }}
+        </v-btn>
       </v-snackbar>
 
       <v-snackbar
@@ -148,7 +145,6 @@
             v-if="snackBtnText"
             text
             color="#00f500"
-            v-bind="attrs"
             @click="rewardPoints = false"
           >
             {{ snackBtnText }}
@@ -169,7 +165,12 @@ import { DateTime } from '@/utils/luxonHelpers';
 export default {
   name: 'SponsorView',
   // sponsor is {sid,biz}
-  props: { updateSponsor: Function, sponsor: Object, earnReward: Function },
+  props: {
+    isConnected: Boolean,
+    updateSponsor: Function,
+    sponsor: Object,
+    earnReward: Function,
+  },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
     snackBarAction() {
@@ -220,6 +221,7 @@ export default {
   data() {
     return {
       rewardPoints: false,
+      rewardPointsMessage: '',
       confSnackbar: false,
       confirmationTitle: 'Address Confirmation',
       confirmationMessage: '',

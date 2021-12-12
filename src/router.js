@@ -16,12 +16,14 @@ const routes = [
     path: '/sponsor/',
     name: 'Sponsor',
     component: Commercial,
+    meta: { layout: 'AppLayoutRewards' },
     props: true,
   },
   {
     path: '/sponsor/:id',
-    name: 'Sponsor',
+    name: 'ThisSponsor',
     component: Commercial,
+    meta: { layout: 'AppLayoutRewards' },
     props: true,
   },
 
