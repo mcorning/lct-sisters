@@ -56,7 +56,6 @@ export default {
     confirmationTitle: String,
     confirmationMessage: String,
     confirmationIcon: String,
-    okAction: String,
     timeout: {
       type: Number,
       default: -1,
@@ -96,6 +95,7 @@ export default {
   },
   methods: {
     approve() {
+      this.snackbar = false
       this.$emit('approved');
     },
   },

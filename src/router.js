@@ -7,13 +7,13 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/space',
+    path: '/',
     name: 'Space',
     component: Space,
     props: true,
   },
   {
-    path: '/',
+    path: '/sponsor',
     name: 'Sponsor',
     component: Commercial,
     meta: { layout: 'AppLayoutRewards' },

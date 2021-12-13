@@ -108,6 +108,7 @@
       />
     </v-toolbar>
 
+    <!-- Map container inside-->
     <v-row no-gutters
       ><v-col>
         <!-- Map container -->
@@ -960,6 +961,7 @@ export default {
           });
           const msg = err ? err : '\td) Saved location settings';
           vm.log(msg);
+          vm.ready = true;
         });
         // TODO Note: either-async in this case was too hard to debug, and i wasn't getting consistent results for namespace
         // geocoder
