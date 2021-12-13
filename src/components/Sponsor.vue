@@ -8,7 +8,7 @@
         <v-card-text>
           <v-text-field
             v-model="business"
-            :counter="30"
+            :counter="nameMaxLength"
             :rules="nameRules"
             label="Your business name"
             required
@@ -220,20 +220,17 @@ export default {
 
   data() {
     return {
+      nameMaxLength:30,
       valid: false,
-      name: '',
       nameRules: [
         (v) => !!v || 'Name is required',
-        (v) => (v && v.length <= 10) || 'Name must be less than 10 characters',
+        (v) => (v && v.length <= this.nameMaxLength) || `Name must be less than ${this.nameMaxLength} characters`,
       ],
       email: '',
       emailRules: [
         (v) => !!v || 'E-mail is required',
         (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid',
       ],
-      select: null,
-      items: ['Item 1', 'Item 2', 'Item 3', 'Item 4'],
-      checkbox: false,
 
       rewardPoints: false,
       rewardPointsMessage: '',
@@ -306,8 +303,9 @@ export default {
         { address, country: this.country },
         ({ formatted_address, place_id }) => {
           vm.place_id = place_id;
-          vm.confirmationMessage = `<p>Google found this address based on what you entered:<br/> ${formatted_address}
-          <p>If this is <strong>correct</strong>, your business place_id is: ${place_id}.</p> 
+          vm.confirmationMessage = 
+          `<p>Google found this address:<br/> ${formatted_address}
+          <p>If <strong>correct</strong>, your place_id is: ${place_id}.</p> 
           <p>If not, enter an address with more detail.</p>`;
           vm.confSnackbar = true;
         }
