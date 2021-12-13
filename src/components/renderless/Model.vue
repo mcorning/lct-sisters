@@ -25,7 +25,7 @@ export default {
   mixins: [graphMixin, spaceMixin, redisMixin, timeMixin, warningMixin],
 
   computed: {
-    oid(){
+    oid() {
       return this.settings.oid;
     },
     namespace() {
@@ -103,7 +103,7 @@ export default {
   },
 
   methods: {
-    ownThePlace({biz}) {
+    ownThePlace({ biz }) {
       // assume the caller of this function pressed the centerMap button on the infowindow
       this.updateSetting({ id: 1, biz, oid: this.$socket.client.auth.userID });
     },
@@ -344,6 +344,10 @@ export default {
     getNamespace() {
       return this.namespace;
     },
+    getAllSettings() {
+      const s = Setting.query().all();
+      return s.length ? s[0] : s;
+    },
   },
 
   watch: {
@@ -417,7 +421,8 @@ export default {
       updateSponsor: this.updateSponsor,
       sponsor: this.sponsor,
       ownThePlace: this.ownThePlace,
-      odi:this.oid,
+      odi: this.oid,
+      getAllSettings: this.getAllSettings,
 
       // Steam events
       enterLottery: this.enterLottery,

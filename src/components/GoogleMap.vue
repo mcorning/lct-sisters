@@ -324,6 +324,7 @@ export default {
     getRedisGraphs: Function,
     enterLottery: Function,
     setNamespace: Function,
+    getAllSettings: Function,
   },
   components: {
     InfoWindowCard,

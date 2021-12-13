@@ -115,6 +115,9 @@ export const spaceMixin = {
 
     // works when connected and when not connected
     callVisitUpdate({ place_id, start, end, name, shared, gatheringName }) {
+      const getNs = () => {
+        return this.getAllSettings().namespace;
+      };
       let visit = {
         id: randomId(),
         name: gatheringName || name,
@@ -127,7 +130,7 @@ export const spaceMixin = {
 
         timed: true,
         marked: getNow(),
-        graphName: this.namespace,
+        graphName: this.namespace ?? getNs(),
       };
       if (this.$socket.connected) {
         // onLogVisit() is in graph.js
