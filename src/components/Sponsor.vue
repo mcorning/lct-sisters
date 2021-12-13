@@ -1,56 +1,51 @@
 <template>
   <v-container fluid>
     <v-card max-width="500">
-      <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
-      <v-card-text v-html="message"> </v-card-text>
-      <v-card-actions>
-        <v-card-text v-if="isSponsor">
-          <v-row align="center"
-            ><v-col>
-              <v-text-field
-                v-model="business"
-                label="Your business name"
-                clearable
-              ></v-text-field>
-              <v-text-field
-                v-model="address"
-                label="Your business address"
-                placeholder="Minimum: City [and State]"
-                @blur="register"
-                clearable
-              ></v-text-field>
-              <v-select
-                v-model="country"
-                :items="countries"
-                label="Country"
-              ></v-select>
-            </v-col>
-          </v-row>
-          <v-row>
-            <!-- <v-col>
-              <v-btn
-                :disabled="registered"
-                block
-                color="primary"
-                @click="register"
-                >Register</v-btn
-              >
-            </v-col> -->
-            <v-col
-              ><v-btn
-                :disabled="!registered"
-                block
-                color="primary"
-                @click="getVisits"
-                >Get Visits</v-btn
-              >
-            </v-col>
-          </v-row>
+      <v-form ref="form" v-model="valid" lazy-validation>
+        <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
+        <v-card-text v-html="message"> </v-card-text>
+        <v-divider />
+        <v-card-text>
+          <v-text-field
+            v-model="business"
+            :counter="30"
+            :rules="nameRules"
+            label="Your business name"
+            required
+            clearable
+          ></v-text-field>
+          <v-text-field
+            v-model="address"
+            :rules="nameRules"
+            label="Your business address"
+            placeholder="Minimum: City [State]"
+            required
+            clearable
+          ></v-text-field>
+          <v-select
+            v-model="country"
+            :items="countries"
+            :rules="[(v) => !!v || 'Item is required']"
+            label="Country"
+            required
+          ></v-select>
         </v-card-text>
-        <v-card-text v-else>
-          <v-btn block color="primary" @click="addVisit">Log Visit</v-btn>
-        </v-card-text>
-      </v-card-actions>
+        <v-card-actions>
+          <v-btn
+            :disabled="!valid"
+            color="success"
+            class="mr-4"
+            @click="getPlaceID"
+          >
+            Validate Business
+          </v-btn>
+
+          <v-btn color="error" class="mr-4" @click="reset">
+            Reset Form
+          </v-btn>
+        </v-card-actions>
+      </v-form>
+
       <div v-if="registered">
         <v-card-title class="text-h6"
           >To see a preview of your QR card...</v-card-title
@@ -60,6 +55,7 @@
       <div ref="printDiv">
         <v-card-text v-if="registered" class="text-center">
           <div id="targetDiv" ref="targetDiv" class="text-center">
+            <v-card-text v-html="message"> </v-card-text>
             <v-row v-if="printing"
               ><v-col
                 ><p>
@@ -84,7 +80,7 @@
                 </VueQRCodeComponent>
               </v-col>
               <v-spacer />
-              {{decodedUri}}
+              {{ decodedUri }}
             </v-row>
           </div>
 
@@ -99,7 +95,6 @@
           </v-card-actions>
         </v-card-text>
       </div>
-
       <confirmation-snackbar
         v-if="confSnackbar"
         :centered="true"
@@ -107,8 +102,9 @@
         :confirmationTitle="confirmationTitle"
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
-        okAction="approved"
+        :canApprove="true"
         @approved="onApproved"
+        @disapprove="confSnackbar = false"
       />
 
       <v-snackbar
@@ -174,6 +170,9 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    disableRegistration() {
+      return this.biz || this.address;
+    },
     snackBarAction() {
       const action =
         this.snackBarActionIndex === 0 ? this.addSponsor : this.closeSnackbar;
@@ -221,6 +220,21 @@ export default {
 
   data() {
     return {
+      valid: false,
+      name: '',
+      nameRules: [
+        (v) => !!v || 'Name is required',
+        (v) => (v && v.length <= 10) || 'Name must be less than 10 characters',
+      ],
+      email: '',
+      emailRules: [
+        (v) => !!v || 'E-mail is required',
+        (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+      ],
+      select: null,
+      items: ['Item 1', 'Item 2', 'Item 3', 'Item 4'],
+      checkbox: false,
+
       rewardPoints: false,
       rewardPointsMessage: '',
       confSnackbar: false,
@@ -229,7 +243,7 @@ export default {
       confirmationIcon: 'question_mark',
       place_id: '',
       countries: ['SG', 'UK', 'US'],
-      country: 'US',
+      country: '',
       business: this.sponsor?.biz ?? '',
       address: '',
       registered: this.sponsor?.sid ?? false,
@@ -246,6 +260,13 @@ export default {
     };
   },
   methods: {
+    validate() {
+      this.$refs.form.validate();
+    },
+    reset() {
+      this.$refs.form.reset();
+    },
+
     convertDateTime(val) {
       console.log('date val', val);
       return new DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED);
@@ -277,15 +298,18 @@ export default {
       window.print();
     },
 
-    register() {
+    getPlaceID() {
       const address = `${this.business} ${this.address}`;
+      const vm = this;
       this.emitFromClient(
         'getPlaceID',
         { address, country: this.country },
         ({ formatted_address, place_id }) => {
-          this.place_id = place_id;
-          this.confirmationMessage = `<p>If this address is <strong>correct</strong>, we will register your business. Otherwise, enter a more accurate address:</p>${formatted_address}`;
-          this.confSnackbar = true;
+          vm.place_id = place_id;
+          vm.confirmationMessage = `<p>Google found this address based on what you entered:<br/> ${formatted_address}
+          <p>If this is <strong>correct</strong>, your business place_id is: ${place_id}.</p> 
+          <p>If not, enter an address with more detail.</p>`;
+          vm.confSnackbar = true;
         }
       );
     },
@@ -362,13 +386,25 @@ export default {
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
   },
-  watch: {},
+  watch: {
+    business() {
+      this.validate();
+    },
+    address() {
+      this.validate();
+    },
+    country() {
+      this.validate();
+    },
+  },
 
   mounted() {
     if (this.$route.params.id) {
       this.onEarnReward();
     }
     console.log('SPONSOR mounted');
+    // set valid false here so the Register btn is disabled
+    this.valid = false;
   },
 };
 </script>

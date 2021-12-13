@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-snackbar
-      v-model="snackbar"
+      v-model="x"
       :timeout="timeout"
       :multi-line="multiLine"
       :dark="dark"
@@ -29,18 +29,19 @@
             v-html="confirmationMessage"
           ></div>
           <v-card-actions>
-            <v-btn absolute bottom left color="success" text @click="approve">
-              ok
+            <v-btn absolute bottom left color="error" text @click="disapprove">
+              Close
             </v-btn>
             <v-btn
+              v-if="canApprove"
               absolute
               bottom
               right
-              color="error"
+              color="success"
               text
-              @click="snackbar = false"
+              @click="approve"
             >
-              Close
+              ok
             </v-btn>
           </v-card-actions>
         </v-col>
@@ -88,15 +89,21 @@ export default {
       type: Boolean,
       default: false,
     },
+    canApprove: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
-    return { snackbar: true };
+    return { x: true };
   },
   methods: {
     approve() {
-      this.snackbar = false
       this.$emit('approved');
+    },
+    disapprove() {
+      this.$emit('disapprove');
     },
   },
   watch: {},
