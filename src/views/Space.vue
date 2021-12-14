@@ -1,5 +1,5 @@
 <template>
-  <Model @error="onError" >
+  <Model @error="onError">
     <div
       slot-scope="{
         isConnected,
@@ -56,7 +56,6 @@
         :getAllSettings="getAllSettings"
       />
     </div>
-
   </Model>
 </template>
 
@@ -64,14 +63,12 @@
 import Spaces from '@/components/GoogleMap.vue';
 
 import Model from '@/components/renderless/Model.vue';
-import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
 
 export default {
   name: `Space`,
   components: {
     Spaces,
     Model,
-    ConfirmationSnackbar,
   },
   props: {
     emergency: Boolean,
@@ -92,7 +89,6 @@ export default {
       error.message = `Space.vue error message: ${error.message}`;
       throw error;
     },
-
   },
   watch: {
     emergency(e) {

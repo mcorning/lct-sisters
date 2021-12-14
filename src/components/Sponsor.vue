@@ -111,13 +111,16 @@
       class="overflow-auto fill-height"
       max-width="500"
     >
+      <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
       <v-container fluid class="fill-height text-center ">
         <v-row no-gutters
           ><v-col>
-            <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
+            <v-card-title class="text-xsOnly-subtitle-1"
+              >Universal TQR Loyalty Tracking</v-card-title
+            >
           </v-col></v-row
         >
-        <v-row dense
+        <v-row dense justify="center"
           ><v-col>
             Version: {{ $version }} <br />Confirmed Address:
             {{ confirmedAddress }}
@@ -146,8 +149,9 @@
             >
           </v-card-actions>
         </v-card>
-      </v-container></v-sheet
-    >
+      </v-container>
+      <!-- </v-card> -->
+    </v-sheet>
   </v-container>
 </template>
 
@@ -223,7 +227,7 @@ export default {
     return {
       preview: false,
       nameMaxLength: 50,
-      addressMaxLength: 50,
+      addressMaxLength: 75,
       valid: false,
       nameRules: [
         (v) => !!v || 'Name is required',
