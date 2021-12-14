@@ -153,18 +153,24 @@ export const spaceMixin = {
     },
 
     onVisitPlace(data) {
+      // it's possible that there can be no record in Place with the given placeId. Rare, but possible.
       const { placeId, gatheringName } = data;
-      const currentPlace = Place.getPlace(placeId);
-      const { name, place_id } = currentPlace;
-      const start = roundTime(Date.now());
-      const end = start + this.avgStay; // avgStay is ms (in Model.vue)
-      this.callVisitUpdate({
-        place_id,
-        start,
-        end,
-        name: name || gatheringName,
-        gatheringName,
-      });
+      try {
+        const currentPlace = Place.getPlace(placeId);
+        const { name, place_id } = currentPlace;
+        const start = roundTime(Date.now());
+        const end = start + this.avgStay; // avgStay is ms (in Model.vue)
+        this.callVisitUpdate({
+          place_id,
+          start,
+          end,
+          name: name || gatheringName,
+          gatheringName,
+        });
+        return true
+      } catch (error) {
+        return (error)
+      }
     },
 
     onMarkerAdded(markedPlace) {

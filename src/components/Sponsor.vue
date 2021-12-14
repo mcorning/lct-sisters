@@ -45,8 +45,8 @@
               Validate Address
             </v-btn>
 
-            <v-btn color="error" class="mr-4" @click="reset">
-              New Sponsor
+            <v-btn color="blue" class="mr-4" @click="reset">
+              Clear
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -54,7 +54,7 @@
 
       <v-card-text v-if="printing">
         <div id="targetDiv" ref="targetDiv" class="text-center">
-          <v-row align="center">
+          <!-- <v-row align="center">
             <v-spacer />
             <v-col cols="12" class="text-center">
               <p>
@@ -68,7 +68,7 @@
               <p>We use no personal identifying information.</p></v-col
             >
             <v-spacer />
-          </v-row>
+          </v-row> -->
           <v-row align="top">
             <v-spacer />
             <v-col cols="12" class="text-center">
@@ -106,21 +106,27 @@
         @disapprove="confSnackbar = false"
       />
     </v-card>
-    <v-sheet class="overflow-auto fill-height  ">
+    <v-sheet
+      v-if="!isSponsor"
+      class="overflow-auto fill-height"
+      max-width="500"
+    >
       <v-container fluid class="fill-height text-center ">
         <v-row no-gutters
           ><v-col>
-            <v-card-title>Universal Loyalty Tracking</v-card-title>
+            <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
           </v-col></v-row
         >
         <v-row dense
           ><v-col>
-              Version: {{ $version }} <br />Confirmed Address:
-              {{ confirmedAddress }}
+            Version: {{ $version }} <br />Confirmed Address:
+            {{ confirmedAddress }}
           </v-col></v-row
         >
         <v-card v-model="rewardPoints" color="blue-grey darken-3">
-          <v-card-title class="white--text">Well Done</v-card-title>
+          <v-card-title class="white--text"
+            >Customer {{ $socket.client.auth.userID }}</v-card-title
+          >
           <v-card-subtitle
             class="white--text mx-auto"
             v-html="rewardPointsMessage"
@@ -134,6 +140,10 @@
             >
               {{ snackBtnText }}
             </v-btn>
+            <v-spacer />
+            <v-btn text color="yellow" @click="earnTokens"
+              >Earn more tokens</v-btn
+            >
           </v-card-actions>
         </v-card>
       </v-container></v-sheet
@@ -188,7 +198,7 @@ export default {
     },
     welcome() {
       const msg = this.isSponsor
-        ? 'Welcome to Universal Loyalty Tracking'
+        ? 'Welcome to Universal TQR Loyalty Tracking'
         : `Welcome to the ${this.$route.params.id} Community`;
 
       return msg;
@@ -212,7 +222,7 @@ export default {
   data() {
     return {
       preview: false,
-      nameMaxLength: 30,
+      nameMaxLength: 50,
       addressMaxLength: 50,
       valid: false,
       nameRules: [
@@ -262,6 +272,9 @@ export default {
     };
   },
   methods: {
+    earnTokens() {
+      window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
+    },
     validate() {
       this.$refs.form.validate();
     },
@@ -280,13 +293,11 @@ export default {
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
-        const msg = `<p>${
-          this.$socket.client.auth.userID
-        }, you are earning <strong> ${
+        const msg = `<p>You are earning <strong> ${
           vm.$route.params.id
-        }</strong> Reward points with these ${
+        }</strong> TQR tokens with ${dates.length === 1 ? 'this' : 'these'} ${
           dates.length
-        } visits:</p>${dates.join('<br/>')}`;
+        } visit${dates.length > 1 ? 's' : ''}:</p>${dates.join('<br/>')}`;
         console.log('rewards:', msg);
         vm.rewardPointsMessage = msg;
         vm.rewardPoints = true;

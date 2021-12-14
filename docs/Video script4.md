@@ -2,119 +2,33 @@
 
 This is the fourth installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
 
-Previously...we saw Seth show Katy how to how to correct errors in Google Maps and what to do when she tests positive for COVID-19.
+Previously...we saw Seth show Katy how to fix Google mistakes and how to warn others if shet tests positive for COVID.
 
-In this episode, Seth takes Katy deeper into the more sophisticated capabilities of the app that saved Sisters...
+In this episode, Seth shows Katy how to integrate public health into her personal life...
 
-## EPISODE 3: IT COULD BE WORSE
+## EPISODE 4: Sharing is caring
 
+By now, Katy knows the drill. First, PT. Then another lesson in armchair epidemiology.
 
-### Page 2: A Word to the Wise and Otherwise
+### Page 1:
 
+"So how did you do at cards the other day, Katy?"
 
-To illustrate how exposure alerts work, Seth says,
-"OK, you already scanned in today.
-"Since we both share the same space right now, I will add an event to my calendar that is fairly close in time to your event on your calendar."
+"Actually, I won both games."
 
-Seth clicks the `MARK CALENDAR` button then adds,
-"Now, to show you what an exposure alert looks like, I will warn the app that I have test positive for COVID..."
+"Yeah, but you haven't played against me, now have you? Today you will learn how to invite other players to your game in a way that keeps all players safe. Open your app, please."
 
-A new banner appears on Katy's phone.
-"Woah, what's this?" Katy asks.
+Katy presses the LCT button on her home screen.
 
-"That is the alert that you need to justify the time and expense of getting tested yourself.
-"And I used that term 'justify' deliberately. 
-"The alert's job is to provide you actionable intelligence about Sisters.
-"You will use this intel to decide if your risk of exposure is sufficient to intervene on community spread."
+"Now click on the Fika map marker and press `Mark Calendar`. This time, we are going to move the event to the future, and you are going to send me a link so I can add it to my calendar for next week, as well."
 
---------------------------------------------------------------------------------------
+"To edit a calendar event, click it and you see an area at the bottom of the calendar that lets you do things. We are going to edit the datetime, so click the edit icon on the right."
 
-### Page 3: The BRB
-
-"Now it's your turn, Katy."
-Katy's eyes widen.
-"Imagine you get home today and your neighbor tells you her husband isn't feeling well.
-"So you grab your inhome COVID test kit (you have one, right?), and sure enough, you, too are positive.
-"First thing you do is call you Primary Care Physician and get a prescription for that new anti-viral theraputic the FDA granted Emergency Use Authorization.
-"And as soon as you get off the phone, you open your app...
-
-"Ready? click that Big Red Button."
-
-Katy clicks the BRB on her app and opens the critical Exposure view.
-
---------------------------------------------------------------------------------------
-
-### Page 4: What's in it for you?
-
-Seth starts,
-"There are two ways to look at this screen. Carefully and in a panic. 
-"This is why it's a good idea to come to terms with this page BEFORE you come down with the virus."
-
-"OK," replies Katy.
-
-"Anyway, this page has several default values, so even if you are in emotional distress because you just tested positive, as long as you hit the YES button immediately, other people will be able to respond to the alert and get tested, as well. OK?"
-
-Katy nods tentatively.
-
-Seth continues, "Right, so before we go into the details on this page, let's try the other option for sending a warning to the server.
-
-I clicked the `DRILL` button a minute ago.
-
-You click the `WARNING` button.
-
-She does, and sees a Confirmation that the server can alert some number of people.
-It's not beyond comprenension that you just saved an elderly person's life by getting them medical attention far quicker than conventional contact tracers could.
-
---------------------------------------------------------------------------------------
-
-### Page 5: What's in it from me?
-
-"Right then, let's go back to the Exposure view," Seths says.
-"The main part of the Exposure view is a list of reasons you are sending an exposure warning to the server.
-"Primary reasons are a positive COVID test or a COVID diagnosis (even if that's only symptomatic).
-"Secondary reasons include being close to a COVID carrier.
-"The last reason is the one with the least reliability (if this is the only reason you are warning of exposure)."
-
-Katy asks, "Must I always use one of these reason? Can I use more than one?"
-
-Seth answers, "Yes to both. And note as you add and remove selections the risk score changes accordingly.
-"You even see a brief explanation of the effect of your choices on your risk score.
-
-Katy points to the form below the progress bar. "What are these?"
-
-"These data represent your current healthy state. If you are fully vaccinated, you select the third option on the list. If you had a booster, pick the value of 3.
-"Of course 0 is the option if for any reason you have not received a shot."
-
-When Seth is sure Katy is following his explanation, he moves on to the last two form elements.
-
-"Wearing a mask primarily affects the value of the the fourth reason for the warning.
-"For example, if the app warned you of exposure and  you wear a mask all the time, the odds of carrying the virus are lower, and people who see an alert can know that.
-"If you had a flu shot this year and report COVID-like symptoms, it's more likely that you present COVID symptoms rather than flu symptoms."
-
---------------------------------------------------------------------------------------
-
-### The Rest of the Story
-
-Seth takes a breath, lets Katy catch up with the information and says,
-"When a test or physician diagnoses you with COVID, you are having a bad day. But it could be much worse.
-
-There could be dozens of people infected the same way you were, but they don't know it yet.
-
-> Today, for example, in our little zip code of 7,000 residents, COVID infection when up by 19 cases. That's an increase from 825/10,000 to 850/10,000.
-
-Armed with the app, as soon as you know you're expose, everybody you shared space and time with knows there's a good chance they are carrying the virus, too.
-
-So if, as a group, we all get tested on the same day of our alert, we have deprived the virus of up to two weeks to replicate and mutate.
-
-Without the app, time is now our ally.
-
-With it, time is not an ally for the viruses. Frankly, the virus hasn't got a chance in our town.
 
 --------------------------------------------------------------------------------------
 
 ### To be continued
 
 Seth's closing remarks to Katy are, "Next time I'll show you how you can invite me to your Thursday card games..."
-
 
 As Katy leaves, Seth says,"Until then, Katy, stay safe out there..."

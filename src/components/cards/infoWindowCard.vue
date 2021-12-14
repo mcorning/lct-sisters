@@ -27,7 +27,7 @@
         block
         :small="$vuetify.breakpoint.xs"
         color="primary"
-        @click="onVisitPlace({ placeId, gatheringName })"
+        @click="callOnVisitPlace({ placeId, gatheringName })"
         >Mark Calendar</v-btn
       >
       <v-card-actions>
@@ -360,6 +360,12 @@ export default {
     printMe() {
       this.preview = true;
       window.print();
+    },
+    callOnVisitPlace({ placeId, gatheringName }) {
+      const result = this.onVisitPlace({ placeId, gatheringName });
+      if (result !== true) {
+        alert('Oops. Please reselect the marker to use.');
+      }
     },
   },
 

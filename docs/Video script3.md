@@ -55,7 +55,7 @@ Katy clicks the BRB on her app and opens the `Exposure` view.
 
 --------------------------------------------------------------------------------------
 
-### Page 4: What's in it for you?
+### Page 4: This is a drill. This is only a drill.
 
 "For today," Seth begins, "ignore the details on this page. The only thing we do here is choose the kind of warning we send to the server."
 
@@ -84,7 +84,6 @@ If this had been a real alert, I would get tested, and if positive, I would hit 
 
 ### The Rest of the Story
 
-Seth takes a breath, lets Katy catch up with the information and says,
 "When a test or physician diagnoses you with COVID, you are having a bad day. But it could be much worse.
 
 There could be dozens of people infected the same way you were, but they don't know it yet.
@@ -93,11 +92,11 @@ There could be dozens of people infected the same way you were, but they don't k
 
 Armed with the app, as soon as you know you're exposed, everybody you shared space and time with knows there's a good chance they are carrying the virus, too.
 
-So if, as a group, we all get tested on the same day of our alert, we have deprived the virus of up to two weeks to replicate and mutate.
+So if, as a group, we all get tested on the same day of our alert, we deprive the virus of up to two weeks to replicate and mutate.
 
 Without the app, time is now our ally.
 
-With it, time is not an ally for the viruses. Frankly, the virus hasn't got a chance in our town.
+With it, time is not an ally for the variants. Frankly, the virus hasn't got a chance in our town.
 
 --------------------------------------------------------------------------------------
 
