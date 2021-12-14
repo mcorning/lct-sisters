@@ -10,7 +10,6 @@ const {
   info,
   highlight,
   err,
-  success,
   logVisitors,
 } = require('../../src/utils/helpers');
 const { DateTime, Interval } = require('../../src/utils/luxonHelpers');
@@ -109,7 +108,7 @@ function getRewardPoints(bid, uid, lastID) {
   return redis.xread(['STREAMS', bid, lastID]).then((a) => {
     let dates = [];
     const m = new Map(a);
-    m.forEach((val, key) => {
+    m.forEach((val) => {
       val.forEach((val) => {
         if (val[1][1] === uid) {
           let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));

@@ -55,8 +55,8 @@ export default {
       return this.settings.sessionID;
     },
     sponsor() {
-      const { sid, biz } = this.settings;
-      return { sid, biz };
+      const { sid, biz, address, country, confirmedAddress } = this.settings;
+      return { sid, biz, address, country,confirmedAddress };
     },
     needsUsername() {
       return !this.settings.username;

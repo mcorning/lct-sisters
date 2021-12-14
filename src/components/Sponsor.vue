@@ -1,100 +1,95 @@
 <template>
   <v-container fluid>
     <v-card max-width="500">
-      <v-form ref="form" v-model="valid" lazy-validation>
-        <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
-        <v-card-text v-html="message"> </v-card-text>
-        <v-divider />
-        <v-card-text>
-          <v-text-field
-            v-model="business"
-            :counter="nameMaxLength"
-            :rules="nameRules"
-            label="Your business name"
-            required
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="address"
-            :rules="nameRules"
-            label="Your business address"
-            placeholder="Minimum: City [State]"
-            required
-            clearable
-          ></v-text-field>
-          <v-select
-            v-model="country"
-            :items="countries"
-            :rules="[(v) => !!v || 'Item is required']"
-            label="Country"
-            required
-          ></v-select>
-        </v-card-text>
-        <v-card-actions>
-          <v-btn
-            :disabled="!valid"
-            color="success"
-            class="mr-4"
-            @click="getPlaceID"
-          >
-            Validate Business
-          </v-btn>
-
-          <v-btn color="error" class="mr-4" @click="reset">
-            Reset Form
-          </v-btn>
-        </v-card-actions>
-      </v-form>
-
-      <div v-if="registered">
-        <v-card-title class="text-h6"
-          >To see a preview of your QR card...</v-card-title
-        >
-        <v-card-subtitle>...press the Print button below</v-card-subtitle>
-      </div>
-      <div ref="printDiv">
-        <v-card-text v-if="registered" class="text-center">
-          <div id="targetDiv" ref="targetDiv" class="text-center">
-            <v-card-text v-html="message"> </v-card-text>
-            <v-row v-if="printing"
-              ><v-col
-                ><p>
-                  Scan this QR code to access our
-                  <strong>{{ business }} Customer Rewards</strong> app.
-                </p>
-                <p>
-                  Each time you access the app, you earn points for future
-                  discounts.
-                </p></v-col
-              ></v-row
+      <div v-if="isSponsor && !preview">
+        <v-form ref="form" v-model="valid" lazy-validation>
+          <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
+          <v-card-subtitle> Version: {{ $version }} <br/>Confirmed Address: {{confirmedAddress}}</v-card-subtitle>
+          <v-card-text v-html="message"> </v-card-text>
+          <v-divider />
+          <v-card-text>
+            <v-text-field
+              v-model="business"
+              :counter="nameMaxLength"
+              :rules="nameRules"
+              label="Your business name"
+              required
+              clearable
+            ></v-text-field>
+            <v-text-field
+              v-model="address"
+              :rules="addressRules"
+              label="Your business address"
+              placeholder="Minimum: City [State]"
+              required
+              clearable
+            ></v-text-field>
+            <v-select
+              v-model="country"
+              :items="countries"
+              :rules="[(v) => !!v || 'Item is required']"
+              label="Country"
+              required
+            ></v-select>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn
+              :disabled="!valid"
+              color="success"
+              class="mr-4"
+              @click="getPlaceID"
             >
-            <v-row>
-              <v-spacer />
-              <v-col class="text-center">
-                <VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="decodedUri"
-                  error-level="L"
-                >
-                </VueQRCodeComponent>
-              </v-col>
-              <v-spacer />
-              {{ decodedUri }}
-            </v-row>
-          </div>
+              Validate Address
+            </v-btn>
 
-          <v-card-actions v-if="printing">
-            <v-row>
-              <v-btn text color="primary" plain @click="printing = false"
-                >Cancel</v-btn
-              >
-              <v-spacer />
-              <v-btn text color="primary" plain @click="printMe">Print</v-btn>
-            </v-row>
+            <v-btn color="error" class="mr-4" @click="reset">
+              New Sponsor
+            </v-btn>
           </v-card-actions>
-        </v-card-text>
+        </v-form>
       </div>
+
+      <v-card-text v-if="printing">
+        <div id="targetDiv" ref="targetDiv" class="text-center">
+          <v-row align="center">
+            <v-spacer />
+            <v-col cols="12" class="text-center">
+              <p>
+                Scan this QR code to access our
+                <strong>{{ business }} Loyalty Rewards</strong>.
+              </p>
+              <p>
+                Each time you scan our code, you earn points for future
+                discounts.
+              </p>
+              <p>We use no personal identifying information.</p></v-col
+            >
+            <v-spacer />
+          </v-row>
+          <v-row align="top">
+            <v-spacer />
+            <v-col cols="12" class="text-center">
+              <VueQRCodeComponent
+                id="qr"
+                ref="qr"
+                :text="decodedUri"
+                error-level="L"
+              >
+              </VueQRCodeComponent>
+            </v-col>
+            <v-spacer />
+          </v-row>
+        </div>
+      </v-card-text>
+
+      <v-card-actions v-if="printing">
+        <v-row>
+          <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
+          <v-spacer />
+          <v-btn text color="primary" plain @click="printMe">Print</v-btn>
+        </v-row>
+      </v-card-actions>
+
       <confirmation-snackbar
         v-if="confSnackbar"
         :centered="true"
@@ -102,12 +97,13 @@
         :confirmationTitle="confirmationTitle"
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
-        :canApprove="true"
+        approveString="Approve"
+        disapproveString="Disapprove"
         @approved="onApproved"
         @disapprove="confSnackbar = false"
       />
 
-      <v-snackbar
+      <!-- <v-snackbar
         v-model="showMe"
         centered
         timeout="-1"
@@ -123,7 +119,7 @@
         >
           {{ snackBtnText }}
         </v-btn>
-      </v-snackbar>
+      </v-snackbar> -->
 
       <v-snackbar
         v-model="rewardPoints"
@@ -134,9 +130,8 @@
         vertical
         multi-line
       >
-        <v-card-title class="text-subtitle-1">Well Done</v-card-title>
+        <v-card-title>Well Done</v-card-title>
         <v-card-text v-html="rewardPointsMessage" />
-        <!-- <template v-slot:action="{ attrs }"> -->
         <v-card-actions>
           <v-btn
             v-if="snackBtnText"
@@ -147,7 +142,6 @@
             {{ snackBtnText }}
           </v-btn>
         </v-card-actions>
-        <!-- </template> -->
       </v-snackbar>
     </v-card>
   </v-container>
@@ -161,7 +155,7 @@ import { DateTime } from '@/utils/luxonHelpers';
 // import { printJson } from '@/utils/helpers';
 export default {
   name: 'SponsorView',
-  // sponsor is {sid,biz}
+  // sponsor is {sid, biz, address}
   props: {
     isConnected: Boolean,
     updateSponsor: Function,
@@ -173,17 +167,24 @@ export default {
     disableRegistration() {
       return this.biz || this.address;
     },
-    snackBarAction() {
-      const action =
-        this.snackBarActionIndex === 0 ? this.addSponsor : this.closeSnackbar;
-      return action;
-    },
+    // snackBarAction() {
+    //   const action =
+    //     this.snackBarActionIndex === 0 ? this.addSponsor : this.closeSnackbar;
+    //   return action;
+    // },
     decodedUri() {
-      const d = `${window.location.origin}/sponsor/${this.business}`;
+      const b = encodeURIComponent(this.business);
+      const d = `${window.location.origin}/sponsor/${b}`;
       return d;
     },
     sponsorName() {
       return this.sponsor.biz;
+    },
+    sponsorAddress() {
+      return this.sponsor.address;
+    },
+    sponsorCountry() {
+      return this.sponsor.country;
     },
     sponsorID() {
       return this.sponsor.sid;
@@ -196,16 +197,18 @@ export default {
       return !this.isSponsor && !this.sponsorID;
     },
     welcome() {
-      const msg = this.$route.params.id
-        ? `Welcome to the ${this.$route.params.id} Community`
-        : 'Welcome to our Community of Communities';
+      const msg = this.isSponsor
+        ? 'Welcome to Universal Loyalty Tracking'
+        : `Welcome to the ${this.$route.params.id} Community`;
 
       return msg;
     },
     message() {
       const msg = this.newSponsor
-        ? 'You can now connect with your customers while protecting their privacy.'
-        : 'You join our community without sharing any personal identifying information. This gives us the ability to communicate opportunities and news about us.';
+        ? 'Enter your Business Name and Address. Validate your address with Google. Print your Loyalty QR.'
+        : '';
+      // ? 'You can now connect with your customers while protecting their privacy.'
+      // : 'You join our community without sharing any personal identifying information. This gives us the ability to communicate opportunities and news about us.';
       return msg;
     },
 
@@ -220,11 +223,23 @@ export default {
 
   data() {
     return {
-      nameMaxLength:30,
+      preview: false,
+      nameMaxLength: 30,
+      addressMaxLength: 50,
       valid: false,
       nameRules: [
         (v) => !!v || 'Name is required',
-        (v) => (v && v.length <= this.nameMaxLength) || `Name must be less than ${this.nameMaxLength} characters`,
+        (v) =>
+          (v && v.length <= this.nameMaxLength) ||
+          `Name must be less than ${this.nameMaxLength} characters`,
+      ],
+      addressRules: [
+        (v) =>
+          !!v ||
+          'Google may require some part of address to find this location',
+        (v) =>
+          (v && v.length <= this.addressMaxLength) ||
+          `Name must be less than ${this.addressMaxLength} characters`,
       ],
       email: '',
       emailRules: [
@@ -238,17 +253,19 @@ export default {
       confirmationTitle: 'Address Confirmation',
       confirmationMessage: '',
       confirmationIcon: 'question_mark',
-      place_id: '',
-      countries: ['SG', 'UK', 'US'],
-      country: '',
+      countries: ['SG', 'UK', 'USA'],
+      
       business: this.sponsor?.biz ?? '',
-      address: '',
-      registered: this.sponsor?.sid ?? false,
+      address: this.sponsor?.address ?? '',
+      country: this.sponsor?.country ?? '',
+      confirmedAddress: this.sponsor?.confirmedAddress ?? '',
+
+      registered: this.sponsor?.biz ?? false,
       snackBtnText: 'ok',
       snackBarMessage: 'Ready to get started?',
       snackBarActionIndex: 0,
       confirmation: null,
-      showMe: false,
+      // showMe: false,
       printing: false,
       duration: 300,
       offset: 0,
@@ -284,15 +301,32 @@ export default {
       });
     },
     onApproved() {
+      const biz = this.business;
+      const address = this.address;
+      const country = address.slice(address.lastIndexOf(',') + 2);
+      // TODO update country from address
+      const oid = this.$socket.client.auth.userID;
+      const confirmedAddress = this.confirmedAddress;
+      console.log(biz, address, country, oid, confirmedAddress);
+      this.updateSponsor({
+        biz,
+        oid,
+        address,
+        country,
+        confirmedAddress,
+      });
+
       this.confSnackbar = false;
-      this.addSponsor();
-    },
-    onPrintQR() {
       this.printing = true;
     },
+
     printMe() {
-      //  this.preview = true;
+      this.preview = true;
       window.print();
+    },
+    stopPrint() {
+      this.preview = false;
+      // this.printing = false;
     },
 
     getPlaceID() {
@@ -302,10 +336,10 @@ export default {
         'getPlaceID',
         { address, country: this.country },
         ({ formatted_address, place_id }) => {
-          vm.place_id = place_id;
-          vm.confirmationMessage = 
-          `<p>Google found this address:<br/> ${formatted_address}
-          <p>If <strong>correct</strong>, your place_id is: ${place_id}.</p> 
+          vm.confirmedAddress = place_id;
+          vm.address = formatted_address;
+          vm.confirmationMessage = `<p>Google found this address:<br/> ${formatted_address}
+          <p>If <strong>correct</strong>, your place_id is:<br/> ${place_id}</p> 
           <p>If not, enter an address with more detail.</p>`;
           vm.confSnackbar = true;
         }
@@ -314,75 +348,70 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
-    closeSnackbar() {
-      this.showMe = false;
-    },
+    // closeSnackbar() {
+    //   this.showMe = false;
+    // },
     addSponsor() {
       // get the Stream ID for the biz and the ID of the biz owner
       const biz = this.business;
+      const address = this.address;
+      // TODO update country from address
       const oid = this.$socket.client.auth.userID;
-      const place_id = this.place_id;
-      console.log(biz, oid, place_id);
+      const confirmedAddress = this.confirmedAddress;
+      console.log(biz, address, oid, confirmedAddress);
 
-      const eventName = 'addSponsor';
-      this.emitFromClient(eventName, { biz, oid, place_id }, (sid) => {
-        this.updateSponsor({ biz, sid, place_id });
-        this.snackBarMessage = `Your Sponsor ID: ${sid}`;
-        this.snackBarActionIndex = 1;
-        this.showMe = true;
-        this.registered = true;
-      });
-
-      this.showMe = false;
-      this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    },
-
-    addVisit() {
-      const sid = this.$route.params.id;
-      const uid = this.$socket.client.auth.userID;
-
-      if (!sid || !uid) {
-        console.log(
-          `Insufficient parameters: sid provided ${sid} uid provided ${uid}`
-        );
-        return;
-      }
-
-      const eventName = 'addVisit';
-      // get the Stream ID for the biz and the ID of the biz owner
-      console.log(sid, uid);
-      this.emitFromClient(eventName, { sid, uid }, (res) => {
-        this.snackBarMessage = res;
-        this.snackBarActionIndex = 1;
-        this.showMe = true;
-      });
-
+      this.updateSponsor({ biz, oid, address, confirmedAddress });
       this.registered = true;
-      this.showMe = false;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
 
-    getVisits() {
-      const biz = this.business;
+    // deprecated
+    // addVisit() {
+    //   const sid = this.$route.params.id;
+    //   const uid = this.$socket.client.auth.userID;
 
-      if (!biz) {
-        console.log(`Missing biz`);
-        return;
-      }
+    //   if (!sid || !uid) {
+    //     console.log(
+    //       `Insufficient parameters: sid provided ${sid} uid provided ${uid}`
+    //     );
+    //     return;
+    //   }
 
-      const eventName = 'getVisits';
-      // get the Stream ID for the biz and the ID of the biz owner
-      console.log(biz);
-      this.emitFromClient(eventName, biz, (res) => {
-        this.snackBarMessage = res;
-        this.snackBarActionIndex = 1;
-        this.showMe = true;
-      });
+    //   const eventName = 'addVisit';
+    //   // get the Stream ID for the biz and the ID of the biz owner
+    //   console.log(sid, uid);
+    //   this.emitFromClient(eventName, { sid, uid }, (res) => {
+    //     this.snackBarMessage = res;
+    //     this.snackBarActionIndex = 1;
+    //     this.showMe = true;
+    //   });
 
-      this.registered = true;
-      this.showMe = false;
-      this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    },
+    //   this.registered = true;
+    //   this.showMe = false;
+    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    // },
+
+    // getVisits() {
+    //   const biz = this.business;
+
+    //   if (!biz) {
+    //     console.log(`Missing biz`);
+    //     return;
+    //   }
+
+    //   const eventName = 'getVisits';
+    //   // get the Stream ID for the biz and the ID of the biz owner
+    //   console.log(biz);
+    //   this.emitFromClient(eventName, biz, (res) => {
+    //     this.snackBarMessage = res;
+    //     this.snackBarActionIndex = 1;
+    //     this.showMe = true;
+    //   });
+
+    //   this.registered = true;
+    //   this.showMe = false;
+    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    // },
   },
   watch: {
     business() {
@@ -400,6 +429,7 @@ export default {
     if (this.$route.params.id) {
       this.onEarnReward();
     }
+    this.printing=this.confirmedAddress
     console.log('SPONSOR mounted');
     // set valid false here so the Register btn is disabled
     this.valid = false;

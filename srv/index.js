@@ -63,7 +63,8 @@ const {
   earnReward,
 } = require('./redis/redis');
 
-const { addSponsor, addVisit, getVisits } = require('./redis/streams');
+// experimental. not used as of 12.13.21
+// const { addSponsor, addVisit, getVisits } = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/redisJsonCache2');
@@ -190,34 +191,34 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('addSponsor', (data, ack) => {
-    console.log(data.sid, data.oid);
-    // add to the Sponsor Stream
-    addSponsor(data).then((sid) => {
-      if (ack) {
-        ack(sid);
-      }
-    });
-  });
+  // socket.on('addSponsor', (data, ack) => {
+  //   console.log(data.sid, data.oid);
+  //   // add to the Sponsor Stream
+  //   addSponsor(data).then((sid) => {
+  //     if (ack) {
+  //       ack(sid);
+  //     }
+  //   });
+  // });
 
-  socket.on('addVisit', ({ sid, uid }, ack) => {
-    console.log({ sid, uid });
-    // add to the Visits Stream
-    addVisit({ sid, uid }).then((id) => {
-      if (ack) {
-        ack(`added visit to STREAM with Visit ID: ${id}`);
-      }
-    });
-  });
+  // socket.on('addVisit', ({ sid, uid }, ack) => {
+  //   console.log({ sid, uid });
+  //   // add to the Visits Stream
+  //   addVisit({ sid, uid }).then((id) => {
+  //     if (ack) {
+  //       ack(`added visit to STREAM with Visit ID: ${id}`);
+  //     }
+  //   });
+  // });
 
-  socket.on('getVisits', (sid, ack) => {
-    console.log(sid);
-    getVisits(sid).then((visits) => {
-      if (ack) {
-        ack(visits);
-      }
-    });
-  });
+  // socket.on('getVisits', (sid, ack) => {
+  //   console.log(sid);
+  //   getVisits(sid).then((visits) => {
+  //     if (ack) {
+  //       ack(visits);
+  //     }
+  //   });
+  // });
   //#endregion STREAM handlers
 
   //#region Visit API

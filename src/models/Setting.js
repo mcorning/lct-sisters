@@ -45,11 +45,18 @@ export default class Setting extends Model {
       // and they need to use the store's computer to generate the store's qr
       // (so the oid will be different)
       biz: this.string(),
+      // Business address.
+      // Stored when first approved.
+      // Used as default value for subsequent QR print jobs
+      address: this.string(),
+      country: this.string(),
       // userID of the owner of biz.
       // updated by clicking the changeMapCenter() button on the biz infowindow.
       // oid gets added to QR URL.
       // system thanks oid when a customer scans the biz qr
       oid: this.string(),
+      // the place_id of an address meaning it does not have to be validated later
+      confirmedAddress: this.string(),
     };
   }
 

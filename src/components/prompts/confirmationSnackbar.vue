@@ -15,25 +15,25 @@
     >
       <v-row align="center"
         ><v-col cols="2"
-          ><v-icon large>{{ confirmationIcon }}</v-icon>
+          ><v-icon x-large>check</v-icon>
         </v-col>
         <v-col cols="10">
-          <div
+          <v-card-title
             v-if="confirmationTitle"
-            class="grey--text text--lighten-1 text-subtitle-1 mb-2"
+            class="grey--text text--lighten-1  mb-2"
           >
             {{ confirmationTitle }}
-          </div>
-          <div
+          </v-card-title>
+          <v-card-text
             class="grey--text text--lighten-1 text-body-2 mb-4"
             v-html="confirmationMessage"
-          ></div>
+          ></v-card-text>
           <v-card-actions>
             <v-btn absolute bottom left color="error" text @click="disapprove">
-              Close
+              {{ disapproveString }}
             </v-btn>
             <v-btn
-              v-if="canApprove"
+              v-if="approveString"
               absolute
               bottom
               right
@@ -41,7 +41,7 @@
               text
               @click="approve"
             >
-              ok
+              {{ approveString }}
             </v-btn>
           </v-card-actions>
         </v-col>
@@ -57,6 +57,15 @@ export default {
     confirmationTitle: String,
     confirmationMessage: String,
     confirmationIcon: String,
+
+    approveString: {
+      type: String,
+      default: '',
+    },
+    disapproveString: {
+      type: String,
+      default: 'Close',
+    },
     timeout: {
       type: Number,
       default: -1,
@@ -86,10 +95,6 @@ export default {
       default: false,
     },
     right: {
-      type: Boolean,
-      default: false,
-    },
-    canApprove: {
       type: Boolean,
       default: false,
     },
