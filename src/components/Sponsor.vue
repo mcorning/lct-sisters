@@ -1,10 +1,13 @@
 <template>
   <v-container fluid>
-    <v-card max-width="500">
+    <v-card>
       <div v-if="isSponsor && !preview">
         <v-form ref="form" v-model="valid" lazy-validation>
           <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
-          <v-card-subtitle> Version: {{ $version }} <br/>Confirmed Address: {{confirmedAddress}}</v-card-subtitle>
+          <v-card-subtitle>
+            Version: {{ $version }} <br />Confirmed Address:
+            {{ confirmedAddress }}</v-card-subtitle
+          >
           <v-card-text v-html="message"> </v-card-text>
           <v-divider />
           <v-card-text>
@@ -102,48 +105,33 @@
         @approved="onApproved"
         @disapprove="confSnackbar = false"
       />
-
-      <!-- <v-snackbar
-        v-model="showMe"
-        centered
-        timeout="-1"
-        height="100px"
-        color="blue-grey darken-3"
-      >
-        <v-card-text v-html="snackBarMessage" />
-        <v-btn
-          v-if="snackBtnText"
-          text
-          color="#00f500"
-          @click.stop="snackBarAction"
-        >
-          {{ snackBtnText }}
-        </v-btn>
-      </v-snackbar> -->
-
-      <v-snackbar
-        v-model="rewardPoints"
-        centered
-        top
-        timeout="-1"
-        color="blue-grey darken-3"
-        vertical
-        multi-line
-      >
-        <v-card-title>Well Done</v-card-title>
-        <v-card-text v-html="rewardPointsMessage" />
-        <v-card-actions>
-          <v-btn
-            v-if="snackBtnText"
-            text
-            color="#00f500"
-            @click="rewardPoints = false"
-          >
-            {{ snackBtnText }}
-          </v-btn>
-        </v-card-actions>
-      </v-snackbar>
     </v-card>
+    <v-sheet class="overflow-auto fill-height  ">
+      <v-container fluid class="fill-height text-center ">
+        <v-card-title>Universal Loyalty Tracking</v-card-title>
+        <v-card-subtitle>
+          Version: {{ $version }} <br />Confirmed Address:
+          {{ confirmedAddress }}</v-card-subtitle
+        >
+        <v-card v-model="rewardPoints" color="blue-grey darken-3">
+          <v-card-title class="white--text">Well Done, {{$socket.client.auth.userID}}</v-card-title>
+          <v-card-subtitle
+            class="white--text mx-auto"
+            v-html="rewardPointsMessage"
+          />
+          <v-card-actions>
+            <v-btn
+              v-if="snackBtnText"
+              text
+              color="#00f500"
+              @click="rewardPoints = false"
+            >
+              {{ snackBtnText }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-container></v-sheet
+    >
   </v-container>
 </template>
 
@@ -167,11 +155,7 @@ export default {
     disableRegistration() {
       return this.biz || this.address;
     },
-    // snackBarAction() {
-    //   const action =
-    //     this.snackBarActionIndex === 0 ? this.addSponsor : this.closeSnackbar;
-    //   return action;
-    // },
+
     decodedUri() {
       const b = encodeURIComponent(this.business);
       const d = `${window.location.origin}/sponsor/${b}`;
@@ -207,8 +191,6 @@ export default {
       const msg = this.newSponsor
         ? 'Enter your Business Name and Address. Validate your address with Google. Print your Loyalty QR.'
         : '';
-      // ? 'You can now connect with your customers while protecting their privacy.'
-      // : 'You join our community without sharing any personal identifying information. This gives us the ability to communicate opportunities and news about us.';
       return msg;
     },
 
@@ -254,7 +236,7 @@ export default {
       confirmationMessage: '',
       confirmationIcon: 'question_mark',
       countries: ['SG', 'UK', 'USA'],
-      
+
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
       country: this.sponsor?.country ?? '',
@@ -292,9 +274,11 @@ export default {
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
-        const msg = `<p>You are earning ${
+        const msg = `<p>You are earning <strong> ${
           vm.$route.params.id
-        } Reward points with these visits:</p>${dates.join('<br/>')}`;
+        }</strong> Reward points with these ${
+          dates.length
+        } visits:</p>${dates.join('<br/>')}`;
         console.log('rewards:', msg);
         vm.rewardPointsMessage = msg;
         vm.rewardPoints = true;
@@ -365,53 +349,7 @@ export default {
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
 
-    // deprecated
-    // addVisit() {
-    //   const sid = this.$route.params.id;
-    //   const uid = this.$socket.client.auth.userID;
-
-    //   if (!sid || !uid) {
-    //     console.log(
-    //       `Insufficient parameters: sid provided ${sid} uid provided ${uid}`
-    //     );
-    //     return;
-    //   }
-
-    //   const eventName = 'addVisit';
-    //   // get the Stream ID for the biz and the ID of the biz owner
-    //   console.log(sid, uid);
-    //   this.emitFromClient(eventName, { sid, uid }, (res) => {
-    //     this.snackBarMessage = res;
-    //     this.snackBarActionIndex = 1;
-    //     this.showMe = true;
-    //   });
-
-    //   this.registered = true;
-    //   this.showMe = false;
-    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    // },
-
-    // getVisits() {
-    //   const biz = this.business;
-
-    //   if (!biz) {
-    //     console.log(`Missing biz`);
-    //     return;
-    //   }
-
-    //   const eventName = 'getVisits';
-    //   // get the Stream ID for the biz and the ID of the biz owner
-    //   console.log(biz);
-    //   this.emitFromClient(eventName, biz, (res) => {
-    //     this.snackBarMessage = res;
-    //     this.snackBarActionIndex = 1;
-    //     this.showMe = true;
-    //   });
-
-    //   this.registered = true;
-    //   this.showMe = false;
-    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    // },
+    
   },
   watch: {
     business() {
@@ -428,11 +366,12 @@ export default {
   mounted() {
     if (this.$route.params.id) {
       this.onEarnReward();
+    } else {
+      this.printing = this.confirmedAddress;
+      // set valid false here so the Register btn is disabled
+      this.valid = false;
     }
-    this.printing=this.confirmedAddress
     console.log('SPONSOR mounted');
-    // set valid false here so the Register btn is disabled
-    this.valid = false;
   },
 };
 </script>
