@@ -108,13 +108,19 @@
     </v-card>
     <v-sheet class="overflow-auto fill-height  ">
       <v-container fluid class="fill-height text-center ">
-        <v-card-title>Universal Loyalty Tracking</v-card-title>
-        <v-card-subtitle>
-          Version: {{ $version }} <br />Confirmed Address:
-          {{ confirmedAddress }}</v-card-subtitle
+        <v-row no-gutters
+          ><v-col>
+            <v-card-title>Universal Loyalty Tracking</v-card-title>
+          </v-col></v-row
+        >
+        <v-row dense
+          ><v-col>
+              Version: {{ $version }} <br />Confirmed Address:
+              {{ confirmedAddress }}
+          </v-col></v-row
         >
         <v-card v-model="rewardPoints" color="blue-grey darken-3">
-          <v-card-title class="white--text">Well Done, {{$socket.client.auth.userID}}</v-card-title>
+          <v-card-title class="white--text">Well Done</v-card-title>
           <v-card-subtitle
             class="white--text mx-auto"
             v-html="rewardPointsMessage"
@@ -274,7 +280,9 @@ export default {
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
-        const msg = `<p>You are earning <strong> ${
+        const msg = `<p>${
+          this.$socket.client.auth.userID
+        }, you are earning <strong> ${
           vm.$route.params.id
         }</strong> Reward points with these ${
           dates.length
@@ -348,8 +356,6 @@ export default {
       this.registered = true;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
-
-    
   },
   watch: {
     business() {
