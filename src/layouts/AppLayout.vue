@@ -20,7 +20,7 @@
           :getVisitors="getVisitors"
           :earnReward="earnReward"
           :getNamespace="getNamespace"
-          :state=state
+          :state="state"
         >
           <slot />
         </component>
@@ -53,7 +53,8 @@ export default {
       return () => import(`@/layouts/${layout}.vue`);
     },
     firstTime() {
-      return !this.namespace;
+      // TODO Jason didn't want this message in Singapore, and i'm not sure we need it anyway.
+      return false; //!this.namespace;
     },
   },
 
