@@ -37,10 +37,10 @@
               <v-select
                 v-model="country"
                 :items="countries"
-                :rules="[(v) => !!v || 'Item is required']"
+                :rules="[(v) => !!v || 'Country is required']"
                 label="Country"
-                placeholder="To help validate your address, select a Country"
-                persistent-placeholder
+                hint="To help validate your address, select a Country"
+                persistent-hint
                 required
               ></v-select>
             </v-card-text>
@@ -289,7 +289,7 @@ export default {
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: this.sponsor?.country ?? '',
+      country: 'SG',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
@@ -312,6 +312,7 @@ export default {
       this.$refs.form.validate();
     },
     reset() {
+      this.valid=false
       this.$refs.form.reset();
     },
 
