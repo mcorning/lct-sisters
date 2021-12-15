@@ -322,18 +322,18 @@ export default {
     },
 
     onEarnReward() {
-      const limitVisits = (visitedOn) => {
-        const dates = visitedOn.map((v) => v.slice(0, 10));
-        const dateSet = new Set(dates);
-        return [...dateSet];
-      };
+      // const limitVisits = (visitedOn) => {
+      //   const dates = visitedOn.map((v) => v.slice(0, 10));
+      //   const dateSet = new Set(dates);
+      //   return [...dateSet];
+      // };
       const vm = this;
       this.earnReward({
         bid: this.$route.params.id,
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
-        const limitedVisits = limitVisits(visitedOn);
-        const dates = limitedVisits.map((v) => this.convertDateTime(v));
+        // const limitedVisits = limitVisits(visitedOn);
+        const dates = visitedOn.map((v) => this.convertDateTime(v));
 
         const tokenMsg = `<p>Out of ${
           visitedOn.length
@@ -345,7 +345,7 @@ export default {
         console.log(tokenMsg);
 
         this.dates = dates;
-        vm.rewardPointsMessage = `Here are your logged visits (one per day) to <strong> ${vm.$route.params.id}</strong>`;
+        vm.rewardPointsMessage = `Here are your visits to <strong> ${vm.$route.params.id}</strong>:`;
         vm.rewardPoints = true;
       });
     },
