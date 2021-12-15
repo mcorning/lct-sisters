@@ -111,7 +111,7 @@ function getRewardPoints(bid, uid, lastID) {
     m.forEach((val) => {
       val.forEach((val) => {
         if (val[1][1] === uid) {
-          let dt = DateTime.fromMillis(Number(val[0].substr(0, 13)));
+          let dt = DateTime.fromMillis(Number(val[0].slice(0,16)));
           dates.push(dt.toISO());
         }
       });

@@ -32,6 +32,7 @@
               :items="countries"
               :rules="[(v) => !!v || 'Item is required']"
               label="Country"
+              placeholder="To help validate your address, select a Country"
               required
             ></v-select>
           </v-card-text>
@@ -54,24 +55,9 @@
 
       <v-card-text v-if="printing">
         <div id="targetDiv" ref="targetDiv" class="text-center">
-          <!-- <v-row align="center">
+          <v-row align="top" justify="center">
             <v-spacer />
-            <v-col cols="12" class="text-center">
-              <p>
-                Scan this QR code to access our
-                <strong>{{ business }} Loyalty Rewards</strong>.
-              </p>
-              <p>
-                Each time you scan our code, you earn points for future
-                discounts.
-              </p>
-              <p>We use no personal identifying information.</p></v-col
-            >
-            <v-spacer />
-          </v-row> -->
-          <v-row align="top">
-            <v-spacer />
-            <v-col cols="12" class="text-center">
+            <v-col cols="auto" class="text-center">
               <VueQRCodeComponent
                 id="qr"
                 ref="qr"
@@ -110,45 +96,69 @@
       v-if="!isSponsor"
       class="overflow-auto fill-height"
       max-width="500"
+      outlined
+      color="grey lighten-1"
     >
       <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
       <v-container fluid class="fill-height text-center ">
         <v-row no-gutters
           ><v-col>
-            <v-card-title class="text-xsOnly-subtitle-1"
+            <v-card-title class="text-subtitle-1"
               >Universal TQR Loyalty Tracking</v-card-title
             >
           </v-col></v-row
         >
         <v-row dense justify="center"
           ><v-col>
-            Version: {{ $version }} <br />Confirmed Address:
-            {{ confirmedAddress }}
+            <span class="text-caption">
+              {{ $route.params.id }}'s Confirmed Address:
+              {{ confirmedAddress }}</span
+            >
           </v-col></v-row
         >
-        <v-card v-model="rewardPoints" color="blue-grey darken-3">
-          <v-card-title class="white--text"
-            >Customer {{ $socket.client.auth.userID }}</v-card-title
-          >
-          <v-card-subtitle
-            class="white--text mx-auto"
-            v-html="rewardPointsMessage"
-          />
-          <v-card-actions>
-            <v-btn
-              v-if="snackBtnText"
-              text
-              color="#00f500"
-              @click="rewardPoints = false"
-            >
-              {{ snackBtnText }}
-            </v-btn>
-            <v-spacer />
-            <v-btn text color="yellow" @click="earnTokens"
-              >Earn more tokens</v-btn
-            >
-          </v-card-actions>
-        </v-card>
+        <v-row justify="center"
+          ><v-col>
+            <v-card v-model="rewardPoints" color="blue-grey darken-3">
+              <v-card-title class="white--text text-subtitle-2"
+                >Customer {{ $socket.client.auth.userID }}</v-card-title
+              >
+              <v-card-text
+                class="white--text mx-auto "
+                v-html="rewardPointsMessage"
+              />
+              <v-simple-table height="300px" dense dark>
+                <template v-slot:default>
+                  <tbody>
+                    <tr v-for="(item, i) in dates" :key="i">
+                      <td>{{ item }}</td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+              <v-card-actions>
+                <v-btn
+                  v-if="snackBtnText"
+                  text
+                  color="#00f500"
+                  @click="rewardPoints = false"
+                >
+                  {{ snackBtnText }}
+                </v-btn>
+                <v-spacer />
+                <v-btn text color="yellow" @click="earnTokens"
+                  >Earn more tokens</v-btn
+                >
+              </v-card-actions>
+            </v-card>
+          </v-col></v-row
+        >
+        <v-row
+          ><v-col>
+            <span class="text-caption">
+              TQR Version: {{ $version }}</span
+            ></v-col
+          ></v-row
+        >
       </v-container>
       <!-- </v-card> -->
     </v-sheet>
@@ -225,6 +235,7 @@ export default {
 
   data() {
     return {
+      dates: [],
       preview: false,
       nameMaxLength: 50,
       addressMaxLength: 75,
@@ -263,11 +274,10 @@ export default {
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
-      snackBtnText: 'ok',
+      snackBtnText: '',
       snackBarMessage: 'Ready to get started?',
       snackBarActionIndex: 0,
       confirmation: null,
-      // showMe: false,
       printing: false,
       duration: 300,
       offset: 0,
@@ -288,30 +298,44 @@ export default {
 
     convertDateTime(val) {
       console.log('date val', val);
-      return new DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED);
+      return new DateTime.fromISO(val).toLocaleString(DateTime.DATE_HUGE);
     },
+
     onEarnReward() {
+      const limitVisits = (visitedOn) => {
+        const dates = visitedOn.map((v) => v.slice(0, 10));
+        const dateSet = new Set(dates);
+        return [...dateSet];
+      };
       const vm = this;
       this.earnReward({
         bid: this.$route.params.id,
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
-        const dates = visitedOn.map((v) => this.convertDateTime(v));
-        const msg = `<p>You are earning <strong> ${
+        const limitedVisits = limitVisits(visitedOn);
+        const dates = limitedVisits.map((v) => this.convertDateTime(v));
+
+        const tokenMsg = `<p>Out of ${
+          visitedOn.length
+        } visits, you are earning <strong> ${
           vm.$route.params.id
-        }</strong> TQR tokens with ${dates.length === 1 ? 'this' : 'these'} ${
+        }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
           dates.length
-        } visit${dates.length > 1 ? 's' : ''}:</p>${dates.join('<br/>')}`;
-        console.log('rewards:', msg);
-        vm.rewardPointsMessage = msg;
+        } date${dates.length > 1 ? 's' : ''}:</p>`;
+        console.log(tokenMsg);
+
+        this.dates = dates;
+        vm.rewardPointsMessage = `Here are your logged visits (one per day) to <strong> ${
+          vm.$route.params.id
+        }</strong>`;
         vm.rewardPoints = true;
       });
     },
     onApproved() {
       const biz = this.business;
       const address = this.address;
-      const country = address.slice(address.lastIndexOf(',') + 2);
       // TODO update country from address
+      const country = address.slice(address.lastIndexOf(',') + 2);
       const oid = this.$socket.client.auth.userID;
       const confirmedAddress = this.confirmedAddress;
       console.log(biz, address, country, oid, confirmedAddress);
@@ -333,7 +357,6 @@ export default {
     },
     stopPrint() {
       this.preview = false;
-      // this.printing = false;
     },
 
     getPlaceID() {
@@ -355,9 +378,7 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
-    // closeSnackbar() {
-    //   this.showMe = false;
-    // },
+
     addSponsor() {
       // get the Stream ID for the biz and the ID of the biz owner
       const biz = this.business;
@@ -389,7 +410,7 @@ export default {
       this.onEarnReward();
     } else {
       this.printing = this.confirmedAddress;
-      // set valid false here so the Register btn is disabled
+      // set valid false here so the Validate btn is disabled
       this.valid = false;
     }
     console.log('SPONSOR mounted');
