@@ -1,10 +1,11 @@
 <template>
   <Model @error="onError">
-    <div slot-scope="{ updateSponsor, sponsor, earnReward }">
+    <div slot-scope="{ updateSponsor, sponsor, earnReward,isConnected }">
       <Sponsor
         :updateSponsor="updateSponsor"
         :sponsor="sponsor"
         :earnReward="earnReward"
+        :isConnected=isConnected
       />
     </div>
   </Model>

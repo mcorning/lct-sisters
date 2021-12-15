@@ -1,103 +1,112 @@
 <template>
-  <v-container fluid>
-    <v-card>
-      <div v-if="isSponsor && !preview">
-        <v-form ref="form" v-model="valid" lazy-validation>
-          <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
-          <v-card-subtitle>
-            Version: {{ $version }} <br />Confirmed Address:
-            {{ confirmedAddress }}</v-card-subtitle
-          >
-          <v-card-text v-html="message"> </v-card-text>
-          <v-divider />
-          <v-card-text>
-            <v-text-field
-              v-model="business"
-              :counter="nameMaxLength"
-              :rules="nameRules"
-              label="Your business name"
-              required
-              clearable
-            ></v-text-field>
-            <v-text-field
-              v-model="address"
-              :rules="addressRules"
-              label="Your business address"
-              placeholder="Minimum: City [State]"
-              required
-              clearable
-            ></v-text-field>
-            <v-select
-              v-model="country"
-              :items="countries"
-              :rules="[(v) => !!v || 'Item is required']"
-              label="Country"
-              placeholder="To help validate your address, select a Country"
-              required
-            ></v-select>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn
-              :disabled="!valid"
-              color="success"
-              class="mr-4"
-              @click="getPlaceID"
-            >
-              Validate Address
-            </v-btn>
-
-            <v-btn color="blue" class="mr-4" @click="reset">
-              Clear
-            </v-btn>
-          </v-card-actions>
-        </v-form>
-      </div>
-
-      <v-card-text v-if="printing">
-        <div id="targetDiv" ref="targetDiv" class="text-center">
-          <v-row align="top" justify="center">
-            <v-spacer />
-            <v-col cols="auto" class="text-center">
-              <VueQRCodeComponent
-                id="qr"
-                ref="qr"
-                :text="decodedUri"
-                error-level="L"
-              >
-              </VueQRCodeComponent>
-            </v-col>
-            <v-spacer />
-          </v-row>
-        </div>
-      </v-card-text>
-
-      <v-card-actions v-if="printing">
-        <v-row>
-          <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
-          <v-spacer />
-          <v-btn text color="primary" plain @click="printMe">Print</v-btn>
-        </v-row>
-      </v-card-actions>
-
-      <confirmation-snackbar
-        v-if="confSnackbar"
-        :centered="true"
-        :top="false"
-        :confirmationTitle="confirmationTitle"
-        :confirmationMessage="confirmationMessage"
-        :confirmationIcon="confirmationIcon"
-        approveString="Approve"
-        disapproveString="Disapprove"
-        @approved="onApproved"
-        @disapprove="confSnackbar = false"
-      />
-    </v-card>
+  <v-container>
     <v-sheet
-      v-if="!isSponsor"
-      class="overflow-auto fill-height"
-      max-width="500"
+      v-if="isSponsor"
+      class="overflow-x:hidden fill-height"
       outlined
       color="grey lighten-1"
+      max-width="500"
+    >
+      <v-card>
+        <div v-if="isSponsor && !preview">
+          <v-form ref="form" v-model="valid" lazy-validation>
+            <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
+            <v-card-subtitle>
+              Your Confirmed Address:
+              {{ confirmedAddress }}</v-card-subtitle
+            >
+            <v-card-text v-html="message"> </v-card-text>
+            <v-divider />
+            <v-card-text>
+              <v-text-field
+                v-model="business"
+                :counter="nameMaxLength"
+                :rules="nameRules"
+                label="Your business name"
+                required
+                clearable
+              ></v-text-field>
+              <v-text-field
+                v-model="address"
+                :rules="addressRules"
+                label="Your business address"
+                placeholder="Minimum: City [State]"
+                required
+                clearable
+              ></v-text-field>
+              <v-select
+                v-model="country"
+                :items="countries"
+                :rules="[(v) => !!v || 'Item is required']"
+                label="Country"
+                placeholder="To help validate your address, select a Country"
+                persistent-placeholder
+                required
+              ></v-select>
+            </v-card-text>
+            <v-card-actions>
+              <v-btn
+                :disabled="!valid"
+                color="success"
+                class="mr-4"
+                @click="getPlaceID"
+              >
+                Validate Address
+              </v-btn>
+
+              <v-btn color="blue" class="mr-4" @click="reset">
+                Clear
+              </v-btn>
+            </v-card-actions>
+          </v-form>
+        </div>
+
+        <v-card-text v-if="printing">
+          <div id="targetDiv" ref="targetDiv" class="text-center">
+            <v-row align="top" justify="center">
+              <v-spacer />
+              <v-col cols="auto" class="text-center">
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="decodedUri"
+                  error-level="L"
+                >
+                </VueQRCodeComponent>
+              </v-col>
+              <v-spacer />
+            </v-row>
+          </div>
+        </v-card-text>
+
+        <v-card-actions v-if="printing">
+          <v-row>
+            <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
+            <v-spacer />
+            <v-btn text color="primary" plain @click="printMe">Print</v-btn>
+          </v-row>
+        </v-card-actions>
+
+        <confirmation-snackbar
+          v-if="confSnackbar"
+          :centered="true"
+          :top="false"
+          :confirmationTitle="confirmationTitle"
+          :confirmationMessage="confirmationMessage"
+          :confirmationIcon="confirmationIcon"
+          approveString="Approve"
+          disapproveString="Disapprove"
+          @approved="onApproved"
+          @disapprove="confSnackbar = false"
+        />
+      </v-card>
+    </v-sheet>
+    <v-sheet
+      v-else
+      class="overflow-x:hidden fill-height"
+      outlined
+      color="grey lighten-1"
+      max-width="500"
     >
       <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
       <v-container fluid class="fill-height text-center ">
@@ -152,16 +161,26 @@
             </v-card>
           </v-col></v-row
         >
-        <v-row
-          ><v-col>
-            <span class="text-caption">
-              TQR Version: {{ $version }}</span
-            ></v-col
-          ></v-row
-        >
       </v-container>
       <!-- </v-card> -->
     </v-sheet>
+    <v-card flat max-width="500">
+      <v-card-text>
+        <v-row align="center" justify="space-between"
+          ><v-col cols="10">
+            <span class="text-caption text-left">
+              TQR Version: {{ $version }}</span
+            ></v-col
+          >
+          <v-spacer />
+          <v-col cols="2" align-self="end">
+            <v-icon right
+              >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+            </v-icon></v-col
+          ></v-row
+        >
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 
@@ -325,9 +344,7 @@ export default {
         console.log(tokenMsg);
 
         this.dates = dates;
-        vm.rewardPointsMessage = `Here are your logged visits (one per day) to <strong> ${
-          vm.$route.params.id
-        }</strong>`;
+        vm.rewardPointsMessage = `Here are your logged visits (one per day) to <strong> ${vm.$route.params.id}</strong>`;
         vm.rewardPoints = true;
       });
     },

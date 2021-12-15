@@ -108,7 +108,7 @@ export default {
   color: #fad000;
   display: block;
   margin: 0 auto 20px;
-  overflow-x: auto;
+  overflow: hidden;
   padding: 20px;
   white-space: nowrap;
   width: 100%;

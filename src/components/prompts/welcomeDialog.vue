@@ -68,7 +68,7 @@ export default {
 
 <style lang="scss" scoped>
 .wrapMe {
-  overflow-x: auto;
+  overflow: hidden;
   white-space: h6-wrap;
   white-space: -moz-h6-wrap;
   white-space: -h6-wrap;
