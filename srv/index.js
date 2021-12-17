@@ -39,11 +39,9 @@ const {
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');
 
-const { Cache } = require('../CacheClass');
-
-// const alertsCache = new Cache('../alerts.json');
-const errorCache = new Cache('../errors.json');
-const feedbackCache = new Cache('../feedback.json');
+// const { Cache } = require('../CacheClass');
+// const errorCache = new Cache('../errors.json');
+// const feedbackCache = new Cache('../feedback.json');
 
 //#region Redis setup
 const {
@@ -225,7 +223,7 @@ io.on('connection', (socket) => {
   socket.on('getPlaceID', ({ address, country }, ack) => {
     function safeAck(results) {
       if (ack) {
-        const {formatted_address, place_id}= results
+        const { formatted_address, place_id } = results;
         console.log(
           highlight(
             'Acknowledging client',
@@ -392,17 +390,22 @@ io.on('connection', (socket) => {
 
   //#region Utility handlers
   socket.on('userFeedback', (data) => {
-    feedbackCache.set(Date.now(), data);
-    feedbackCache.save();
-    feedbackCache.print(null, 'User Feedback:');
+    console.log('userFeedback', data);
+    // TODO ADD: use Redis Streams for error logs
+    //   feedbackCache.set(Date.now(), data);
+    //   feedbackCache.save();
+    //   feedbackCache.print(
+    //     null,
+    //     'User Feedback:'
+    //   );
   });
 
   socket.on('client_error', (data) => {
-    errorCache.set(Date.now(), data);
-    errorCache.save();
+    // TODO ADD: use Redis Streams for error logs
+    // errorCache.print(null, 'Errors:');
     console.error('Incoming client_error!');
-    errorCache.print(null, 'Errors:');
-    console.error(err('See the errors.json later for details.'));
+    console.log(data);
+    console.error(err('See the errors STREAM for details.'));
   });
   //#endregion
 

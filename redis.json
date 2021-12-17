@@ -1,0 +1,13 @@
+{
+    "databases": [
+        {
+            "name": "local",
+            "url": "redis://localhost:6379"
+        },
+        {
+            "name": "production",
+            "url": "rediss://production-address:9091",
+            "password": "super_secret_password"
+        }
+    ]
+}

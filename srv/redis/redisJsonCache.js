@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === 'production') {
   };
 } else {
   console.log('Dereferencing redisConfig.js');
-  const cacheOptions = require('./redisCache.options.js');
+  const cacheOptions = require('./redisLstJson.options.js');
   options = {
     host: cacheOptions.redisCacheHost,
     port: cacheOptions.redisCachePort,

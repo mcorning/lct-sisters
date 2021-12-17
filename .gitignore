@@ -58,3 +58,6 @@ diag.json
 diag2.json
 srv/googlemaps.options.js
 qrCodes/Signed 201901 MichaelCorning_Secours NDA.pdf
+srv/redis/redisLstJson.options.js
+srv/redis/lab.js
+srv/redis/connectLab.js

@@ -2,16 +2,16 @@ let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
   options = {
-    host: process.env.REDIS_CACHE_HOST,
-    port: process.env.REDIS_CACHE_PORT,
-    password: process.env.REDIS_CACHE_PASSWORD,
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
   };
 } else {
-  const cacheOptions = require('./options');
+  const graphOptions = require('./redisGraph.options.js');
   options = {
-    host: cacheOptions.redisCacheHost,
-    port: cacheOptions.redisCachePort,
-    password: cacheOptions.redisCachePassword,
+    host: graphOptions.redisHost,
+    port: graphOptions.redisPort,
+    password: graphOptions.redisPassword,
   };
 }
 
