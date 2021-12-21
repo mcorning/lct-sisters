@@ -12,16 +12,16 @@ One of the trickiest things to remember when learning the Redis Streams API are 
 
 Command|Character | Useage|Notes
 -------|----------|-------|----
-`XADD` | * | Redis manages Stream event IDS
-`XREAD` | 0 |Start reading the Stream from its `FIRST` ID
-`XREAD` | $ |Start reading the Stream from its `LAST` ID
+`XADD` | * | Redis manages Stream event `ID`s
+`XREAD` | 0 |Start reading the Stream from its `FIRST ID`
+`XREAD` | $ |Start reading the Stream from its `LAST ID`
 `XREADGROUP`|>|The `last-delivered-id` of a `CONSUMER GROUP`
-`XRANGE`|-|Start reading the Stream `RANGE` from its `SMALLEST POSSIBLE` ID (viz., `0-1`)|1
-`XRANGE`|+|Start reading the Stream `RANGE` from its `LARGEST POSSIBLE` ID (viz., `18446744073709551615-18446744073709551615`)
-`XREVRANGE`|+|Start reading the Stream from its `LARGEST POSSIBLE` ID|2
-`XREVRANGE`|-|Start reading the Stream from its `SMALLEST POSSIBLE` ID
-`XPENDING`|-|Start reading the Stream from its `SMALLEST POSSIBLE` ID
-`XPENDING`|+|Start reading the Stream from its `LARGEST POSSIBLE` ID
+`XRANGE`|-|Start reading the Stream `RANGE` from its `SMALLEST POSSIBLE ID` (viz., `0-1`)|1
+`XRANGE`|+|Start reading the Stream `RANGE` from its `LARGEST POSSIBLE ID` (viz., `18446744073709551615-18446744073709551615`)
+`XREVRANGE`|+|Start reading the Stream from its `LARGEST POSSIBLE ID`|2
+`XREVRANGE`|-|Start reading the Stream from its `SMALLEST POSSIBLE ID`
+`XPENDING`|-|Start reading the Stream from its `SMALLEST POSSIBLE ID`
+`XPENDING`|+|Start reading the Stream from its `LARGEST POSSIBLE ID`
 
 > NOTES:
 >

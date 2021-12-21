@@ -19,7 +19,7 @@ const confirmPlaceID = (place_id) => {
   return client
     .reverseGeocode({ params: params })
     .then((r) => r.data.results[0])
-    .catch((e) => console.log(e));
+    .catch((e) => e);
 };
 
 const getPlaceID = ({ address, country }) => {
@@ -29,19 +29,17 @@ const getPlaceID = ({ address, country }) => {
     key: API_KEY,
   };
 
-  return client
-    .geocode({ params: params })
-    .then((r) => {
-      const {
-        geometry: { location: latlng },
-        place_id,
-      } = r.data.results[0];
+  return client.geocode({ params: params }).then((r) => {
+    const {
+      geometry: { location: latlng },
+      place_id,
+    } = r.data.results[0];
 
-      console.log('Place_id', place_id);
-      console.log('latlng:', latlng);
-      return place_id;
-    })
-    .catch((e) => console.log(e));
+    console.log('Place_id', place_id);
+    console.log('latlng:', latlng);
+    return place_id;
+  });
+// let the caller handle the exception
 };
 
 module.exports = {

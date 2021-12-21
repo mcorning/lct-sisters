@@ -46,7 +46,7 @@
             </v-card-text>
             <v-card-actions>
               <v-btn
-                :disabled="!valid"
+                :disabled="!isValid"
                 color="success"
                 class="mr-4"
                 @click="getPlaceID"
@@ -94,8 +94,8 @@
           :confirmationTitle="confirmationTitle"
           :confirmationMessage="confirmationMessage"
           :confirmationIcon="confirmationIcon"
-          approveString="Approve"
-          disapproveString="Disapprove"
+          :approveString="approveString"
+          :disapproveString="disapproveString"
           @approved="onApproved"
           @disapprove="confSnackbar = false"
         />
@@ -201,6 +201,10 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    isValid() {
+      return this.business && this.address && this.country;
+    },
+
     disableRegistration() {
       return this.biz || this.address;
     },
@@ -254,11 +258,13 @@ export default {
 
   data() {
     return {
+      approveString: 'Approve',
+      disapproveString: 'Disapprove',
       dates: [],
       preview: false,
       nameMaxLength: 50,
       addressMaxLength: 75,
-      valid: false,
+      valid: true,
       nameRules: [
         (v) => !!v || 'Name is required',
         (v) =>
@@ -284,7 +290,7 @@ export default {
       confSnackbar: false,
       confirmationTitle: 'Address Confirmation',
       confirmationMessage: '',
-      confirmationIcon: 'question_mark',
+      confirmationIcon: 'check',
       countries: ['SG', 'UK', 'USA'],
 
       business: this.sponsor?.biz ?? '',
@@ -312,8 +318,9 @@ export default {
       this.$refs.form.validate();
     },
     reset() {
-      this.valid=false
       this.$refs.form.reset();
+      // this.$refs.form.resetValidation();
+      // this.valid=false
     },
 
     convertDateTime(val) {
@@ -383,13 +390,22 @@ export default {
       this.emitFromClient(
         'getPlaceID',
         { address, country: this.country },
-        ({ formatted_address, place_id }) => {
-          vm.confirmedAddress = place_id;
-          vm.address = formatted_address;
-          vm.confirmationMessage = `<p>Google found this address:<br/> ${formatted_address}
+        ({ formatted_address, place_id, warning }) => {
+          if (warning) {
+            vm.confirmationMessage = warning;
+            vm.disapproveString = 'OK';
+            vm.approveString = null;
+            vm.confSnackbar = true;
+          } else {
+            vm.approveString = 'Approve';
+            vm.disapproveString = 'Disapprove';
+            vm.confirmedAddress = place_id;
+            vm.address = formatted_address;
+            vm.confirmationMessage = `<p>Google found this address:<br/> ${formatted_address}
           <p>If <strong>correct</strong>, your place_id is:<br/> ${place_id}</p> 
-          <p>If not, enter an address with more detail.</p>`;
-          vm.confSnackbar = true;
+          <p>If not, enter an address with more or different detail.</p>`;
+            vm.confSnackbar = true;
+          }
         }
       );
     },
@@ -429,7 +445,7 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
       // set valid false here so the Validate btn is disabled
-      this.valid = false;
+      //this.valid = false;
     }
     console.log('SPONSOR mounted');
   },

@@ -15,7 +15,7 @@
     >
       <v-row align="center"
         ><v-col cols="2"
-          ><v-icon x-large>check</v-icon>
+          ><v-icon x-large>{{icon}}</v-icon>
         </v-col>
         <v-col cols="10">
           <v-card-title
@@ -99,7 +99,11 @@ export default {
       default: false,
     },
   },
-
+computed: {
+  icon() {
+    return this.approveString?'check':'close' 
+  }
+},
   data() {
     return { x: true };
   },

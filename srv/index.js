@@ -31,6 +31,7 @@ const {
   info,
   success,
   special,
+  warn,
   url,
   printNow,
   getNow,
@@ -223,19 +224,37 @@ io.on('connection', (socket) => {
   socket.on('getPlaceID', ({ address, country }, ack) => {
     function safeAck(results) {
       if (ack) {
-        const { formatted_address, place_id } = results;
-        console.log(
-          highlight(
-            'Acknowledging client',
-            printJson({ formatted_address, place_id })
-          )
-        );
-        ack({ formatted_address, place_id });
+        if (results.isAxiosError) {
+          console.log(warn('Error', results.message));
+          ack({ warning: results.message });
+        } else {
+          const { formatted_address, place_id } = results;
+          console.log(
+            highlight(
+              'Acknowledging client',
+              printJson({ formatted_address, place_id })
+            )
+          );
+          ack({ formatted_address, place_id });
+        }
       }
     }
+    function safeWarn() {
+      if (ack) {
+        console.log(warn('Warning client of no results'));
+        ack({ warning: 'Cannot find an address based on your input.' });
+      }
+    }
+
     getPlaceID({ address, country })
-      .then((result) => confirmPlaceID(result))
-      .then((result) => safeAck(result));
+      .then((result) =>
+        // reverse geocode to compare given address with google's address
+        // but only if getPlaceID() returns a value to compare
+        confirmPlaceID(result)
+          .then((finalResult) => safeAck(finalResult))
+          .catch((e) => safeWarn(e))
+      )
+      .catch((e) => safeWarn(e));
   });
 
   socket.on('exposureWarning', ({ graphName, riskScore }, ack) => {
