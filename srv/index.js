@@ -40,10 +40,6 @@ const {
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');
 
-// const { Cache } = require('../CacheClass');
-// const errorCache = new Cache('../errors.json');
-// const feedbackCache = new Cache('../feedback.json');
-
 //#region Redis setup
 const {
   currentGraphName, // mapped to client nsp (aka namespace or community name)
@@ -60,6 +56,7 @@ const {
   confirmDates,
   enterLottery,
   earnReward,
+  addPromotion,
 } = require('./redis/redis');
 
 // experimental. not used as of 12.13.21
@@ -169,6 +166,13 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
+  socket.on('promote', ({ promoText, bid }, ack) => {
+    addPromotion({ promoText, bid }).then((id) => {
+      if (ack) {
+        ack(id);
+      }
+    });
+  });
 
   socket.on('enterLottery', (uid, ack) => {
     // add to the Lottery Stream
@@ -220,7 +224,6 @@ io.on('connection', (socket) => {
   // });
   //#endregion STREAM handlers
 
-  //#region Visit API
   socket.on('getPlaceID', ({ address, country }, ack) => {
     function safeAck(results) {
       if (ack) {
@@ -232,17 +235,25 @@ io.on('connection', (socket) => {
           console.log(
             highlight(
               'Acknowledging client',
-              printJson({ formatted_address, place_id })
+              printJson({
+                formatted_address,
+                place_id,
+              })
             )
           );
-          ack({ formatted_address, place_id });
+          ack({
+            formatted_address,
+            place_id,
+          });
         }
       }
     }
     function safeWarn() {
       if (ack) {
         console.log(warn('Warning client of no results'));
-        ack({ warning: 'Cannot find an address based on your input.' });
+        ack({
+          warning: 'Cannot find an address based on your input.',
+        });
       }
     }
 
@@ -257,6 +268,7 @@ io.on('connection', (socket) => {
       .catch((e) => safeWarn(e));
   });
 
+  //#region Visit API
   socket.on('exposureWarning', ({ graphName, riskScore }, ack) => {
     // separated to enable unit testing
     callOnExposureWarning(

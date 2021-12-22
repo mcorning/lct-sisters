@@ -19,11 +19,11 @@ if (process.env.NODE_ENV === 'production') {
   };
 } else {
   console.log('Dereferencing redisConfig.js');
-  const cacheOptions = require('./redisLstJson.options.js');
+  const cacheOptions = require('./redisJson.options.js');
   options = {
-    host: cacheOptions.redisCacheHost,
-    port: cacheOptions.redisCachePort,
-    password: cacheOptions.redisCachePassword,
+    host: cacheOptions.redisHost,
+    port: cacheOptions.redisPort,
+    password: cacheOptions.redisPassword,
   };
 }
 const Rejson = require('iorejson');

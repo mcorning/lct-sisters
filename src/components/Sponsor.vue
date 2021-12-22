@@ -7,100 +7,187 @@
       color="grey lighten-1"
       max-width="500"
     >
-      <v-card>
-        <div v-if="isSponsor && !preview">
-          <v-form ref="form" v-model="valid" lazy-validation>
-            <v-card-title class="text-subtitle-2">{{ welcome }}</v-card-title>
-            <v-card-subtitle>
-              Your Confirmed Address:
-              {{ confirmedAddress }}</v-card-subtitle
-            >
-            <v-card-text v-html="message"> </v-card-text>
-            <v-divider />
-            <v-card-text>
-              <v-text-field
-                v-model="business"
-                :counter="nameMaxLength"
-                :rules="nameRules"
-                label="Your business name"
-                required
-                clearable
-              ></v-text-field>
-              <v-text-field
-                v-model="address"
-                :rules="addressRules"
-                label="Your business address"
-                placeholder="Minimum: City [State]"
-                required
-                clearable
-              ></v-text-field>
-              <v-select
-                v-model="country"
-                :items="countries"
-                :rules="[(v) => !!v || 'Country is required']"
-                label="Country"
-                hint="To help validate your address, select a Country"
-                persistent-hint
-                required
-              ></v-select>
-            </v-card-text>
-            <v-card-actions>
-              <v-btn
-                :disabled="!isValid"
-                color="success"
-                class="mr-4"
-                @click="getPlaceID"
+      <v-container fluid class="fill-height text-center ">
+        <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
+
+        <v-card-subtitle v-html="message"> </v-card-subtitle>
+        <v-card-text class="text-caption">
+          Your Google Confirmed Address:
+          {{ confirmedAddress }}</v-card-text
+        >
+        <v-row no-gutters justify="center">
+          <v-sheet v-if="isSponsor && !preview" color="blue-grey darken-1">
+            <v-form ref="form" v-model="valid" lazy-validation>
+              <v-card-text>
+                <v-text-field
+                  v-model="business"
+                  :counter="nameMaxLength"
+                  :rules="nameRules"
+                  label="Your business name"
+                  required
+                  clearable
+                  dark
+                  color="grey lighten-3"
+                ></v-text-field>
+                <v-text-field
+                  v-model="address"
+                  :counter="addressMaxLength"
+                  :rules="addressRules"
+                  label="Your business address"
+                  placeholder="Minimum: City [State]"
+                  required
+                  clearable
+                  dark
+                  color="grey lighten-3"
+                ></v-text-field>
+                <v-select
+                  v-model="country"
+                  :items="countries"
+                  :rules="[(v) => !!v || 'Country is required']"
+                  label="Country"
+                  hint="To help validate your address, select a Country"
+                  persistent-hint
+                  required
+                  dark
+                  color="grey lighten-3"
+                ></v-select>
+              </v-card-text>
+              <v-card-text>
+                <!-- Promotion Text -->
+                <v-textarea
+                  v-model="promoText"
+                  lines="4"
+                  label="Promotion Message"
+                  color="grey lighten-3"
+                  dark
+                ></v-textarea>
+                <v-checkbox v-model="agreement" dark required>
+                  <template v-slot:label>
+                    I agree to the&nbsp;
+                    <a href="#" @click.stop.prevent="dialog = true"
+                      >Terms of Service</a
+                    >
+                    &nbsp;and&nbsp;
+                    <a href="#" @click.stop.prevent="dialog = true"
+                      >Privacy Policy</a
+                    >*
+                  </template>
+                </v-checkbox></v-card-text
               >
-                Validate Address
-              </v-btn>
+              <!-- buttons -->
+              <v-sheet color="black">
+                <v-card-actions>
+                  <v-btn
+                    text
+                    :disabled="!isValid"
+                    color="yellow"
+                    class="mr-4"
+                    @click="getPlaceID"
+                  >
+                    Confirm
+                  </v-btn>
 
-              <v-btn color="blue" class="mr-4" @click="reset">
-                Clear
-              </v-btn>
-            </v-card-actions>
-          </v-form>
-        </div>
+                  <v-btn
+                    text
+                    color="blue  lighten-3"
+                    class="mr-4"
+                    @click="reset"
+                  >
+                    Clear
+                  </v-btn>
+                  <v-spacer />
+                  <v-btn
+                    text
+                    color="brown lighten-3"
+                    class="white--text mr-4"
+                    @click="promote"
+                  >
+                    Promote
+                  </v-btn>
+                </v-card-actions>
+                <v-dialog v-model="dialog" absolute max-width="400" persistent>
+                  <v-card>
+                    <v-card-title class="text-h5 grey lighten-3">
+                      Legal
+                    </v-card-title>
+                    <v-card-text>
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                      sed do eiusmod tempor incididunt ut labore et dolore magna
+                      aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                      ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                      Duis aute irure dolor in reprehenderit in voluptate velit
+                      esse cillum dolore eu fugiat nulla pariatur. Excepteur
+                      sint occaecat cupidatat non proident, sunt in culpa qui
+                      officia deserunt mollit anim id est laborum.
+                    </v-card-text>
+                    <v-divider></v-divider>
+                    <v-card-actions>
+                      <v-btn
+                        text
+                        @click="(agreement = false), (dialog = false)"
+                      >
+                        No
+                      </v-btn>
+                      <v-spacer></v-spacer>
+                      <v-btn
+                        class="white--text"
+                        color="deep-purple accent-4"
+                        @click="(agreement = true), (dialog = false)"
+                      >
+                        Yes
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-sheet>
+            </v-form>
+          </v-sheet>
 
-        <v-card-text v-if="printing">
-          <div id="targetDiv" ref="targetDiv" class="text-center">
-            <v-row align="top" justify="center">
+          <v-card-text v-if="printing">
+            <div id="targetDiv" ref="targetDiv" class="text-center">
+              <v-row align="top" justify="center">
+                <v-spacer />
+                <v-col cols="auto" class="text-center">
+                  <VueQRCodeComponent
+                    id="qr"
+                    ref="qr"
+                    :text="decodedUri"
+                    error-level="L"
+                  >
+                  </VueQRCodeComponent>
+                </v-col>
+                <v-spacer />
+              </v-row>
+            </div>
+          </v-card-text>
+
+          <v-card-actions v-if="printing">
+            <v-row>
+              <v-btn text color="primary" plain @click="stopPrint"
+                >Cancel</v-btn
+              >
               <v-spacer />
-              <v-col cols="auto" class="text-center">
-                <VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="decodedUri"
-                  error-level="L"
-                >
-                </VueQRCodeComponent>
-              </v-col>
-              <v-spacer />
+              <v-btn text color="primary" plain @click="printMe">Print</v-btn>
             </v-row>
-          </div>
-        </v-card-text>
+          </v-card-actions>
 
-        <v-card-actions v-if="printing">
-          <v-row>
-            <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
-            <v-spacer />
-            <v-btn text color="primary" plain @click="printMe">Print</v-btn>
-          </v-row>
-        </v-card-actions>
-
-        <confirmation-snackbar
-          v-if="confSnackbar"
-          :centered="true"
-          :top="false"
-          :confirmationTitle="confirmationTitle"
-          :confirmationMessage="confirmationMessage"
-          :confirmationIcon="confirmationIcon"
-          :approveString="approveString"
-          :disapproveString="disapproveString"
-          @approved="onApproved"
-          @disapprove="confSnackbar = false"
-        />
-      </v-card>
+          <confirmation-snackbar
+            v-if="confSnackbar"
+            :centered="true"
+            :top="false"
+            :confirmationTitle="confirmationTitle"
+            :confirmationMessage="confirmationMessage"
+            :confirmationIcon="confirmationIcon"
+            :approveString="approveString"
+            :disapproveString="disapproveString"
+            @approved="onApproved"
+            @disapprove="confSnackbar = false"
+          />
+        </v-row>
+      </v-container>
     </v-sheet>
+
+    <!-- customer sheet -->
     <v-sheet
       v-else
       class="overflow-x:hidden fill-height"
@@ -164,6 +251,8 @@
       </v-container>
       <!-- </v-card> -->
     </v-sheet>
+
+    <!-- Footer card -->
     <v-card flat max-width="500">
       <v-card-text>
         <v-row align="center" justify="space-between"
@@ -241,9 +330,10 @@ export default {
       return msg;
     },
     message() {
-      const msg = this.newSponsor
-        ? 'Enter your Business Name and Address. Validate your address with Google. Print your Loyalty QR.'
-        : '';
+      const msg = 'Fill in the form. Confirm your address. Print your QR.';
+      // const msg = this.newSponsor
+      // ?''
+      //   : '';
       return msg;
     },
 
@@ -258,6 +348,9 @@ export default {
 
   data() {
     return {
+      promoText: '',
+      agreement: false,
+      dialog: false,
       approveString: 'Approve',
       disapproveString: 'Disapprove',
       dates: [],
@@ -311,6 +404,14 @@ export default {
     };
   },
   methods: {
+    promote() {
+      const promoText = this.promoText;
+      const bid = this.$socket.client.auth.userID;
+
+      this.emitFromClient('promote', { promoText, bid }, (ack) =>
+        alert(`Promotion ID: ${ack}`)
+      );
+    },
     earnTokens() {
       window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
     },
@@ -402,7 +503,7 @@ export default {
             vm.confirmedAddress = place_id;
             vm.address = formatted_address;
             vm.confirmationMessage = `<p>Google found this address:<br/> ${formatted_address}
-          <p>If <strong>correct</strong>, your place_id is:<br/> ${place_id}</p> 
+          <p>If <strong>correct</strong>, your place_id is:<br/> ${place_id}</p>
           <p>If not, enter an address with more or different detail.</p>`;
             vm.confSnackbar = true;
           }
@@ -462,5 +563,21 @@ export default {
     visibility: visible;
     border: none;
   }
+}
+/* unvisited link */
+a:link {
+  color: #ccc;
+}
+/* visited link */
+a:visited {
+  color: #095484;
+}
+/* mouse over link */
+a:hover {
+  color: #8ebf42;
+}
+/* selected link */
+a:active {
+  color: #800000;
 }
 </style>
