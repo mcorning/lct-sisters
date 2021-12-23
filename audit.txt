@@ -1,0 +1,342 @@
+[90m                                                                                [39m
+[90m [39m                      === npm audit security report ===                       [90m [39m
+[90m                                                                                [39m
+[90m                                                                                [39m
+[90m [39m                                Manual Review                                 [90m [39m
+[90m [39m            Some vulnerabilities require your attention to resolve            [90m [39m
+[90m [39m                                                                              [90m [39m
+[90m [39m         Visit https://go.npm.me/audit-guide for additional guidance          [90m [39m
+[90m                                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-plugin-babel [dev]                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-plugin-babel > @vue/cli-shared-utils > ora >        [90m [39m
+[90m [39m               [90m [39m strip-ansi > ansi-regex                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > @vue/cli-plugin-router >                  [90m [39m
+[90m [39m               [90m [39m @vue/cli-shared-utils > ora > strip-ansi > ansi-regex        [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > sass-graph > yargs >            [90m [39m
+[90m [39m               [90m [39m string-width > strip-ansi > ansi-regex                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > sass-graph > yargs > cliui >    [90m [39m
+[90m [39m               [90m [39m string-width > strip-ansi > ansi-regex                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > sass-graph > yargs > cliui >    [90m [39m
+[90m [39m               [90m [39m wrap-ansi > string-width > strip-ansi > ansi-regex           [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > yargs > string-width [90m [39m
+[90m [39m               [90m [39m > strip-ansi > ansi-regex                                    [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > yargs > cliui >      [90m [39m
+[90m [39m               [90m [39m string-width > strip-ansi > ansi-regex                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > yargs > cliui >      [90m [39m
+[90m [39m               [90m [39m wrap-ansi > string-width > strip-ansi > ansi-regex           [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > yargs > cliui >      [90m [39m
+[90m [39m               [90m [39m strip-ansi > ansi-regex                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m  Inefficient Regular Expression Complexity in                [90m [39m
+[90m [39m               [90m [39m chalk/ansi-regex                                             [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-regex                                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > yargs > cliui >      [90m [39m
+[90m [39m               [90m [39m wrap-ansi > strip-ansi > ansi-regex                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-93q8-gq69-wqmw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m Inefficient Regular Expression Complexity in nth-check       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m nth-check                                                    [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=2.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > cssnano > cssnano-preset-default >        [90m [39m
+[90m [39m               [90m [39m postcss-svgo > svgo > css-select > nth-check                 [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-rp65-9cf3-cjxr            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Moderate      [90m [39m Inefficient Regular Expression Complexity in nth-check       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m nth-check                                                    [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=2.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > @intervolga/optimize-cssnano-plugin >     [90m [39m
+[90m [39m               [90m [39m cssnano > cssnano-preset-default > postcss-svgo > svgo >     [90m [39m
+[90m [39m               [90m [39m css-select > nth-check                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-rp65-9cf3-cjxr            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Arbitrary File Creation/Overwrite on Windows via             [90m [39m
+[90m [39m               [90m [39m insufficient relative path sanitization                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m tar                                                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=4.4.18                                                     [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > node-gyp > tar                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-5955-9wpr-37jh            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Arbitrary File Creation/Overwrite via insufficient symlink   [90m [39m
+[90m [39m               [90m [39m protection due to directory cache poisoning using symbolic   [90m [39m
+[90m [39m               [90m [39m links                                                        [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m tar                                                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=4.4.18                                                     [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > node-gyp > tar                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-qq89-hq3f-393p            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Arbitrary File Creation/Overwrite via insufficient symlink   [90m [39m
+[90m [39m               [90m [39m protection due to directory cache poisoning using symbolic   [90m [39m
+[90m [39m               [90m [39m links                                                        [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m tar                                                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=4.4.16                                                     [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > node-gyp > tar                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-9r2w-394v-53qc            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Arbitrary File Creation/Overwrite due to insufficient        [90m [39m
+[90m [39m               [90m [39m absolute path sanitization                                   [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m tar                                                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=3.2.2                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > node-gyp > tar                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-3jfq-g458-7qm9            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Arbitrary File Creation/Overwrite via insufficient symlink   [90m [39m
+[90m [39m               [90m [39m protection due to directory cache poisoning                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m tar                                                          [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=3.2.3                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > node-gyp > tar                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-r628-mhmh-qjhw            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Uncontrolled Resource Consumption in ansi-html               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m ansi-html                                                    [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m No patch available                                           [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > ansi-html            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-whgm-jr23-g3j9            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Regular expression denial of service                         [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m glob-parent                                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.1.2                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-plugin-babel [dev]                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-plugin-babel > webpack > watchpack >                [90m [39m
+[90m [39m               [90m [39m watchpack-chokidar2 > chokidar > glob-parent                 [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-ww39-953v-wcq6            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Regular expression denial of service                         [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m glob-parent                                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.1.2                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-plugin-eslint [dev]                                 [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-plugin-eslint > globby > fast-glob > glob-parent    [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-ww39-953v-wcq6            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Regular expression denial of service                         [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m glob-parent                                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.1.2                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > copy-webpack-plugin > glob-parent         [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-ww39-953v-wcq6            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Regular expression denial of service                         [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m glob-parent                                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=5.1.2                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m @vue/cli-service [dev]                                       [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m @vue/cli-service > webpack-dev-server > chokidar >           [90m [39m
+[90m [39m               [90m [39m glob-parent                                                  [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-ww39-953v-wcq6            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m High          [90m [39m Regular Expression Denial of Service in trim-newlines        [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Package       [90m [39m trim-newlines                                                [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Patched in    [90m [39m >=3.0.1                                                      [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Dependency of [90m [39m vue2-clipboard                                               [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m Path          [90m [39m vue2-clipboard > node-sass > meow > trim-newlines            [90m [39m
+[90m                [39m[90m                                                                [39m
+[90m [39m More info     [90m [39m https://github.com/advisories/GHSA-7p7h-4mm5-852v            [90m [39m
+[90m                [39m[90m                                                                [39m
+found 23 vulnerabilities (12 moderate, 11 high) in 1658 scanned packages
+  23 vulnerabilities require manual review. See the full report for details.

@@ -13,6 +13,8 @@ One of the trickiest things to remember when learning the Redis Streams API are 
 Command|Character | Useage|Notes
 -------|----------|-------|----
 `XADD` | * | Redis manages Stream event `ID`s
+`XADD` | ~ | After adding, truncate Stream to approximate size (viz., `MAXLEN ~ 100`)
+`XTRIM` | ~ | Truncate Stream to approximate size (viz., `MAXLEN ~ 100`)
 `XREAD` | 0 |Start reading the Stream from its `FIRST ID`
 `XREAD` | $ |Start reading the Stream from its `LAST ID`
 `XREADGROUP`|>|The `last-delivered-id` of a `CONSUMER GROUP`

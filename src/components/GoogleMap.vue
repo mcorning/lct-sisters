@@ -517,7 +517,7 @@ export default {
       this.setDefaultMapCenter(center);
     },
     emailDiagnostics() {
-      this.$clipboard(this.diagnosticOutput);
+      // this.$clipboard(this.diagnosticOutput);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
     goToPolicies() {
@@ -560,11 +560,11 @@ export default {
       `;
     },
     copyStatus() {
-      this.setStatus(`Copied to clipboard ${this.$clipboard(this.status)}`); // this.$clipboard copy any String/Array/Object you want
+      // this.setStatus(`Copied to clipboard ${this.$clipboard(this.status)}`); // this.$clipboard copy any String/Array/Object you want
     },
     cutStatus() {
-      this.$clipboard(this.status);
-      this.status = 'Status cut to clipboard';
+      // this.$clipboard(this.status);
+      // this.status = 'Status cut to clipboard';
     },
 
     goThere() {

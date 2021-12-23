@@ -95,7 +95,6 @@ module.exports = {
   confirmDates,
   enterLottery,
   earnReward,
-  addPromotion,
 };
 //#endregion Setup
 
@@ -121,11 +120,6 @@ function getRewardPoints(bid, uid, lastID) {
   });
 }
 
-async function addPromotion({ promoText, bid }) {
-  console.log(highlight('bid, promoText', bid, promoText));
-  const id = await redis.xadd(bid, '*', 'promoText', promoText);
-  return id;
-}
 
 async function earnReward({ bid, uid, lastID = 0 }) {
   console.log(highlight('bid, uid, lastID', bid, uid, lastID));

@@ -59,7 +59,7 @@ export default {
       console.log(warn(`The server just disconnected the socket.\n`));
     },
 
-    // sent from Server after Server has all the data it needs to register the Visitor
+    // sent from Server after Server has all the data it needs to register the customer or restauranteur
     newSession({ sessionID, userID, username, graphName }) {
       console.assert(
         sessionID && userID && username,

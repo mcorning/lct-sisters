@@ -302,9 +302,13 @@ export default {
       this.updateState({ settings: { usernumber: userNumber } });
     },
 
-    updateSponsor(data) {
-      console.log('Model passing', data, 'to Setting');
-      this.updateSetting({ id: 1, ...data });
+    updateSponsor({biz, address, uid, confirmedAddress, promoText}) {
+      this.emitFromClient('addSponsor',{biz, address, uid, confirmedAddress, promoText},({sid,pid})=>{
+        console.log('addSponsor returns:',sid)
+        console.log('addPromotion returns:',pid)
+        console.log('Model passing', biz, address, uid, confirmedAddress, promoText, sid, pid,'to Setting');
+        this.updateSetting({ id: 1, biz, address, uid, confirmedAddress, promoText,sid,pid });
+      })
     },
     updateSession(data) {
       console.log('Model passing', data, 'to Setting');

@@ -448,14 +448,14 @@ export default {
     },
 
     copyStatus() {
-      this.log(
-        `Copied Status to clipboard, ${this.$clipboard(this.diagnosticOutput)}` // this.$clipboard copy any String/Array/Object you want
-      );
+      // this.log(
+      //   `Copied Status to clipboard, ${this.$clipboard(this.diagnosticOutput)}` // this.$clipboard copy any String/Array/Object you want
+      // );
     },
 
     cutStatus() {
-      this.$clipboard(this.diagnostics);
-      this.diagnostics = 'Status cut to clipboard';
+      // this.$clipboard(this.diagnostics);
+      // this.diagnostics = 'Status cut to clipboard';
     },
 
     openBanner() {

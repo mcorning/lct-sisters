@@ -7,7 +7,7 @@
       color="grey lighten-1"
       max-width="500"
     >
-      <v-container fluid class="fill-height text-center ">
+      <v-container fluid class="fill-height text-center">
         <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
 
         <v-card-subtitle v-html="message"> </v-card-subtitle>
@@ -196,7 +196,7 @@
       max-width="500"
     >
       <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
-      <v-container fluid class="fill-height text-center ">
+      <v-container fluid class="fill-height text-center">
         <v-row no-gutters
           ><v-col>
             <v-card-title class="text-subtitle-1"
@@ -219,7 +219,7 @@
                 >Customer {{ $socket.client.auth.userID }}</v-card-title
               >
               <v-card-text
-                class="white--text mx-auto "
+                class="white--text mx-auto"
                 v-html="rewardPointsMessage"
               />
               <v-simple-table height="300px" dense dark>
@@ -248,6 +248,21 @@
             </v-card>
           </v-col></v-row
         >
+        <v-btn text @click="renderPromos">Check for Enticements</v-btn>
+        <v-carousel
+          cycle
+          height="300"
+          hide-delimiter-background
+          show-arrows-on-hover
+        >
+          <v-carousel-item v-for="(promo, i) in promos" :key="i">
+            <v-sheet :color="colors[i]" height="100%">
+              <v-row class="fill-height" align="center" justify="center">
+                <v-card-text class="text-h4" v-html="promo"></v-card-text>
+              </v-row>
+            </v-sheet>
+          </v-carousel-item>
+        </v-carousel>
       </v-container>
       <!-- </v-card> -->
     </v-sheet>
@@ -304,7 +319,7 @@ export default {
       return d;
     },
     sponsorName() {
-      return this.sponsor.biz;
+      return this.sponsor.biz || this.business;
     },
     sponsorAddress() {
       return this.sponsor.address;
@@ -348,6 +363,15 @@ export default {
 
   data() {
     return {
+      colors: [
+        'indigo',
+        'warning',
+        'pink darken-2',
+        'red lighten-1',
+        'deep-purple accent-4',
+      ],
+      promos: [],
+      promotions: '',
       promoText: '',
       agreement: false,
       dialog: false,
@@ -406,9 +430,9 @@ export default {
   methods: {
     promote() {
       const promoText = this.promoText;
-      const bid = this.$socket.client.auth.userID;
-
-      this.emitFromClient('promote', { promoText, bid }, (ack) =>
+      const sid = this.sponsorID;
+      const biz = this.sponsorName;
+      this.emitFromClient('promote', { biz, promoText, sid }, (ack) =>
         alert(`Promotion ID: ${ack}`)
       );
     },
@@ -420,8 +444,6 @@ export default {
     },
     reset() {
       this.$refs.form.reset();
-      // this.$refs.form.resetValidation();
-      // this.valid=false
     },
 
     convertDateTime(val) {
@@ -430,19 +452,17 @@ export default {
     },
 
     onEarnReward() {
-      // const limitVisits = (visitedOn) => {
-      //   const dates = visitedOn.map((v) => v.slice(0, 10));
-      //   const dateSet = new Set(dates);
-      //   return [...dateSet];
-      // };
       const vm = this;
+      // see Model.vue
+      // it sends a message to node/redis returning the visitedOn data
+      // it returns any promo text the restaurant has published
       this.earnReward({
         bid: this.$route.params.id,
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
-        // const limitedVisits = limitVisits(visitedOn);
         const dates = visitedOn.map((v) => this.convertDateTime(v));
 
+        // Jason wanted to wait on mentioning tokens.
         const tokenMsg = `<p>Out of ${
           visitedOn.length
         } visits, you are earning <strong> ${
@@ -453,7 +473,7 @@ export default {
         console.log(tokenMsg);
 
         this.dates = dates;
-        vm.rewardPointsMessage = `Here are your visits to <strong> ${vm.$route.params.id}</strong>:`;
+        vm.rewardPointsMessage = `Here ${dates.length === 1 ? 'is' : 'are'} your ${dates.length} visit${dates.length > 1 ? 's' : ''} to <strong> ${vm.$route.params.id}</strong>:`;
         vm.rewardPoints = true;
       });
     },
@@ -462,16 +482,11 @@ export default {
       const address = this.address;
       // TODO update country from address
       const country = address.slice(address.lastIndexOf(',') + 2);
-      const oid = this.$socket.client.auth.userID;
+      const uid = this.$socket.client.auth.userID;
       const confirmedAddress = this.confirmedAddress;
-      console.log(biz, address, country, oid, confirmedAddress);
-      this.updateSponsor({
-        biz,
-        oid,
-        address,
-        country,
-        confirmedAddress,
-      });
+      const promoText = this.promoText;
+      console.log(biz, address, country, uid, confirmedAddress, promoText);
+      this.updateSponsor({ biz, address, uid, confirmedAddress, promoText });
 
       this.confSnackbar = false;
       this.printing = true;
@@ -519,13 +534,25 @@ export default {
       const biz = this.business;
       const address = this.address;
       // TODO update country from address
-      const oid = this.$socket.client.auth.userID;
+      const uid = this.$socket.client.auth.userID;
       const confirmedAddress = this.confirmedAddress;
-      console.log(biz, address, oid, confirmedAddress);
+      console.log(biz, address, uid, confirmedAddress);
 
-      this.updateSponsor({ biz, oid, address, confirmedAddress });
+      this.updateSponsor({ biz, address, uid, confirmedAddress });
       this.registered = true;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    },
+    renderPromos() {
+      if (!this.promotions) {
+        return;
+      }
+      const promoMap = new Map(this.promotions);
+      promoMap.forEach((promo) => {
+        const promoMap = new Map(promo);
+        promoMap.forEach((promo) => {
+          this.promos.push(`At ${promo[1]}<p class="pt-3">${promo[3]}</p>`);
+        });
+      });
     },
   },
   watch: {
@@ -538,6 +565,13 @@ export default {
     country() {
       this.validate();
     },
+    promotions(val) {
+      this.renderPromos(val);
+    },
+    promoText(val)
+    {
+      console.log(this.business, val);
+    }
   },
 
   mounted() {
@@ -545,9 +579,14 @@ export default {
       this.onEarnReward();
     } else {
       this.printing = this.confirmedAddress;
-      // set valid false here so the Validate btn is disabled
-      //this.valid = false;
     }
+
+    this.emitFromClient(
+      'getPromotions',
+      null,
+      (promos) => (this.promotions = promos)
+    );
+
     console.log('SPONSOR mounted');
   },
 };

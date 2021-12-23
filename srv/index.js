@@ -56,11 +56,10 @@ const {
   confirmDates,
   enterLottery,
   earnReward,
-  addPromotion,
 } = require('./redis/redis');
 
 // experimental. not used as of 12.13.21
-// const { addSponsor, addVisit, getVisits } = require('./redis/streams');
+const { addSponsor, addPromotion, getPromotions } = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/redisJsonCache2');
@@ -166,10 +165,18 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
-  socket.on('promote', ({ promoText, bid }, ack) => {
-    addPromotion({ promoText, bid }).then((id) => {
+  socket.on('promote', ({ biz, promoText, sid }, ack) => {
+    addPromotion({ biz, promoText, sid }).then((pid) => {
       if (ack) {
-        ack(id);
+        ack(pid);
+      }
+    });
+  });
+
+  socket.on('getPromotions', (_, ack) => {
+    getPromotions().then((promos) => {
+      if (ack) {
+        ack(promos);
       }
     });
   });
@@ -194,15 +201,19 @@ io.on('connection', (socket) => {
     });
   });
 
-  // socket.on('addSponsor', (data, ack) => {
-  //   console.log(data.sid, data.oid);
-  //   // add to the Sponsor Stream
-  //   addSponsor(data).then((sid) => {
-  //     if (ack) {
-  //       ack(sid);
-  //     }
-  //   });
-  // });
+  socket.on(
+    'addSponsor',
+    ({ biz, address, uid, confirmedAddress, promoText }, ack) => {
+      console.log(biz, confirmedAddress, promoText);
+      // add to the Sponsor Stream
+      addSponsor({ biz, address, uid, confirmedAddress }).then((sid) => {
+        if (ack) {
+          const pid = addPromotion({ biz, promoText, sid });
+          ack({ sid, pid });
+        }
+      });
+    }
+  );
 
   // socket.on('addVisit', ({ sid, uid }, ack) => {
   //   console.log({ sid, uid });
