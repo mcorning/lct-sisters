@@ -1,6 +1,25 @@
 // you may find this read https://redis.io/topics/streams-intro
 // very helpfull as a starter to understand the usescases and the parameters used
-const { redis } = require('./connectLab');
+let options;
+if (process.env.NODE_ENV === 'production') {
+  console.log('Dereferencing process.env');
+  options = {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+  };
+} else {
+  const lctJsonOptions = require('./redisJson.options.js');
+  options = {
+    host: lctJsonOptions.redisHost,
+    port: lctJsonOptions.redisPort,
+    password: lctJsonOptions.redisPassword,
+  };
+}
+console.log('Redis Options:', JSON.stringify(options, null, 3));
+
+const Redis = require('ioredis');
+const redis = new Redis(options);
 
 const addSponsor = ({ biz, address, uid, confirmedAddress }) => {
   const channel = 'sponsors:sg';
