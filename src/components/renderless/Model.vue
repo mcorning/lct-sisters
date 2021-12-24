@@ -360,6 +360,14 @@ export default {
         });
       });
     },
+    getRewardPoints({ bid, uid }) {
+      return new Promise((resolve) => {
+        this.emitFromClient('getRewardPoints', { bid, uid }, (visitedOn) => {
+          console.log('visitedOn', visitedOn);
+          resolve(visitedOn);
+        });
+      });
+    },
     getVisitByID(id) {
       return Visit.get(id);
     },
@@ -452,6 +460,7 @@ export default {
       // Steam events
       enterLottery: this.enterLottery,
       earnReward: this.earnReward,
+      getRewardPoints:this.getRewardPoints,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

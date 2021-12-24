@@ -1,11 +1,12 @@
 <template>
   <Model @error="onError">
-    <div slot-scope="{ state, earnReward,isConnected }">
+    <div slot-scope="{ state, earnReward, getRewardPoints, isConnected }">
       <Customer
         :updateSponsor="updateSponsor"
         :state="state"
+        :getRewardPoints="getRewardPoints"
         :earnReward="earnReward"
-        :isConnected=isConnected
+        :isConnected="isConnected"
       />
     </div>
   </Model>

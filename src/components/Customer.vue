@@ -15,14 +15,14 @@
             >
           </v-col></v-row
         >
-        <v-row dense justify="center"
+        <!-- <v-row dense justify="center"
           ><v-col>
             <span class="text-caption">
               {{ $route.params.id }}'s Confirmed Address:
               {{ confirmedAddress }}</span
             >
           </v-col></v-row
-        >
+        > -->
         <v-row justify="center"
           ><v-col>
             <v-card v-model="rewardPoints" color="blue-grey darken-3">
@@ -33,7 +33,44 @@
                 class="white--text mx-auto"
                 v-html="rewardPointsMessage"
               />
-              <v-simple-table height="300px" dense dark>
+              <!-- <v-treeview :items="items"></v-treeview> -->
+
+              <v-card class="mx-auto" max-width="500">
+                <v-sheet class="pa-4 primary lighten-2">
+                  <v-text-field
+                    v-model="search"
+                    label="Search Visited Establishments"
+                    dark
+                    flat
+                    solo-inverted
+                    hide-details
+                    clearable
+                    clear-icon="mdi-close-circle-outline"
+                  ></v-text-field>
+                  <v-checkbox
+                    v-model="caseSensitive"
+                    dark
+                    hide-details
+                    label="Case sensitive search"
+                  ></v-checkbox>
+                </v-sheet>
+                <v-card-text>
+                  <v-treeview :items="items" :search="search" :filter="filter">
+                    <template v-slot:prepend="{ item }">
+                      <v-icon
+                        v-if="item.children"
+                        v-text="
+                          `mdi-${
+                            item.id === 1 ? 'home-variant' : 'folder-network'
+                          }`
+                        "
+                      ></v-icon>
+                    </template>
+                  </v-treeview>
+                </v-card-text>
+              </v-card>
+
+              <!-- <v-simple-table height="300px" dense dark>
                 <template v-slot:default>
                   <tbody>
                     <tr v-for="(item, i) in dates" :key="i">
@@ -41,7 +78,7 @@
                     </tr>
                   </tbody>
                 </template>
-              </v-simple-table>
+              </v-simple-table> -->
               <v-card-actions>
                 <v-btn
                   v-if="snackBtnText"
@@ -101,21 +138,24 @@
 
 <script>
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
-import { DateTime } from '@/utils/luxonHelpers';
-// import { printJson } from '@/utils/helpers';
+import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
+import { printJson } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
     isConnected: Boolean,
     state: Object,
+    getRewardPoints: Function,
     earnReward: Function,
   },
   computed: {
+    filter() {
+      return this.caseSensitive
+        ? (item, search, textKey) => item[textKey].indexOf(search) > -1
+        : undefined;
+    },
     settings() {
       return this.state?.settings;
-    },
-    isValid() {
-      return this.settings?.country;
     },
 
     disableRegistration() {
@@ -147,6 +187,9 @@ export default {
 
   data() {
     return {
+      visits: null,
+      search: null,
+      caseSensitive: false,
       colors: [
         'indigo',
         'warning',
@@ -194,29 +237,55 @@ export default {
       confirmationIcon: 'check',
       countries: ['SG', 'UK', 'USA'],
 
-      country: this.settings.country,
+      country: '',
 
       registered: this.sponsor?.biz ?? false,
       snackBtnText: '',
       snackBarMessage: 'Ready to get started?',
       snackBarActionIndex: 0,
       confirmation: null,
-      printing: false,
       duration: 300,
       offset: 0,
       easing: 'easeInOutCubic',
       easings: Object.keys(easings),
+      items: [
+        {
+          id: 1,
+          name: 'Fika :',
+          children: [
+            { id: 2, name: formatSmallTime(1640371630838) },
+            { id: 3, name: formatSmallTime(1640371630840) },
+            { id: 4, name: formatSmallTime(1640371630899) },
+          ],
+        },
+        {
+          id: 5,
+          name: 'Tomahawk:',
+          children: [
+            { id: 2, name: formatSmallTime(1640373330938) },
+            { id: 3, name: formatSmallTime(1640373330840) },
+            { id: 4, name: formatSmallTime(1640373330899) },
+          ],
+        },
+      ],
     };
   },
+
   methods: {
-    promote() {
-      const promoText = this.promoText;
-      const sid = this.sponsorID;
-      const biz = this.sponsorName;
-      const country = this.country;
-      this.emitFromClient('promote', { biz, country, promoText, sid }, (ack) =>
-        alert(`Promotion ID: ${ack}`)
-      );
+    onGetRewardPoints() {
+      // const vm = this;
+      const uid = this.$socket.client.auth.userID;
+      this.getRewardPoints({ bid: '', uid }).then((visitedOn) => {
+        console.log(printJson(visitedOn));
+        // const dates = visitedOn.map((v) => this.convertDateTime(v));
+        // this.dates = dates;
+        // vm.rewardPointsMessage = `Here ${
+        //   dates.length === 1 ? 'is' : 'are'
+        // } your ${dates.length} visit${
+        //   dates.length > 1 ? 's' : ''
+        // } to <strong> ${vm.$route.params.id}</strong>:`;
+        // vm.rewardPoints = true;
+      });
     },
 
     onEarnReward() {
@@ -301,14 +370,15 @@ export default {
     if (this.$route.params.id) {
       this.onEarnReward();
     } else {
-      this.printing = this.confirmedAddress;
+      this.onGetRewardPoints();
     }
 
-    this.emitFromClient(
-      'getPromotions',
-      this.country,
-      (promos) => (this.promotions = promos)
-    );
+    // TODO refactor to restaurant based promotions (within a country)
+    // this.emitFromClient(
+    //   'getPromotions',
+    //   this.country,
+    //   (promos) => (this.promotions = promos)
+    // );
 
     console.log('CUSTOMER mounted');
   },

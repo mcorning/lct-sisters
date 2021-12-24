@@ -69,8 +69,6 @@ const host = options.host;
 console.log(highlight('Redis Options:', printJson(options)));
 
 let Graph = new RedisGraph(currentGraphName, null, null, options);
-const Redis = require('ioredis');
-const redis = new Redis(options);
 
 console.log(info(`At initialization, Redis Graph opened ${currentGraphName}`));
 
@@ -93,43 +91,9 @@ module.exports = {
   matchAllSpacesQuery,
   setStartEnd,
   confirmDates,
-  enterLottery,
-  earnReward,
+  // TODO refactor to streams.js
 };
 //#endregion Setup
-
-//#region STREAMS
-// SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
-function enterLottery(uid) {
-  return redis.xadd('lottery', '*', 'uid', uid);
-}
-
-function getRewardPoints(bid, uid, lastID) {
-  return redis.xread(['STREAMS', bid, lastID]).then((a) => {
-    let dates = [];
-    const m = new Map(a);
-    m.forEach((val) => {
-      val.forEach((val) => {
-        if (val[1][1] === uid) {
-          let dt = DateTime.fromMillis(Number(val[0].slice(0, 13)));
-          dates.push(dt.toISO());
-        }
-      });
-    });
-    return dates;
-  });
-}
-
-
-async function earnReward({ bid, uid, lastID = 0 }) {
-  console.log(highlight('bid, uid, lastID', bid, uid, lastID));
-  await redis.xadd(bid, '*', 'uid', uid);
-  const points = await getRewardPoints(bid, uid, lastID);
-  console.log(`Reward Points for ${uid} visiting ${bid}:`);
-  console.log(printJson(points));
-  return points;
-}
-//#endregion
 
 function getSessionID(param, ack) {
   const { userID } = param;

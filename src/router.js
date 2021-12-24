@@ -8,7 +8,7 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/',
+    path: '/space',
     name: 'Space',
     component: Space,
     props: true,
@@ -21,7 +21,15 @@ const routes = [
     props: true,
   },
   {
-    path: '/customer',
+    // path: '/customer/',
+    path:'/',
+    name: 'Customer',
+    component: Customer,
+    meta: { layout: 'AppLayoutRewards' },
+    props: true,
+  },
+  {
+    path: '/customer/:id',
     name: 'Customer',
     component: Customer,
     meta: { layout: 'AppLayoutRewards' },

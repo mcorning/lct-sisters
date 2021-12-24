@@ -54,12 +54,17 @@ const {
   getVisitedPaths,
   setStartEnd,
   confirmDates,
-  enterLottery,
-  earnReward,
-} = require('./redis/redis');
+} = require('./redis/graph');
 
 // experimental. not used as of 12.13.21
-const { addSponsor, addPromotion, getPromotions } = require('./redis/streams');
+const {
+  addSponsor,
+  addPromotion,
+  getPromotions,
+  enterLottery,
+  earnReward,
+  getRewardPoints,
+} = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/redisJsonCache2');
@@ -192,6 +197,14 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('getRewardPoints', ({ bid, uid }, ack) => {
+    // add to the bid's Reward Stream
+    getRewardPoints({ bid, uid }).then((visitedOn) => {
+      if (ack) {
+        ack(visitedOn);
+      }
+    });
+  });
   socket.on('earnReward', ({ bid, uid }, ack) => {
     // add to the bid's Reward Stream
     earnReward({ bid, uid }).then((visitedOn) => {

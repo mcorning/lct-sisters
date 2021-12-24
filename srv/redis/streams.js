@@ -1,5 +1,9 @@
 // you may find this read https://redis.io/topics/streams-intro
 // very helpfull as a starter to understand the usescases and the parameters used
+// SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
+const { printJson, highlight } = require('../../src/utils/helpers');
+const { DateTime } = require('../../src/utils/luxonHelpers');
+
 let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -92,10 +96,50 @@ const getVisits = (sid) => {
     return zipped;
   });
 };
+
+function enterLottery(uid) {
+  return redis.xadd('lottery', '*', 'uid', uid);
+}
+
+function getRewardPoints({ bid, uid }, lastID = 0) {
+  const bizStream = `biz:${bid}`;
+  const customerStream = `customer:${uid}`;
+  console.log(bizStream, customerStream);
+  return redis.xread(['STREAMS', customerStream, lastID]).then((visits) => {
+   
+   // let dates = [];
+    // const m = new Map(visits);
+    // m.forEach((val) => {
+    //   val.forEach((val) => {
+    //     // if (val[1][1] === uid) {
+    //     let dt = DateTime.fromMillis(Number(val[0].slice(0, 13)));
+    //     dates.push(dt.toISO());
+    //     // }
+    //   });
+    // });
+    console.log(visits[0][1]);
+    return visits[0][1];
+  });
+}
+
+async function earnReward({ bid, uid, lastID = 0 }) {
+  const bizStream = `biz:${bid}`;
+  const customerStream = `customer:${uid}`;
+  console.log(highlight('bid, uid, lastID', bid, uid, lastID));
+  redis.xadd(bizStream, '*', 'uid', uid);
+  redis.xadd(customerStream, '*', 'bid', bid);
+  const points = await getRewardPoints({ uid }, lastID);
+  console.log(`Reward Points for ${uid} visiting ${bid}:`);
+  console.log(printJson(points));
+  return points;
+}
 module.exports = {
   addSponsor,
   addPromotion,
   getPromotions,
   addVisit,
   getVisits,
+  enterLottery,
+  earnReward,
+  getRewardPoints,
 };
