@@ -16,7 +16,7 @@ import Model from '@/components/renderless/Model.vue';
 import Sponsor from '@/components/Sponsor.vue';
 
 export default {
-  name: 'LabView',
+  name: 'SponsorView',
   props: {},
   components: {
     Model,

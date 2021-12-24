@@ -1,8 +1,9 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import Customer from '@/views/Customer.vue';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
-import Commercial from '@/views/Commercial.vue';
+import Sponsor from '@/views/Sponsor.vue';
 Vue.use(VueRouter);
 
 const routes = [
@@ -15,14 +16,14 @@ const routes = [
   {
     path: '/sponsor',
     name: 'Sponsor',
-    component: Commercial,
+    component: Sponsor,
     meta: { layout: 'AppLayoutRewards' },
     props: true,
   },
   {
-    path: '/sponsor/:id',
-    name: 'ThisSponsor',
-    component: Commercial,
+    path: '/customer',
+    name: 'Customer',
+    component: Customer,
     meta: { layout: 'AppLayoutRewards' },
     props: true,
   },

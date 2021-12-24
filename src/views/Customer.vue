@@ -1,0 +1,41 @@
+<template>
+  <Model @error="onError">
+    <div slot-scope="{ state, earnReward,isConnected }">
+      <Customer
+        :updateSponsor="updateSponsor"
+        :state="state"
+        :earnReward="earnReward"
+        :isConnected=isConnected
+      />
+    </div>
+  </Model>
+</template>
+
+<script>
+import Model from '@/components/renderless/Model.vue';
+import Customer from '@/components/Customer.vue';
+
+export default {
+  name: 'CustomerView',
+  props: {},
+  components: {
+    Model,
+    Customer,
+  },
+  data() {
+    return {};
+  },
+  methods: {
+    onError(error) {
+      // let the global error handler pick up and display this error
+      error.message = `Commercial.vue error message: ${error.message}`;
+      throw error;
+    },
+  },
+  mounted() {
+    console.log(this.$route.query);
+  },
+};
+</script>
+
+<style lang="scss" scoped></style>

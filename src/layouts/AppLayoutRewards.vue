@@ -1,7 +1,13 @@
 <template>
   <Model>
     <div slot-scope="{ isConnected, state, updateSession }">
-      <commercial
+      <sponsor
+        v-if="isSponsor"
+        :isConnected="isConnected"
+        :state="state"
+        :updateSession="updateSession"
+      />
+      <customer
         :isConnected="isConnected"
         :state="state"
         :updateSession="updateSession"
@@ -13,7 +19,9 @@
 <script>
 import Model from '../components/renderless/Model.vue';
 
-import Commercial from '../views/Commercial.vue';
+import Sponsor from '@/views/Sponsor.vue';
+import Customer from '@/views/Customer.vue';
+
 import { getNow } from '@/utils/luxonHelpers';
 import { info, success, warn, printJson } from '@/utils/helpers';
 export default {
@@ -23,7 +31,14 @@ export default {
     updateSession: Function,
     isConnected: Boolean,
   },
-  components: { Commercial, Model },
+  components: { Model, Customer, Sponsor },
+  computed: {
+    isSponsor() {
+      const yes = this.$route.path === '/sponsor';
+      return yes;
+    },
+
+  },
   data() {
     return {};
   },

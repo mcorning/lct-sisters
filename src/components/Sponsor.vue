@@ -295,7 +295,7 @@ import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import { DateTime } from '@/utils/luxonHelpers';
 // import { printJson } from '@/utils/helpers';
 export default {
-  name: 'SponsorView',
+  name: 'Sponsor',
   // sponsor is {sid, biz, address}
   props: {
     isConnected: Boolean,
@@ -412,7 +412,7 @@ export default {
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: 'SG',
+      country: this.sponsor?.country??'SG',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
@@ -432,23 +432,10 @@ export default {
       const promoText = this.promoText;
       const sid = this.sponsorID;
       const biz = this.sponsorName;
-      this.emitFromClient('promote', { biz, promoText, sid }, (ack) =>
+      const country = this.country;
+      this.emitFromClient('promote', { biz, country, promoText, sid }, (ack) =>
         alert(`Promotion ID: ${ack}`)
       );
-    },
-    earnTokens() {
-      window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
-    },
-    validate() {
-      this.$refs.form.validate();
-    },
-    reset() {
-      this.$refs.form.reset();
-    },
-
-    convertDateTime(val) {
-      console.log('date val', val);
-      return new DateTime.fromISO(val).toLocaleString(DateTime.DATE_HUGE);
     },
 
     onEarnReward() {
@@ -473,23 +460,75 @@ export default {
         console.log(tokenMsg);
 
         this.dates = dates;
-        vm.rewardPointsMessage = `Here ${dates.length === 1 ? 'is' : 'are'} your ${dates.length} visit${dates.length > 1 ? 's' : ''} to <strong> ${vm.$route.params.id}</strong>:`;
+        vm.rewardPointsMessage = `Here ${
+          dates.length === 1 ? 'is' : 'are'
+        } your ${dates.length} visit${
+          dates.length > 1 ? 's' : ''
+        } to <strong> ${vm.$route.params.id}</strong>:`;
         vm.rewardPoints = true;
       });
     },
+
     onApproved() {
       const biz = this.business;
       const address = this.address;
-      // TODO update country from address
       const country = address.slice(address.lastIndexOf(',') + 2);
       const uid = this.$socket.client.auth.userID;
       const confirmedAddress = this.confirmedAddress;
       const promoText = this.promoText;
       console.log(biz, address, country, uid, confirmedAddress, promoText);
-      this.updateSponsor({ biz, address, uid, confirmedAddress, promoText });
+      this.updateSponsor({
+        biz,
+        address,
+        country,
+        uid,
+        confirmedAddress,
+        promoText,
+      });
 
       this.confSnackbar = false;
       this.printing = true;
+    },
+
+    addSponsor() {
+      const biz = this.business;
+      const address = this.address;
+      const country = address.slice(address.lastIndexOf(',') + 2);
+      const uid = this.$socket.client.auth.userID;
+      const confirmedAddress = this.confirmedAddress;
+      console.log(biz, address, country, uid, confirmedAddress);
+
+      this.updateSponsor({ biz, address, country, uid, confirmedAddress });
+      this.registered = true;
+      this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    },
+
+    renderPromos() {
+      if (!this.promotions) {
+        return;
+      }
+      const promoMap = new Map(this.promotions);
+      promoMap.forEach((promo) => {
+        const promoMap = new Map(promo);
+        promoMap.forEach((promo) => {
+          this.promos.push(`At ${promo[1]}<p class="pt-3">${promo[3]}</p>`);
+        });
+      });
+    },
+
+    earnTokens() {
+      window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
+    },
+    validate() {
+      this.$refs.form.validate();
+    },
+    reset() {
+      this.$refs.form.reset();
+    },
+
+    convertDateTime(val) {
+      console.log('date val', val);
+      return new DateTime.fromISO(val).toLocaleString(DateTime.DATE_HUGE);
     },
 
     printMe() {
@@ -525,36 +564,12 @@ export default {
         }
       );
     },
+
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+  }, // end of Methods
 
-    addSponsor() {
-      // get the Stream ID for the biz and the ID of the biz owner
-      const biz = this.business;
-      const address = this.address;
-      // TODO update country from address
-      const uid = this.$socket.client.auth.userID;
-      const confirmedAddress = this.confirmedAddress;
-      console.log(biz, address, uid, confirmedAddress);
-
-      this.updateSponsor({ biz, address, uid, confirmedAddress });
-      this.registered = true;
-      this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    },
-    renderPromos() {
-      if (!this.promotions) {
-        return;
-      }
-      const promoMap = new Map(this.promotions);
-      promoMap.forEach((promo) => {
-        const promoMap = new Map(promo);
-        promoMap.forEach((promo) => {
-          this.promos.push(`At ${promo[1]}<p class="pt-3">${promo[3]}</p>`);
-        });
-      });
-    },
-  },
   watch: {
     business() {
       this.validate();
@@ -568,10 +583,9 @@ export default {
     promotions(val) {
       this.renderPromos(val);
     },
-    promoText(val)
-    {
+    promoText(val) {
       console.log(this.business, val);
-    }
+    },
   },
 
   mounted() {
@@ -583,7 +597,7 @@ export default {
 
     this.emitFromClient(
       'getPromotions',
-      null,
+      this.country,
       (promos) => (this.promotions = promos)
     );
 

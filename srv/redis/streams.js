@@ -21,10 +21,10 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
-const addSponsor = ({ biz, address, uid, confirmedAddress }) => {
-  const channel = 'sponsors:sg';
+const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
+  const key = `sponsors:${country}`;
   return redis.xadd(
-    channel,
+    key,
     '*',
     'biz',
     biz,
@@ -37,11 +37,11 @@ const addSponsor = ({ biz, address, uid, confirmedAddress }) => {
   );
 };
 
-async function addPromotion({ biz, promoText, sid }) {
-  console.log('name, sid, promoText', biz, sid, promoText);
-  // TODO replace hardwired country with real value
+async function addPromotion({ biz, country, promoText, sid }) {
+  console.log('name, sid, promoText', biz, country, sid, promoText);
+  const key = `promotions:${country}`;
   const pid = await redis.xadd(
-    'promotions:sg',
+    key,
     '*',
     'business',
     biz,
@@ -52,9 +52,9 @@ async function addPromotion({ biz, promoText, sid }) {
   );
   return pid;
 }
-async function getPromotions() {
-  // TODO replace hardwired country with real value
-  const promos = await redis.xread('STREAMS', 'promotions:sg', '0');
+async function getPromotions(country) {
+  const key = `promotions:${country}`;
+  const promos = await redis.xread('STREAMS', key, '0');
   console.log('promos', promos);
   return promos;
 }

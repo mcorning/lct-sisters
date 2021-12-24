@@ -165,16 +165,16 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
-  socket.on('promote', ({ biz, promoText, sid }, ack) => {
-    addPromotion({ biz, promoText, sid }).then((pid) => {
+  socket.on('promote', ({ biz, country, promoText, sid }, ack) => {
+    addPromotion({ biz, country, promoText, sid }).then((pid) => {
       if (ack) {
         ack(pid);
       }
     });
   });
 
-  socket.on('getPromotions', (_, ack) => {
-    getPromotions().then((promos) => {
+  socket.on('getPromotions', (country, ack) => {
+    getPromotions(country).then((promos) => {
       if (ack) {
         ack(promos);
       }
@@ -203,15 +203,17 @@ io.on('connection', (socket) => {
 
   socket.on(
     'addSponsor',
-    ({ biz, address, uid, confirmedAddress, promoText }, ack) => {
-      console.log(biz, confirmedAddress, promoText);
+    ({ biz, address, country, uid, confirmedAddress, promoText }, ack) => {
+      console.log(biz, country, confirmedAddress, promoText);
       // add to the Sponsor Stream
-      addSponsor({ biz, address, uid, confirmedAddress }).then((sid) => {
-        if (ack) {
-          const pid = addPromotion({ biz, promoText, sid });
-          ack({ sid, pid });
+      addSponsor({ biz, address, country, uid, confirmedAddress }).then(
+        (sid) => {
+          if (ack) {
+            const pid = addPromotion({ biz, country, promoText, sid });
+            ack({ sid, pid });
+          }
         }
-      });
+      );
     }
   );
 
