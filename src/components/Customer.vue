@@ -7,56 +7,57 @@
       max-width="500"
     >
       <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
-      <v-container fluid class="fill-height text-center">
+      <v-container fluid class="fill-height ">
         <v-row no-gutters
           ><v-col>
-            <v-card-title class="text-subtitle-1"
-              >Universal TQR Loyalty Tracking</v-card-title
+            <v-card-title>TQR Loyalty Tracking</v-card-title>
+            <v-card-subtitle
+              >Here are you recent visits to TQR supporting
+              establishments:</v-card-subtitle
             >
           </v-col></v-row
         >
-        <!-- <v-row dense justify="center"
+
+        <v-row 
           ><v-col>
-            <span class="text-caption">
-              {{ $route.params.id }}'s Confirmed Address:
-              {{ confirmedAddress }}</span
+            <v-card
+              v-model="rewardPoints"
+              color="blue-grey darken-3"
+              class="mx-auto"
             >
-          </v-col></v-row
-        > -->
-        <v-row justify="center"
-          ><v-col>
-            <v-card v-model="rewardPoints" color="blue-grey darken-3">
-              <v-card-title class="white--text text-subtitle-2"
-                >Customer {{ $socket.client.auth.userID }}</v-card-title
-              >
-              <v-card-text
+              <!-- <v-card-text
                 class="white--text mx-auto"
                 v-html="rewardPointsMessage"
-              />
-              <!-- <v-treeview :items="items"></v-treeview> -->
+              /> -->
 
-              <v-card class="mx-auto" max-width="500">
-                <v-sheet class="pa-4 primary lighten-2">
-                  <v-text-field
-                    v-model="search"
-                    label="Search Visited Establishments"
-                    dark
-                    flat
-                    solo-inverted
-                    hide-details
-                    clearable
-                    clear-icon="mdi-close-circle-outline"
-                  ></v-text-field>
-                  <v-checkbox
-                    v-model="caseSensitive"
-                    dark
-                    hide-details
-                    label="Case sensitive search"
-                  ></v-checkbox>
-                </v-sheet>
-                <v-card-text>
-                  <v-treeview :items="items" :search="search" :filter="filter">
-                    <template v-slot:prepend="{ item }">
+              <v-card-text>
+                <v-text-field
+                  v-model="search"
+                  label="Search visited establishments here"
+                  dark
+                  flat
+                  solo-inverted
+                  hide-details
+                  clearable
+                ></v-text-field>
+                <v-checkbox
+                  v-model="caseSensitive"
+                  dark
+                  hide-details
+                  label="Case sensitive search"
+                ></v-checkbox>
+                <v-treeview
+                v-model=tree
+                  :items="items"
+                  :search="search"
+                  :filter="filter"
+                  activatable
+                  selectable
+                  open-all
+                  dense
+                  dark
+                >
+                  <!-- <template v-slot:prepend="{ item }">
                       <v-icon
                         v-if="item.children"
                         v-text="
@@ -65,10 +66,9 @@
                           }`
                         "
                       ></v-icon>
-                    </template>
-                  </v-treeview>
-                </v-card-text>
-              </v-card>
+                    </template> -->
+                </v-treeview>
+              </v-card-text>
 
               <!-- <v-simple-table height="300px" dense dark>
                 <template v-slot:default>
@@ -96,10 +96,11 @@
             </v-card>
           </v-col></v-row
         >
-        <v-btn text @click="renderPromos">Check for Enticements</v-btn>
+        <v-card-text class=text-h5>Enticements</v-card-text>
+
         <v-carousel
           cycle
-          height="300"
+          height="250"
           hide-delimiter-background
           show-arrows-on-hover
         >
@@ -138,7 +139,7 @@
 
 <script>
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
-import { DateTime, formatSmallTime } from '@/utils/luxonHelpers';
+import { DateTime, formatTime } from '@/utils/luxonHelpers';
 import { printJson } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
@@ -187,7 +188,7 @@ export default {
 
   data() {
     return {
-      visits: null,
+      tree: [],
       search: null,
       caseSensitive: false,
       colors: [
@@ -248,43 +249,30 @@ export default {
       offset: 0,
       easing: 'easeInOutCubic',
       easings: Object.keys(easings),
-      items: [
-        {
-          id: 1,
-          name: 'Fika :',
-          children: [
-            { id: 2, name: formatSmallTime(1640371630838) },
-            { id: 3, name: formatSmallTime(1640371630840) },
-            { id: 4, name: formatSmallTime(1640371630899) },
-          ],
-        },
-        {
-          id: 5,
-          name: 'Tomahawk:',
-          children: [
-            { id: 2, name: formatSmallTime(1640373330938) },
-            { id: 3, name: formatSmallTime(1640373330840) },
-            { id: 4, name: formatSmallTime(1640373330899) },
-          ],
-        },
-      ],
+      items: [],
     };
   },
 
   methods: {
     onGetRewardPoints() {
-      // const vm = this;
       const uid = this.$socket.client.auth.userID;
-      this.getRewardPoints({ bid: '', uid }).then((visitedOn) => {
-        console.log(printJson(visitedOn));
-        // const dates = visitedOn.map((v) => this.convertDateTime(v));
-        // this.dates = dates;
-        // vm.rewardPointsMessage = `Here ${
-        //   dates.length === 1 ? 'is' : 'are'
-        // } your ${dates.length} visit${
-        //   dates.length > 1 ? 's' : ''
-        // } to <strong> ${vm.$route.params.id}</strong>:`;
-        // vm.rewardPoints = true;
+      this.getRewardPoints({ bid: '', uid }).then((visits) => {
+        console.log(printJson(visits));
+        let i=0
+        this.items = visits.map((visit) => {
+          return {
+            id: i,
+            name: visit[0],
+            children: visit[1].map((t) => {
+              return {
+                id: ++i ,
+                name: formatTime(Number(t[0].slice(0, 13))),
+                children: [{ id: ++i, name: t[1][1] }],
+              };
+            }),
+          };
+        });
+        console.log('Items',printJson(this.items));
       });
     },
 

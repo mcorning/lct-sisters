@@ -2,7 +2,7 @@
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { printJson, highlight } = require('../../src/utils/helpers');
-const { DateTime } = require('../../src/utils/luxonHelpers');
+// const { DateTime } = require('../../src/utils/luxonHelpers');
 
 let options;
 if (process.env.NODE_ENV === 'production') {
@@ -106,19 +106,8 @@ function getRewardPoints({ bid, uid }, lastID = 0) {
   const customerStream = `customer:${uid}`;
   console.log(bizStream, customerStream);
   return redis.xread(['STREAMS', customerStream, lastID]).then((visits) => {
-   
-   // let dates = [];
-    // const m = new Map(visits);
-    // m.forEach((val) => {
-    //   val.forEach((val) => {
-    //     // if (val[1][1] === uid) {
-    //     let dt = DateTime.fromMillis(Number(val[0].slice(0, 13)));
-    //     dates.push(dt.toISO());
-    //     // }
-    //   });
-    // });
-    console.log(visits[0][1]);
-    return visits[0][1];
+    console.log(visits);
+    return visits;
   });
 }
 
