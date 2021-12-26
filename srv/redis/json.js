@@ -81,25 +81,30 @@ function connectCache(init = false) {
       .connect()
       .then(() => {
         if (init) {
-          jsonCache.get('alerts', '.').then((node) => {
-            const keys = Object.keys(node);
-            const pending = keys.length ? keys.join('\n') : 'nobody';
-            console.log(
-              success(
-                '....................... RedisJSON .........................'
-              )
-            );
-            console.log(success('Connected to RedisJSON using:'));
-            console.log(success(`${JSON.stringify(options, null, 3)}`));
-            console.log(success('There are pending alerts for: '));
-            console.log(success('\t', pending));
-            console.log(
-              success(
-                '.........................................................\n'
-              )
-            );
-            console.log();
-          });
+          jsonCache
+            .get('alerts', '.')
+            .then((node) => {
+              const keys = Object.keys(node);
+              const pending = keys.length ? keys.join('\n') : 'nobody';
+              console.log(
+                success(
+                  '....................... RedisJSON .........................'
+                )
+              );
+              console.log(success('Connected to RedisJSON using:'));
+              console.log(success(`${JSON.stringify(options, null, 3)}`));
+              console.log(success('There are pending alerts for: '));
+              console.log(success('\t', pending));
+              console.log(
+                success(
+                  '.........................................................\n'
+                )
+              );
+              console.log();
+            })
+            .catch((e) => {
+              console.log(e);
+            });
         }
         resolve(true);
       })

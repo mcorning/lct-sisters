@@ -67,7 +67,7 @@ const {
 } = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
-const cache = require('./redis/redisJsonCache2');
+const cache = require('./redis/json');
 cache.connectCache(true).then(() => {
   console.log(getNow());
   console.log('RedisGraph host:', host);
@@ -82,13 +82,16 @@ const getPendingAlerts = (newUserID, socketId) => {
   const message = `Checking pending alerts for ${newUserID}...`;
 
   const get = (newUserID, socketId, message) => {
-    cache.get('alerts', newUserID, message).then((alert) => {
-      if (!alert) return;
+    cache
+      .get('alerts', newUserID, message)
+      .then((alert) => {
+        if (!alert) return;
 
-      // sending to individual socketid (private message)
-      io.to(socketId).emit('exposureAlert', alert.riskScore);
-      cache.del('alerts', newUserID);
-    });
+        // sending to individual socketid (private message)
+        io.to(socketId).emit('exposureAlert', alert.riskScore);
+        cache.del('alerts', newUserID);
+      })
+      .catch((e) => console.log(e));
   };
 
   try {
