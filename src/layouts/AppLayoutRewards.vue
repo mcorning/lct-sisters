@@ -8,6 +8,7 @@
         :updateSession="updateSession"
       />
       <customer
+        v-else
         :isConnected="isConnected"
         :state="state"
         :updateSession="updateSession"
@@ -37,7 +38,6 @@ export default {
       const yes = this.$route.path === '/sponsor';
       return yes;
     },
-
   },
   data() {
     return {};

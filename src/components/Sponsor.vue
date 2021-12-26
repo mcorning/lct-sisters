@@ -187,97 +187,18 @@
       </v-container>
     </v-sheet>
 
-    <!-- customer sheet -->
-    <v-sheet
-      v-else
-      class="overflow-x:hidden fill-height"
-      outlined
-      color="grey lighten-1"
-      max-width="500"
-    >
-      <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
-      <v-container fluid class="fill-height text-center">
-        <v-row no-gutters
-          ><v-col>
-            <v-card-title class="text-subtitle-1"
-              >Universal TQR Loyalty Tracking</v-card-title
-            >
-          </v-col></v-row
-        >
-        <v-row dense justify="center"
-          ><v-col>
-            <span class="text-caption">
-              {{ $route.params.id }}'s Confirmed Address:
-              {{ confirmedAddress }}</span
-            >
-          </v-col></v-row
-        >
-        <v-row justify="center"
-          ><v-col>
-            <v-card v-model="rewardPoints" color="blue-grey darken-3">
-              <v-card-title class="white--text text-subtitle-2"
-                >Customer {{ $socket.client.auth.userID }}</v-card-title
-              >
-              <v-card-text
-                class="white--text mx-auto"
-                v-html="rewardPointsMessage"
-              />
-              <v-simple-table height="300px" dense dark>
-                <template v-slot:default>
-                  <tbody>
-                    <tr v-for="(item, i) in dates" :key="i">
-                      <td>{{ item }}</td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table>
-              <v-card-actions>
-                <v-btn
-                  v-if="snackBtnText"
-                  text
-                  color="#00f500"
-                  @click="rewardPoints = false"
-                >
-                  {{ snackBtnText }}
-                </v-btn>
-                <v-spacer />
-                <v-btn text color="yellow" @click="earnTokens"
-                  >Earn more tokens</v-btn
-                >
-              </v-card-actions>
-            </v-card>
-          </v-col></v-row
-        >
-        <v-btn text @click="renderPromos">Check for Enticements</v-btn>
-        <v-carousel
-          cycle
-          height="300"
-          hide-delimiter-background
-          show-arrows-on-hover
-        >
-          <v-carousel-item v-for="(promo, i) in promos" :key="i">
-            <v-sheet :color="colors[i]" height="100%">
-              <v-row class="fill-height" align="center" justify="center">
-                <v-card-text class="text-h4" v-html="promo"></v-card-text>
-              </v-row>
-            </v-sheet>
-          </v-carousel-item>
-        </v-carousel>
-      </v-container>
-      <!-- </v-card> -->
-    </v-sheet>
-
     <!-- Footer card -->
     <v-card flat max-width="500">
       <v-card-text>
         <v-row align="center" justify="space-between"
-          ><v-col cols="10">
+          ><v-col cols="">
             <span class="text-caption text-left">
               TQR Version: {{ $version }}</span
             ></v-col
           >
-          <v-spacer />
-          <v-col cols="2" align-self="end">
+          <span class=text-caption>{{decodedUri}}</span>
+          <!-- <v-spacer /> -->
+          <v-col cols="" align-self="end">
             <v-icon right
               >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
             </v-icon></v-col
@@ -412,7 +333,7 @@ export default {
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: this.sponsor?.country??'SG',
+      country: this.sponsor?.country ?? 'SG',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
