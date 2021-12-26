@@ -43,7 +43,7 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
 
 async function addPromotion({ biz, country, promoText, sid }) {
   console.log('name, sid, promoText', biz, country, sid, promoText);
-  const key = `promotions:${country}`;
+  const key = `promotions:${biz}`;
   const pid = await redis.xadd(
     key,
     '*',
@@ -56,8 +56,11 @@ async function addPromotion({ biz, country, promoText, sid }) {
   );
   return pid;
 }
-async function getPromotions(country) {
-  const key = `promotions:${country}`;
+async function getPromotions({ biz, country }) {
+  console.log(`getPromotions({${biz}, ${country}})`);
+  const key = `promotions:${biz}`;
+  // TODO use country in future
+  // const key = `promotions:${country}`;
   const promos = await redis.xread('STREAMS', key, '0');
   console.log('promos', promos);
   return promos;

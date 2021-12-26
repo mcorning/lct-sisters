@@ -97,6 +97,7 @@
                   </v-btn>
                   <v-spacer />
                   <v-btn
+                  :disabled=!promoText
                     text
                     color="brown lighten-3"
                     class="white--text mr-4"
@@ -196,7 +197,7 @@
               TQR Version: {{ $version }}</span
             ></v-col
           >
-          <span class=text-caption>{{decodedUri}}</span>
+          <span class="text-caption">{{ decodedUri }}</span>
           <!-- <v-spacer /> -->
           <v-col cols="" align-self="end">
             <v-icon right
@@ -359,37 +360,6 @@ export default {
       );
     },
 
-    onEarnReward() {
-      const vm = this;
-      // see Model.vue
-      // it sends a message to node/redis returning the visitedOn data
-      // it returns any promo text the restaurant has published
-      this.earnReward({
-        bid: this.$route.params.id,
-        uid: this.$socket.client.auth.userID,
-      }).then((visitedOn) => {
-        const dates = visitedOn.map((v) => this.convertDateTime(v));
-
-        // Jason wanted to wait on mentioning tokens.
-        const tokenMsg = `<p>Out of ${
-          visitedOn.length
-        } visits, you are earning <strong> ${
-          vm.$route.params.id
-        }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
-          dates.length
-        } date${dates.length > 1 ? 's' : ''}:</p>`;
-        console.log(tokenMsg);
-
-        this.dates = dates;
-        vm.rewardPointsMessage = `Here ${
-          dates.length === 1 ? 'is' : 'are'
-        } your ${dates.length} visit${
-          dates.length > 1 ? 's' : ''
-        } to <strong> ${vm.$route.params.id}</strong>:`;
-        vm.rewardPoints = true;
-      });
-    },
-
     onApproved() {
       const biz = this.business;
       const address = this.address;
@@ -515,12 +485,16 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
     }
-
-    this.emitFromClient(
-      'getPromotions',
-      this.country,
-      (promos) => (this.promotions = promos)
-    );
+    const biz = this.business;
+    const country = this.country;
+    this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+      console.log(
+        'Sponsor.vue promos for',
+        'biz:',
+        JSON.stringify(promos, null, 2)
+      );
+      this.promotions = promos;
+    });
 
     console.log('SPONSOR mounted');
   },

@@ -7,7 +7,7 @@
       max-width="500"
     >
       <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
-      <v-container fluid class="fill-height ">
+      <v-container fluid class="fill-height">
         <v-row no-gutters
           ><v-col>
             <v-card-title>TQR Loyalty Tracking</v-card-title>
@@ -18,7 +18,7 @@
           </v-col></v-row
         >
 
-        <v-row 
+        <v-row
           ><v-col>
             <v-card
               v-model="rewardPoints"
@@ -47,13 +47,15 @@
                   label="Case sensitive search"
                 ></v-checkbox>
                 <v-treeview
-                v-model=tree
+                  v-model="tree"
                   :items="items"
                   :search="search"
                   :filter="filter"
                   activatable
                   selectable
                   open-all
+                  open-on-click
+                  return-object
                   dense
                   dark
                 >
@@ -96,7 +98,7 @@
             </v-card>
           </v-col></v-row
         >
-        <v-card-text class=text-h5>Enticements</v-card-text>
+        <v-card-text class="text-h5">Enticements</v-card-text>
 
         <v-carousel
           cycle
@@ -258,21 +260,21 @@ export default {
       const uid = this.$socket.client.auth.userID;
       this.getRewardPoints({ bid: '', uid }).then((visits) => {
         console.log(printJson(visits));
-        let i=0
+        let i = 0;
         this.items = visits.map((visit) => {
           return {
             id: i,
             name: visit[0],
             children: visit[1].map((t) => {
               return {
-                id: ++i ,
+                id: ++i,
                 name: formatTime(Number(t[0].slice(0, 13))),
                 children: [{ id: ++i, name: t[1][1] }],
               };
             }),
           };
         });
-        console.log('Items',printJson(this.items));
+        console.log('Items', printJson(this.items));
       });
     },
 
@@ -290,7 +292,7 @@ export default {
         // Jason wanted to wait on mentioning tokens.
         const tokenMsg = `<p>Out of ${
           visitedOn.length
-        } visits, you are earning <strong> ${
+        } visit${visitedOn.length>1?'s':''}, you are earning <strong> ${
           vm.$route.params.id
         }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
           dates.length
@@ -346,27 +348,32 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+    getPromos() {
+      const country=this.country
+      const biz = 'biz'
+      this.emitFromClient(
+        'getPromotions',
+        {biz, country},
+        (promos) => (this.promotions = promos)
+      );
+    },
   }, // end of Methods
 
   watch: {
     promotions(val) {
       this.renderPromos(val);
     },
+    tree(val) {
+      console.log(val);
+    },
   },
 
   mounted() {
     if (this.$route.params.id) {
       this.onEarnReward();
-    } else {
+    } 
       this.onGetRewardPoints();
-    }
-
-    // TODO refactor to restaurant based promotions (within a country)
-    // this.emitFromClient(
-    //   'getPromotions',
-    //   this.country,
-    //   (promos) => (this.promotions = promos)
-    // );
+    
 
     console.log('CUSTOMER mounted');
   },

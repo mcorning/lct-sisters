@@ -299,9 +299,18 @@ export default {
     },
 
     updateSponsor({ biz, address, country, uid, confirmedAddress, promoText }) {
+      const countryLowerCase =
+        typeof country === 'string' ? country.toLowerCase() : '';
       this.emitFromClient(
         'addSponsor',
-        { biz, address, country, uid, confirmedAddress, promoText },
+        {
+          biz,
+          address,
+          country: countryLowerCase,
+          uid,
+          confirmedAddress,
+          promoText,
+        },
         ({ sid, pid }) => {
           console.log('addSponsor returns:', sid);
           console.log('addPromotion returns:', pid);
@@ -460,7 +469,7 @@ export default {
       // Steam events
       enterLottery: this.enterLottery,
       earnReward: this.earnReward,
-      getRewardPoints:this.getRewardPoints,
+      getRewardPoints: this.getRewardPoints,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

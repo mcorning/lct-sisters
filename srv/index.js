@@ -181,8 +181,8 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('getPromotions', (country, ack) => {
-    getPromotions(country).then((promos) => {
+  socket.on('getPromotions', ({ biz, country }, ack) => {
+    getPromotions({ biz, country }).then((promos) => {
       if (ack) {
         ack(promos);
       }
