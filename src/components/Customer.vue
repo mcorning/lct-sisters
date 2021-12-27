@@ -59,28 +59,18 @@
                   dense
                   dark
                 >
-                  <!-- <template v-slot:prepend="{ item }">
-                      <v-icon
-                        v-if="item.children"
-                        v-text="
-                          `mdi-${
-                            item.id === 1 ? 'home-variant' : 'folder-network'
-                          }`
-                        "
-                      ></v-icon>
-                    </template> -->
                 </v-treeview>
-              </v-card-text>
-
-              <!-- <v-simple-table height="300px" dense dark>
+                <!-- <v-card-title dark>{{`Promotions from ${tree.name}`}}</v-card-title>
+              <v-simple-table height="300px" dense dark>
                 <template v-slot:default>
                   <tbody>
-                    <tr v-for="(item, i) in dates" :key="i">
+                    <tr v-for="(item, i) in promotions" :key="i">
                       <td>{{ item }}</td>
                     </tr>
                   </tbody>
                 </template>
               </v-simple-table> -->
+              </v-card-text>
               <v-card-actions>
                 <v-btn
                   v-if="snackBtnText"
@@ -109,7 +99,7 @@
           <v-carousel-item v-for="(promo, i) in promos" :key="i">
             <v-sheet :color="colors[i]" height="100%">
               <v-row class="fill-height" align="center" justify="center">
-                <v-card-text class="text-h4" v-html="promo"></v-card-text>
+                <v-card-text v-html="promo"></v-card-text>
               </v-row>
             </v-sheet>
           </v-carousel-item>
@@ -201,7 +191,7 @@ export default {
         'deep-purple accent-4',
       ],
       promos: [],
-      promotions: '',
+      promotions: [],
       promoText: '',
       agreement: false,
       dialog: false,
@@ -290,9 +280,9 @@ export default {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
 
         // Jason wanted to wait on mentioning tokens.
-        const tokenMsg = `<p>Out of ${
-          visitedOn.length
-        } visit${visitedOn.length>1?'s':''}, you are earning <strong> ${
+        const tokenMsg = `<p>Out of ${visitedOn.length} visit${
+          visitedOn.length > 1 ? 's' : ''
+        }, you are earning <strong> ${
           vm.$route.params.id
         }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
           dates.length
@@ -317,7 +307,9 @@ export default {
       promoMap.forEach((promo) => {
         const promoMap = new Map(promo);
         promoMap.forEach((promo) => {
-          this.promos.push(`At ${promo[1]}<p class="pt-3">${promo[3]}</p>`);
+          this.promos.push(
+            `<h4>At ${promo[1]}</h4><p class="text-subtitle-2 pt-3">${promo[3]}</p>`
+          );
         });
       });
     },
@@ -348,32 +340,30 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
-    getPromos() {
-      const country=this.country
-      const biz = 'biz'
+    getPromos(biz) {
+      const country = this.country;
       this.emitFromClient(
         'getPromotions',
-        {biz, country},
+        { biz, country },
         (promos) => (this.promotions = promos)
       );
     },
   }, // end of Methods
 
   watch: {
+    tree(val) {
+      this.getPromos(val[0].name);
+    },
     promotions(val) {
       this.renderPromos(val);
-    },
-    tree(val) {
-      console.log(val);
     },
   },
 
   mounted() {
     if (this.$route.params.id) {
       this.onEarnReward();
-    } 
-      this.onGetRewardPoints();
-    
+    }
+    this.onGetRewardPoints();
 
     console.log('CUSTOMER mounted');
   },
