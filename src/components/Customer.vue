@@ -299,21 +299,6 @@ export default {
       });
     },
 
-    renderPromos() {
-      if (!this.promotions) {
-        return;
-      }
-      const promoMap = new Map(this.promotions);
-      promoMap.forEach((promo) => {
-        const promoMap = new Map(promo);
-        promoMap.forEach((promo) => {
-          this.promos.push(
-            `<h4>At ${promo[1]}</h4><p class="text-subtitle-2 pt-3">${promo[3]}</p>`
-          );
-        });
-      });
-    },
-
     earnTokens() {
       window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
     },
@@ -342,19 +327,39 @@ export default {
     },
     getPromos(biz) {
       const country = this.country;
-      this.emitFromClient(
-        'getPromotions',
-        { biz, country },
-        (promos) => (this.promotions = promos)
-      );
+      console.log(`getPromotions({${biz},${country}}`);
+      this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+        this.promotions = promos;
+        console.log(`promotions`, this.promotions);
+      });
+    },
+    renderPromos() {
+      if (!this.promotions) {
+        return;
+      }
+      const promoMap = new Map(this.promotions);
+      promoMap.forEach((promo) => {
+        const promoMap = new Map(promo);
+        promoMap.forEach((promo) => {
+          this.promos.push(
+            `<h4>At ${promo[1]}</h4><p class="text-subtitle-2 pt-3">${promo[3]}</p>`
+          );
+        });
+      });
     },
   }, // end of Methods
 
   watch: {
     tree(val) {
-      this.getPromos(val[0].name);
+      if (val) {
+        this.getPromos(val[0].name);
+      }
     },
     promotions(val) {
+      if (!val) {
+        console.log(`No promotions yet from ${this.tree[0].name}`);
+        return;
+      }
       this.renderPromos(val);
     },
   },
