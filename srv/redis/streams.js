@@ -42,6 +42,10 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
 };
 
 async function addPromotion({ biz, country, promoText, sid }) {
+  if (typeof biz !== 'string') {
+    return null;
+  }
+  biz = biz.toLowerCase();
   console.log('name, sid, promoText', biz, country, sid, promoText);
   const key = `promotions:${biz}`;
   const pid = await redis.xadd(
@@ -57,8 +61,15 @@ async function addPromotion({ biz, country, promoText, sid }) {
   return pid;
 }
 async function getPromotions({ biz, country }) {
-  console.log(`getPromotions({${biz}, ${country}})`);
+  if (typeof biz !== 'string') {
+    return null;
+  }
+  biz = biz.toLowerCase();
+
   const key = `promotions:${biz}`;
+  console.log(
+    `getPromotions (in country ${country}): XREAD STREAMS ${biz}, '0'`
+  );
   // TODO use country in future
   // const key = `promotions:${country}`;
   const promos = await redis.xread('STREAMS', key, '0');
@@ -109,7 +120,7 @@ function getRewardPoints({ bid, uid }, lastID = 0) {
   const customerStream = `customer:${uid}`;
   console.log(bizStream, customerStream);
   return redis.xread(['STREAMS', customerStream, lastID]).then((visits) => {
-    console.log(visits);
+    console.log('getRewardPoints returns:\n', visits);
     return visits;
   });
 }
