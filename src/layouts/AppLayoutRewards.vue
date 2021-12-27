@@ -43,6 +43,10 @@ export default {
     return {};
   },
   sockets: {
+    newPromotion( msg) {
+      alert(msg);
+    },
+
     confirmRewardEntry({ bid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
       this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;

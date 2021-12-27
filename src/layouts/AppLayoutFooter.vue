@@ -1,15 +1,8 @@
 <template>
   <v-footer app dark color="primary" class="white--text">
-    <v-btn
-      x-small
-      color="primary"
-      plain
-      absolute
-      bottom
-      left
-      @click="open('Monitor')"
-    >
+    <v-btn color="primary" plain absolute bottom left @click="open('Sponsor')">
     </v-btn>
+    <v-btn color="primary" plain @click="open('Customer')"> </v-btn>
     <!-- status bar -->
 
     <!-- View buttons -->

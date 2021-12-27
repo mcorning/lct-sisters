@@ -174,10 +174,15 @@ io.on('connection', (socket) => {
 
   //#region STREAM handlers
   socket.on('promote', ({ biz, country, promoText, sid }, ack) => {
+    console.log(`promote(${biz}, ${promoText}`);
     addPromotion({ biz, country, promoText, sid }).then((pid) => {
       if (ack) {
         ack(pid);
       }
+      const msg = `A new enticement from ${biz}:\n${promoText}`;
+      console.log(`newPromotion, ${msg}`);
+
+      socket.broadcast.emit('newPromotion', msg);
     });
   });
 
