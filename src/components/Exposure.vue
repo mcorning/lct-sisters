@@ -1,8 +1,8 @@
 <template>
-  <v-sheet class="overflow-auto fill-height ">
+  <v-sheet class="overflow-auto fill-height">
     <v-container
       fluid
-      class="fill-height "
+      class="fill-height"
       :class="checkEmergency"
       v-if="hasVisits && (isConnected || isDebugging)"
     >
@@ -221,6 +221,8 @@ export default {
     onExposureWarning: Function,
     setVaccinationStatus: Function,
     emergency: Boolean,
+    addWarnings: Function,
+    getAlerts: Function,
   },
   components: {
     ConfirmationSnackbar,
@@ -520,6 +522,16 @@ export default {
           this.confSnackbar = true;
         }
       );
+
+      // TODO NOTE: Experimental alternative: Stream-based alerts
+      console.log('visits:', this.state.visits);
+      this.addWarnings({
+        visits: this.state.visits,
+        score: this.score,
+        reliability,
+      });
+      const alerts=this.getAlerts()
+      console.log('alerts', alerts);
     },
   },
 

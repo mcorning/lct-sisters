@@ -377,6 +377,31 @@ export default {
         });
       });
     },
+    getAlerts() {
+      return new Promise((resolve) => {
+        this.emitFromClient('getAlerts', null, (alerts) => {
+          console.log('alerts', alerts);
+          resolve(alerts);
+        });
+      });
+    },
+
+    addWarnings({ visits, score, reliability }) {
+      console.log(
+        'visits, score, reliability'
+      );
+      console.log(visits,score,reliability);
+      return new Promise((resolve) => {
+        this.emitFromClient(
+          'addWarnings',
+          { visits, score, reliability },
+          (warnings) => {
+            console.log('warnings', warnings);
+            resolve(warnings);
+          }
+        );
+      });
+    },
     getVisitByID(id) {
       return Visit.get(id);
     },
@@ -470,6 +495,8 @@ export default {
       enterLottery: this.enterLottery,
       earnReward: this.earnReward,
       getRewardPoints: this.getRewardPoints,
+      addWarnings: this.addWarnings,
+      getAlerts: this.getAlerts,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

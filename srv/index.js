@@ -64,6 +64,8 @@ const {
   enterLottery,
   earnReward,
   getRewardPoints,
+  addWarnings,
+  getAlerts,
 } = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
@@ -190,6 +192,23 @@ io.on('connection', (socket) => {
     getPromotions({ biz, country }).then((promos) => {
       if (ack) {
         ack(promos);
+      }
+    });
+  });
+
+  socket.on('addWarnings', ({ visits, score, reliability }, ack) => {
+    const promises = addWarnings({ visits, score, reliability });
+    Promise.all(promises).then((warningIDS) => {
+      if (ack) {
+        ack(warningIDS);
+      }
+    });
+  });
+
+  socket.on('getAlerts', (_, ack) => {
+    getAlerts().then((alerts) => {
+      if (ack) {
+        ack(alerts);
       }
     });
   });

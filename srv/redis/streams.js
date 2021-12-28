@@ -60,6 +60,7 @@ async function addPromotion({ biz, country, promoText, sid }) {
   );
   return pid;
 }
+
 async function getPromotions({ biz, country }) {
   if (typeof biz !== 'string') {
     return null;
@@ -76,6 +77,35 @@ async function getPromotions({ biz, country }) {
   console.log('promos', promos);
   return promos;
 }
+
+const getAlerts = () => {
+  const channel = 'warnings';
+  return redis.xread('STREAMS', channel, '0').then((alerts) => alerts);
+};
+
+const addWarnings = ({ visits, score, reliability }) => {
+  const channel = 'warnings';
+  let warnings = [];
+  warnings.push(
+    visits.forEach((visit) => {
+      redis.xadd(
+        channel,
+        '*',
+        'place_id',
+        visit.place_id,
+        'start',
+        visit.start,
+        'end',
+        visit.end,
+        'score',
+        score,
+        'reliability',
+        reliability
+      );
+    })
+  );
+  return warnings;
+};
 
 const addVisit = ({ sid, uid }) => {
   const channel = 'visits';
@@ -145,4 +175,6 @@ module.exports = {
   enterLottery,
   earnReward,
   getRewardPoints,
+  addWarnings,
+  getAlerts,
 };
