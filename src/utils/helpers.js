@@ -26,6 +26,7 @@ function printNow() {
   console.log(getNow());
 }
 
+const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
@@ -34,6 +35,7 @@ function getRandomIntInclusive(min, max) {
 }
 
 module.exports = {
+  isEmpty,
   columns,
   getRandomIntInclusive,
   printJson,

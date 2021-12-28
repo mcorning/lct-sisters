@@ -92,7 +92,7 @@
 
         <v-carousel
           cycle
-          height="250"
+          height="200"
           hide-delimiter-background
           show-arrows-on-hover
         >
@@ -132,7 +132,7 @@
 <script>
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime, formatTime } from '@/utils/luxonHelpers';
-import { printJson } from '@/utils/helpers';
+import { printJson, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
@@ -351,12 +351,14 @@ export default {
 
   watch: {
     tree(val) {
-      if (val) {
-        this.getPromos(val[0].name);
+      if (isEmpty(val)) {
+        this.promos=null
+        return;
       }
+      this.getPromos(val[0].name);
     },
     promotions(val) {
-      if (!val) {
+      if (isEmpty(val)) {
         console.log(`No promotions yet from ${this.tree[0].name}`);
         return;
       }
