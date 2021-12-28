@@ -259,7 +259,7 @@ export default {
               return {
                 id: ++i,
                 name: formatTime(Number(t[0].slice(0, 13))),
-                children: [{ id: ++i, name: t[1][1] }],
+                children: [{ id: ++i, name: t[1][1].replace(/_/g, ' ') }],
               };
             }),
           };
@@ -274,7 +274,7 @@ export default {
       // it sends a message to node/redis returning the visitedOn data
       // it returns any promo text the restaurant has published
       this.earnReward({
-        bid: this.$route.params.id,
+        bid: this.$route.params.id.replace(/ /g, '_'),
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
@@ -352,10 +352,11 @@ export default {
   watch: {
     tree(val) {
       if (isEmpty(val)) {
-        this.promos=null
+        this.promos = [];
         return;
       }
-      this.getPromos(val[0].name);
+      const biz=val[0].name.replace(/ /g, '_')
+      this.getPromos(biz);
     },
     promotions(val) {
       if (isEmpty(val)) {

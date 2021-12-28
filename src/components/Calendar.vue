@@ -761,7 +761,8 @@ export default {
       // const { shared, deleted, name, loggedVisitId } = val;
       if (val.shared) {
         this.earnReward({
-          bid: val.name,
+          bid: val.place_id,
+          name:val.name,
           uid: this.$socket.client.auth.userID,
         }).then((visitedOn) => {
           const dates = visitedOn.map((v) => this.convertDateTime(v));

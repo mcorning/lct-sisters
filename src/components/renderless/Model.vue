@@ -155,10 +155,11 @@ export default {
     onUpdate({ eventToHandle, deleteVisit }) {
       if (deleteVisit) {
         const id = eventToHandle.id;
+        const placeID = eventToHandle.placeID;
         const name = eventToHandle.name;
         const graphID = eventToHandle.loggedVisitId;
         this.deleteVisit(id);
-        this.$emit('updatedModel', { name, id, graphID, deleteVisit });
+        this.$emit('updatedModel', { placeID, name, id, graphID, deleteVisit });
         return;
       }
 
@@ -387,10 +388,8 @@ export default {
     },
 
     addWarnings({ visits, score, reliability }) {
-      console.log(
-        'visits, score, reliability'
-      );
-      console.log(visits,score,reliability);
+      console.log('visits, score, reliability');
+      console.log(visits, score, reliability);
       return new Promise((resolve) => {
         this.emitFromClient(
           'addWarnings',

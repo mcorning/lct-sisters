@@ -175,17 +175,19 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
-  socket.on('promote', ({ biz, country, promoText, sid }, ack) => {
-    console.log(`promote(${biz}, ${promoText}`);
-    addPromotion({ biz, country, promoText, sid }).then((pid) => {
-      if (ack) {
-        ack(pid);
-      }
-      const msg = `A new enticement from ${biz}:\n${promoText}`;
-      console.log(`newPromotion, ${msg}`);
+  socket.on('promote', ({confirmedAddress, biz, country, promoText, sid }, ack) => {
+    console.log(`promote(${biz} (${confirmedAddress}), ${promoText}`);
+    addPromotion({ confirmedAddress,biz, country, promoText, sid }).then(
+      (pid) => {
+        if (ack) {
+          ack(pid);
+        }
+        const msg = `A new enticement from ${biz}:\n${promoText}`;
+        console.log(`newPromotion, ${msg}`);
 
-      socket.broadcast.emit('newPromotion', msg);
-    });
+        socket.broadcast.emit('newPromotion', msg);
+      }
+    );
   });
 
   socket.on('getPromotions', ({ biz, country }, ack) => {

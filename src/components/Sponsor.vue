@@ -355,7 +355,8 @@ export default {
       const sid = this.sponsorID;
       const biz = this.sponsorName;
       const country = this.country;
-      this.emitFromClient('promote', { biz, country, promoText, sid }, (ack) =>
+      const confirmedAddress=this.confirmedAddress
+      this.emitFromClient('promote', { confirmedAddress, biz, country, promoText, sid }, (ack) =>
         alert(`Promotion ID: ${ack}`)
       );
     },
