@@ -61,7 +61,8 @@ export default class Setting extends Model {
   }
 
   static update(settings) {
-    console.log(settings);
+    console.log(`Setting.update(${JSON.stringify(settings, null, 2)})`);
+    this.$create({ data: settings });
     return this.$create({ data: settings });
   }
 

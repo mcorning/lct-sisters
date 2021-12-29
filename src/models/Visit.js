@@ -41,14 +41,13 @@ export default class Visit extends Model {
     return this.find(id);
   }
   static getVisits(active, expiredTimestamp) {
-    const x = this.query()
+    return this.query()
       .where((visit) =>
         active
           ? visit.start >= expiredTimestamp
           : visit.start < expiredTimestamp
       )
       .get();
-    return x;
   }
   static getMyVisits(active, expiredTimestamp) {
     return this.getVisits(active, expiredTimestamp)
@@ -68,9 +67,7 @@ export default class Visit extends Model {
 
   static convertLoggedVisitId() {
     this.$update({
-      where: (visit) => {
-        return typeof visit.loggedVisitId === 'string';
-      },
+      where: (visit) => typeof visit.loggedVisitId === 'string',
 
       data(visit) {
         visit.loggedVisitId = Number(visit.loggedVisitId);
@@ -109,7 +106,7 @@ export default class Visit extends Model {
           if (p) {
             resolve(p);
           } else {
-            throw 'No VISIT to DELETE';
+            throw new Error('No VISIT to DELETE');
           }
         })
         .catch((e) => reject(e));
@@ -117,8 +114,7 @@ export default class Visit extends Model {
   }
 
   static async deleteAll() {
-    let p = await this.$deleteAll();
-    return p;
+    await this.$deleteAll();
   }
 
   static deleteAllPromise() {

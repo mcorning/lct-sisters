@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-card v-if="info" class="mx-auto" max-width="344">
-      <v-card-text class="text-subtitle-1   pb-0">
+      <v-card-text class="text-subtitle-1 pb-0">
         <div v-if="!isGathering">{{ name }}</div>
         <v-text-field
           v-else
@@ -63,6 +63,21 @@
           <span>Save this marker as your default map center</span>
         </v-tooltip>
 
+        <v-tooltip top>
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              v-bind="attrs"
+              v-on="on"
+              @click="onIWorkHere"
+              icon
+              color="primary"
+            >
+              <v-icon>work</v-icon>
+            </v-btn>
+          </template>
+          <span>I work here</span>
+        </v-tooltip>
+
         <v-spacer />
         <v-dialog v-model="enlargeQR" width="520">
           <!-- never could figure out how to add a tooltip to an activator button -->
@@ -119,7 +134,6 @@
                         >
                       </v-card-text>
 
-                      <!-- <v-row v-if="item.content === 'Shift'"> -->
                       <v-row v-if="employee">
                         <date-time-card
                           :size="24"
@@ -172,7 +186,7 @@
         <v-card
           v-if="reveal"
           class="transition-fast-in-fast-out v-card--reveal"
-          style="height: 100%;"
+          style="height: 100%"
           ><v-card-title>{{ name }}</v-card-title>
           <v-card-subtitle>Position values:</v-card-subtitle>
           <v-card-text class="pb-0">
@@ -181,9 +195,7 @@
             {{ `GlobalCode: ${globalCode}` }}<br />
           </v-card-text>
           <v-card-actions class="pt-0">
-            <v-btn text color="primary" @click="reveal = false">
-              Close
-            </v-btn>
+            <v-btn text color="primary" @click="reveal = false"> Close </v-btn>
           </v-card-actions>
         </v-card>
       </v-expand-transition>
@@ -197,6 +209,8 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import dateTimeCard from './dateTimeCard.vue';
 import { DateTime, asHour, asMinute } from '@/utils/luxonHelpers';
+import {  isEmpty } from '@/utils/helpers';
+
 export default {
   name: 'InfowindowCard',
   props: {
@@ -206,6 +220,7 @@ export default {
     },
     onVisitPlace: Function,
     ownThePlace: Function,
+    iWorkHere: Function,
     oid: Function,
     state: Object,
   },
@@ -226,14 +241,23 @@ export default {
     },
 
     dialogSubtitle() {
-      const text = this.printing
-        ? this.employee
-          ? 'Use the LCT QR code to sign in to work safely.'
-          : 'Scan QR to log your visit with us today. If your city does not have QR codes for tracking COVID, this QR code will help keep us safer during the pandemic. '
-        : this.employee
-        ? 'Use this dialog to log in at work'
-        : 'Use this dialog to share this public place with friends and family.';
+    if (isEmpty(this.tag)) {
+        return
+      }
+      const text = this.printing ? printPrompt() : showPrompt();
       return text;
+
+      function showPrompt() {
+        return this.employee
+          ? 'Use this dialog to log in at work'
+          : 'Use this dialog to share this public place with friends and family.';
+      }
+
+      function printPrompt() {
+        return this.employee
+          ? 'Use the LCT QR code to sign in to work safely.'
+          : 'Scan QR to log your visit with us today. If your city does not have QR codes for tracking COVID, this QR code will help keep us safer during the pandemic. ';
+      }
     },
 
     decodedUri() {
@@ -260,14 +284,13 @@ export default {
     decodedShiftUri() {
       // the QR code generator needs to use the decoded URI
       const uri = `${this.mailToUri}&start=${this.startShift}&end=${this.endShift}`;
-      const d = decodeURIComponent(uri);
-      return d;
+      return decodeURIComponent(uri);
     },
+
     decodedVisitorUri() {
       // the QR code generator needs to use the decoded URI
       const uri = `${this.mailToUri}&avgStay=${this.avgStay}`;
-      const d = decodeURIComponent(uri);
-      return d;
+      return decodeURIComponent(uri);
     },
 
     isGathering() {
@@ -275,8 +298,9 @@ export default {
     },
     latLng: () => {
       return this.info
-        ? `Lat: ${this.info?.position.lat ?? ''} Lng:  ${this.info?.position
-            .lng ?? ''}`
+        ? `Lat: ${this.info?.position.lat ?? ''} Lng:  ${
+            this.info?.position.lng ?? ''
+          }`
         : '';
     },
     name() {
@@ -324,6 +348,9 @@ export default {
     };
   },
   methods: {
+    onIWorkHere() {
+      this.iWorkHere(this.placeId);
+    },
     emailUrl() {
       alert(this.decodedUri);
     },
@@ -370,7 +397,6 @@ export default {
   },
 
   watch: {},
-  mounted() {},
 };
 </script>
 <style>

@@ -36,7 +36,6 @@ const {
   printNow,
   getNow,
 } = require('../src/utils/helpers.js');
-// const { DateTime } = require('../src/utils/luxonHelpers');
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');
 
@@ -66,6 +65,8 @@ const {
   getRewardPoints,
   addWarnings,
   getAlerts,
+  addVisit,
+  getVisits,
 } = require('./redis/streams');
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
@@ -83,7 +84,7 @@ cache.connectCache(true).then(() => {
 const getPendingAlerts = (newUserID, socketId) => {
   const message = `Checking pending alerts for ${newUserID}...`;
 
-  const get = (newUserID, socketId, message) => {
+  const get = () => {
     cache
       .get('alerts', newUserID, message)
       .then((alert) => {
@@ -97,10 +98,10 @@ const getPendingAlerts = (newUserID, socketId) => {
   };
 
   try {
-    get(newUserID, socketId, message);
+    get();
   } catch (error) {
     cache.connectCache().then(() => {
-      get(newUserID, socketId, message);
+      get();
     });
   }
 };
@@ -115,7 +116,7 @@ const setCacheItem = (key, to, val) => {
 
 const server = express()
   .use(serveStatic(dirPath))
-  .use('*', (req, res) => res.sendFile(dirPath + '/index.html'))
+  .use('*', (req, res) => res.sendFile(`${dirPath}/index.html`))
   .listen(PORT, () => {
     printNow();
     console.log('Listening on:');
@@ -164,8 +165,8 @@ io.on('connection', (socket) => {
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
   socket.broadcast.emit('userConnected', {
-    userID: userID,
-    username: username,
+    userID,
+    username,
     connected: true,
   });
   console.log('Leaving io.on(connect)');
@@ -175,20 +176,23 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
-  socket.on('promote', ({confirmedAddress, biz, country, promoText, sid }, ack) => {
-    console.log(`promote(${biz} (${confirmedAddress}), ${promoText}`);
-    addPromotion({ confirmedAddress,biz, country, promoText, sid }).then(
-      (pid) => {
-        if (ack) {
-          ack(pid);
-        }
-        const msg = `A new enticement from ${biz}:\n${promoText}`;
-        console.log(`newPromotion, ${msg}`);
+  socket.on(
+    'promote',
+    ({ confirmedAddress, biz, country, promoText, sid }, ack) => {
+      console.log(`promote(${biz} (${confirmedAddress}), ${promoText}`);
+      addPromotion({ confirmedAddress, biz, country, promoText, sid }).then(
+        (pid) => {
+          if (ack) {
+            ack(pid);
+          }
+          const msg = `A new enticement from ${biz}:\n${promoText}`;
+          console.log(`newPromotion, ${msg}`);
 
-        socket.broadcast.emit('newPromotion', msg);
-      }
-    );
-  });
+          socket.broadcast.emit('newPromotion', msg);
+        }
+      );
+    }
+  );
 
   socket.on('getPromotions', ({ biz, country }, ack) => {
     getPromotions({ biz, country }).then((promos) => {
@@ -259,24 +263,24 @@ io.on('connection', (socket) => {
     }
   );
 
-  // socket.on('addVisit', ({ sid, uid }, ack) => {
-  //   console.log({ sid, uid });
-  //   // add to the Visits Stream
-  //   addVisit({ sid, uid }).then((id) => {
-  //     if (ack) {
-  //       ack(`added visit to STREAM with Visit ID: ${id}`);
-  //     }
-  //   });
-  // });
+  socket.on('addVisit', ({ sid, uid }, ack) => {
+    console.log({ sid, uid });
+    // add to the Visits Stream
+    addVisit({ sid, uid }).then((id) => {
+      if (ack) {
+        ack(`added visit to STREAM with Visit ID: ${id}`);
+      }
+    });
+  });
 
-  // socket.on('getVisits', (sid, ack) => {
-  //   console.log(sid);
-  //   getVisits(sid).then((visits) => {
-  //     if (ack) {
-  //       ack(visits);
-  //     }
-  //   });
-  // });
+  socket.on('getVisits', (sid, ack) => {
+    console.log(sid);
+    getVisits(sid).then((visits) => {
+      if (ack) {
+        ack(visits);
+      }
+    });
+  });
   //#endregion STREAM handlers
 
   socket.on('getPlaceID', ({ address, country }, ack) => {
@@ -303,11 +307,12 @@ io.on('connection', (socket) => {
         }
       }
     }
-    function safeWarn() {
+    function safeWarn(e) {
       if (ack) {
         console.log(warn('Warning client of no results'));
         ack({
           warning: 'Cannot find an address based on your input.',
+          error: e,
         });
       }
     }
@@ -335,14 +340,13 @@ io.on('connection', (socket) => {
     );
   });
   // TODO do this for all the event handlers
-  const callOnExposureWarning = ({ graphName, riskScore }, ack) => {
+  const callOnExposureWarning = async ({ graphName, riskScore }, ack) => {
     // riskScore will make its way into exposure alert message in sendExposureAlert()
 
-    // let everybody = await io.allSockets();
-    // console.log('All Online sockets:', printJson([...everybody]));
+    const everybody = await io.allSockets();
+    console.log('All Online sockets:', printJson([...everybody]));
 
     //#region Functions called by onExposureWarning() below
-    const userID = socket.handshake.auth.userID;
     console.log('exposureWarning() > ', graphName, riskScore, userID);
     // called when onExposureWarning() Promise resolves below
     const sendExposureAlert = (to, alert) => {
@@ -360,10 +364,7 @@ io.on('connection', (socket) => {
         nominalTime,
       };
     };
-    const alertMap = (v) => {
-      return v.map((x) => vMap(x));
-    };
-
+    const alertMap = (v) => v.map((x) => vMap(x));
     // onExposureWarning() needs to group alerts by place_id
     const groupBy = (arr, fn) =>
       arr
@@ -383,11 +384,11 @@ io.on('connection', (socket) => {
         // TODO Use a Map here. it's much easier to de/serialize across boundaries
         Object.entries(exposures).forEach(([key, value]) => {
           console.log(`${key}: ${printJson(value)}`);
-          let x = alertMap(value);
+          const x = alertMap(value);
           console.log(x);
-          let alert = groupBy(value, 'placeID');
+          const alert = groupBy(value, 'placeID');
           console.log(alert);
-          let data = {
+          const data = {
             alert,
             riskScore,
           };
@@ -531,38 +532,36 @@ io.on('connection', (socket) => {
   socket.on('getVisitors', (graphNames, ack) => {
     getVisitors(graphNames, ack);
   });
-  socket.on('getExposures', ({ graphNames, userID }, ack) => {
+  socket.on('getExposures', ({ graphNames }, ack) => {
     getExposures({ graphNames, userID }, ack);
   });
-  socket.on('getVisitTimes', ({ graphNames, userID }, ack) => {
+  socket.on('getVisitTimes', ({ graphNames }, ack) => {
     getVisitTimes({ graphNames, userID })
       .then((results) => results.flat())
       .then((all) => {
         if (all.length) {
           console.log('visit dates:', all);
-          const graphName = all[0]['_graph']._graphId;
-          const visits = all[0]['_results'].map((c) => {
-            let v = c.get('v');
+          const graphName = all[0]._graph._graphId;
+          const visits = all[0]._results.map((c) => {
+            const v = c.get('v');
             return {
               id: v.id,
               start: v.properties.start,
               end: v.properties.end,
-              graphName: graphName,
+              graphName,
             };
           });
 
           if (ack) {
             ack(visits);
           }
-        } else {
-          if (ack) {
-            ack(all);
-          }
+        } else if (ack) {
+          ack(all);
         }
       });
   });
 
-  socket.on('confirmDates', ({ userID, dates }, ack) => {
+  socket.on('confirmDates', ({ dates }, ack) => {
     confirmDates({ userID, dates })
       .then((res) => {
         const results = res.map((v, i) => ({
@@ -577,7 +576,7 @@ io.on('connection', (socket) => {
       .catch((e) => console.error(e));
   });
 
-  socket.on('validateVisits', (userID, ack) => {
+  socket.on('validateVisits', (_, ack) => {
     console.log('validateVisits:', userID, ack);
     getVisitTimes(userID, (spaces) => {
       if (ack) {
@@ -586,7 +585,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('getVisitedPaths', (userID, ack) => {
+  socket.on('getVisitedPaths', (_, ack) => {
     console.log('getVisitedPaths:', userID, ack);
     getVisitedPaths(userID, (paths) => {
       if (ack) {

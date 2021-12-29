@@ -2,7 +2,6 @@
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { printJson, highlight } = require('../../src/utils/helpers');
-// const { DateTime } = require('../../src/utils/luxonHelpers');
 
 let options;
 if (process.env.NODE_ENV === 'production') {
@@ -64,7 +63,7 @@ async function addPromotion({
   const bizPath = biz.replace(/ /g, '_');
   const key = `promotions:${bizPath}`;
   console.log('addPromotion() key:', key);
-  const pid = await redis.xadd(
+  await redis.xadd(
     key,
     '*',
     'business',
@@ -74,7 +73,6 @@ async function addPromotion({
     'sid',
     sid
   );
-  return pid;
 }
 
 async function getPromotions({ biz, country }) {
@@ -101,7 +99,7 @@ const getAlerts = () => {
 
 const addWarnings = ({ visits, score, reliability }) => {
   const channel = 'warnings';
-  let warnings = [];
+  const warnings = [];
   warnings.push(
     visits.forEach((visit) => {
       redis.xadd(
@@ -142,14 +140,12 @@ const getVisits = (sid) => {
     let zipped;
     visits.forEach((visitData, channel) => {
       console.log(channel);
-      let visits = new Map(visitData);
+      const visits = new Map(visitData);
       visits.forEach((visit, id) => {
         console.log('visit ID:', id);
-        let names = visit.filter((v, i) => i % 2 === 0);
-        let values = visit.filter((v, i) => i % 2 !== 0);
-        zipped = names.map(function (name, i) {
-          return { [name]: values[i] };
-        });
+        const names = visit.filter((v, i) => i % 2 === 0);
+        const values = visit.filter((v, i) => i % 2 !== 0);
+        zipped = names.map((name, i) => ({ [name]: values[i] }));
         console.log(JSON.stringify(zipped, null, 3));
       });
     });

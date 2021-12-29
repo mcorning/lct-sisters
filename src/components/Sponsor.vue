@@ -97,7 +97,7 @@
                   </v-btn>
                   <v-spacer />
                   <v-btn
-                  :disabled=!promoText
+                    :disabled="!promoText"
                     text
                     color="brown lighten-3"
                     class="white--text mr-4"
@@ -198,7 +198,6 @@
             ></v-col
           >
           <span class="text-caption">{{ decodedUri }}</span>
-          <!-- <v-spacer /> -->
           <v-col cols="" align-self="end">
             <v-icon right
               >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
@@ -215,7 +214,6 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import { DateTime } from '@/utils/luxonHelpers';
-// import { printJson } from '@/utils/helpers';
 export default {
   name: 'Sponsor',
   // sponsor is {sid, biz, address}
@@ -237,8 +235,7 @@ export default {
 
     decodedUri() {
       const b = encodeURIComponent(this.business);
-      const d = `${window.location.origin}/sponsor/${b}`;
-      return d;
+      return `${window.location.origin}/sponsor/${b}`;
     },
     sponsorName() {
       return this.sponsor.biz || this.business;
@@ -260,18 +257,12 @@ export default {
       return !this.isSponsor && !this.sponsorID;
     },
     welcome() {
-      const msg = this.isSponsor
+      return this.isSponsor
         ? 'Welcome to Universal TQR Loyalty Tracking'
         : `Welcome to the ${this.$route.params.id} Community`;
-
-      return msg;
     },
     message() {
-      const msg = 'Fill in the form. Confirm your address. Print your QR.';
-      // const msg = this.newSponsor
-      // ?''
-      //   : '';
-      return msg;
+      return 'Fill in the form. Confirm your address. Print your QR.';
     },
 
     options() {
@@ -355,9 +346,11 @@ export default {
       const sid = this.sponsorID;
       const biz = this.sponsorName;
       const country = this.country;
-      const confirmedAddress=this.confirmedAddress
-      this.emitFromClient('promote', { confirmedAddress, biz, country, promoText, sid }, (ack) =>
-        alert(`Promotion ID: ${ack}`)
+      const confirmedAddress = this.confirmedAddress;
+      this.emitFromClient(
+        'promote',
+        { confirmedAddress, biz, country, promoText, sid },
+        (ack) => alert(`Promotion ID: ${ack}`)
       );
     },
 
@@ -399,11 +392,11 @@ export default {
       if (!this.promotions) {
         return;
       }
-      const promoMap = new Map(this.promotions);
-      promoMap.forEach((promo) => {
+      const promosMap = new Map(this.promotions);
+      promosMap.forEach((promo) => {
         const promoMap = new Map(promo);
-        promoMap.forEach((promo) => {
-          this.promos.push(`At ${promo[1]}<p class="pt-3">${promo[3]}</p>`);
+        promoMap.forEach((p) => {
+          this.promos.push(`At ${p[1]}<p class="pt-3">${p[3]}</p>`);
         });
       });
     },

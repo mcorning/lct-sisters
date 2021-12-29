@@ -6,7 +6,6 @@
       color="grey lighten-1"
       max-width="500"
     >
-      <!-- <v-card class="d-flex align-center justify-center pa-4 mx-auto"> -->
       <v-container fluid class="fill-height">
         <v-row no-gutters
           ><v-col>
@@ -25,11 +24,6 @@
               color="blue-grey darken-3"
               class="mx-auto"
             >
-              <!-- <v-card-text
-                class="white--text mx-auto"
-                v-html="rewardPointsMessage"
-              /> -->
-
               <v-card-text>
                 <v-text-field
                   v-model="search"
@@ -60,16 +54,6 @@
                   dark
                 >
                 </v-treeview>
-                <!-- <v-card-title dark>{{`Promotions from ${tree.name}`}}</v-card-title>
-              <v-simple-table height="300px" dense dark>
-                <template v-slot:default>
-                  <tbody>
-                    <tr v-for="(item, i) in promotions" :key="i">
-                      <td>{{ item }}</td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table> -->
               </v-card-text>
               <v-card-actions>
                 <v-btn
@@ -105,7 +89,6 @@
           </v-carousel-item>
         </v-carousel>
       </v-container>
-      <!-- </v-card> -->
     </v-sheet>
 
     <!-- Footer card -->
@@ -157,16 +140,13 @@ export default {
 
     decodedUri() {
       const b = encodeURIComponent(this.business);
-      const d = `${window.location.origin}/sponsor/${b}`;
-      return d;
+      return `${window.location.origin}/sponsor/${b}`;
     },
 
     welcome() {
-      const msg = this.isSponsor
+      return this.isSponsor
         ? 'Welcome to Universal TQR Loyalty Tracking'
         : `Welcome to the ${this.$route.params.id} Community`;
-
-      return msg;
     },
 
     options() {
@@ -337,12 +317,12 @@ export default {
       if (!this.promotions) {
         return;
       }
-      const promoMap = new Map(this.promotions);
-      promoMap.forEach((promo) => {
+      const promosMap = new Map(this.promotions);
+      promosMap.forEach((promo) => {
         const promoMap = new Map(promo);
-        promoMap.forEach((promo) => {
+        promoMap.forEach((p) => {
           this.promos.push(
-            `<h4>At ${promo[1]}</h4><p class="text-subtitle-2 pt-3">${promo[3]}</p>`
+            `<h4>At ${p[1]}</h4><p class="text-subtitle-2 pt-3">${p[3]}</p>`
           );
         });
       });
@@ -355,7 +335,7 @@ export default {
         this.promos = [];
         return;
       }
-      const biz=val[0].name.replace(/ /g, '_')
+      const biz = val[0].name.replace(/ /g, '_');
       this.getPromos(biz);
     },
     promotions(val) {

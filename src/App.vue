@@ -35,7 +35,6 @@
     <!-- NOTE: ApplyLayout is configured in main.js -->
     <AppLayout>
       <v-main>
-        <!-- <router-view @exposureWarning="onExposureWarning" /> -->
         <router-view />
       </v-main>
     </AppLayout>
@@ -129,9 +128,6 @@ export default {
         window.location.reload();
       });
     }
-    // document.addEventListener('beforeinstallprompt', this.showAdd2HsUI, {
-    //   once: true,
-    // });
 
     document.addEventListener('appinstalled', () => {
       console.log('PWA was installed');
@@ -147,16 +143,7 @@ export default {
   },
 
   destroyed() {
-    // document.removeEventListener('swUpdated', this.showRefreshUI);
-    // document.removeEventListener('offline', this.showOfflineUI);
-    // document.removeEventListener('controllerchange', () => {
-    //   if (this.refreshing) return;
-    //   this.refreshing = true;
-    //   window.location.reload();
-    // });
-    // document.removeEventListener('appinstalled', () => {
-    //   console.log('PWA was installed');
-    // });
+    console.log('App.vue destroyed');
   },
 };
 </script>

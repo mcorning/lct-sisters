@@ -99,7 +99,7 @@
               :max="28"
               :step="4"
               v-model="fontSize"
-              @input="$refs.picker.resize()"/></v-col
+              @input="$refs.picker.resize()" /></v-col
         ></v-row>
       </v-container>
     </v-card>
@@ -208,8 +208,7 @@ export default {
 
     defaultFontSize() {
       const s = this.size ?? 28;
-      const x = this.$vuetify.breakpoint.smAndUp ? s : 20;
-      return x;
+      return this.$vuetify.breakpoint.smAndUp ? s : 20;
     },
 
     formattedDate() {
@@ -321,13 +320,11 @@ export default {
           .diff(this.startDateTimeNew, this.nominalTime)
           .as(this.nominalTime);
 
-        const x = `Log your shift from <br/>
+        return `Log your shift from <br/>
         ${this.startDateTimeNew.toFormat(this.localizedDateFormat)} to <br/>
         ${this.endDateTimeNew.toFormat(
           this.localizedDateFormat
         )} [<strong>${diff} ${this.nominalTime}</strong>]`;
-
-        return x;
       }
       return this.formattedDate;
     },
@@ -368,17 +365,18 @@ export default {
     // currTimes will store the date in ISO format, so we need to convert that to picker format
     fixDates() {
       const { startDateString, startTime, endTime, present } = this.currTimes;
-
-      this.eventDate = present
-        ? 'Today'
-        : isTomorrow(startDateString)
-        ? 'Tomorrow'
-        : isYesterday(startDateString)
-        ? 'Yesterday'
-        : // ultimately we change the ISO date to a localized date string format
-          DateTime.fromISO(startDateString).toFormat(
-            this.abbreviatedMonthDateFormat
-          );
+      function checkForTomorrow() {
+        return isTomorrow(startDateString) ? 'Tomorrow' : checkFormYesterday();
+      }
+      function checkFormYesterday() {
+        return isYesterday(startDateString)
+          ? 'Yesterday'
+          : // ultimately we change the ISO date to a localized date string format
+            DateTime.fromISO(startDateString).toFormat(
+              this.abbreviatedMonthDateFormat
+            );
+      }
+      this.eventDate = present ? 'Today' : checkForTomorrow();
 
       const startMillis = startTime ?? roundTime(t());
       const endMillis = endTime ?? roundTime(tPlusOne(30 * 16));

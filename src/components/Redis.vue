@@ -91,7 +91,6 @@ export default {
   methods: {
     // TODO why isn't this in Model?
     emailDiagnostics() {
-      // this.$clipboard(this.diagnosticOutput);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=${this.diagnosticOutput}\n`;
     },
 

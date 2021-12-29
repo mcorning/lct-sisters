@@ -1,4 +1,3 @@
-// const redis = require('redis');
 const {
   err,
   heading,
@@ -36,8 +35,7 @@ function handleAsSingleEntry(cache) {
   const headings = Object.keys(cache).map(heads);
 
   const vals = Object.values(cache);
-  const finalGrid = [headings, vals];
-  return finalGrid;
+  return [headings, vals];
 }
 
 function handleAsManyEntries(cache) {
@@ -52,8 +50,7 @@ function handleAsManyEntries(cache) {
   const vals = Object.entries(cache).map((v) => Object.values(v[1]));
   // don't iterate the elements of allHeadings,
   // add the single array of headings to the array of cache element values
-  const finalGrid = [allHeadings, ...vals.map(insertPrimaryKeys)];
-  return finalGrid;
+  return [allHeadings, ...vals.map(insertPrimaryKeys)];
 }
 
 function asTable(cache) {
@@ -66,7 +63,7 @@ function asTable(cache) {
 
 function ensureValidPath(path) {
   if (path && !path.startsWith('_')) {
-    path = '_' + path;
+    return `_${path}`;
   }
   return path;
 }
@@ -92,7 +89,7 @@ function connectCache(init = false) {
                 )
               );
               console.log(success('Connected to RedisJSON using:'));
-              console.log(success(`${JSON.stringify(options, null, 3)}`));
+              console.log(success(JSON.stringify(options, null, 3)));
               console.log(success('There are pending alerts for: '));
               console.log(success('\t', pending));
               console.log(
@@ -114,7 +111,7 @@ function connectCache(init = false) {
 
 function add(key, path, node) {
   return jsonCache
-    .set(key, '._' + path, node)
+    .set(key, `._${path}`, node)
     .catch((e) => console.error(err('Error in add()', printJson(e))));
 }
 
@@ -140,7 +137,7 @@ function filter(data, fn) {
 }
 
 // TODO Consider: a better design here. Why is it an error if you cannot find a record?
-function get(key, path = '.', message) {
+function get(key, message, path = '.') {
   console.log(warn(message));
   return jsonCache
     .get(key, ensureValidPath(path))
@@ -167,20 +164,18 @@ function set(key, path, node) {
     .catch((e) => console.error('Error in set()', e));
 }
 
-// function create(key, path, node) {
-//   console.log(key, path, node);
-// }
-
 // TODO Investigate why isEmpty() can fail (often)
 function create(key, path, node) {
   // confirm a null key before creating one (i.e., don't overwrite a cache)
   return isEmpty(key).then((canCreate) => {
-    canCreate
-      ? jsonCache
-          .set(key, '.', { ['_' + path]: node })
-          .then((ok) => console.log(getNow(), success('Created?', ok)))
-          .catch((e) => console.error(err('Error in create():', e)))
-      : console.log(getNow(), 'Cache is not empty');
+    if (canCreate) {
+      jsonCache
+        .set(key, '.', { [`_${path}`]: node })
+        .then((ok) => console.log(getNow(), success('Created?', ok)))
+        .catch((e) => console.error(err('Error in create():', e)));
+    } else {
+      console.log(getNow(), 'Cache is not empty');
+    }
   });
 }
 module.exports = {

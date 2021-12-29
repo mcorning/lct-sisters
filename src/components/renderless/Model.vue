@@ -115,7 +115,7 @@ export default {
       return x;
     },
     getActualVisits() {
-      const x = Visit.query()
+      return Visit.query()
         .where(
           (v) =>
             !(
@@ -126,30 +126,19 @@ export default {
             )
         )
         .get();
+    },
 
-      return x;
-    },
     getVisits() {
-      // Visit.$delete((v) => {
-      //   return !(
-      //     !v.start ||
-      //     !v.end ||
-      //     Number.isNaN(v.start) ||
-      //     Number.isNaN(v.end)
-      //   );
-      // });
-      const x = Visit.query().all();
-      return x;
+      return Visit.query().all();
     },
+
     getPlaces() {
-      const x = this.getVisits().map((v) => {
+      return this.getVisits().map((v) => {
         return { name: v.name, placeID: v.place_id };
       });
-      return x;
     },
     getUnloggedVisits() {
-      const x = Visit.query().where('loggedVisitId', '').get();
-      return x;
+      return Visit.query().where('loggedVisitId', '').get();
     },
 
     onUpdate({ eventToHandle, deleteVisit }) {
@@ -185,6 +174,10 @@ export default {
     setDefaultMapCenter(center) {
       const centerVal = center ? JSON.stringify(center) : center;
       this.updateSetting({ id: 1, default_map_center: centerVal });
+    },
+    iWorkHere(place_id) {
+      console.log(`iWorkHere(${place_id})`);
+      this.updateSetting({ id: 1, workplace: place_id });
     },
 
     setPoi({ namespace, global_code, location, viewport, zoom }) {
@@ -283,13 +276,12 @@ export default {
 
       const appointments = this.getSomeEntityData(allAppointments.appointments);
 
-      const some = Some({
+      return Some({
         settings,
         places,
         visits,
         appointments,
       });
-      return some;
     },
     updateUsernumber() {
       // as a date, this permits us to use the usernumber to see how long they've been using LCT
@@ -513,6 +505,7 @@ export default {
       updateLatLng: this.updateLatLng,
       setNamespace: this.setNamespace,
       getNamespace: this.getNamespace,
+      iWorkHere:this.iWorkHere,
 
       // Time assets
       changeEvent: this.changeEvent,

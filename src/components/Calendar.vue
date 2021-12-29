@@ -1,6 +1,6 @@
 <template>
   <v-row no-gutters>
-    <v-col fluid id="calendarDiv" class=" fill-height">
+    <v-col fluid id="calendarDiv" class="fill-height">
       <v-toolbar flat>
         <v-icon medium @click="setToday"> mdi-calendar-today </v-icon>
         <v-btn fab text small color="grey darken-2" @click="prev">
@@ -253,8 +253,7 @@ export default {
 
     decodedUri() {
       // the QR code generator needs to use the decoded URI
-      const d = decodeURIComponent(this.mailToUri);
-      return d;
+      return decodeURIComponent(this.mailToUri);
     },
 
     mailToUri() {
@@ -262,17 +261,9 @@ export default {
       if (!this.selectedEvent) {
         return;
       }
-      // if (Object.keys(this.selectedEvent).length === 0) {
-      //   return;
-      // }
-      const {
-        place_id,
-        name,
-        date,
-        start,
-        end,
-        graphName,
-      } = this.selectedEvent;
+
+      const { place_id, name, date, start, end, graphName } =
+        this.selectedEvent;
       console.log(
         'mailToUri()->name, selectedEvent.name',
         name,
@@ -325,11 +316,8 @@ export default {
     expiredEvents() {
       // TODO should this property include all visits or only those for the selected day?
       try {
-        const cutoffDateTime = DateTime.now()
-          .minus({ days: 10 })
-          .toMillis();
-        const x = this.getVisits().filter((v) => v.start < cutoffDateTime);
-        return x;
+        const cutoffDateTime = DateTime.now().minus({ days: 10 }).toMillis();
+        return this.getVisits().filter((v) => v.start < cutoffDateTime);
       } catch (error) {
         return [];
       }
@@ -337,20 +325,14 @@ export default {
     relevantEvents() {
       // TODO should this property include all visits or only those for the selected day?
       try {
-        const cutoffDateTime = DateTime.now()
-          .minus({ days: 10 })
-          .toMillis();
-        const x = this.getVisits().filter((v) => v.start > cutoffDateTime);
-        return x;
+        const cutoffDateTime = DateTime.now().minus({ days: 10 }).toMillis();
+        return this.getVisits().filter((v) => v.start > cutoffDateTime);
       } catch (error) {
         return [];
       }
     },
     unloggedEvents() {
-      const x = this.relevantEvents.filter((v) =>
-        Number.isNaN(v.loggedVisitId)
-      );
-      return x;
+      return this.relevantEvents.filter((v) => Number.isNaN(v.loggedVisitId));
     },
 
     intervalCount() {
@@ -358,8 +340,7 @@ export default {
     },
     eventDetails() {
       // TODO This is where you decide what and how to display event details
-      const x = this.selectedEvent.details;
-      return x;
+      return this.selectedEvent.details;
     },
     nowY() {
       return this.cal ? this.cal.timeToY(this.cal.times.now) + 'px' : '-10px';
@@ -374,14 +355,7 @@ export default {
 
       showStatus: true,
       qrText: '',
-      clipboard: null,
-      rules: {
-        required: (value) => !!value || 'Required.',
-        email: (value) => {
-          const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-          return pattern.test(value) || 'Invalid e-mail.';
-        },
-      },
+
       seePickers: false,
       showQR: false,
       room: null,
@@ -447,17 +421,6 @@ export default {
       this.showStatus = !this.showStatus;
     },
 
-    copyStatus() {
-      // this.log(
-      //   `Copied Status to clipboard, ${this.$clipboard(this.diagnosticOutput)}` // this.$clipboard copy any String/Array/Object you want
-      // );
-    },
-
-    cutStatus() {
-      // this.$clipboard(this.diagnostics);
-      // this.diagnostics = 'Status cut to clipboard';
-    },
-
     openBanner() {
       this.banner = true;
       this.qrText = document.getElementById('qr');
@@ -466,7 +429,7 @@ export default {
     copy: (e) => {
       alert('You just copied: ' + e.text);
     },
-    onError: function() {
+    onError: function () {
       alert('Failed to copy texts');
     },
     onDeleteEvent() {
@@ -584,16 +547,8 @@ export default {
       if (this.isCategoryCalendar && this.isTakingAppointments) {
         this.tip =
           'You can add appointments by clicking a time interval for any selected day.';
-        // this.openAt = this.settings.openAt;
-        // this.closeAt = this.settings.closeAt;
-        // const open = Number(this.openAt.slice(0, 2));
-        // const close = Number(this.closeAt.slice(0, 2));
-        this.range = 8; // close - open;
+        this.range = 8;
 
-        // this.intervalMinutes = this.settings.slotInterval;
-        // this.firstTime = `${String(
-        //   Number(this.openAt.split(':')[0]) - 1
-        // ).padStart(2, '0')}:${this.openAt.slice(3, 5)}`;
         this.log(
           `. intervalMinutes: ${this.intervalMinutes}  first-time: ${this.firstTime}  range: ${this.range}  intervalCount: ${this.intervalCount} `
         );
@@ -625,11 +580,9 @@ export default {
     //#region Calendar functions
     // called by event-color calendar event
     getEventColor(event) {
-      const c =
-        this.currentEventParsed?.input.id === event.id
-          ? `${event.color} darken-1`
-          : event.color;
-      return c;
+      return this.currentEventParsed?.input.id === event.id
+        ? `${event.color} darken-1`
+        : event.color;
     },
     showEvent({ nativeEvent, event }) {
       const open = () => {
@@ -758,11 +711,10 @@ export default {
       console.log(val);
       console.log(' ');
       let msg;
-      // const { shared, deleted, name, loggedVisitId } = val;
       if (val.shared) {
         this.earnReward({
           bid: val.place_id,
-          name:val.name,
+          name: val.name,
           uid: this.$socket.client.auth.userID,
         }).then((visitedOn) => {
           const dates = visitedOn.map((v) => this.convertDateTime(v));
@@ -819,7 +771,6 @@ export default {
             ? '<br/>Oh, and welcome to the LCT community. Stay safe out there...'
             : '';
       }
-      // this.confirmationColor = confirmationColor;
       this.confirmationMessage = msg;
       console.log('confirmationMessage', this.confirmationMessage);
 

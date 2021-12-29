@@ -26,6 +26,7 @@
         enterLottery,
         setNamespace,
         getAllSettings,
+        iWorkHere,
       }"
     >
       <Spaces
@@ -36,6 +37,7 @@
         :onToWork="onToWork"
         :onVisitPlace="onVisitPlace"
         :ownThePlace="ownThePlace"
+        :iWorkHere=iWorkHere
         :oid="oid"
         :onSharePlace="onSharePlace"
         :onShareGathering="onShareGathering"

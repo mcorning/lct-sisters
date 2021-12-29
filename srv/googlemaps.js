@@ -17,19 +17,19 @@ const confirmPlaceID = (place_id) => {
   params.place_id = place_id;
   console.log('params', params);
   return client
-    .reverseGeocode({ params: params })
+    .reverseGeocode({ params })
     .then((r) => r.data.results[0])
     .catch((e) => e);
 };
 
 const getPlaceID = ({ address, country }) => {
-  const params = {
+  const placeParams = {
     address,
     components: { country },
     key: API_KEY,
   };
 
-  return client.geocode({ params: params }).then((r) => {
+  return client.geocode({ params: placeParams }).then((r) => {
     const {
       geometry: { location: latlng },
       place_id,
@@ -39,7 +39,7 @@ const getPlaceID = ({ address, country }) => {
     console.log('latlng:', latlng);
     return place_id;
   });
-// let the caller handle the exception
+  // let the caller handle the exception
 };
 
 module.exports = {

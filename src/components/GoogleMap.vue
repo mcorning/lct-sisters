@@ -151,6 +151,7 @@
       :state="state"
       :onVisitPlace="onVisitPlace"
       :ownThePlace="ownThePlace"
+      :iWorkHere=iWorkHere
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
       @changeMapCenter="changeMapCenter"
@@ -258,26 +259,6 @@
       :confirmationIcon="confirmationIcon"
       :bottom="confBottom"
     />
-    <!-- 
-    <v-row justify="center">
-      <v-dialog v-model="dialog" max-width="290">
-        <v-card>
-          <v-card-title class="text-h6">
-            {{ dialogTitle }}
-          </v-card-title>
-
-          <v-card-text> {{ dialogMessage }} </v-card-text>
-
-          <v-card-actions>
-            <v-spacer></v-spacer>
-
-            <v-btn color="green darken-1" text @click="dialog = false">
-              Thanks
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-row> -->
   </v-sheet>
 </template>
 
@@ -309,6 +290,7 @@ export default {
     onVisitPlace: Function,
     oid: Function,
     ownThePlace: Function,
+    iWorkHere:Function,
     onSharePlace: Function,
     onMarkerAdded: Function,
     onMarkerClicked: Function,
@@ -366,15 +348,13 @@ export default {
       // double check for bad location value
       if (this.state.settings.location === '{}') return null;
 
-      const loc = this.state.settings.location
+      return this.state.settings.location
         ? JSON.parse(this.state.settings.location)
         : null;
 
-      return loc;
     },
     namespace() {
-      const nsp = this.state.settings.namespace;
-      return nsp;
+      return this.state.settings.namespace;
     },
     defaultMapCenter() {
       return this.state.settings.default_map_center
@@ -442,7 +422,6 @@ export default {
       // offset: 0,
       // easing: 'easeInOutCubic',
       // easings: Object.keys(easings),
-      dialog: false,
       graph: '',
       enlargeQR: false,
 
@@ -517,7 +496,6 @@ export default {
       this.setDefaultMapCenter(center);
     },
     emailDiagnostics() {
-      // this.$clipboard(this.diagnosticOutput);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=[Please replace this line with your pasted diagnostics, and thanks a0xF4240 for helping make LCT better.]\n`;
     },
     goToPolicies() {
@@ -559,13 +537,6 @@ export default {
       this.status += `${msg}
       `;
     },
-    copyStatus() {
-      // this.setStatus(`Copied to clipboard ${this.$clipboard(this.status)}`); // this.$clipboard copy any String/Array/Object you want
-    },
-    cutStatus() {
-      // this.$clipboard(this.status);
-      // this.status = 'Status cut to clipboard';
-    },
 
     goThere() {
       alert(this.startFrom);
@@ -596,7 +567,7 @@ export default {
         };
 
         const title = `${name}\nLast Visited: add lastVisit to Place type`;
-        const markedPlace = {
+        return {
           name,
           formatted_address,
           place_id,
@@ -605,7 +576,6 @@ export default {
           position,
           title,
         };
-        return markedPlace;
       };
 
       // markedPlace -> markedPlace
@@ -635,7 +605,7 @@ export default {
         });
         this.selectedMarker = marker;
         marker.setMap(map);
-        marker.addListener(`click`, (event) => {
+        marker.addListener(`click`, () => {
           event.stop();
           setInfo(markedPlace);
           showInfoWindow(marker);
@@ -702,7 +672,7 @@ export default {
       const callGeoCoder = () => {
         geocoder.geocode({ location: xMarksTheSpot }).then((place) => {
           firstOrNone(place.results).match({
-            Some: (place) => composition(place),
+            Some: (returnedPlace) => composition(returnedPlace),
             None: () => console.log,
           });
         });
@@ -813,14 +783,14 @@ export default {
         });
       });
 
-      const showInfoWindow = ({ map, markedPlace, marker, infowindow }) => {
+      const showInfoWindow = ({  markedPlace, marker,  }) => {
         this.info = markedPlace;
         this.selectedMarker = marker; // for deleting purposes
         infowindow.open(map, marker);
         return markedPlace;
       };
 
-      const makeMarker = ({ map, infowindow, markedPlace }) => {
+      const makeMarker = ({  markedPlace }) => {
         const { position, name: title, place_id } = markedPlace;
         let marker = new window.google.maps.Marker({
           title,
@@ -846,7 +816,7 @@ export default {
         return marker;
       };
 
-      const makeMarkersFromCache = ({ google, map, infowindow }) => {
+      const makeMarkersFromCache = () => {
         const markers = this.cachedPlaces.map((markedPlace) => {
           makeMarker({ map, infowindow, markedPlace });
         });
@@ -857,7 +827,7 @@ export default {
         return { google, map, markers };
       };
 
-      const getAutocompleteResults = ({ google, map, infowindow, places }) => {
+      const getAutocompleteResults = ({ places }) => {
         {
           // TODO this is a Maybe
           if (places.length == 0) {
@@ -880,7 +850,7 @@ export default {
             const global_code = plus_code?.global_code || '';
 
             const title = `${name}\nLast Visited: add lastVisit to Place type`;
-            const markedPlace = {
+            return {
               name,
               formatted_address,
               place_id,
@@ -889,7 +859,6 @@ export default {
               position,
               title,
             };
-            return markedPlace;
           };
           // For each place, get the icon, name and location.
           const bounds = new google.maps.LatLngBounds();
@@ -921,7 +890,7 @@ export default {
         }
       };
 
-      const setupAutocomplete = ({ google, map, infowindow }) => {
+      const setupAutocomplete = () => {
         const input = document.getElementById('autoCompleteInput');
         const searchBox = new google.maps.places.SearchBox(input);
         map.addListener('bounds_changed', () => {
@@ -954,7 +923,7 @@ export default {
           console.log('geocode results:', response);
           const { address_components, geometry } = response.results[0];
           const namespace = getNamespace(address_components);
-          const { location, viewport } = geometry;
+          const {  viewport } = geometry;
           const err = vm.setPoi({
             namespace,
             location: JSON.stringify(location),
@@ -1000,8 +969,8 @@ export default {
         //   });
       };
 
-      makeMarkersFromCache({ google, map, infowindow });
-      setupAutocomplete({ google, map, infowindow });
+      makeMarkersFromCache();
+      setupAutocomplete();
 
       // final step in loading map:
       try {
@@ -1023,8 +992,7 @@ export default {
         }
       } catch (error) {
         this.openDiagnostics = true;
-
-        throw 'Sorry. Error loading map: ' + error.message;
+        throw new Error('Sorry. Error loading map: ' + error.message);
       }
     },
   },

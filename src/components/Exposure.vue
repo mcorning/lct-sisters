@@ -200,6 +200,7 @@
       :confirmationTitle="confirmationTitle"
       :confirmationMessage="confirmationMessage"
       :confirmationIcon="confirmationIcon"
+      @disapprove="confSnackbar = false"
     />
   </v-sheet>
 </template>
@@ -207,8 +208,6 @@
 <script>
 import { formatTime } from '../utils/luxonHelpers';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
-
-// import tooltip from './misc/tooltip.vue';
 
 export default {
   name: 'Warning',
@@ -438,7 +437,6 @@ export default {
 
   methods: {
     emailDiagnostics() {
-      // this.$clipboard(this.diagnostics);
       window.location = `mailto:mcorning@soteriaInstitute.org?subject=Diagnostics&body=Paste copied text here, please.}`;
     },
     log(diagnostic) {
@@ -488,29 +486,32 @@ export default {
           reliability,
         },
         (results) => {
-          const alerts = Object.values(results).flat();
-          console.log('exposureWarnings', JSON.stringify(alerts, null, 3));
-          const visits = alerts.length === 1 ? 'place' : 'places';
+          const alertsToSend = Object.values(results).flat();
           console.log(
-            `${this.$socket.client.auth.userID} sent exposure alerts to ${alerts.length} ${visits}`
+            'exposureWarnings',
+            JSON.stringify(alertsToSend, null, 3)
+          );
+          const visits = alertsToSend.length === 1 ? 'place' : 'places';
+          console.log(
+            `${this.$socket.client.auth.userID} sent exposure alerts to ${alertsToSend.length} ${visits}`
           );
 
           let places;
-          switch (alerts.length) {
+          switch (alertsToSend.length) {
             case 0:
               this.confirmationMessage =
                 'Good news! You exposed no one else at the places you visited.';
               this.confirmationIcon = 'thumb_up_alt';
               break;
             case 1:
-              this.confirmationMessage = `Thanks. You sent an exposure alert to ${alerts[0].placeID} warning them that the virus is lurking in your community.`;
+              this.confirmationMessage = `Thanks. You sent an exposure alert to ${alertsToSend[0].placeID} warning them that the virus is lurking in your community.`;
               this.confirmationIcon = 'cloud_done';
               break;
 
             default:
-              places = alerts.map((v) => v.placeID);
+              places = alertsToSend.map((v) => v.placeID);
               this.confirmationMessage = `Well done. You sent exposure alerts that the virus is lurking in your community to ${
-                alerts.length
+                alertsToSend.length
               } ${visits}: ${places.join(
                 '<br/> '
               )}. <p>Soon, there will be no where for those virions to hide...</p>`;
@@ -530,8 +531,7 @@ export default {
         score: this.score,
         reliability,
       });
-      const alerts=this.getAlerts()
-      console.log('alerts', alerts);
+      this.getAlerts().then((alerts) => console.log('alerts', alerts));
     },
   },
 
@@ -541,7 +541,6 @@ export default {
         const parts = val.split('-');
         return `Month: ${parts[1]} Year: ${parts[0]}`;
       }
-      return;
     },
   },
 

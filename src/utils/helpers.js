@@ -27,6 +27,7 @@ function printNow() {
 }
 
 const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
+const truthCheckCollection = (collection, pre) => collection.every(obj => obj[pre]);
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
@@ -36,6 +37,7 @@ function getRandomIntInclusive(min, max) {
 
 module.exports = {
   isEmpty,
+  truthCheckCollection,
   columns,
   getRandomIntInclusive,
   printJson,
