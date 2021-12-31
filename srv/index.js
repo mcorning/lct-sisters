@@ -35,6 +35,7 @@ const {
   url,
   printNow,
   getNow,
+  isEmpty,
 } = require('../src/utils/helpers.js');
 const PORT = process.env.PORT || 3003;
 const dirPath = path.join(__dirname, '../dist');
@@ -64,7 +65,7 @@ const {
   earnReward,
   getRewardPoints,
   addWarnings,
-  getAlerts,
+  getWarnings,
   addVisit,
   getVisits,
 } = require('./redis/streams');
@@ -202,17 +203,27 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('addWarnings', ({ visits, score, reliability }, ack) => {
-    const promises = addWarnings({ visits, score, reliability });
-    Promise.all(promises).then((warningIDS) => {
+  socket.on('addWarnings', ({ visitData, score, reliability }, ack) => {
+    if (isEmpty(visitData)) {
+      if (ack) {
+        ack('No Visit Data. Server should not be called.');
+      }
+    }
+
+    addWarnings({ visitData, score, reliability });
+
+    getWarnings().then((warningIDS) => {
+      console.log('warningIDS :>> ', warningIDS);
       if (ack) {
         ack(warningIDS);
       }
+      socket.broadcast.emit('broadcastedAlert', warningIDS);
+      socket.emit('alertsSent');
     });
   });
 
-  socket.on('getAlerts', (_, ack) => {
-    getAlerts().then((alerts) => {
+  socket.on('getWarnings', (_, ack) => {
+    getWarnings().then((alerts) => {
       if (ack) {
         ack(alerts);
       }

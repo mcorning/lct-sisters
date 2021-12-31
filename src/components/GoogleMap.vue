@@ -307,6 +307,7 @@ export default {
     enterLottery: Function,
     setNamespace: Function,
     getAllSettings: Function,
+    getAlerts:Function,
   },
   components: {
     InfoWindowCard,
@@ -1037,6 +1038,7 @@ export default {
   },
 
   mounted() {
+    this.getAlerts()
     const self = this;
     const query = this.$route.query;
 

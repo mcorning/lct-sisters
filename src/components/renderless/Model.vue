@@ -15,7 +15,7 @@ import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 import { redisMixin } from '@/js/redis';
 
-import { success, printJson } from '@/utils/helpers';
+import { success, printJson, isEmpty } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
 
@@ -370,22 +370,46 @@ export default {
         });
       });
     },
-    getAlerts() {
+    getWarnings() {
       return new Promise((resolve) => {
-        this.emitFromClient('getAlerts', null, (alerts) => {
-          console.log('alerts', alerts);
-          resolve(alerts);
+        this.emitFromClient('getWarnings', null, (warnings) => {
+          console.log('warnings', warnings);
+          resolve(warnings);
         });
       });
     },
+    getAlerts() {
+      this.getWarnings().then((alerts) => {
+        if (isEmpty(alerts)) {
+          alert('Whew. No evidence of exposure.');
+          return null;
+        }
+        // check for workplace exposure
+        const workplace = this.state.settings.workplace;
+        console.log('workplace:>> ', workplace);
+        console.log('Alerts:>>', printJson(alerts));
+        const score = alerts[0].score;
+        const reliability = alerts[0].reliability;
+        this.riskScore = { score, reliability };
+        const test = alerts.map((v) => {
+          console.log('place_id :>> ', v.place_id);
+          console.log('atWork :>> ', v.place_id === workplace);
+        });
+        const atWork = (element) => element.find(place_id === workplace);
+        if (alerts.find(atWork)) {
+          alert('You have been exposed to COVID 19 at work');
+        }
+        // check for public exposure
+      });
+    },
 
-    addWarnings({ visits, score, reliability }) {
-      console.log('visits, score, reliability');
-      console.log(visits, score, reliability);
+    addWarnings({ visitData, score, reliability }) {
+      console.log('visitData, score, reliability');
+      console.log(visitData, score, reliability);
       return new Promise((resolve) => {
         this.emitFromClient(
           'addWarnings',
-          { visits, score, reliability },
+          { visitData, score, reliability },
           (warnings) => {
             console.log('warnings', warnings);
             resolve(warnings);
@@ -505,7 +529,7 @@ export default {
       updateLatLng: this.updateLatLng,
       setNamespace: this.setNamespace,
       getNamespace: this.getNamespace,
-      iWorkHere:this.iWorkHere,
+      iWorkHere: this.iWorkHere,
 
       // Time assets
       changeEvent: this.changeEvent,

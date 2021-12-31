@@ -131,10 +131,10 @@ function xReadP(channel, lastID) {
 }
 
 function consumer() {
-  return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
-    console.log(JSON.stringify(stream, null, 3));
+  return redis.xread(['STREAMS', channel, lastID]).then((consumers) => {
+    console.log(JSON.stringify(consumers, null, 3));
 
-    const visits = new Map(stream);
+    const visits = new Map(consumers);
     console.log(
       `Reading visits from channel ${channel}, found ${visits.size} visits.`
     );
@@ -146,7 +146,7 @@ function consumer() {
         console.log('visit ID:', id);
         let names = visit.filter((v, i) => i % 2 === 0);
         let values = visit.filter((v, i) => i % 2 !== 0);
-        zipped = names.map(function(name, i) {
+        zipped = names.map(function (name, i) {
           return { [name]: values[i] };
         });
         console.log(JSON.stringify(zipped, null, 3));

@@ -2,7 +2,7 @@
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { printJson, highlight } = require('../../src/utils/helpers');
-
+const { groupBy, objectFromStream } = require('../utils.js');
 let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -92,16 +92,19 @@ async function getPromotions({ biz, country }) {
   return promos;
 }
 
-const getAlerts = () => {
+const getWarnings = () => {
   const channel = 'warnings';
-  return redis.xread('STREAMS', channel, '0').then((alerts) => alerts);
+  return redis
+    .xread('STREAMS', channel, '0')
+    .then((stream) => stream[0][1].map((warning) => objectFromStream(warning)))
+    .then((alerts) => groupBy(alerts, 'place_id'));
 };
 
-const addWarnings = ({ visits, score, reliability }) => {
+const addWarnings = ({ visitData, score, reliability }) => {
   const channel = 'warnings';
   const warnings = [];
   warnings.push(
-    visits.forEach((visit) => {
+    visitData.forEach((visit) => {
       redis.xadd(
         channel,
         '*',
@@ -124,6 +127,43 @@ const addWarnings = ({ visits, score, reliability }) => {
 const addVisit = ({ sid, uid }) => {
   const channel = 'visits';
   return redis.xadd(channel, '*', 'sid', sid, 'uid', uid);
+};
+
+const groupStream = (stream) =>
+  stream.reduce((acc, value) => {
+    if (!acc[value.place_id]) {
+      acc[value.place_id] = [];
+    }
+
+    acc[value.place_id].push(value);
+
+    return acc;
+  }, {});
+
+const zippedStream = (streamData) => {
+  const visits = new Map(streamData);
+
+  const zipped = [];
+  visits.forEach((visitData) => {
+    const elements = new Map(visitData);
+    elements.forEach((element) => {
+      const names = element.filter((v, i) => i % 2 === 0);
+      const values = element.filter((v, i) => i % 2 !== 0);
+
+      zipped.push(
+        names.map((name, i) => {
+          if (name === 'place_id') {
+            console.log(names);
+          }
+          return { [name]: values[i] };
+        })
+      );
+    });
+  });
+
+  console.log('places :>> ', placeMap);
+  console.log('zipped :>> ', JSON.stringify(zipped, null, 2));
+  return zipped;
 };
 
 const getVisits = (sid) => {
@@ -149,6 +189,7 @@ const getVisits = (sid) => {
         console.log(JSON.stringify(zipped, null, 3));
       });
     });
+    console.log('zipped :>> ', JSON.stringify(zipped));
     return zipped;
   });
 };
@@ -188,5 +229,5 @@ module.exports = {
   earnReward,
   getRewardPoints,
   addWarnings,
-  getAlerts,
+  getWarnings,
 };

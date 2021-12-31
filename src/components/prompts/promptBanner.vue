@@ -1,8 +1,8 @@
 <template>
   <div>
-    <v-banner v-if="alert" :key="refresh" :color="getAlertColor">
+    <v-banner v-if="alert" :key="refresh" dark :color="getAlertColor">
       <v-card :color="getAlertColor" flat>
-        <v-card-title class="text-sm-h4  text-subtitle-2"
+        <v-card-title class="text-sm-h4 text-subtitle-2"
           >COVID Early Warning System</v-card-title
         >
         <v-card-subtitle
@@ -17,9 +17,8 @@
         ></v-card-text>
         <v-card outlined
           ><v-card-text>
-            Warnings received to date:
-            <strong>{{ warningsReceived }}</strong></v-card-text
-          ></v-card
+            <pre>{{ alert }}</pre>
+          </v-card-text></v-card
         >
       </v-card>
       <template v-slot:actions="{ dismiss }">
@@ -33,11 +32,10 @@
 export default {
   name: 'promptBanner',
   props: {
-    alert: Object,
     riskScore: Object,
     refresh: Number,
     showBanner: Boolean,
-    warningsReceived: Number,
+    alert: Object,
   },
   computed: {
     callToAction() {
@@ -61,7 +59,16 @@ export default {
 
     alertMessage() {
       const { score, reliability } = this.riskScore;
-      const details = Object.entries(this.alert);
+      const details = Object.entries(this.alert)[0][1][1];
+      console.log('details :>> ', JSON.stringify(details, null, 2));
+      const alerts = details.map((v) => v[1]);
+      console.log('alerts :>> ', alerts);
+      return `${score} ${reliability}`;
+    },
+
+    alertMessage2() {
+      const { score, reliability } = this.riskScore;
+      const details = Object.entries(this.alert)[0][1][1];
 
       let msg = `<p>
        Their self-reported <br/><strong>Risk Value: ${score}</strong><br/><strong> Relative Risk ${Math.round(

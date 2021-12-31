@@ -138,7 +138,6 @@
       :alert="alert"
       :riskScore="riskScore"
       :refresh="refresh"
-      :warningsReceived="warningsReceived"
     ></prompt-banner>
 
     <feedback-card
@@ -223,7 +222,7 @@ export default {
     },
 
     fileMenuItems() {
-      const x = [
+      return [
         {
           subtitle: 'Look behind the curtain',
           name: 'Monitor',
@@ -246,12 +245,12 @@ export default {
           color: 'yellow',
         },
       ];
-      return x;
     },
   },
 
   data() {
     return {
+      alert: true,
       showEmail: false,
       enlargeQR: false,
 
@@ -263,7 +262,6 @@ export default {
       handledSessionEvent: false,
       graphName: '',
       feedbackDialog: false,
-      alert: null,
       riskScore: null,
       showBanner: false,
       refresh: 0,
@@ -279,6 +277,15 @@ export default {
     };
   },
   sockets: {
+    broadcastedAlert(alerts) {
+      // TODO this is where you check for relevant alerts
+      const score=10//alerts[0][1][1][1][7]
+      const reliability=0//alerts[0][1][1][1][9]
+      this.riskScore={score, reliability}
+      this.alert = alerts;
+ 
+    },
+
     confirmRewardEntry({ bid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
       this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;
@@ -311,10 +318,7 @@ export default {
       this.riskScore = riskScore;
       this.refresh++;
       this.showBanner = true;
-      this.incrementWarningsReceived().then((x) => {
-        // TODO this is a Maybe
-        this.warningsReceived = x[0].warningsReceived;
-      });
+
     },
     /*
      * 👂 Listen to socket events emitted from the socket server
