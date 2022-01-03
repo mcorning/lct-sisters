@@ -1,25 +1,9 @@
 <template>
-  <Model>
-    <div slot-scope="{ isConnected, state, updateSession }">
-      <sponsor
-        v-if="isSponsor"
-        :isConnected="isConnected"
-        :state="state"
-        :updateSession="updateSession"
-      />
-      <customer
-        v-else
-        :isConnected="isConnected"
-        :state="state"
-        :updateSession="updateSession"
-      />
-    </div>
-  </Model>
+  <sponsor v-if="isSponsor" :isConnected="isConnected" :state="state" />
+  <customer v-else :isConnected="isConnected" :state="state" />
 </template>
 
 <script>
-import Model from '../components/renderless/Model.vue';
-
 import Sponsor from '@/views/Sponsor.vue';
 import Customer from '@/views/Customer.vue';
 
@@ -32,18 +16,17 @@ export default {
     updateSession: Function,
     isConnected: Boolean,
   },
-  components: { Model, Customer, Sponsor },
+  components: { Customer, Sponsor },
   computed: {
     isSponsor() {
-      const yes = this.$route.path === '/sponsor';
-      return yes;
+      return this.$route.path === '/sponsor';
     },
   },
   data() {
     return {};
   },
   sockets: {
-    newPromotion( msg) {
+    newPromotion(msg) {
       alert(msg);
     },
 

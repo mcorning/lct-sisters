@@ -25,33 +25,40 @@
               class="mx-auto"
             >
               <v-card-text>
-                <v-text-field
-                  v-model="search"
-                  label="Search visited establishments here"
-                  dark
-                  flat
-                  solo-inverted
-                  hide-details
-                  clearable
-                ></v-text-field>
-                <v-checkbox
-                  v-model="caseSensitive"
-                  dark
-                  hide-details
-                  label="Case sensitive search"
-                ></v-checkbox>
+                <v-row>
+                  <v-text-field
+                    v-model="search"
+                    label="Search visited establishments here"
+                    dark
+                    flat
+                    solo-inverted
+                    hide-details
+                    clearable
+                  ></v-text-field>
+                  <v-checkbox
+                    v-model="caseSensitive"
+                    dark
+                    hide-details
+                    class="text-caption"
+                    label="Case sensitive"
+                  ></v-checkbox>
+                </v-row>
+              </v-card-text>
+              <v-card-text>
+                <v-divider />
                 <v-treeview
                   v-model="tree"
                   :items="items"
                   :search="search"
                   :filter="filter"
-                  activatable
                   selectable
                   open-all
                   open-on-click
                   return-object
                   dense
                   dark
+                  selected-color="green darken-1"
+                  color="green lighten-1"
                 >
                 </v-treeview>
               </v-card-text>
@@ -79,9 +86,10 @@
           height="200"
           hide-delimiter-background
           show-arrows-on-hover
+          dark
         >
           <v-carousel-item v-for="(promo, i) in promos" :key="i">
-            <v-sheet :color="colors[i]" height="100%">
+            <v-sheet dark :color="colors[i]" height="100%">
               <v-row class="fill-height" align="center" justify="center">
                 <v-card-text v-html="promo"></v-card-text>
               </v-row>
@@ -114,7 +122,7 @@
 
 <script>
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
-import { DateTime, formatTime } from '@/utils/luxonHelpers';
+import { DateTime } from '@/utils/luxonHelpers';
 import { printJson, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
@@ -160,6 +168,7 @@ export default {
 
   data() {
     return {
+      activeNodes: [],
       tree: [],
       search: null,
       caseSensitive: false,
@@ -230,17 +239,16 @@ export default {
       const uid = this.$socket.client.auth.userID;
       this.getRewardPoints({ bid: '', uid }).then((visits) => {
         console.log('Visits:>>', printJson(visits));
-        let i = 0;
-        this.items = visits.map((visit) => {
+        this.items = visits.map((visit, i) => {
+          const biz = visit[0].replace(/_/g, ' ');
           return {
             id: i,
-            name: visit[0],
-            children: visit[1].map((v) => {
+            name: biz,
+            children: visit[1].map((v, idx) => {
               return {
-                id: ++i,
+                id: `${i}.${idx}`,
                 name: v.visitedOn,
-                // name: formatTime(Number(t[0].slice(0, 13))),
-                // children: [{ id: ++i, name: t[1][1].replace(/_/g, ' ') }],
+                biz,
               };
             }),
           };
@@ -307,6 +315,7 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
     getPromos(biz) {
+      this.promos = [];
       const country = this.country;
       console.log(`getPromotions({${biz},${country}}`);
       this.emitFromClient('getPromotions', { biz, country }, (promos) => {
@@ -331,13 +340,12 @@ export default {
   }, // end of Methods
 
   watch: {
-    tree(val) {
-      if (isEmpty(val)) {
+    tree(n, o) {
+      if (isEmpty(n)) {
         this.promos = [];
         return;
       }
-      const biz = val[0].name.replace(/ /g, '_');
-      this.getPromos(biz);
+console.log('n[0] :>> ', n[0]);      this.getPromos(n[0].biz);
     },
     promotions(val) {
       if (isEmpty(val)) {

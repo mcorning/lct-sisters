@@ -196,6 +196,7 @@ io.on('connection', (socket) => {
   );
 
   socket.on('getPromotions', ({ biz, country }, ack) => {
+    console.log('getPromotions() biz :>> ', biz);
     getPromotions({ biz, country }).then((promos) => {
       if (ack) {
         ack(promos);
