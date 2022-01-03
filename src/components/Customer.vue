@@ -229,17 +229,18 @@ export default {
     onGetRewardPoints() {
       const uid = this.$socket.client.auth.userID;
       this.getRewardPoints({ bid: '', uid }).then((visits) => {
-        console.log(printJson(visits));
+        console.log('Visits:>>', printJson(visits));
         let i = 0;
         this.items = visits.map((visit) => {
           return {
             id: i,
             name: visit[0],
-            children: visit[1].map((t) => {
+            children: visit[1].map((v) => {
               return {
                 id: ++i,
-                name: formatTime(Number(t[0].slice(0, 13))),
-                children: [{ id: ++i, name: t[1][1].replace(/_/g, ' ') }],
+                name: v.visitedOn,
+                // name: formatTime(Number(t[0].slice(0, 13))),
+                // children: [{ id: ++i, name: t[1][1].replace(/_/g, ' ') }],
               };
             }),
           };

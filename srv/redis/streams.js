@@ -2,7 +2,7 @@
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { printJson, highlight } = require('../../src/utils/helpers');
-const { groupBy, objectFromStream } = require('../utils.js');
+const { groupBy, objectFromStream, objectToEntries } = require('../utils.js');
 let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -96,7 +96,7 @@ const getWarnings = () => {
   const channel = 'warnings';
   return redis
     .xread('STREAMS', channel, '0')
-    .then((stream) => stream[0][1].map((warning) => objectFromStream(warning)))
+    .then((stream) => objectFromStream(stream))
     .then((alerts) => groupBy(alerts, 'place_id'));
 };
 
@@ -129,46 +129,10 @@ const addVisit = ({ sid, uid }) => {
   return redis.xadd(channel, '*', 'sid', sid, 'uid', uid);
 };
 
-const groupStream = (stream) =>
-  stream.reduce((acc, value) => {
-    if (!acc[value.place_id]) {
-      acc[value.place_id] = [];
-    }
-
-    acc[value.place_id].push(value);
-
-    return acc;
-  }, {});
-
-const zippedStream = (streamData) => {
-  const visits = new Map(streamData);
-
-  const zipped = [];
-  visits.forEach((visitData) => {
-    const elements = new Map(visitData);
-    elements.forEach((element) => {
-      const names = element.filter((v, i) => i % 2 === 0);
-      const values = element.filter((v, i) => i % 2 !== 0);
-
-      zipped.push(
-        names.map((name, i) => {
-          if (name === 'place_id') {
-            console.log(names);
-          }
-          return { [name]: values[i] };
-        })
-      );
-    });
-  });
-
-  console.log('places :>> ', placeMap);
-  console.log('zipped :>> ', JSON.stringify(zipped, null, 2));
-  return zipped;
-};
-
 const getVisits = (sid) => {
   const channel = 'visits';
   const lastID = 0;
+  // TODO REFACTOR using objectFromStream()
   return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
     console.log(JSON.stringify(stream, null, 3));
 
@@ -199,13 +163,33 @@ function enterLottery(uid) {
 }
 
 function getRewardPoints({ bid, uid }, lastID = 0) {
+  return groupRewardPoints({ bid, uid }, lastID);
+}
+
+/**
+ *
+ * @param {*} { bid, uid }  biz ID, and user ID
+ * @param {*} lastID  last read stream ID
+ * @returns object with bids as keys
+ */
+function groupRewardPoints({ bid, uid }, lastID = 0) {
   const bizStream = `biz:${bid}`;
   const customerStream = `customer:${uid}`;
   console.log(bizStream, customerStream);
-  return redis.xread(['STREAMS', customerStream, lastID]).then((visits) => {
-    console.log('getRewardPoints returns:\n', visits);
-    return visits;
-  });
+
+  const getVisitsFor = (groupedVisits) => {
+    const visitsArray = objectToEntries(groupedVisits);
+    if (bid) {
+      return visitsArray.filter((v) => v[0] === bid);
+    }
+    return visitsArray;
+  };
+
+  return redis
+    .xread(['STREAMS', customerStream, lastID])
+    .then((stream) => objectFromStream(stream, 'bid'))
+    .then((visits) => groupBy(visits, 'bid'))
+    .then((groupedVisits) => getVisitsFor(groupedVisits));
 }
 
 async function earnReward({ bid, uid, lastID = 0 }) {
@@ -219,6 +203,7 @@ async function earnReward({ bid, uid, lastID = 0 }) {
   console.log(printJson(points));
   return points;
 }
+
 module.exports = {
   addSponsor,
   addPromotion,

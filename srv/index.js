@@ -204,10 +204,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('addWarnings', ({ visitData, score, reliability }, ack) => {
-    if (isEmpty(visitData)) {
-      if (ack) {
-        ack('No Visit Data. Server should not be called.');
-      }
+    if (isEmpty(visitData) && ack) {
+      ack('No Visit Data. Server should not be called.');
     }
 
     addWarnings({ visitData, score, reliability });
