@@ -60,36 +60,31 @@ async function addPromotion({
     sid,
     promoText
   );
-  const bizPath = biz.replace(/ /g, '_');
+  const bizPath = biz.trim().replace(/ /g, '_');
   const key = `promotions:${bizPath}`;
   console.log('addPromotion() key:', key);
-  await redis.xadd(
-    key,
-    '*',
-    'business',
-    biz,
-    'promoText',
-    promoText,
-    'sid',
-    sid
-  );
+  return redis
+    .xadd(key, '*', 'business', biz, 'promoText', promoText, 'sid', sid)
+    .then((newSid) => {
+      console.log(`XREAD STREAMS ${key} ${newSid}`);
+      // TODO RESEARCH: why can't i get XREAD to work with the newSid?
+      return redis.xrange(key, newSid, newSid);
+    });
 }
 
-async function getPromotions({ biz, country }) {
+function getPromotions({ biz, country }) {
   if (typeof biz !== 'string') {
     return null;
   }
-  const bizPath = biz.replace(/ /g, '_');
+  const bizPath = biz.trim().replace(/ /g, '_');
   const key = `promotions:${bizPath}`;
 
   console.log(
     `getPromotions (in country ${country}): XREAD STREAMS ${key}, '0'`
   );
-  // TODO use country in future
-  // const key = `promotions:${country}`;
-  const promos = await redis.xread('STREAMS', key, '0');
-  console.log('promos', promos);
-  return promos;
+  return redis
+    .xread(['STREAMS', key, '0'])
+    .then((stream) => objectFromStream(stream));
 }
 
 const getWarnings = () => {
@@ -193,7 +188,7 @@ function groupRewardPoints({ bid, uid }, lastID = 0) {
 }
 
 async function earnReward({ bid, uid, lastID = 0 }) {
-  const bizStream = `biz:${bid.replace(/ /g, '_')}`;
+  const bizStream = `biz:${bid.trim().replace(/ /g, '_')}`;
   const customerStream = `customer:${uid}`;
   console.log(highlight('bid, uid, lastID', bid, uid, lastID));
   redis.xadd(bizStream, '*', 'uid', uid);

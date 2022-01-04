@@ -182,13 +182,13 @@ io.on('connection', (socket) => {
     ({ confirmedAddress, biz, country, promoText, sid }, ack) => {
       console.log(`promote(${biz} (${confirmedAddress}), ${promoText}`);
       addPromotion({ confirmedAddress, biz, country, promoText, sid }).then(
-        (pid) => {
+        (newPromo) => {
           if (ack) {
-            ack(pid);
+            ack(newPromo);
           }
+          // let everybody online now see the new promo
           const msg = `A new enticement from ${biz}:\n${promoText}`;
           console.log(`newPromotion, ${msg}`);
-
           socket.broadcast.emit('newPromotion', msg);
         }
       );

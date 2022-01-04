@@ -14,8 +14,19 @@
               >Here are you recent visits to TQR supporting
               establishments:</v-card-subtitle
             >
-          </v-col></v-row
-        >
+          </v-col>
+          <v-col cols="auto" class="text-center">
+            <VueQRCodeComponent
+              id="qr"
+              ref="qr"
+              :text="$socket.client.auth.userID"
+              error-level="L"
+              size="128"
+            >
+            </VueQRCodeComponent>
+            <span class="text-caption">{{ $socket.client.auth.userID }}</span>
+          </v-col>
+        </v-row>
 
         <v-row
           ><v-col>
@@ -121,6 +132,8 @@
 </template>
 
 <script>
+import VueQRCodeComponent from 'vue-qr-generator';
+
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { printJson, isEmpty } from '@/utils/helpers';
@@ -131,6 +144,9 @@ export default {
     state: Object,
     getRewardPoints: Function,
     earnReward: Function,
+  },
+  components: {
+    VueQRCodeComponent,
   },
   computed: {
     filter() {
@@ -345,7 +361,9 @@ export default {
         this.promos = [];
         return;
       }
-console.log('n[0] :>> ', n[0]);      this.getPromos(n[0].biz);
+      console.log('n[0] :>> ', n[0]);
+      console.log('o[0] :>> ', o[0]);
+      this.getPromos(n[0].biz);
     },
     promotions(val) {
       if (isEmpty(val)) {

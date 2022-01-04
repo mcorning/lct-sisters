@@ -27,7 +27,9 @@ export default {
   },
   sockets: {
     newPromotion(msg) {
-      alert(msg);
+      if (this.$route.name !== 'Sponsor') {
+        alert(msg);
+      }
     },
 
     confirmRewardEntry({ bid, sid }) {

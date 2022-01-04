@@ -15,7 +15,7 @@
           Your Google Confirmed Address:
           {{ confirmedAddress }}</v-card-text
         >
-        <v-row no-gutters justify="center">
+        <v-row no-gutters>
           <v-sheet v-if="isSponsor && !preview" color="blue-grey darken-1">
             <v-form ref="form" v-model="valid" lazy-validation>
               <v-card-text>
@@ -52,12 +52,47 @@
                   color="grey lighten-3"
                 ></v-select>
               </v-card-text>
+              <v-divider />
+              <v-card-text>
+                <v-card-title>Past Promotions</v-card-title>
+              </v-card-text>
+              <v-simple-table dark>
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th>Promotion</th>
+                      <th>Offered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in ps" :key="item.promoText">
+                      <td>{{ item.promoText }}</td>
+                      <td>{{ item.visitedOn }}</td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+              <v-treeview
+                v-model="tree"
+                :items="items"
+                :search="search"
+                :filter="filter"
+                selectable
+                open-all
+                open-on-click
+                return-object
+                dense
+                dark
+                selected-color="green darken-1"
+                color="green lighten-1"
+              >
+              </v-treeview>
               <v-card-text>
                 <!-- Promotion Text -->
                 <v-textarea
                   v-model="promoText"
                   lines="4"
-                  label="Promotion Message"
+                  label="New Promotion Message"
                   color="grey lighten-3"
                   dark
                 ></v-textarea>
@@ -225,6 +260,12 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    enticements() {
+      const x = this.ps.map((v) => {
+        return `Promotion: ${v.promoText}\tOffered: ${v.visitedOn} `;
+      });
+      return x.join('\n');
+    },
     isValid() {
       return this.business && this.address && this.country;
     },
@@ -276,6 +317,8 @@ export default {
 
   data() {
     return {
+      tree: [],
+      items: [],
       colors: [
         'indigo',
         'warning',
@@ -283,6 +326,7 @@ export default {
         'red lighten-1',
         'deep-purple accent-4',
       ],
+      ps: [],
       promos: [],
       promotions: '',
       promoText: '',
@@ -350,7 +394,7 @@ export default {
       this.emitFromClient(
         'promote',
         { confirmedAddress, biz, country, promoText, sid },
-        (ack) => alert(`Promotion ID: ${ack}`)
+        () => this.getPromos()
       );
     },
 
@@ -399,6 +443,7 @@ export default {
           this.promos.push(`At ${p[1]}<p class="pt-3">${p[3]}</p>`);
         });
       });
+      console.log([...promosMap]);
     },
 
     earnTokens() {
@@ -453,6 +498,18 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+    getPromos() {
+      const biz = this.business;
+      const country = this.country;
+      this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+        console.log(
+          'Sponsor.vue promos for',
+          'biz:',
+          JSON.stringify(promos, null, 2)
+        );
+        this.ps = promos;
+      });
+    },
   }, // end of Methods
 
   watch: {
@@ -479,16 +536,7 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
     }
-    const biz = this.business;
-    const country = this.country;
-    this.emitFromClient('getPromotions', { biz, country }, (promos) => {
-      console.log(
-        'Sponsor.vue promos for',
-        'biz:',
-        JSON.stringify(promos, null, 2)
-      );
-      this.promotions = promos;
-    });
+    this.getPromos();
 
     console.log('SPONSOR mounted');
   },
