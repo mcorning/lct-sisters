@@ -51,7 +51,7 @@
                     dark
                     hide-details
                     class="text-caption"
-                    label="Case sensitive"
+                    append-icon="mdi-case-sensitive-alt"
                   ></v-checkbox>
                 </v-row>
               </v-card-text>
@@ -90,7 +90,15 @@
             </v-card>
           </v-col></v-row
         >
-        <v-card-text class="text-h5">Enticements</v-card-text>
+        <v-row dense
+          ><v-col>
+            <v-card-text class="text-h5">Enticements</v-card-text>
+          </v-col>
+
+          <v-col>
+            <v-checkbox v-model="annoyed" label="Those colors annoy me" />
+          </v-col>
+        </v-row>
 
         <v-carousel
           cycle
@@ -102,7 +110,7 @@
           <v-carousel-item v-for="(promo, i) in promos" :key="i">
             <v-sheet dark :color="colors[i]" height="100%">
               <v-row class="fill-height" align="center" justify="center">
-                <v-card-text v-html="promo"></v-card-text>
+                <v-card-text class="text-center" v-html="promo"></v-card-text>
               </v-row>
             </v-sheet>
           </v-carousel-item>
@@ -149,6 +157,9 @@ export default {
     VueQRCodeComponent,
   },
   computed: {
+    colors() {
+      return this.annoyed ? ['black'] : this.defaultColors;
+    },
     filter() {
       return this.caseSensitive
         ? (item, search, textKey) => item[textKey].indexOf(search) > -1
@@ -184,11 +195,12 @@ export default {
 
   data() {
     return {
+      annoyed: false,
       activeNodes: [],
       tree: [],
       search: null,
       caseSensitive: false,
-      colors: [
+      defaultColors: [
         'indigo',
         'warning',
         'pink darken-2',
@@ -340,18 +352,15 @@ export default {
       });
     },
     renderPromos() {
-      if (!this.promotions) {
-        return;
-      }
-      const promosMap = new Map(this.promotions);
-      promosMap.forEach((promo) => {
-        const promoMap = new Map(promo);
-        promoMap.forEach((p) => {
-          this.promos.push(
-            `<h4>At ${p[1]}</h4><p class="text-subtitle-2 pt-3">${p[3]}</p>`
-          );
-        });
-      });
+      console.log('this.promotions.length :>> ', this.promotions.length);
+      this.promos = this.promotions.length
+        ? this.promotions.map(
+            (v) =>
+              `<h3>At ${v.business}</h3><p class="text-subtitle-2 pt-3">${v.promoText}</p>`
+          )
+        : [
+            `<h3>No enticements from ${this.tree[0].biz} at this time.</h3> Try again, later...`,
+          ];
     },
   }, // end of Methods
 
@@ -366,10 +375,6 @@ export default {
       this.getPromos(n[0].biz);
     },
     promotions(val) {
-      if (isEmpty(val)) {
-        console.log(`No promotions yet from ${this.tree[0].name}`);
-        return;
-      }
       this.renderPromos(val);
     },
   },

@@ -79,12 +79,11 @@ function getPromotions({ biz, country }) {
   const bizPath = biz.trim().replace(/ /g, '_');
   const key = `promotions:${bizPath}`;
 
-  console.log(
-    `getPromotions (in country ${country}): XREAD STREAMS ${key}, '0'`
-  );
+  console.log(`getPromotions (in country ${country}): XREAD STREAMS ${key} 0`);
   return redis
-    .xread(['STREAMS', key, '0'])
-    .then((stream) => objectFromStream(stream));
+    .xread('STREAMS', key, '0')
+    .then((stream) => objectFromStream(stream))
+    .catch((e) => e);
 }
 
 const getWarnings = () => {
