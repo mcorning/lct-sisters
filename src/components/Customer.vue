@@ -29,6 +29,10 @@
         </v-row>
 
         <v-row
+          ><v-col> Sponsors: {{ activeSponsors }} </v-col>
+        </v-row>
+
+        <v-row
           ><v-col>
             <v-card
               v-model="rewardPoints"
@@ -195,6 +199,7 @@ export default {
 
   data() {
     return {
+      activeSponsors: [],
       annoyed: false,
       activeNodes: [],
       tree: [],
@@ -384,6 +389,11 @@ export default {
       this.onEarnReward();
     }
     this.onGetRewardPoints();
+    this.emitFromClient(
+      'getSponsors',
+      'usa',
+      (sponsors) => (this.activeSponsors = sponsors.join())
+    );
 
     console.log('CUSTOMER mounted');
   },

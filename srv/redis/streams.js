@@ -39,12 +39,23 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
     confirmedAddress
   );
 };
+const getSponsors = (country) => {
+  country = country.toLowerCase();
+  const key = `sponsors:${country}`;
+  return redis
+    .xread('STREAMS', key, 0)
+    .then((stream) => objectFromStream(stream))
+    .then((sponsors) => groupBy(sponsors, 'biz'))
+    .then((results) => Object.keys(results))
+    .catch((e) => e);
+};
 
 async function addPromotion({
   confirmedAddress,
   biz,
   country,
   promoText,
+  promotionalDays,
   sid,
 }) {
   if (typeof biz !== 'string') {
@@ -64,7 +75,18 @@ async function addPromotion({
   const key = `promotions:${bizPath}`;
   console.log('addPromotion() key:', key);
   return redis
-    .xadd(key, '*', 'business', biz, 'promoText', promoText, 'sid', sid)
+    .xadd(
+      key,
+      '*',
+      'business',
+      biz,
+      'promoText',
+      promoText,
+      'expires',
+      promotionalDays,
+      'sid',
+      sid
+    )
     .then((newSid) => {
       console.log(`XREAD STREAMS ${key} ${newSid}`);
       // TODO RESEARCH: why can't i get XREAD to work with the newSid?
@@ -91,7 +113,8 @@ const getWarnings = () => {
   return redis
     .xread('STREAMS', channel, '0')
     .then((stream) => objectFromStream(stream))
-    .then((alerts) => groupBy(alerts, 'place_id'));
+    .then((alerts) => groupBy(alerts, 'place_id'))
+    .catch((e) => e);
 };
 
 const addWarnings = ({ visitData, score, reliability }) => {
@@ -183,7 +206,8 @@ function groupRewardPoints({ bid, uid }, lastID = 0) {
     .xread(['STREAMS', customerStream, lastID])
     .then((stream) => objectFromStream(stream, 'bid'))
     .then((visits) => groupBy(visits, 'bid'))
-    .then((groupedVisits) => getVisitsFor(groupedVisits));
+    .then((groupedVisits) => getVisitsFor(groupedVisits))
+    .catch((e) => e);
 }
 
 async function earnReward({ bid, uid, lastID = 0 }) {
@@ -200,6 +224,7 @@ async function earnReward({ bid, uid, lastID = 0 }) {
 
 module.exports = {
   addSponsor,
+  getSponsors,
   addPromotion,
   getPromotions,
   addVisit,

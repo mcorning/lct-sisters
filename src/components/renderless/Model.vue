@@ -380,6 +380,7 @@ export default {
     },
     getAlerts() {
       this.getWarnings().then((alerts) => {
+        // alerts is an object of warning objects
         if (isEmpty(alerts)) {
           alert('Whew. No evidence of exposure.');
           return null;
@@ -388,17 +389,20 @@ export default {
         const workplace = this.state.settings.workplace;
         console.log('workplace:>> ', workplace);
         console.log('Alerts:>>', printJson(alerts));
-        const score = alerts[0].score;
-        const reliability = alerts[0].reliability;
-        this.riskScore = { score, reliability };
-        const test = alerts.map((v) => {
-          console.log('place_id :>> ', v.place_id);
-          console.log('atWork :>> ', v.place_id === workplace);
+        Object.entries(alerts).forEach(([key, value]) => {
+          if (key === workplace) {
+            console.log('value[0] :>> ', value[0]);
+            const score = value[0].score;
+            const reliability = value[0].reliability;
+            this.riskScore = { score, reliability };
+            alert(
+              `You have been exposed to COVID 19 at work ${
+                value.length
+              } times. \nTypical risk profile:\n${printJson(this.riskScore)}`
+            );
+          }
         });
-        const atWork = (element) => element.find(place_id === workplace);
-        if (alerts.find(atWork)) {
-          alert('You have been exposed to COVID 19 at work');
-        }
+
         // check for public exposure
       });
     },

@@ -59,6 +59,7 @@ const {
 // experimental. not used as of 12.13.21
 const {
   addSponsor,
+  getSponsors,
   addPromotion,
   getPromotions,
   enterLottery,
@@ -69,6 +70,7 @@ const {
   addVisit,
   getVisits,
 } = require('./redis/streams');
+
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/json');
@@ -179,19 +181,29 @@ io.on('connection', (socket) => {
   //#region STREAM handlers
   socket.on(
     'promote',
-    ({ confirmedAddress, biz, country, promoText, sid }, ack) => {
-      console.log(`promote(${biz} (${confirmedAddress}), ${promoText}`);
-      addPromotion({ confirmedAddress, biz, country, promoText, sid }).then(
-        (newPromo) => {
-          if (ack) {
-            ack(newPromo);
-          }
-          // let everybody online now see the new promo
-          const msg = `A new enticement from ${biz}:\n${promoText}`;
-          console.log(`newPromotion, ${msg}`);
-          socket.broadcast.emit('newPromotion', msg);
-        }
+    (
+      { confirmedAddress, biz, country, promoText, promotionalDays, sid },
+      ack
+    ) => {
+      console.log(
+        `promote(${biz} (${confirmedAddress}), ${promoText}, ${promotionalDays}`
       );
+      addPromotion({
+        confirmedAddress,
+        biz,
+        country,
+        promoText,
+        promotionalDays,
+        sid,
+      }).then((newPromo) => {
+        if (ack) {
+          ack(newPromo);
+        }
+        // let everybody online now see the new promo
+        const msg = `A new enticement from ${biz}:\n${promoText}`;
+        console.log(`newPromotion, ${msg}`);
+        socket.broadcast.emit('newPromotion', msg);
+      });
     }
   );
 
@@ -272,6 +284,14 @@ io.on('connection', (socket) => {
       );
     }
   );
+  socket.on('getSponsors', (country, ack) => {
+    console.log(`getSponsors(${country})`);
+    getSponsors(country).then((sponsors) => {
+      if (ack) {
+        ack(sponsors);
+      }
+    });
+  });
 
   socket.on('addVisit', ({ sid, uid }, ack) => {
     console.log({ sid, uid });

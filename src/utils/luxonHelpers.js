@@ -123,6 +123,12 @@ const userSince = (then) => {
 const formatVisitedDate = (date) =>
   DateTime.fromISO(date).toFormat(visitFormat);
 
+const formatDate = (time = Date.now()) => {
+  const x = DateTime.fromMillis(time).toLocaleString(DateTime.DATE_MED);
+  // console.log('formatDate:>', x);
+  return x;
+};
+
 const formatTime = (time = Date.now()) =>
   DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_SHORT);
 
@@ -243,6 +249,7 @@ module.exports = {
   isBetween,
   isTomorrow,
   isYesterday,
+  formatDate,
   formatSmallTime,
   formatSmallTimeBare,
   formatTime,

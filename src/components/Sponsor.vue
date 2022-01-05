@@ -52,64 +52,6 @@
                   color="grey lighten-3"
                 ></v-select>
               </v-card-text>
-              <v-divider />
-              <v-card-text>
-                <v-card-title>Past Promotions</v-card-title>
-              </v-card-text>
-              <v-simple-table dark>
-                <template v-slot:default>
-                  <thead>
-                    <tr>
-                      <th>Promotion</th>
-                      <th>Offered</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="item in ps" :key="item.promoText">
-                      <td>{{ item.promoText }}</td>
-                      <td>{{ item.visitedOn }}</td>
-                    </tr>
-                  </tbody>
-                </template>
-              </v-simple-table>
-              <v-treeview
-                v-model="tree"
-                :items="items"
-                :search="search"
-                :filter="filter"
-                selectable
-                open-all
-                open-on-click
-                return-object
-                dense
-                dark
-                selected-color="green darken-1"
-                color="green lighten-1"
-              >
-              </v-treeview>
-              <v-card-text>
-                <!-- Promotion Text -->
-                <v-textarea
-                  v-model="promoText"
-                  lines="4"
-                  label="New Promotion Message"
-                  color="grey lighten-3"
-                  dark
-                ></v-textarea>
-                <v-checkbox v-model="agreement" dark required>
-                  <template v-slot:label>
-                    I agree to the&nbsp;
-                    <a href="#" @click.stop.prevent="dialog = true"
-                      >Terms of Service</a
-                    >
-                    &nbsp;and&nbsp;
-                    <a href="#" @click.stop.prevent="dialog = true"
-                      >Privacy Policy</a
-                    >*
-                  </template>
-                </v-checkbox></v-card-text
-              >
-              <!-- buttons -->
               <v-sheet color="black">
                 <v-card-actions>
                   <v-btn
@@ -130,6 +72,68 @@
                   >
                     Clear
                   </v-btn>
+                </v-card-actions>
+              </v-sheet>
+
+              <v-divider />
+
+              <v-card dark color="blue-grey darken-1">
+                <v-card-title>{{ sponsorName }} Promotions</v-card-title>
+                <v-card-subtitle>
+                  <v-checkbox
+                    model="showAll"
+                    label="Include all past promotions"
+                  ></v-checkbox>
+                </v-card-subtitle>
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th bgcolor="grey">Promotion</th>
+                        <th bgcolor="grey">Expires</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in ps" :key="item.promoText">
+                        <td style="text-align:left;">{{ item.promoText }}</td>
+                        <td style="text-align:left;">{{ item.expires }}</td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+                <v-card-text>
+                  <!-- Promotion Text -->
+                  <v-textarea
+                    v-model="promoText"
+                    lines="4"
+                    label="New Promotion Message"
+                    color="grey lighten-3"
+                    dark
+                    outlined
+                  ></v-textarea>
+                  <v-text-field
+                    v-model="promotionalDays"
+                    label="Offer expires"
+                    placeholder="(Days)"
+                  />
+                </v-card-text>
+              </v-card>
+              <v-checkbox v-model="agreement" dark required>
+                <template v-slot:label>
+                  I agree to the&nbsp;
+                  <a href="#" @click.stop.prevent="dialog = true"
+                    >Terms of Service</a
+                  >
+                  &nbsp;and&nbsp;
+                  <a href="#" @click.stop.prevent="dialog = true"
+                    >Privacy Policy</a
+                  >*
+                </template>
+              </v-checkbox>
+
+              <!-- buttons -->
+              <v-sheet color="black">
+                <v-card-actions>
                   <v-spacer />
                   <v-btn
                     :disabled="!promoText"
@@ -317,6 +321,8 @@ export default {
 
   data() {
     return {
+      promotionalDays: 7,
+      showAll: false,
       tree: [],
       items: [],
       colors: [
@@ -391,9 +397,10 @@ export default {
       const biz = this.sponsorName;
       const country = this.country;
       const confirmedAddress = this.confirmedAddress;
+      const promotionalDays = this.promotionalDays;
       this.emitFromClient(
         'promote',
-        { confirmedAddress, biz, country, promoText, sid },
+        { confirmedAddress, biz, country, promoText, promotionalDays, sid },
         () => this.getPromos()
       );
     },

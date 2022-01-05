@@ -1,20 +1,13 @@
-<template>
-  <v-row dense>
-    <v-col>
-      <mailToCard />
-    </v-col>
-  </v-row>
-</template>
+<testVue/>
 
 <script>
-import mailToCard from '../components/misc/mailToCard';
+import testVue from '../components/misc/autocomplete';
 export default {
   components: {
-    mailToCard,
+    testVue,
   },
   data() {
     return {
-      key: [['Gathering', [['1639100997131-0', ['uid', 'ed8de5f32d6d1bff']]]]],
     };
   },
 };
