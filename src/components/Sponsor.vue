@@ -302,14 +302,6 @@ export default {
       return !this.$route.params.id;
     },
 
-    newSponsor() {
-      return !this.isSponsor && !this.sponsorID;
-    },
-    welcome() {
-      return this.isSponsor
-        ? 'Welcome to Universal TQR Loyalty Tracking'
-        : `Welcome to the ${this.$route.params.id} Community`;
-    },
     message() {
       return 'Fill in the form. Confirm your address. Print your QR.';
     },

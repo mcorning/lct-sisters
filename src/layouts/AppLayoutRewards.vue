@@ -1,6 +1,9 @@
 <template>
   <sponsor v-if="isSponsor" :isConnected="isConnected" :state="state" />
-  <customer v-else :isConnected="isConnected" :state="state" />
+  <customer
+    v-else
+    :isConnected="isConnected"
+  />
 </template>
 
 <script>
@@ -23,15 +26,10 @@ export default {
     },
   },
   data() {
-    return {};
+    return {
+    };
   },
   sockets: {
-    newPromotion(msg) {
-      if (this.$route.name !== 'Sponsor') {
-        alert(msg);
-      }
-    },
-
     confirmRewardEntry({ bid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
       this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;
@@ -137,9 +135,12 @@ export default {
       return msg;
     },
   },
+  watch: {
+
+  },
   mounted() {
     console.log(this.connectMe());
-    console.log('Mounted');
+    console.log('/tMounted');
   },
 };
 </script>

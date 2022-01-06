@@ -15,7 +15,7 @@ import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 import { redisMixin } from '@/js/redis';
 
-import { success, printJson, isEmpty } from '@/utils/helpers';
+import { success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
 
@@ -381,10 +381,10 @@ export default {
     getAlerts() {
       this.getWarnings().then((alerts) => {
         // alerts is an object of warning objects
-        if (isEmpty(alerts)) {
-          alert('Whew. No evidence of exposure.');
-          return null;
-        }
+        // if (isEmpty(alerts)) {
+        //   alert('Whew. No evidence of exposure.');
+        //   return null;
+        // }
         // check for workplace exposure
         const workplace = this.state.settings.workplace;
         console.log('workplace:>> ', workplace);

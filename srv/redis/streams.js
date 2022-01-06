@@ -40,6 +40,9 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
   );
 };
 const getSponsors = (country) => {
+    if (typeof country !== 'string') {
+      return null;
+    }
   country = country.toLowerCase();
   const key = `sponsors:${country}`;
   return redis

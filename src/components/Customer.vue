@@ -29,7 +29,17 @@
         </v-row>
 
         <v-row
-          ><v-col> Sponsors: {{ activeSponsors }} </v-col>
+          ><v-col>
+            <v-card color="blue-grey darken-3" class="mx-auto" dark>
+              <v-card-title>Active Sponsors: </v-card-title>
+              <v-select
+                v-model="selectedSponsor"
+                :items="activeSponsors"
+                label="Select a Sponsor to see Promotions"
+                outlined
+              ></v-select>
+            </v-card>
+          </v-col>
         </v-row>
 
         <v-row
@@ -38,7 +48,9 @@
               v-model="rewardPoints"
               color="blue-grey darken-3"
               class="mx-auto"
+              dark
             >
+              <v-card-title>TQR Rewards</v-card-title>
               <v-card-text>
                 <v-row>
                   <v-text-field
@@ -94,31 +106,40 @@
             </v-card>
           </v-col></v-row
         >
-        <v-row dense
-          ><v-col>
-            <v-card-text class="text-h5">Enticements</v-card-text>
-          </v-col>
-
+        <v-row>
           <v-col>
-            <v-checkbox v-model="annoyed" label="Those colors annoy me" />
+            <v-card color="blue-grey darken-3" class="mx-auto" dark>
+              <v-row>
+                <v-col>
+                  <v-card-title>Enticements</v-card-title>
+                </v-col>
+
+                <v-col>
+                  <v-checkbox v-model="annoyed" label="Those colors annoy me" />
+                </v-col>
+              </v-row>
+
+              <v-carousel
+                cycle
+                height="200"
+                hide-delimiter-background
+                show-arrows-on-hover
+                dark
+              >
+                <v-carousel-item v-for="(promo, i) in promos" :key="i">
+                  <v-sheet dark :color="colors[i]" height="100%">
+                    <v-row class="fill-height" align="center" justify="center">
+                      <v-card-text
+                        class="text-center"
+                        v-html="promo"
+                      ></v-card-text>
+                    </v-row>
+                  </v-sheet>
+                </v-carousel-item>
+              </v-carousel>
+            </v-card>
           </v-col>
         </v-row>
-
-        <v-carousel
-          cycle
-          height="200"
-          hide-delimiter-background
-          show-arrows-on-hover
-          dark
-        >
-          <v-carousel-item v-for="(promo, i) in promos" :key="i">
-            <v-sheet dark :color="colors[i]" height="100%">
-              <v-row class="fill-height" align="center" justify="center">
-                <v-card-text class="text-center" v-html="promo"></v-card-text>
-              </v-row>
-            </v-sheet>
-          </v-carousel-item>
-        </v-carousel>
       </v-container>
     </v-sheet>
 
@@ -182,12 +203,6 @@ export default {
       return `${window.location.origin}/sponsor/${b}`;
     },
 
-    welcome() {
-      return this.isSponsor
-        ? 'Welcome to Universal TQR Loyalty Tracking'
-        : `Welcome to the ${this.$route.params.id} Community`;
-    },
-
     options() {
       return {
         duration: this.duration,
@@ -199,6 +214,7 @@ export default {
 
   data() {
     return {
+      selectedSponsor: '',
       activeSponsors: [],
       annoyed: false,
       activeNodes: [],
@@ -266,11 +282,47 @@ export default {
       items: [],
     };
   },
+  sockets: {
+    newPromotion(msg) {
+      if (confirm(msg)) {
+        const visits = [
+          [
+            'Fika_Coffeehouse',
+            [
+              {
+                bid: 'Fika_Coffeehouse',
+                visitedOn: '1/5/2022, 11:57 PM',
+                dated: 'Jan 5, 2022',
+              },
+            ],
+          ],
+        ];
+
+        this.items = visits.map((visit, i) => {
+          const biz = visit[0].replace(/_/g, ' ');
+          return {
+            id: i,
+            name: biz,
+            children: visit[1].map((v, idx) => {
+              return {
+                id: `${i}.${idx}`,
+                name: v.visitedOn,
+                biz,
+              };
+            }),
+          };
+        });
+      }
+    },
+  },
 
   methods: {
     onGetRewardPoints() {
       const uid = this.$socket.client.auth.userID;
       this.getRewardPoints({ bid: '', uid }).then((visits) => {
+        if (isEmpty(visits)) {
+          return;
+        }
         console.log('Visits:>>', printJson(visits));
         this.items = visits.map((visit, i) => {
           const biz = visit[0].replace(/_/g, ' ');
@@ -370,6 +422,9 @@ export default {
   }, // end of Methods
 
   watch: {
+    selectedSponsor(sponsor) {
+      this.getPromos(sponsor);
+    },
     tree(n, o) {
       if (isEmpty(n)) {
         this.promos = [];
@@ -392,9 +447,8 @@ export default {
     this.emitFromClient(
       'getSponsors',
       'usa',
-      (sponsors) => (this.activeSponsors = sponsors.join())
+      (sponsors) => (this.activeSponsors = sponsors)
     );
-
     console.log('CUSTOMER mounted');
   },
 };
