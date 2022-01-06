@@ -28,7 +28,7 @@ const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
     const visitedOn = getTimeFromSid(entry[0]);
     const dated = getDateFromSid(entry[0]);
-    console.log('expires :>> ', expires);
+    console.log('expires :>> ', dated);
     if (i % 2 === 0) {
       a[c] = pairs[i + 1];
       a.visitedOn = visitedOn;

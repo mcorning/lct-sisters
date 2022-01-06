@@ -52,6 +52,18 @@
                   color="grey lighten-3"
                 ></v-select>
               </v-card-text>
+              <v-checkbox v-model="agreement" dark required>
+                <template v-slot:label>
+                  I agree to the&nbsp;
+                  <a href="#" @click.stop.prevent="dialog = true"
+                    >Terms of Service</a
+                  >
+                  &nbsp;and&nbsp;
+                  <a href="#" @click.stop.prevent="dialog = true"
+                    >Privacy Policy</a
+                  >*
+                </template>
+              </v-checkbox>
               <v-sheet color="black">
                 <v-card-actions>
                   <v-btn
@@ -90,13 +102,17 @@
                     <thead>
                       <tr>
                         <th bgcolor="grey">Promotion</th>
-                        <th bgcolor="grey">Expires</th>
+                        <th bgcolor="grey">From</th>
+                        <th bgcolor="grey">For</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="item in ps" :key="item.promoText">
-                        <td style="text-align:left;">{{ item.promoText }}</td>
-                        <td style="text-align:left;">{{ item.expires }}</td>
+                        <td style="text-align: left">{{ item.promoText }}</td>
+                        <td style="text-align: left">{{ item.dated }}</td>
+                        <td style="text-align: left">
+                          {{ item.expires }} days
+                        </td>
                       </tr>
                     </tbody>
                   </template>
@@ -118,18 +134,6 @@
                   />
                 </v-card-text>
               </v-card>
-              <v-checkbox v-model="agreement" dark required>
-                <template v-slot:label>
-                  I agree to the&nbsp;
-                  <a href="#" @click.stop.prevent="dialog = true"
-                    >Terms of Service</a
-                  >
-                  &nbsp;and&nbsp;
-                  <a href="#" @click.stop.prevent="dialog = true"
-                    >Privacy Policy</a
-                  >*
-                </template>
-              </v-checkbox>
 
               <!-- buttons -->
               <v-sheet color="black">
