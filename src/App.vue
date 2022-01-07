@@ -8,29 +8,31 @@
       >
     </v-overlay>
     <!-- PWA snackbar -->
-    <v-snackbar
-      v-model="snackWithButtons"
-      bottom
-      left
-      timeout="-1"
-      height="100px"
-    >
-      {{ snackWithBtnText }}
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          v-if="snackBtnText"
-          text
-          color="#00f500"
-          v-bind="attrs"
-          @click.stop="refreshApp"
-        >
-          {{ snackBtnText }}
-        </v-btn>
-        <v-btn icon class="ml-4" @click="snackWithButtons = false">
-          <v-icon>close</v-icon>
-        </v-btn>
-      </template>
-    </v-snackbar>
+    <!-- <div v-if="snackWithButtons"> -->
+      <v-snackbar
+        v-model="snackWithButtons"
+        bottom
+        left
+        timeout="-1"
+        height="100px"
+      >
+        {{ snackWithBtnText }}
+        <template v-slot:action="{ attrs }">
+          <v-btn
+            v-if="snackBtnText"
+            text
+            color="#00f500"
+            v-bind="attrs"
+            @click.stop="refreshApp"
+          >
+            {{ snackBtnText }}
+          </v-btn>
+          <v-btn icon class="ml-4" @click="snackWithButtons = false">
+            <v-icon>close</v-icon>
+          </v-btn>
+        </template>
+      </v-snackbar>
+    <!-- </div> -->
     <!-- End PWA snackbar -->
     <!-- NOTE: ApplyLayout is configured in main.js -->
     <AppLayout>
@@ -137,8 +139,12 @@ export default {
   },
 
   mounted() {
-    console.log('Incoming querystring:', this.$route.query);
+    console.log(
+      'Incoming querystring:',
+      JSON.stringify(this.$route.query, null, 2)
+    );
     this.overlay = false;
+    console.log('snackWithButtons :>> ', this.snackWithButtons);
     console.log('\tAPP mounted');
   },
 

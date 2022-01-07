@@ -104,7 +104,7 @@ export default {
   },
   computed: {
     icon() {
-      return this.$parent.confirmationIcon; // this.approveString ? 'check' : 'close';
+      return this.$parent.confirmationIcon; 
     },
   },
   data() {

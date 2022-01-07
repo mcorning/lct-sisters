@@ -277,7 +277,6 @@ io.on('connection', (socket) => {
       addSponsor({ biz, address, country, uid, confirmedAddress }).then(
         (sid) => {
           if (ack) {
-            // const pid = addPromotion({ biz, country, promoText, sid });
             ack({ sid });
           }
         }

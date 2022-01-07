@@ -21,7 +21,7 @@
               ref="qr"
               :text="$socket.client.auth.userID"
               error-level="L"
-              size="128"
+              :size="128"
             >
             </VueQRCodeComponent>
             <span class="text-caption">{{ $socket.client.auth.userID }}</span>
@@ -139,6 +139,23 @@
             </v-card>
           </v-col>
         </v-row>
+
+        <!-- Footer card -->
+        <v-row no-gutters justify="space-between">
+          <v-col cols="3">
+            <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
+          </v-col>
+          <v-spacer />
+          <v-col cols="auto">
+            <span class="text-caption">{{ decodedUri }}</span></v-col
+          >
+          <v-spacer />
+          <v-col cols="2">
+            <v-icon
+              >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+            </v-icon>
+          </v-col>
+        </v-row>
       </v-container>
     </v-sheet>
 
@@ -151,24 +168,6 @@
       :confirmationIcon="local_offer"
       @disapprove="closeSnackbar"
     />
-    <!-- Footer card -->
-    <v-card flat max-width="500">
-      <v-card-text>
-        <v-row align="center" justify="space-between"
-          ><v-col cols="10">
-            <span class="text-caption text-left">
-              TQR Version: {{ $version }}</span
-            ></v-col
-          >
-          <v-spacer />
-          <v-col cols="2" align-self="end">
-            <v-icon right
-              >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-            </v-icon></v-col
-          ></v-row
-        >
-      </v-card-text>
-    </v-card>
   </v-container>
 </template>
 

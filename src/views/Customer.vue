@@ -2,12 +2,10 @@
   <Model @error="onError">
     <div slot-scope="{ state, earnReward, getRewardPoints, isConnected }">
       <Customer
-        :updateSponsor="updateSponsor"
         :state="state"
         :getRewardPoints="getRewardPoints"
         :earnReward="earnReward"
         :isConnected="isConnected"
-        :promptSponsor="promptSponsor"
       />
     </div>
   </Model>
@@ -19,16 +17,13 @@ import Customer from '@/components/Customer.vue';
 
 export default {
   name: 'CustomerView',
-  props: {
-
-  },
+  props: {},
   components: {
     Model,
     Customer,
   },
   data() {
-    return {
-    };
+    return {};
   },
   methods: {
     onError(error) {
@@ -37,9 +32,7 @@ export default {
       throw error;
     },
   },
-  watch: {
-
-  },
+  watch: {},
   mounted() {
     console.log(this.$route.query);
   },

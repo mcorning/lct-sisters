@@ -4,11 +4,11 @@
       class="overflow-x:hidden fill-height"
       outlined
       color="grey lighten-1"
-      max-width="500"
+      max-width="600"
     >
-      <v-container v-if="!printingCard" fluid class="fill-height text-center">
+      <v-container v-if="!printingCard" fluid class="fill-height">
         <!-- Header -->
-        <v-row justify="space-between">
+        <v-row no-gutters align="center" justify="center">
           <v-col>
             <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
 
@@ -18,13 +18,14 @@
               {{ confirmedAddress }}</v-card-text
             >
           </v-col>
-          <v-col cols="auto" class="text-right">
+          <v-col cols="auto">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
               :text="decodedUri"
               error-level="L"
-              size="128"
+              :size="128"
+              class="ml-5"
             >
             </VueQRCodeComponent>
             <v-btn text color="primary" plain @click="printingCard = true"
@@ -35,88 +36,90 @@
 
         <!-- Sponsor Registration Form -->
         <v-row justify="center">
-          <v-card color="blue-grey darken-1" dark>
-            <v-card-title>Sponsor Registration Form</v-card-title>
-            <v-form ref="form" v-model="valid" lazy-validation>
-              <v-card-text>
-                <v-text-field
-                  v-model="business"
-                  :counter="nameMaxLength"
-                  :rules="nameRules"
-                  label="Your business name"
-                  required
-                  clearable
-                  dark
-                  color="grey lighten-3"
-                ></v-text-field>
-                <v-text-field
-                  v-model="address"
-                  :counter="addressMaxLength"
-                  :rules="addressRules"
-                  label="Your business address"
-                  placeholder="Minimum: City [State]"
-                  required
-                  clearable
-                  dark
-                  color="grey lighten-3"
-                ></v-text-field>
-                <v-select
-                  v-model="country"
-                  :items="countries"
-                  :rules="[(v) => !!v || 'Country is required']"
-                  label="Country"
-                  hint="To help validate your address, select a Country"
-                  persistent-hint
-                  required
-                  dark
-                  color="grey lighten-3"
-                ></v-select>
-              </v-card-text>
-              <v-card-text>
-                <v-checkbox v-model="agreement" dark required>
-                  <template v-slot:label>
-                    I agree to the&nbsp;
-                    <a href="#" @click.stop.prevent="dialog = true"
-                      >Terms of Service</a
+          <v-col cols="12">
+            <v-card color="blue-grey darken-1" dark>
+              <v-card-title>Sponsor Registration Form</v-card-title>
+              <v-form ref="form" v-model="valid" lazy-validation>
+                <v-card-text>
+                  <v-text-field
+                    v-model="business"
+                    :counter="nameMaxLength"
+                    :rules="nameRules"
+                    label="Your business name"
+                    required
+                    clearable
+                    dark
+                    color="grey lighten-3"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="address"
+                    :counter="addressMaxLength"
+                    :rules="addressRules"
+                    label="Your business address"
+                    placeholder="Minimum: City [State]"
+                    required
+                    clearable
+                    dark
+                    color="grey lighten-3"
+                  ></v-text-field>
+                  <v-select
+                    v-model="country"
+                    :items="countries"
+                    :rules="[(v) => !!v || 'Country is required']"
+                    label="Country"
+                    hint="To help validate your address, select a Country"
+                    persistent-hint
+                    required
+                    dark
+                    color="grey lighten-3"
+                  ></v-select>
+                </v-card-text>
+                <v-card-text>
+                  <v-checkbox v-model="agreement" dark required>
+                    <template v-slot:label>
+                      I agree to the&nbsp;
+                      <a href="#" @click.stop.prevent="dialog = true"
+                        >Terms of Service</a
+                      >
+                      &nbsp;and&nbsp;
+                      <a href="#" @click.stop.prevent="dialog = true"
+                        >Privacy Policy</a
+                      >*
+                    </template>
+                  </v-checkbox>
+                </v-card-text>
+                <v-sheet color="black">
+                  <v-card-actions>
+                    <v-btn
+                      text
+                      :disabled="!isValid"
+                      color="yellow"
+                      class="mr-4"
+                      @click="getPlaceID"
                     >
-                    &nbsp;and&nbsp;
-                    <a href="#" @click.stop.prevent="dialog = true"
-                      >Privacy Policy</a
-                    >*
-                  </template>
-                </v-checkbox>
-              </v-card-text>
-              <v-sheet color="black">
-                <v-card-actions>
-                  <v-btn
-                    text
-                    :disabled="!isValid"
-                    color="yellow"
-                    class="mr-4"
-                    @click="getPlaceID"
-                  >
-                    Confirm
-                  </v-btn>
-                  <v-spacer />
-                  <v-btn
-                    text
-                    color="blue  lighten-3"
-                    class="mr-4"
-                    @click="reset"
-                  >
-                    Clear
-                  </v-btn>
-                </v-card-actions>
-              </v-sheet>
-            </v-form>
-          </v-card>
+                      Confirm
+                    </v-btn>
+                    <v-spacer />
+                    <v-btn
+                      text
+                      color="blue  lighten-3"
+                      class="mr-4"
+                      @click="reset"
+                    >
+                      Clear
+                    </v-btn>
+                  </v-card-actions>
+                </v-sheet>
+              </v-form>
+            </v-card>
+          </v-col>
         </v-row>
 
         <!-- Promotions -->
         <v-row>
           <v-col>
             <v-card dark color="blue-grey darken-1">
-              <v-card-title>{{ sponsorName }} Promotions</v-card-title>
+              <v-card-title>{{ business }} Promotions</v-card-title>
               <v-card-subtitle>
                 <v-checkbox
                   model="showAll"
@@ -127,9 +130,9 @@
                 <template v-slot:default>
                   <thead>
                     <tr>
-                      <th bgcolor="grey">Promotion</th>
-                      <th bgcolor="grey">From</th>
-                      <th bgcolor="grey">For</th>
+                      <th id="promo" style="bgcolor: grey">Promotion</th>
+                      <th id="from" style="bgcolor: grey">From</th>
+                      <th id="for" style="bgcolor: grey">For</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -178,23 +181,21 @@
         </v-row>
 
         <!-- Footer card -->
-        <v-card flat max-width="500">
-          <v-card-text>
-            <v-row align="center" justify="space-between"
-              ><v-col>
-                <span class="text-caption text-left">
-                  TQR Ver: {{ $version }}</span
-                ></v-col
-              >
-              <span class="text-caption">{{ decodedUri }}</span>
-              <v-col justify-self="end">
-                <v-icon right
-                  >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-                </v-icon></v-col
-              ></v-row
-            >
-          </v-card-text>
-        </v-card>
+        <v-row no-gutters justify="space-between">
+          <v-col cols="3">
+            <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
+          </v-col>
+          <v-spacer />
+          <v-col cols="auto">
+            <span class="text-caption">{{ decodedUri }}</span></v-col
+          >
+          <v-spacer />
+          <v-col cols="2">
+            <v-icon
+              >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+            </v-icon>
+          </v-col>
+        </v-row>
       </v-container>
 
       <v-card v-else>
