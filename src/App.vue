@@ -86,9 +86,9 @@ export default {
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
       console.log('Rendering Refesh snackbar');
-      this.$router.push({
-        name: 'Space',
-      });
+      // this.$router.push({
+      //   name: 'Space',
+      // });
       console.log('Pushed router to Space.vue');
     },
     showOfflineUI() {

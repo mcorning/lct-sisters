@@ -1,22 +1,42 @@
 <template>
   <v-container>
     <v-sheet
-      v-if="isSponsor"
       class="overflow-x:hidden fill-height"
       outlined
       color="grey lighten-1"
       max-width="500"
     >
-      <v-container fluid class="fill-height text-center">
-        <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
+      <v-container v-if="!printingCard" fluid class="fill-height text-center">
+        <!-- Header -->
+        <v-row justify="space-between">
+          <v-col>
+            <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
 
-        <v-card-subtitle v-html="message"> </v-card-subtitle>
-        <v-card-text class="text-caption">
-          Your Google Confirmed Address:
-          {{ confirmedAddress }}</v-card-text
-        >
-        <v-row no-gutters>
-          <v-sheet v-if="isSponsor && !preview" color="blue-grey darken-1">
+            <v-card-subtitle v-html="message"> </v-card-subtitle>
+            <v-card-text class="text-caption">
+              Your Google Confirmed Address:
+              {{ confirmedAddress }}</v-card-text
+            >
+          </v-col>
+          <v-col cols="auto" class="text-right">
+            <VueQRCodeComponent
+              id="qr"
+              ref="qr"
+              :text="decodedUri"
+              error-level="L"
+              size="128"
+            >
+            </VueQRCodeComponent>
+            <v-btn text color="primary" plain @click="printingCard = true"
+              >Preview QR Card</v-btn
+            >
+          </v-col>
+        </v-row>
+
+        <!-- Sponsor Registration Form -->
+        <v-row justify="center">
+          <v-card color="blue-grey darken-1" dark>
+            <v-card-title>Sponsor Registration Form</v-card-title>
             <v-form ref="form" v-model="valid" lazy-validation>
               <v-card-text>
                 <v-text-field
@@ -52,18 +72,20 @@
                   color="grey lighten-3"
                 ></v-select>
               </v-card-text>
-              <v-checkbox v-model="agreement" dark required>
-                <template v-slot:label>
-                  I agree to the&nbsp;
-                  <a href="#" @click.stop.prevent="dialog = true"
-                    >Terms of Service</a
-                  >
-                  &nbsp;and&nbsp;
-                  <a href="#" @click.stop.prevent="dialog = true"
-                    >Privacy Policy</a
-                  >*
-                </template>
-              </v-checkbox>
+              <v-card-text>
+                <v-checkbox v-model="agreement" dark required>
+                  <template v-slot:label>
+                    I agree to the&nbsp;
+                    <a href="#" @click.stop.prevent="dialog = true"
+                      >Terms of Service</a
+                    >
+                    &nbsp;and&nbsp;
+                    <a href="#" @click.stop.prevent="dialog = true"
+                      >Privacy Policy</a
+                    >*
+                  </template>
+                </v-checkbox>
+              </v-card-text>
               <v-sheet color="black">
                 <v-card-actions>
                   <v-btn
@@ -75,7 +97,7 @@
                   >
                     Confirm
                   </v-btn>
-
+                  <v-spacer />
                   <v-btn
                     text
                     color="blue  lighten-3"
@@ -86,169 +108,161 @@
                   </v-btn>
                 </v-card-actions>
               </v-sheet>
-
-              <v-divider />
-
-              <v-card dark color="blue-grey darken-1">
-                <v-card-title>{{ sponsorName }} Promotions</v-card-title>
-                <v-card-subtitle>
-                  <v-checkbox
-                    model="showAll"
-                    label="Include all past promotions"
-                  ></v-checkbox>
-                </v-card-subtitle>
-                <v-simple-table>
-                  <template v-slot:default>
-                    <thead>
-                      <tr>
-                        <th bgcolor="grey">Promotion</th>
-                        <th bgcolor="grey">From</th>
-                        <th bgcolor="grey">For</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="item in ps" :key="item.promoText">
-                        <td style="text-align: left">{{ item.promoText }}</td>
-                        <td style="text-align: left">{{ item.dated }}</td>
-                        <td style="text-align: left">
-                          {{ item.expires }} days
-                        </td>
-                      </tr>
-                    </tbody>
-                  </template>
-                </v-simple-table>
-                <v-card-text>
-                  <!-- Promotion Text -->
-                  <v-textarea
-                    v-model="promoText"
-                    lines="4"
-                    label="New Promotion Message"
-                    color="grey lighten-3"
-                    dark
-                    outlined
-                  ></v-textarea>
-                  <v-text-field
-                    v-model="promotionalDays"
-                    label="Offer expires"
-                    placeholder="(Days)"
-                  />
-                </v-card-text>
-              </v-card>
-
-              <!-- buttons -->
-              <v-sheet color="black">
-                <v-card-actions>
-                  <v-spacer />
-                  <v-btn
-                    :disabled="!promoText"
-                    text
-                    color="brown lighten-3"
-                    class="white--text mr-4"
-                    @click="promote"
-                  >
-                    Promote
-                  </v-btn>
-                </v-card-actions>
-                <v-dialog v-model="dialog" absolute max-width="400" persistent>
-                  <v-card>
-                    <v-card-title class="text-h5 grey lighten-3">
-                      Legal
-                    </v-card-title>
-                    <v-card-text>
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                      sed do eiusmod tempor incididunt ut labore et dolore magna
-                      aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                      ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                      Duis aute irure dolor in reprehenderit in voluptate velit
-                      esse cillum dolore eu fugiat nulla pariatur. Excepteur
-                      sint occaecat cupidatat non proident, sunt in culpa qui
-                      officia deserunt mollit anim id est laborum.
-                    </v-card-text>
-                    <v-divider></v-divider>
-                    <v-card-actions>
-                      <v-btn
-                        text
-                        @click="(agreement = false), (dialog = false)"
-                      >
-                        No
-                      </v-btn>
-                      <v-spacer></v-spacer>
-                      <v-btn
-                        class="white--text"
-                        color="deep-purple accent-4"
-                        @click="(agreement = true), (dialog = false)"
-                      >
-                        Yes
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
-              </v-sheet>
             </v-form>
-          </v-sheet>
-
-          <v-card-text v-if="printing">
-            <div id="targetDiv" ref="targetDiv" class="text-center">
-              <v-row align="top" justify="center">
-                <v-spacer />
-                <v-col cols="auto" class="text-center">
-                  <VueQRCodeComponent
-                    id="qr"
-                    ref="qr"
-                    :text="decodedUri"
-                    error-level="L"
-                  >
-                  </VueQRCodeComponent>
-                </v-col>
-                <v-spacer />
-              </v-row>
-            </div>
-          </v-card-text>
-
-          <v-card-actions v-if="printing">
-            <v-row>
-              <v-btn text color="primary" plain @click="stopPrint"
-                >Cancel</v-btn
-              >
-              <v-spacer />
-              <v-btn text color="primary" plain @click="printMe">Print</v-btn>
-            </v-row>
-          </v-card-actions>
-
-          <confirmation-snackbar
-            v-if="confSnackbar"
-            :centered="true"
-            :top="false"
-            :confirmationTitle="confirmationTitle"
-            :confirmationMessage="confirmationMessage"
-            :confirmationIcon="confirmationIcon"
-            :approveString="approveString"
-            :disapproveString="disapproveString"
-            @approved="onApproved"
-            @disapprove="confSnackbar = false"
-          />
+          </v-card>
         </v-row>
-      </v-container>
-    </v-sheet>
 
-    <!-- Footer card -->
-    <v-card flat max-width="500">
-      <v-card-text>
-        <v-row align="center" justify="space-between"
-          ><v-col cols="">
-            <span class="text-caption text-left">
-              TQR Version: {{ $version }}</span
-            ></v-col
-          >
-          <span class="text-caption">{{ decodedUri }}</span>
-          <v-col cols="" align-self="end">
-            <v-icon right
-              >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-            </v-icon></v-col
-          ></v-row
-        >
-      </v-card-text>
-    </v-card>
+        <!-- Promotions -->
+        <v-row>
+          <v-col>
+            <v-card dark color="blue-grey darken-1">
+              <v-card-title>{{ sponsorName }} Promotions</v-card-title>
+              <v-card-subtitle>
+                <v-checkbox
+                  model="showAll"
+                  label="Include all past promotions"
+                ></v-checkbox>
+              </v-card-subtitle>
+              <v-simple-table>
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th bgcolor="grey">Promotion</th>
+                      <th bgcolor="grey">From</th>
+                      <th bgcolor="grey">For</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in ps" :key="item.promoText">
+                      <td style="text-align: left">{{ item.promoText }}</td>
+                      <td style="text-align: left">{{ item.dated }}</td>
+                      <td style="text-align: left">{{ item.expires }} days</td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+              <v-card-text>
+                <!-- Promotion Text -->
+                <v-textarea
+                  v-model="promoText"
+                  lines="4"
+                  label="New Promotion Message"
+                  color="grey lighten-3"
+                  dark
+                  outlined
+                ></v-textarea>
+                <v-text-field
+                  v-model="promotionalDays"
+                  label="Offer expires"
+                  placeholder="(Days)"
+                />
+              </v-card-text>
+            </v-card>
+
+            <!-- buttons -->
+            <v-sheet color="black">
+              <v-card-actions>
+                <v-spacer />
+                <v-btn
+                  :disabled="!promoText"
+                  text
+                  color="brown lighten-3"
+                  class="white--text mr-4"
+                  @click="promote"
+                >
+                  Promote
+                </v-btn>
+              </v-card-actions>
+            </v-sheet>
+          </v-col>
+        </v-row>
+
+        <!-- Footer card -->
+        <v-card flat max-width="500">
+          <v-card-text>
+            <v-row align="center" justify="space-between"
+              ><v-col>
+                <span class="text-caption text-left">
+                  TQR Ver: {{ $version }}</span
+                ></v-col
+              >
+              <span class="text-caption">{{ decodedUri }}</span>
+              <v-col justify-self="end">
+                <v-icon right
+                  >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+                </v-icon></v-col
+              ></v-row
+            >
+          </v-card-text>
+        </v-card>
+      </v-container>
+
+      <v-card v-else>
+        <v-card-text>
+          <div id="targetDiv" ref="targetDiv" class="text-center">
+            <v-row align="top" justify="center">
+              <v-spacer />
+              <v-col cols="auto" class="text-center">
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="decodedUri"
+                  error-level="L"
+                >
+                </VueQRCodeComponent>
+              </v-col>
+              <v-spacer />
+            </v-row>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
+          <v-spacer />
+          <v-btn text color="primary" plain @click="printMe">Print</v-btn>
+        </v-card-actions>
+      </v-card>
+
+      <v-dialog v-model="dialog" absolute max-width="400" persistent>
+        <v-card>
+          <v-card-title class="text-h5 grey lighten-3"> Legal </v-card-title>
+          <v-card-text>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat. Duis aute irure dolor in
+            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+            culpa qui officia deserunt mollit anim id est laborum.
+          </v-card-text>
+          <v-divider></v-divider>
+          <v-card-actions>
+            <v-btn text @click="(agreement = false), (dialog = false)">
+              No
+            </v-btn>
+            <v-spacer></v-spacer>
+            <v-btn
+              class="white--text"
+              color="deep-purple accent-4"
+              @click="(agreement = true), (dialog = false)"
+            >
+              Yes
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <confirmation-snackbar
+        v-if="confSnackbar"
+        :centered="true"
+        :top="false"
+        :confirmationTitle="confirmationTitle"
+        :confirmationMessage="confirmationMessage"
+        :confirmationIcon="confirmationIcon"
+        :approveString="approveString"
+        :disapproveString="disapproveString"
+        @approved="onApproved"
+        @disapprove="confSnackbar = false"
+      />
+    </v-sheet>
   </v-container>
 </template>
 
@@ -317,6 +331,7 @@ export default {
 
   data() {
     return {
+      printingCard: false,
       promotionalDays: 7,
       showAll: false,
       tree: [],
@@ -337,7 +352,6 @@ export default {
       approveString: 'Approve',
       disapproveString: 'Disapprove',
       dates: [],
-      preview: false,
       nameMaxLength: 50,
       addressMaxLength: 75,
       valid: true,
@@ -465,11 +479,11 @@ export default {
     },
 
     printMe() {
-      this.preview = true;
+      this.printingCard = true;
       window.print();
     },
     stopPrint() {
-      this.preview = false;
+      this.printingCard = false;
     },
 
     getPlaceID() {

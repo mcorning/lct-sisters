@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-snackbar
-      v-model="x"
+      v-model="showSnackbar"
       :timeout="timeout"
       :multi-line="multiLine"
       :dark="dark"
@@ -15,12 +15,12 @@
     >
       <v-row align="center"
         ><v-col cols="2"
-          ><v-icon x-large>{{icon}}</v-icon>
+          ><v-icon x-large>{{ icon }}</v-icon>
         </v-col>
         <v-col cols="10">
           <v-card-title
             v-if="confirmationTitle"
-            class="grey--text text--lighten-1  mb-2"
+            class="grey--text text--lighten-1 mb-2"
           >
             {{ confirmationTitle }}
           </v-card-title>
@@ -56,8 +56,11 @@ export default {
   props: {
     confirmationTitle: String,
     confirmationMessage: String,
-    confirmationIcon: String,
 
+    confirmationIcon: {
+      type: String,
+      default: '',
+    },
     approveString: {
       type: String,
       default: '',
@@ -99,13 +102,13 @@ export default {
       default: false,
     },
   },
-computed: {
-  icon() {
-    return this.approveString?'check':'close' 
-  }
-},
+  computed: {
+    icon() {
+      return this.$parent.confirmationIcon; // this.approveString ? 'check' : 'close';
+    },
+  },
   data() {
-    return { x: true };
+    return { showSnackbar: false };
   },
   methods: {
     approve() {
@@ -117,6 +120,7 @@ computed: {
   },
   watch: {},
   mounted() {
+    this.showSnackbar = true;
     console.log('Snackbar mounted');
   },
 };

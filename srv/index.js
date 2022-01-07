@@ -200,8 +200,8 @@ io.on('connection', (socket) => {
           ack(newPromo);
         }
         // let everybody online now see the new promo
-        const msg = `A new enticement from ${biz}:\n${promoText}`;
-        console.log(`newPromotion, ${msg}`);
+        const msg = { biz, promoText: newPromo[0][1][3] };
+        console.log(`newPromotion, ${printJson(msg)}`);
         socket.broadcast.emit('newPromotion', msg);
       });
     }
@@ -277,8 +277,8 @@ io.on('connection', (socket) => {
       addSponsor({ biz, address, country, uid, confirmedAddress }).then(
         (sid) => {
           if (ack) {
-            const pid = addPromotion({ biz, country, promoText, sid });
-            ack({ sid, pid });
+            // const pid = addPromotion({ biz, country, promoText, sid });
+            ack({ sid });
           }
         }
       );

@@ -30,7 +30,7 @@
 
         <v-row
           ><v-col>
-            <v-card color="blue-grey darken-3" class="mx-auto" dark>
+            <v-card color="blue-grey darken-2" class="mx-auto" dark>
               <v-card-title>Active Sponsors: </v-card-title>
               <v-select
                 v-model="selectedSponsor"
@@ -41,12 +41,11 @@
             </v-card>
           </v-col>
         </v-row>
-
         <v-row
           ><v-col>
             <v-card
               v-model="rewardPoints"
-              color="blue-grey darken-3"
+              color="blue-grey darken-2"
               class="mx-auto"
               dark
             >
@@ -108,7 +107,7 @@
         >
         <v-row>
           <v-col>
-            <v-card color="blue-grey darken-3" class="mx-auto" dark>
+            <v-card color="blue-grey darken-2" class="mx-auto" dark>
               <v-row>
                 <v-col>
                   <v-card-title>Enticements</v-card-title>
@@ -143,6 +142,15 @@
       </v-container>
     </v-sheet>
 
+    <confirmation-snackbar
+      v-if="confSnackbar"
+      :centered="true"
+      :top="true"
+      :confirmationTitle="confirmationTitle"
+      :confirmationMessage="confirmationMessage"
+      :confirmationIcon="local_offer"
+      @disapprove="closeSnackbar"
+    />
     <!-- Footer card -->
     <v-card flat max-width="500">
       <v-card-text>
@@ -165,6 +173,7 @@
 </template>
 
 <script>
+import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
@@ -180,6 +189,7 @@ export default {
   },
   components: {
     VueQRCodeComponent,
+    ConfirmationSnackbar,
   },
   computed: {
     colors() {
@@ -263,9 +273,9 @@ export default {
       rewardPoints: false,
       rewardPointsMessage: '',
       confSnackbar: false,
-      confirmationTitle: 'Address Confirmation',
+      confirmationTitle: "A Sponsor's New Promotion",
       confirmationMessage: '',
-      confirmationIcon: 'check',
+      confirmationIcon: 'local_offer',
       countries: ['SG', 'UK', 'USA'],
 
       country: '',
@@ -283,40 +293,18 @@ export default {
     };
   },
   sockets: {
-    newPromotion(msg) {
-      if (confirm(msg)) {
-        const visits = [
-          [
-            'Fika_Coffeehouse',
-            [
-              {
-                bid: 'Fika_Coffeehouse',
-                visitedOn: '1/5/2022, 11:57 PM',
-                dated: 'Jan 5, 2022',
-              },
-            ],
-          ],
-        ];
-
-        this.items = visits.map((visit, i) => {
-          const biz = visit[0].replace(/_/g, ' ');
-          return {
-            id: i,
-            name: biz,
-            children: visit[1].map((v, idx) => {
-              return {
-                id: `${i}.${idx}`,
-                name: v.visitedOn,
-                biz,
-              };
-            }),
-          };
-        });
-      }
+    newPromotion({ biz, promoText }) {
+      this.confirmationMessage = `<h5>From ${biz}:</h5><span>${promoText}</span>`;
+      this.confSnackbar = true;
     },
   },
 
   methods: {
+    closeSnackbar() {
+      this.confSnackbar = false;
+      this.getSponsors();
+    },
+
     onGetRewardPoints() {
       const uid = this.$socket.client.auth.userID;
       this.getRewardPoints({ bid: '', uid }).then((visits) => {
@@ -409,6 +397,12 @@ export default {
       });
     },
     renderPromos() {
+      if (isEmpty(this.promotions)) {
+        this.promos = [
+          `<h3>No enticements from that Sponsor at this time.</h3> Try again, later...`,
+        ];
+        return;
+      }
       console.log('this.promotions.length :>> ', this.promotions.length);
       this.promos = this.promotions.length
         ? this.promotions.map(
@@ -418,6 +412,12 @@ export default {
         : [
             `<h3>No enticements from ${this.tree[0].biz} at this time.</h3> Try again, later...`,
           ];
+    },
+    getSponsors() {
+      this.emitFromClient('getSponsors', 'usa', (sponsors) => {
+        console.log('sponsors :>> ', sponsors);
+        this.activeSponsors = isEmpty(sponsors) ? [] : sponsors;
+      });
     },
   }, // end of Methods
 
@@ -440,15 +440,12 @@ export default {
   },
 
   mounted() {
+    this.getSponsors();
     if (this.$route.params.id) {
       this.onEarnReward();
     }
     this.onGetRewardPoints();
-    this.emitFromClient(
-      'getSponsors',
-      'usa',
-      (sponsors) => (this.activeSponsors = sponsors)
-    );
+
     console.log('CUSTOMER mounted');
   },
 };
