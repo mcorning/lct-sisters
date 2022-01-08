@@ -24,6 +24,12 @@
           >
             {{ confirmationTitle }}
           </v-card-title>
+          <v-card-subtitle
+            v-if="confirmationSubtitle"
+            class="grey--text text--lighten-1 mb-2"
+          >
+            {{ confirmationSubtitle }}
+          </v-card-subtitle>
           <v-card-text
             class="grey--text text--lighten-1 text-body-2 mb-4"
             v-html="confirmationMessage"
@@ -56,7 +62,11 @@ export default {
   props: {
     confirmationTitle: String,
     confirmationMessage: String,
-
+    
+    confirmationSubtitle: {
+      type: String,
+      default: '',
+    },
     confirmationIcon: {
       type: String,
       default: '',
@@ -104,7 +114,7 @@ export default {
   },
   computed: {
     icon() {
-      return this.$parent.confirmationIcon; 
+      return this.confirmationIcon || this.$parent.confirmationIcon;
     },
   },
   data() {

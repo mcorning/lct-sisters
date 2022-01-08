@@ -9,19 +9,18 @@
       <v-container fluid class="fill-height">
         <v-row no-gutters
           ><v-col>
-            <v-card-title>TQR Loyalty Tracking</v-card-title>
-            <v-card-subtitle
-              >Here are you recent visits to TQR supporting
-              establishments:</v-card-subtitle
+            <v-card-title class="text-sm-h5 text-xs-subtitle-1"
+              >TQR Loyalty Tracking</v-card-title
             >
+            <v-card-subtitle>Customer View</v-card-subtitle>
           </v-col>
           <v-col cols="auto" class="text-center">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
-              :text="$socket.client.auth.userID"
+              :text="rewardUri"
               error-level="L"
-              :size="128"
+              :size="qrSize"
             >
             </VueQRCodeComponent>
             <span class="text-caption">{{ $socket.client.auth.userID }}</span>
@@ -112,10 +111,10 @@
                 <v-col>
                   <v-card-title>Enticements</v-card-title>
                 </v-col>
-
+                <!-- 
                 <v-col>
                   <v-checkbox v-model="annoyed" label="Those colors annoy me" />
-                </v-col>
+                </v-col> -->
               </v-row>
 
               <v-carousel
@@ -123,14 +122,13 @@
                 height="200"
                 hide-delimiter-background
                 show-arrows-on-hover
-                dark
               >
                 <v-carousel-item v-for="(promo, i) in promos" :key="i">
-                  <v-sheet dark :color="colors[i]" height="100%">
+                  <v-sheet dark :color="promo.color" height="100%">
                     <v-row class="fill-height" align="center" justify="center">
                       <v-card-text
                         class="text-center"
-                        v-html="promo"
+                        v-html="promo.msg"
                       ></v-card-text>
                     </v-row>
                   </v-sheet>
@@ -141,20 +139,21 @@
         </v-row>
 
         <!-- Footer card -->
-        <v-row no-gutters justify="space-between">
-          <v-col cols="3">
+        <v-row no-gutters justify="space-between" class="mt-2">
+          <v-col>
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
-          <v-spacer />
-          <v-col cols="auto">
-            <span class="text-caption">{{ decodedUri }}</span></v-col
-          >
-          <v-spacer />
-          <v-col cols="2">
+
+          <v-col cols="1">
             <v-icon
               >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
             </v-icon>
           </v-col>
+        </v-row>
+        <v-row no-gutters justify="center">
+          <v-col cols="auto">
+            <span class="text-caption">{{ reward }}</span></v-col
+          >
         </v-row>
       </v-container>
     </v-sheet>
@@ -177,7 +176,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
-import { printJson, isEmpty } from '@/utils/helpers';
+import { printJson, head, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
@@ -191,8 +190,32 @@ export default {
     ConfirmationSnackbar,
   },
   computed: {
+    rewardingSponsor() {
+      return head(this.tree);
+    },
+
+    rewardUri() {
+      const baseUri = `${this.origin}/sponsor`;
+      const uri = `/?sponsor=${this.rewardingSponsor.biz}&customer=${this.$socket.client.auth.userID}`;
+      return `${baseUri}${uri}`;
+    },
+
+    reward() {
+      return this.rewardingSponsor
+        ? `Redeeming reward from ${this.rewardingSponsor.biz} with \n${this.rewardUri}`
+        : 'Still working on earning rewards...';
+    },
+
+    qrSize() {
+      const { md, sm, xs } = this.$vuetify.breakpoint;
+      console.log('xs, sm, sm:>> ', xs, sm, md);
+      function isSmall() {
+        return sm ? 128 : 100;
+      }
+      return md ? 256 : isSmall();
+    },
     colors() {
-      return this.annoyed ? ['black'] : this.defaultColors;
+      return head(this.tree) ? ['amber'] : this.mixedColors;
     },
     filter() {
       return this.caseSensitive
@@ -223,6 +246,7 @@ export default {
 
   data() {
     return {
+      origin: window.location.origin,
       selectedSponsor: '',
       activeSponsors: [],
       annoyed: false,
@@ -230,7 +254,8 @@ export default {
       tree: [],
       search: null,
       caseSensitive: false,
-      defaultColors: [
+      defaultColors: ['black', 'goldenrod'],
+      mixedColors: [
         'indigo',
         'warning',
         'pink darken-2',
@@ -386,13 +411,20 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
-    getPromos(biz) {
+    getPromos(biz, rewards = false) {
       this.promos = [];
       const country = this.country;
       console.log(`getPromotions({${biz},${country}}`);
       this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+        if (rewards) {
+          promos.push({
+            business: biz,
+            promoText: 'Reward',
+            color: 'amber darken-2',
+          });
+        }
         this.promotions = promos;
-        console.log(`promotions`, this.promotions);
+        console.log(`promotions`, printJson(this.promotions));
       });
     },
     renderPromos() {
@@ -404,12 +436,17 @@ export default {
       }
       console.log('this.promotions.length :>> ', this.promotions.length);
       this.promos = this.promotions.length
-        ? this.promotions.map(
-            (v) =>
-              `<h3>At ${v.business}</h3><p class="text-subtitle-2 pt-3">${v.promoText}</p>`
-          )
+        ? this.promotions.map((v) => {
+            return {
+              color: v.color,
+              msg: `<h3>At ${v.business}</h3><p class="text-subtitle-2 pt-3">${v.promoText}</p>`,
+            };
+          })
         : [
-            `<h3>No enticements from ${this.tree[0].biz} at this time.</h3> Try again, later...`,
+            {
+              color: 'red',
+              msg: `<h3>No enticements from ${this.tree[0].biz} at this time.</h3> Try again, later...`,
+            },
           ];
     },
     getSponsors() {
@@ -431,7 +468,7 @@ export default {
       }
       console.log('n[0] :>> ', n[0]);
       console.log('o[0] :>> ', o[0]);
-      this.getPromos(n[0].biz);
+      this.getPromos(n[0].biz, true);
     },
     promotions(val) {
       this.renderPromos(val);

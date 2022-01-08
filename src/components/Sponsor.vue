@@ -10,11 +10,11 @@
         <!-- Header -->
         <v-row no-gutters align="center" justify="center">
           <v-col>
-            <v-card-title>Universal TQR Loyalty Tracking</v-card-title>
+            <v-card-title class="text-sm-h5">TQR Loyalty Tracking</v-card-title>
 
-            <v-card-subtitle v-html="message"> </v-card-subtitle>
+            <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
-              Your Google Confirmed Address:
+              Google Confirmed Business Address:
               {{ confirmedAddress }}</v-card-text
             >
           </v-col>
@@ -24,12 +24,17 @@
               ref="qr"
               :text="decodedUri"
               error-level="L"
-              :size="128"
+              :size="qrSize"
               class="ml-5"
             >
             </VueQRCodeComponent>
-            <v-btn text color="primary" plain @click="printingCard = true"
-              >Preview QR Card</v-btn
+            <v-btn
+              class="ml-1"
+              text
+              color="green"
+              plain
+              @click="printingCard = true"
+              >Preview QR</v-btn
             >
           </v-col>
         </v-row>
@@ -182,20 +187,21 @@
 
         <!-- Footer card -->
         <v-row no-gutters justify="space-between">
-          <v-col cols="3">
+          <v-col cols="11">
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
-          <v-spacer />
-          <v-col cols="auto">
-            <span class="text-caption">{{ decodedUri }}</span></v-col
-          >
-          <v-spacer />
-          <v-col cols="2">
-            <v-icon
+
+          <v-col cols="1">
+            <v-icon right
               >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
             </v-icon>
           </v-col>
         </v-row>
+        <v-row no-gutters justify="center">
+          <v-col cols="auto">
+            <span class="text-caption">{{ decodedUri }}</span></v-col
+          ></v-row
+        >
       </v-container>
 
       <v-card v-else>
@@ -256,6 +262,7 @@
         :centered="true"
         :top="false"
         :confirmationTitle="confirmationTitle"
+        :confirmationSubtitle=confirmationSubtitle
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
         :approveString="approveString"
@@ -272,6 +279,8 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import { DateTime } from '@/utils/luxonHelpers';
+import { printJson, isEmpty } from '@/utils/helpers';
+
 export default {
   name: 'Sponsor',
   // sponsor is {sid, biz, address}
@@ -283,6 +292,15 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    qrSize() {
+      const { md, sm, xs } = this.$vuetify.breakpoint;
+      console.log('xs, sm, md:>> ', xs, sm, md);
+      function isSmall() {
+        return sm ? 128 : 100;
+      }
+      return md ? 256 : isSmall();
+    },
+
     enticements() {
       const x = this.ps.map((v) => {
         return `Promotion: ${v.promoText}\tOffered: ${v.visitedOn} `;
@@ -299,7 +317,7 @@ export default {
 
     decodedUri() {
       const b = encodeURIComponent(this.business);
-      return `${window.location.origin}/sponsor/${b}`;
+      return `${window.location.origin}/customer/${b}`;
     },
     sponsorName() {
       return this.sponsor.biz || this.business;
@@ -380,6 +398,7 @@ export default {
       rewardPointsMessage: '',
       confSnackbar: false,
       confirmationTitle: 'Address Confirmation',
+      confirmationSubtitle:'',
       confirmationMessage: '',
       confirmationIcon: 'check',
       countries: ['SG', 'UK', 'USA'],
@@ -417,6 +436,11 @@ export default {
     },
 
     onApproved() {
+      // if the confirmation is for rewards, don't process new/updated sponsor
+      if (this.confSnackbar === 2) {
+        this.confSnackbar=false
+        return;
+      }
       const biz = this.business;
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
@@ -520,13 +544,21 @@ export default {
       const biz = this.business;
       const country = this.country;
       this.emitFromClient('getPromotions', { biz, country }, (promos) => {
-        console.log(
-          'Sponsor.vue promos for',
-          'biz:',
-          JSON.stringify(promos, null, 2)
-        );
+        console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
       });
+    },
+    redeemReward(val) {
+      this.confirmationTitle = `TQR Redemption Center`;
+      this.confirmationSubtitle = `${this.business}`;
+      this.confirmationIcon = 'local_offer';
+      if (val.sponsor === this.business) {
+        this.confirmationMessage = `Thank ${val.customer} for their support.`;
+      } else {
+        this.approveString=''
+        this.confirmationMessage = `${val.customer} is trying to redeem ${val.sponsor}'s reward, not yours.`;
+      }
+      this.confSnackbar = 2;
     },
   }, // end of Methods
 
@@ -549,8 +581,8 @@ export default {
   },
 
   mounted() {
-    if (this.$route.params.id) {
-      this.onEarnReward();
+    if (!isEmpty(this.$route.query)) {
+      this.redeemReward(this.$route.query);
     } else {
       this.printing = this.confirmedAddress;
     }

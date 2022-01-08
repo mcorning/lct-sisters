@@ -22,7 +22,8 @@ export default {
   components: { Customer, Sponsor },
   computed: {
     isSponsor() {
-      return this.$route.path === '/sponsor';
+      // here are the expected values for path: /sponsor or /sponsor/
+      return this.$route.path.includes('sponsor');
     },
   },
   data() {

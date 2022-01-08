@@ -21,7 +21,14 @@ const routes = [
     props: true,
   },
   {
-    path: '/sponsor/:id',
+    path: '/redeem',
+    name: 'RedeemingSponsor',
+    component: Sponsor,
+    meta: { layout: 'AppLayoutRewards' },
+    props: true,
+  },
+  {
+    path: '/customer/:id',
     name: 'Sponsor2Customer',
     component: Customer,
     meta: { layout: 'AppLayoutRewards' },
