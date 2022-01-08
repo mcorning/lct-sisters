@@ -17,12 +17,16 @@
               Google Confirmed Business Address:
               {{ confirmedAddress }}</v-card-text
             >
+            <v-card-text class="text-caption">
+              Customers scan:
+              {{ encodedUri }}</v-card-text
+            >
           </v-col>
           <v-col cols="auto">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
-              :text="decodedUri"
+              :text="encodedUri"
               error-level="L"
               :size="qrSize"
               class="ml-5"
@@ -199,7 +203,7 @@
         </v-row>
         <v-row no-gutters justify="center">
           <v-col cols="auto">
-            <span class="text-caption">{{ decodedUri }}</span></v-col
+            <span class="text-caption">{{ encodedUri }}</span></v-col
           ></v-row
         >
       </v-container>
@@ -213,7 +217,7 @@
                 <VueQRCodeComponent
                   id="qr"
                   ref="qr"
-                  :text="decodedUri"
+                  :text="encodedUri"
                   error-level="L"
                 >
                 </VueQRCodeComponent>
@@ -315,9 +319,8 @@ export default {
       return this.biz || this.address;
     },
 
-    decodedUri() {
-      const b = encodeURIComponent(this.business.trim());
-      return `${window.location.origin}/customer/${b}`;
+    encodedUri() {
+      return encodeURI(`${window.location.origin}/customer/${this.business.trim()}`);
     },
     sponsorName() {
       return this.sponsor.biz || this.business;

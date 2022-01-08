@@ -23,7 +23,7 @@
               :size="qrSize"
             >
             </VueQRCodeComponent>
-            <span class="text-caption">{{ $socket.client.auth.userID }}</span>
+            <span class="text-caption">{{ encodedUri}}</span>
           </v-col>
         </v-row>
 
@@ -111,10 +111,6 @@
                 <v-col>
                   <v-card-title>Enticements</v-card-title>
                 </v-col>
-                <!-- 
-                <v-col>
-                  <v-checkbox v-model="annoyed" label="Those colors annoy me" />
-                </v-col> -->
               </v-row>
 
               <v-carousel
@@ -195,13 +191,11 @@ export default {
     },
 
     rewardUri() {
-      const baseUri = `${this.origin}/sponsor`;
-      const uri = `/?sponsor=${this.rewardingSponsor.biz}&customer=${this.$socket.client.auth.userID}`;
-      return `${baseUri}${uri}`;
+      return`?sponsor=${this.rewardingSponsor.biz}&customer=${this.$socket.client.auth.userID}`;
     },
 
     encodedUri() {
-      return encodeURIComponent(this.rewardUri);
+      return encodeURI(`${window.location.origin}/sponsor/${this.rewardUri}`);
     },
 
     reward() {
