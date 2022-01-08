@@ -18,7 +18,7 @@
             <VueQRCodeComponent
               id="qr"
               ref="qr"
-              :text="rewardUri"
+              :text="encodedUri"
               error-level="L"
               :size="qrSize"
             >
@@ -200,9 +200,13 @@ export default {
       return `${baseUri}${uri}`;
     },
 
+    encodedUri() {
+      return encodeURIComponent(this.rewardUri);
+    },
+
     reward() {
       return this.rewardingSponsor
-        ? `Redeeming reward from ${this.rewardingSponsor.biz} with \n${this.rewardUri}`
+        ? `Redeeming reward from ${this.rewardingSponsor.biz} with \n${this.encodedUri}`
         : 'Still working on earning rewards...';
     },
 

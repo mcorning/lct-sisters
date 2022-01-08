@@ -262,7 +262,7 @@
         :centered="true"
         :top="false"
         :confirmationTitle="confirmationTitle"
-        :confirmationSubtitle=confirmationSubtitle
+        :confirmationSubtitle="confirmationSubtitle"
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
         :approveString="approveString"
@@ -316,7 +316,7 @@ export default {
     },
 
     decodedUri() {
-      const b = encodeURIComponent(this.business);
+      const b = encodeURIComponent(this.business.trim());
       return `${window.location.origin}/customer/${b}`;
     },
     sponsorName() {
@@ -398,7 +398,7 @@ export default {
       rewardPointsMessage: '',
       confSnackbar: false,
       confirmationTitle: 'Address Confirmation',
-      confirmationSubtitle:'',
+      confirmationSubtitle: '',
       confirmationMessage: '',
       confirmationIcon: 'check',
       countries: ['SG', 'UK', 'USA'],
@@ -438,10 +438,10 @@ export default {
     onApproved() {
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
-        this.confSnackbar=false
+        this.confSnackbar = false;
         return;
       }
-      const biz = this.business;
+      const biz = this.business.trim();
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
       const uid = this.$socket.client.auth.userID;
@@ -462,7 +462,7 @@ export default {
     },
 
     addSponsor() {
-      const biz = this.business;
+      const biz = this.business.trim();
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
       const uid = this.$socket.client.auth.userID;
@@ -541,7 +541,7 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
     getPromos() {
-      const biz = this.business;
+      const biz = this.business.trim();
       const country = this.country;
       this.emitFromClient('getPromotions', { biz, country }, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
@@ -552,10 +552,10 @@ export default {
       this.confirmationTitle = `TQR Redemption Center`;
       this.confirmationSubtitle = `${this.business}`;
       this.confirmationIcon = 'local_offer';
-      if (val.sponsor === this.business) {
+      if (val.sponsor === this.business.trim()) {
         this.confirmationMessage = `Thank ${val.customer} for their support.`;
       } else {
-        this.approveString=''
+        this.approveString = '';
         this.confirmationMessage = `${val.customer} is trying to redeem ${val.sponsor}'s reward, not yours.`;
       }
       this.confSnackbar = 2;
