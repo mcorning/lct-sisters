@@ -75,7 +75,8 @@ export const spaceMixin = {
       );
 
       // replace the "escaped" underscores with spaces
-      const name = this.$route.query.name.replace(/_/g, ' ');
+      // TODO replace with en[de]codeURI[Component]()
+      const name = decodeURIComponent(this.$route.query.name);
       const shared = true;
 
       this.callVisitUpdate({

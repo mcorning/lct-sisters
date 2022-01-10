@@ -137,21 +137,4 @@ export const testPlace = {
   utc_offset_minutes: -420,
 };
 
-// const filter = curry((f, xs) => xs.filter(f));
 
-// const map = curry((f, xs) => xs.map(f));
-// const y = this.compose(this.test2, this.test1);
-// console.log(y(1));
-// console.log(this.match(/r/g, 'hello world'));
-// const hasLetterR = this.match(/r/g); // x => x.match(/r/g)
-// hasLetterR('hello world'); // [ 'r' ]
-// hasLetterR('just j and s and t etc'); // null
-
-// this.filter(hasLetterR, ['rock and roll', 'smooth jazz']); // ['rock and roll']
-
-// const removeStringsWithoutRs = this.filter(hasLetterR); // xs => xs.filter(x => x.match(/r/g))
-// removeStringsWithoutRs(['rock and roll', 'smooth jazz', 'drum circle']); // ['rock and roll', 'drum circle']
-
-// const noVowels = this.replace(/[aeiou]/gi); // (r,x) => x.replace(/[aeiou]/ig, r)
-// const censored = noVowels('*'); // x => x.replace(/[aeiou]/ig, '*')
-// console.log(censored('Chocolate Rain')); // 'Ch*c*l*t* R**n'

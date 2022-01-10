@@ -272,11 +272,12 @@ export default {
           ? this.state.settings.oid
           : undefined;
       const uid = this.$socket.client.auth.userID; //otherwise the userID for the visitor sharing the Place
-      const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
+            // TODO replace with en[de]codeURI[Component]()
+      // const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js
       const uri = encodeURIComponent(
-        `oid=${oid}&uid=${uid}&place_id=${this.placeId}&name=${escapedName}`
+        `oid=${oid}&uid=${uid}&place_id=${this.placeId}&name=${this.name}`
       );
       return `${window.location.origin}/?${uri}`;
     },

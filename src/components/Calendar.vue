@@ -270,12 +270,13 @@ export default {
         this.selectedEvent.name
       );
       const printedName = `${name}`;
-      const escapedName = printedName.replace(/ /g, '_').replace(/&/g, 'and');
-      const escapedGraphName = graphName.replace(/ /g, '_');
+      // TODO replace with en[de]codeURI[Component]()
+      // const escapedName = encodeURIComponent(printedName)
+      // const escapedGraphName = encodeURIComponent(graphName)
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js (but see note above in decodedUri())
       const uri = encodeURIComponent(
-        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${escapedName}&graphName=${escapedGraphName}`
+        `place_id=${place_id}&date=${date}&start=${start}&end=${end}&name=${printedName}&graphName=${graphName}`
       );
       const fullUri = `${this.origin}/?${uri}`;
       console.log('mailToUri()->uri', fullUri);

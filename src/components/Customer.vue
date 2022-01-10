@@ -14,7 +14,7 @@
             >
             <v-card-subtitle>Customer View</v-card-subtitle>
           </v-col>
-          <v-col cols="auto" class="text-center">
+          <v-col v-if=rewardingSponsor cols="auto" class="text-center">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
@@ -23,8 +23,9 @@
               :size="qrSize"
             >
             </VueQRCodeComponent>
-            <span class="text-caption">{{ encodedUri}}</span>
+            <span class="text-caption">{{ encodedUri }}</span>
           </v-col>
+          <v-col v-else>Select a TQR Sponsor below to render a QR code to redeem your reward</v-col>
         </v-row>
 
         <v-row
@@ -151,7 +152,6 @@
             <span class="text-caption">{{ reward }}</span></v-col
           >
         </v-row>
-        <pre>{{promos}}</pre>
       </v-container>
     </v-sheet>
 
@@ -192,7 +192,9 @@ export default {
     },
 
     rewardUri() {
-      return`?sponsor=${encodeURIComponent(this.rewardingSponsor.biz)}&customer=${this.$socket.client.auth.userID}`;
+      return `?sponsor=${encodeURIComponent(
+        this.rewardingSponsor.biz
+      )}&customer=${this.$socket.client.auth.userID}`;
     },
 
     encodedUri() {
@@ -229,6 +231,7 @@ export default {
       return this.biz || this.address;
     },
 
+    // TODO Why is this here?
     decodedUri() {
       const b = encodeURIComponent(this.business);
       return `${window.location.origin}/sponsor/${b}`;
@@ -336,7 +339,8 @@ export default {
         }
         console.log('Visits:>>', printJson(visits));
         this.items = visits.map((visit, i) => {
-          const biz = visit[0].replace(/_/g, ' ');
+          // TODO replace with en[de]codeURI[Component]()
+          const biz = decodeURIComponent(visit[0].trim());
           return {
             id: i,
             name: biz,
@@ -359,7 +363,8 @@ export default {
       // it sends a message to node/redis returning the visitedOn data
       // it returns any promo text the restaurant has published
       this.earnReward({
-        bid: this.$route.params.id.replace(/ /g, '_'),
+        // TODO replace with en[de]codeURI[Component]()
+        bid: encodeURIComponent(this.$route.params.id),
         uid: this.$socket.client.auth.userID,
       }).then((visitedOn) => {
         const dates = visitedOn.map((v) => this.convertDateTime(v));
@@ -427,12 +432,6 @@ export default {
       });
     },
     renderPromos() {
-      if (isEmpty(this.promotions)) {
-        this.promos = [
-          `<h3>No enticements from that Sponsor at this time.</h3> Try again, later...`,
-        ];
-        return;
-      }
       console.log('this.promotions.length :>> ', this.promotions.length);
       this.promos = this.promotions.length
         ? this.promotions.map((v) => {
@@ -444,7 +443,7 @@ export default {
         : [
             {
               color: 'red',
-              msg: `<h3>No enticements from ${this.tree[0].biz} at this time.</h3> Try again, later...`,
+              msg: `<h3>No enticements from ${this.selectedSponsor} at this time.</h3> Try again, later...`,
             },
           ];
     },

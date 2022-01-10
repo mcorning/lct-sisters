@@ -63,9 +63,7 @@
         ></v-textarea>
       </v-form>
 
-      <v-btn class="btn" :href="mailtoUrl">
-        Send
-      </v-btn>
+      <v-btn class="btn" :href="mailtoUrl"> Send </v-btn>
       <code class="outputBox">
         {{ mailtoUrl }}
       </code>
@@ -123,17 +121,12 @@ export default {
         this.cvewUrl += '?';
       }
 
+      // TODO replace with en[de]codeURI[Component]()
       this.cvewUrl += remaining
-        .map(
-          (key) =>
-            `${key}=${this.href[key]
-              .trim()
-              .replace(/ /g, '_')
-              .replace(/&/g, 'and')}`
-        )
+        .map((key) => `${key}=${encodeURIComponent(this.href[key].trim())}`)
         .join('&');
-      const uri = encodeURIComponent(this.cvewUrl);
-      this.body = uri;
+      // const uri = encodeURIComponent(this.cvewUrl);
+      this.body = cvewUrl //uri;
       this.mailtoUrl = `mailto:${this.emailId}?subject=${this.subject}&body=${this.body}`;
     },
   },
