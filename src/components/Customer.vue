@@ -151,6 +151,7 @@
             <span class="text-caption">{{ reward }}</span></v-col
           >
         </v-row>
+        <pre>{{promos}}</pre>
       </v-container>
     </v-sheet>
 
@@ -191,7 +192,7 @@ export default {
     },
 
     rewardUri() {
-      return`?sponsor=${this.rewardingSponsor.biz}&customer=${this.$socket.client.auth.userID}`;
+      return`?sponsor=${encodeURIComponent(this.rewardingSponsor.biz)}&customer=${this.$socket.client.auth.userID}`;
     },
 
     encodedUri() {

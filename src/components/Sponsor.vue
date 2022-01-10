@@ -17,10 +17,6 @@
               Google Confirmed Business Address:
               {{ confirmedAddress }}</v-card-text
             >
-            <v-card-text class="text-caption">
-              Customers scan:
-              {{ encodedUri }}</v-card-text
-            >
           </v-col>
           <v-col cols="auto">
             <VueQRCodeComponent
@@ -211,6 +207,12 @@
       <v-card v-else>
         <v-card-text>
           <div id="targetDiv" ref="targetDiv" class="text-center">
+            <v-row
+              ><v-col
+                >To earn {{ business }} loyalty rewards, scann this QR
+                code</v-col
+              ></v-row
+            >
             <v-row align="top" justify="center">
               <v-spacer />
               <v-col cols="auto" class="text-center">
@@ -224,6 +226,14 @@
               </v-col>
               <v-spacer />
             </v-row>
+            <v-row
+              ><v-col>
+                <v-card-text class="text-caption">
+                  Or enter this URL:
+                  {{ encodedUri }}</v-card-text
+                ></v-col
+              ></v-row
+            >
           </div>
         </v-card-text>
         <v-card-actions>
@@ -320,7 +330,9 @@ export default {
     },
 
     encodedUri() {
-      return encodeURI(`${window.location.origin}/customer/${this.business.trim()}`);
+      return encodeURI(
+        `${window.location.origin}/customer/${this.business.trim()}`
+      );
     },
     sponsorName() {
       return this.sponsor.biz || this.business;
@@ -552,14 +564,16 @@ export default {
       });
     },
     redeemReward(val) {
+      const customer = decodeURIComponent(val.customer);
+      const sponsor = decodeURIComponent(val.sponsor);
       this.confirmationTitle = `TQR Redemption Center`;
       this.confirmationSubtitle = `${this.business}`;
       this.confirmationIcon = 'local_offer';
-      if (val.sponsor === this.business.trim()) {
-        this.confirmationMessage = `Thank ${val.customer} for their support.`;
+      if (sponsor === this.business.trim()) {
+        this.confirmationMessage = `Thank ${customer} for their support.`;
       } else {
         this.approveString = '';
-        this.confirmationMessage = `${val.customer} is trying to redeem ${val.sponsor}'s reward, not yours.`;
+        this.confirmationMessage = `${customer} is trying to redeem ${sponsor}'s reward, not yours.`;
       }
       this.confSnackbar = 2;
     },
