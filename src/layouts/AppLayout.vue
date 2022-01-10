@@ -11,6 +11,7 @@
           setNamespace,
           getNamespace,
           state,
+          updateSession,
         }"
       >
         <component
@@ -21,6 +22,7 @@
           :earnReward="earnReward"
           :getNamespace="getNamespace"
           :state="state"
+          :updateSession=updateSession
         >
           <slot />
         </component>
@@ -54,7 +56,7 @@ export default {
     },
     firstTime() {
       // TODO Jason didn't want this message in Singapore, and i'm not sure we need it anyway.
-      return false; //!this.namespace;
+      return false; 
     },
   },
 
