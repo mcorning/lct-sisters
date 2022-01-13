@@ -68,7 +68,6 @@ const {
   addVisit,
   getVisits,
   randomId,
-  getSponsor,
 } = require('./redis/streams');
 
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
@@ -273,7 +272,7 @@ io.on('connection', (socket) => {
   });
 
   // sent by Sponsor
-  socket.on('readyForBusiness', ({ cid, bid, biz,transaction, country }) => {
+  socket.on('readyForBusiness', ({ cid, bid, biz, transaction, country }) => {
     console.log(
       'cid, bid, biz, transaction, country :>> ',
       cid,
@@ -290,7 +289,7 @@ io.on('connection', (socket) => {
       });
     }
   });
-//#endregion
+  //#endregion
 
   socket.on(
     'addSponsor',

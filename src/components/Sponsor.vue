@@ -458,8 +458,17 @@ export default {
 
   methods: {
     approved() {
-      if (this.approval === 'approvePoints') {
-        this.approvePoints();
+      switch (this.approval) {
+        case 'approvePoints':
+          this.approvePoints();
+          break;
+        case 'approveNewSponsor':
+          this.approveNewSponsor();
+          break;
+
+        default:
+          alert(`Cannot handle approval value of ${this.approval}`);
+          break;
       }
     },
     approvePoints() {
@@ -486,7 +495,7 @@ export default {
       );
     },
 
-    onApproved() {
+    approveNewSponsor() {
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
         this.confSnackbar = false;
@@ -575,6 +584,7 @@ export default {
             vm.approveString = null;
             vm.confSnackbar = true;
           } else {
+            vm.approval = 'approveNewSponsor';
             vm.approveString = 'Approve';
             vm.disapproveString = 'Disapprove';
             vm.confirmedAddress = place_id;
@@ -600,7 +610,9 @@ export default {
       });
     },
 
-    redeemReward(val) {},
+    redeemReward(val) {
+      console.log(val);
+    },
   }, // end of Methods
 
   watch: {
