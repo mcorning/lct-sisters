@@ -253,6 +253,15 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('redeemReward', ({ bid, cid, points }, ack) => {
+    getRewardPoints({ bid, cid }).then((visitedOn) => {
+      if (ack && visitedOn[cid].length >= points) {
+        socket.to(cid).emit('rewardRedeemed')
+        ack('Redeemed');
+      }
+    });
+  });
+
   socket.on('getRewardPoints', ({ bid, cid }, ack) => {
     if (isEmpty(bid)) {
       return;

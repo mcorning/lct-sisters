@@ -140,8 +140,7 @@
                 <v-spacer />
                 <v-btn text color="yellow" @click="earnTokens"
                   >Earn more tokens</v-btn
-                ><v-spacer />
-                <v-btn text color="green" @click="redeemReward">Redeem</v-btn>
+                >
               </v-card-actions>
             </v-card>
           </v-col></v-row
@@ -214,7 +213,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
-import {  getDateFromSid } from '../../srv/utils';
+import { getDateFromSid } from '../../srv/utils';
 import { printJson, head, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
@@ -234,7 +233,7 @@ export default {
   computed: {
     dateFromSid() {
       if (isEmpty(this.selectedReward.sid)) {
-        return
+        return;
       }
       return getDateFromSid(this.selectedReward.sid);
     },
@@ -254,11 +253,13 @@ export default {
     },
 
     rewardingSponsor() {
-      return head(this.tree);
+      // using select
+      return this.selectedReward; // using treeview: head(this.tree);
     },
 
     rewardUri() {
-      return `?customer=${this.userID}`;
+      // TODO extend this for dynamic points taken from Reward
+      return `?cid=${this.userID}&points=1`;
     },
 
     encodedUri() {
@@ -377,6 +378,9 @@ export default {
     };
   },
   sockets: {
+    rewardRedeemed() {
+      alert('You are redeemed');
+    },
     // final step in rewards handshake protocol
     doingBusinessWith({ bid, biz, country, sid }) {
       const msg = `Earned reward points with ${biz} (${bid}) in ${country} `;
@@ -397,9 +401,6 @@ export default {
   },
 
   methods: {
-    redeemReward() {
-      alert('Removing points from local storage');
-    },
     offerHandshake({ bid, transaction }) {
       this.emitFromClient(
         'offerHandshake',

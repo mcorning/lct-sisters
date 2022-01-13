@@ -610,8 +610,8 @@ export default {
       });
     },
 
-    redeemReward(val) {
-      console.log(val);
+    redeemReward({cid, points}) {
+      this.emitFromClient('redeemReward', {bid:this.userID, cid, points}, (ack) => alert(ack));
     },
   }, // end of Methods
 
