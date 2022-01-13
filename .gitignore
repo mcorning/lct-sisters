@@ -64,3 +64,5 @@ srv/redis/lab.js
 srv/redis/connectLab.js
 srv/lab.js
 srv/redis/streamLab.js
+srv/lab copy.js
+.gitignore

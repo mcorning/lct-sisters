@@ -1,8 +1,12 @@
 // you may find this read https://redis.io/topics/streams-intro
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
-const { printJson, highlight } = require('../../src/utils/helpers');
-const { groupBy, objectFromStream, objectToEntries } = require('../utils.js');
+const { highlight } = require('../../src/utils/helpers');
+
+const crypto = require('crypto');
+const randomId = () => crypto.randomBytes(8).toString('hex');
+
+const { groupBy, objectFromStream } = require('../utils.js');
 let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -39,6 +43,21 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
     confirmedAddress
   );
 };
+
+const getSponsor = ({ country, sponsorID }) => {
+  if (typeof country !== 'string') {
+    return null;
+  }
+  country = country.toLowerCase();
+  const key = `sponsors:${country}`;
+  return redis
+    .xread('STREAMS', key, 0)
+    .then((stream) => objectFromStream(stream))
+    .then((sponsors) => groupBy(sponsors, sponsorID))
+    .then((results) => Object.keys(results))
+    .catch((e) => e);
+};
+
 const getSponsors = (country) => {
   if (typeof country !== 'string') {
     return null;
@@ -108,26 +127,30 @@ function getPromotions({ biz, country }) {
   console.log(`getPromotions (in country ${country}): XREAD STREAMS ${key} 0`);
   return redis
     .xread('STREAMS', key, '0')
+    .then((s) => {
+      console.log(s);
+      return s;
+    })
     .then((stream) => objectFromStream(stream))
     .catch((e) => e);
 }
 
 const getWarnings = () => {
-  const channel = 'warnings';
+  const key = 'warnings';
   return redis
-    .xread('STREAMS', channel, '0')
+    .xread('STREAMS', key, '0')
     .then((stream) => objectFromStream(stream))
     .then((alerts) => groupBy(alerts, 'place_id'))
     .catch((e) => e);
 };
 
 const addWarnings = ({ visitData, score, reliability }) => {
-  const channel = 'warnings';
+  const key = 'warnings';
   const warnings = [];
   warnings.push(
     visitData.forEach((visit) => {
       redis.xadd(
-        channel,
+        key,
         '*',
         'place_id',
         visit.place_id,
@@ -146,25 +169,25 @@ const addWarnings = ({ visitData, score, reliability }) => {
 };
 
 const addVisit = ({ sid, uid }) => {
-  const channel = 'visits';
-  return redis.xadd(channel, '*', 'sid', sid, 'uid', uid);
+  const key = 'visits';
+  return redis.xadd(key, '*', 'sid', sid, 'uid', uid);
 };
 
 const getVisits = (sid) => {
-  const channel = 'visits';
+  const key = 'visits';
   const lastID = 0;
   // TODO REFACTOR using objectFromStream()
-  return redis.xread(['STREAMS', channel, lastID]).then((stream) => {
+  return redis.xread(['STREAMS', key, lastID]).then((stream) => {
     console.log(JSON.stringify(stream, null, 3));
 
-    const visits = new Map(stream);
+    const visitMap = new Map(stream);
     console.log(
-      `Reading visits from channel ${channel}, found ${visits.size} visits.`
+      `Reading visits from key ${key}, found ${visitMap.size} visits.`
     );
     console.log(`Looking for Sponsor ID: ${sid}`);
     let zipped;
-    visits.forEach((visitData, channel) => {
-      console.log(channel);
+    visitMap.forEach((visitData, visitKey) => {
+      console.log(visitKey);
       const visits = new Map(visitData);
       visits.forEach((visit, id) => {
         console.log('visit ID:', id);
@@ -183,60 +206,35 @@ function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
 }
 
-function getRewardPoints({ bid, uid }, lastID = 0) {
-  return groupRewardPoints({ bid, uid }, lastID);
-}
-
-/**
- *
- * @param {*} { bid, uid }  biz ID, and user ID
- * @param {*} lastID  last read stream ID
- * @returns object with bids as keys
- */
-function groupRewardPoints({ bid, uid }, lastID = 0) {
+function getRewardPoints({ bid }, lastID = 0) {
   const bizStream = `biz:${bid}`;
-  const customerStream = `customer:${uid}`;
-  console.log(bizStream, customerStream);
-
-  const getVisitsFor = (groupedVisits) => {
-    const visitsArray = objectToEntries(groupedVisits);
-    if (bid) {
-      return visitsArray.filter((v) => v[0] === bid);
-    }
-    return visitsArray;
-  };
-
+  console.log(bizStream);
   return redis
-    .xread(['STREAMS', customerStream, lastID])
-    .then((stream) => objectFromStream(stream, 'bid'))
-    .then((visits) => groupBy(visits, 'bid'))
-    .then((groupedVisits) => getVisitsFor(groupedVisits))
+    .xread(['STREAMS', bizStream, lastID])
+    .then((stream) => objectFromStream(stream))
+    .then((visits) => groupBy(visits, 'cid'))
     .catch((e) => e);
 }
 
-async function earnReward({ bid, uid, lastID = 0 }) {
-  // TODO replace with en[de]codeURI[Component]()
-  const bizStream = `biz:${encodeURIComponent(bid.trim())}`;
-  const customerStream = `customer:${uid}`;
-  console.log(highlight('bid, uid, lastID', bid, uid, lastID));
-  redis.xadd(bizStream, '*', 'uid', uid);
-  redis.xadd(customerStream, '*', 'bid', bid);
-  const points = await getRewardPoints({ uid }, lastID);
-  console.log(`Reward Points for ${uid} visiting ${bid}:`);
-  console.log(printJson(points));
-  return points;
+async function earnReward({ bid, cid, lastID = 0 }) {
+  const bizStream = `biz:${bid}`;
+  console.log(highlight('bid, cid, lastID', bid, cid, lastID));
+  // bizStream contains the same data as all the Customers do locally
+  return redis.xadd(bizStream, '*', 'cid', cid);
 }
 
 module.exports = {
   addSponsor,
-  getSponsors,
   addPromotion,
-  getPromotions,
   addVisit,
+  getPromotions,
+  getSponsor,
+  getSponsors,
   getVisits,
   enterLottery,
   earnReward,
   getRewardPoints,
   addWarnings,
   getWarnings,
+  randomId,
 };

@@ -1,5 +1,13 @@
 const { formatTime, formatDate } = require('../src/utils/luxonHelpers');
 
+const filterOn = (arr, fn) =>
+  arr
+    .filter(typeof fn === 'function' ? fn : (val) => val[fn])
+    .reduce((acc, val, i) => {
+      acc[val] = (acc[val] || []).concat(arr[i]);
+      return acc;
+    }, {});
+
 const groupBy = (arr, fn) =>
   arr
     .map(typeof fn === 'function' ? fn : (val) => val[fn])
@@ -28,7 +36,6 @@ const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
     const visitedOn = getTimeFromSid(entry[0]);
     const dated = getDateFromSid(entry[0]);
-    console.log('expires :>> ', dated);
     if (i % 2 === 0) {
       a[c] = pairs[i + 1];
       a.visitedOn = visitedOn;
@@ -45,6 +52,7 @@ const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 
 module.exports = {
   groupBy,
+  filterOn,
   indexOn,
   isEmpty,
   objectFromStream,

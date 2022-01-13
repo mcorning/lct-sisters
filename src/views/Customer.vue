@@ -1,11 +1,24 @@
 <template>
   <Model @error="onError">
-    <div slot-scope="{ state, earnReward, getRewardPoints, isConnected }">
+    <div
+      slot-scope="{
+        callUpdateRewardPoints,
+        state,
+        earnReward,
+        getRewardPoints,
+        isConnected,
+        rewardMap,
+        rewardingSponsors,
+      }"
+    >
       <Customer
         :state="state"
         :getRewardPoints="getRewardPoints"
         :earnReward="earnReward"
         :isConnected="isConnected"
+        :callUpdateRewardPoints="callUpdateRewardPoints"
+        :rewardMap=rewardMap
+        :rewardingSponsors=rewardingSponsors
       />
     </div>
   </Model>

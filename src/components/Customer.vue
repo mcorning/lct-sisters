@@ -8,13 +8,17 @@
     >
       <v-container fluid class="fill-height">
         <v-row no-gutters
-          ><v-col>
+          ><v-col cols="8">
             <v-card-title class="text-sm-h5 text-xs-subtitle-1"
               >TQR Loyalty Tracking</v-card-title
             >
             <v-card-subtitle>Customer View</v-card-subtitle>
+            <v-card-text class="text-caption">
+              Your user ID:
+              {{ userID }}</v-card-text
+            >
           </v-col>
-          <v-col v-if=rewardingSponsor cols="auto" class="text-center">
+          <v-col v-if="rewardingSponsor" cols="auto" class="text-center">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
@@ -23,9 +27,8 @@
               :size="qrSize"
             >
             </VueQRCodeComponent>
-            <span class="text-caption">{{ encodedUri }}</span>
+            Sponsor will scan your QR code
           </v-col>
-          <v-col v-else>Select a TQR Sponsor below to render a QR code to redeem your reward</v-col>
         </v-row>
 
         <v-row
@@ -50,43 +53,80 @@
               dark
             >
               <v-card-title>TQR Rewards</v-card-title>
-              <v-card-text>
-                <v-row>
-                  <v-text-field
-                    v-model="search"
-                    label="Search visited establishments here"
-                    dark
-                    flat
-                    solo-inverted
-                    hide-details
-                    clearable
-                  ></v-text-field>
-                  <v-checkbox
-                    v-model="caseSensitive"
-                    dark
-                    hide-details
-                    class="text-caption"
-                    append-icon="mdi-case-sensitive-alt"
-                  ></v-checkbox>
-                </v-row>
-              </v-card-text>
-              <v-card-text>
-                <v-divider />
-                <v-treeview
-                  v-model="tree"
-                  :items="items"
-                  :search="search"
-                  :filter="filter"
-                  selectable
-                  open-all
-                  open-on-click
-                  return-object
-                  dense
-                  dark
-                  selected-color="green darken-1"
-                  color="green lighten-1"
+              <div v-if="searchable">
+                <v-card-subtitle
+                  >Click a Sponsor to claim your reward</v-card-subtitle
                 >
-                </v-treeview>
+                <v-card-text>
+                  <v-row>
+                    <v-text-field
+                      v-model="search"
+                      label="Search visited establishments here"
+                      dark
+                      flat
+                      solo-inverted
+                      hide-details
+                      clearable
+                    ></v-text-field>
+                    <v-checkbox
+                      v-model="caseSensitive"
+                      dark
+                      hide-details
+                      class="text-caption"
+                      append-icon="mdi-case-sensitive-alt"
+                    ></v-checkbox>
+                  </v-row>
+                </v-card-text>
+                <v-card-text>
+                  <v-divider />
+                  <v-treeview
+                    v-model="tree"
+                    :items="items"
+                    :search="search"
+                    :filter="filter"
+                    selectable
+                    open-all
+                    open-on-click
+                    return-object
+                    dense
+                    dark
+                    selected-color="green darken-1"
+                    color="green lighten-1"
+                  >
+                  </v-treeview>
+                </v-card-text>
+              </div>
+              <v-card-text v-else>
+                <v-row
+                  ><v-col cols="6">
+                    <v-select
+                      :items="getRewardingSponsors"
+                      item-text="biz"
+                      item-value="bid"
+                      return-object
+                      v-model="selectedReward"
+                  /></v-col>
+                  <v-col>
+                    <v-text-field
+                      v-model="selectedReward.bid"
+                      label="Business ID"
+                      readonly
+                      dense
+                    />
+                    <v-text-field
+                      v-model="dateFromSid"
+                      label="Last visit on"
+                      readonly
+                      dense
+                    />
+                    <v-text-field
+                      v-model="selectedReward.points"
+                      label="Reward Points"
+                      readonly
+                      dense
+                    />
+                  </v-col>
+                </v-row>
               </v-card-text>
               <v-card-actions>
                 <v-btn
@@ -100,7 +140,8 @@
                 <v-spacer />
                 <v-btn text color="yellow" @click="earnTokens"
                   >Earn more tokens</v-btn
-                >
+                ><v-spacer />
+                <v-btn text color="green" @click="redeemReward">Redeem</v-btn>
               </v-card-actions>
             </v-card>
           </v-col></v-row
@@ -149,8 +190,8 @@
         </v-row>
         <v-row no-gutters justify="center">
           <v-col cols="auto">
-            <span class="text-caption">{{ reward }}</span></v-col
-          >
+            <v-card-text v-html="rewardMsg" class="text-caption"></v-card-text
+          ></v-col>
         </v-row>
       </v-container>
     </v-sheet>
@@ -173,6 +214,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
+import {  getDateFromSid } from '../../srv/utils';
 import { printJson, head, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
@@ -181,40 +223,54 @@ export default {
     state: Object,
     getRewardPoints: Function,
     earnReward: Function,
+    callUpdateRewardPoints: Function,
+    rewardMap: Function,
+    rewardingSponsors: Function,
   },
   components: {
     VueQRCodeComponent,
     ConfirmationSnackbar,
   },
   computed: {
+    dateFromSid() {
+      if (isEmpty(this.selectedReward.sid)) {
+        return
+      }
+      return getDateFromSid(this.selectedReward.sid);
+    },
+    getRewardingSponsors() {
+      const s = this.rewardingSponsors();
+      console.log('rewardingSponsors', printJson(s));
+      return s;
+    },
+    userID() {
+      return this.$socket.client.auth.userID;
+    },
+
+    qrSize() {
+      const width = 500;
+      const cols = 3;
+      return width * (cols / 12);
+    },
+
     rewardingSponsor() {
       return head(this.tree);
     },
 
     rewardUri() {
-      return `?sponsor=${encodeURIComponent(
-        this.rewardingSponsor.biz
-      )}&customer=${this.$socket.client.auth.userID}`;
+      return `?customer=${this.userID}`;
     },
 
     encodedUri() {
       return encodeURI(`${window.location.origin}/sponsor/${this.rewardUri}`);
     },
 
-    reward() {
+    rewardMsg() {
       return this.rewardingSponsor
-        ? `Redeeming reward from ${this.rewardingSponsor.biz} with \n${this.encodedUri}`
+        ? `${this.rewardingSponsor.biz} will redeem your reward using<br/>${this.encodedUri}`
         : 'Still working on earning rewards...';
     },
 
-    qrSize() {
-      const { md, sm, xs } = this.$vuetify.breakpoint;
-      console.log('xs, sm, sm:>> ', xs, sm, md);
-      function isSmall() {
-        return sm ? 128 : 100;
-      }
-      return md ? 256 : isSmall();
-    },
     colors() {
       return head(this.tree) ? ['amber'] : this.mixedColors;
     },
@@ -248,6 +304,8 @@ export default {
 
   data() {
     return {
+      selectedReward: { biz: '', bid: '' },
+      searchable: false,
       origin: window.location.origin,
       selectedSponsor: '',
       activeSponsors: [],
@@ -319,76 +377,67 @@ export default {
     };
   },
   sockets: {
+    // final step in rewards handshake protocol
+    doingBusinessWith({ bid, biz, country, sid }) {
+      const msg = `Earned reward points with ${biz} (${bid}) in ${country} `;
+      this.confirmationTitle = msg;
+      this.confirmationMessage = `Transaction ID: ${sid}`;
+      this.confSnackbar = true;
+      // now add the bid/name to the items array
+      this.getRewardPointsFor(bid);
+      // now add the bid to local storage
+      this.callUpdateRewardPoints({ bid, biz, sid });
+    },
+
     newPromotion({ biz, promoText }) {
+      this.confirmationTitle = "A Sponsor's New Promotion";
       this.confirmationMessage = `<h5>From ${biz}:</h5><span>${promoText}</span>`;
       this.confSnackbar = true;
     },
   },
 
   methods: {
+    redeemReward() {
+      alert('Removing points from local storage');
+    },
+    offerHandshake({ bid, transaction }) {
+      this.emitFromClient(
+        'offerHandshake',
+        {
+          cid: this.userID,
+          bid,
+          transaction,
+        },
+        (ack) => console.log('ack :>> ', ack)
+      );
+    },
+
     closeSnackbar() {
       this.confSnackbar = false;
       this.getSponsors();
     },
 
-    onGetRewardPoints() {
-      const uid = this.$socket.client.auth.userID;
-      this.getRewardPoints({ bid: '', uid }).then((visits) => {
+    getRewardPointsFor(bid) {
+      const cid = this.userID;
+      this.getRewardPoints({ bid, cid }).then((visits) => {
         if (isEmpty(visits)) {
           return;
         }
-        console.log('Visits:>>', printJson(visits));
-        this.items = visits.map((visit, i) => {
-          // TODO replace with en[de]codeURI[Component]()
-          const biz = decodeURIComponent(visit[0].trim());
-          return {
-            id: i,
-            name: biz,
-            children: visit[1].map((v, idx) => {
+        let i = 0;
+        Object.entries(visits).forEach(([key, value]) => {
+          this.items.push({
+            name: key,
+            children: value.map((v, idx) => {
               return {
-                id: `${i}.${idx}`,
-                name: v.visitedOn,
-                biz,
+                id: `${++i}.${idx}`,
+                name: v.dated,
               };
             }),
-          };
+          });
         });
-        console.log('Items', printJson(this.items));
+        console.log('items', this.items);
       });
     },
-
-    onEarnReward() {
-      const vm = this;
-      // see Model.vue
-      // it sends a message to node/redis returning the visitedOn data
-      // it returns any promo text the restaurant has published
-      this.earnReward({
-        // TODO replace with en[de]codeURI[Component]()
-        bid: encodeURIComponent(this.$route.params.id),
-        uid: this.$socket.client.auth.userID,
-      }).then((visitedOn) => {
-        const dates = visitedOn.map((v) => this.convertDateTime(v));
-
-        // Jason wanted to wait on mentioning tokens.
-        const tokenMsg = `<p>Out of ${visitedOn.length} visit${
-          visitedOn.length > 1 ? 's' : ''
-        }, you are earning <strong> ${
-          vm.$route.params.id
-        }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
-          dates.length
-        } date${dates.length > 1 ? 's' : ''}:</p>`;
-        console.log(tokenMsg);
-
-        this.dates = dates;
-        vm.rewardPointsMessage = `Here ${
-          dates.length === 1 ? 'is' : 'are'
-        } your ${dates.length} visit${
-          dates.length > 1 ? 's' : ''
-        } to <strong> ${vm.$route.params.id}</strong>:`;
-        vm.rewardPoints = true;
-      });
-    },
-
     earnTokens() {
       window.open('https://TQRtokens.com', '_blank', 'noopener noreferrer');
     },
@@ -415,6 +464,7 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+
     getPromos(biz, rewards = false) {
       this.promos = [];
       const country = this.country;
@@ -431,6 +481,7 @@ export default {
         console.log(`promotions`, printJson(this.promotions));
       });
     },
+
     renderPromos() {
       console.log('this.promotions.length :>> ', this.promotions.length);
       this.promos = this.promotions.length
@@ -447,6 +498,35 @@ export default {
             },
           ];
     },
+
+    onEarnReward() {
+      const vm = this;
+      // see Model.vue
+      this.earnReward({
+        bid: encodeURIComponent(this.$route.params.id),
+        uid: this.userID,
+      }).then((rewards) => {
+        const dates = rewards.map((v) => this.convertDateTime(v));
+
+        // Jason wanted to wait on mentioning tokens.
+        const tokenMsg = `<p>Out of ${rewards.length} visit${
+          rewards.length > 1 ? 's' : ''
+        }, you are earning <strong> ${
+          vm.$route.params.id
+        }</strong> TQR tokens on ${dates.length === 1 ? 'this' : 'these'} ${
+          dates.length
+        } date${dates.length > 1 ? 's' : ''}:</p>`;
+        console.log(tokenMsg);
+
+        this.dates = dates;
+        vm.rewardPointsMessage = `Here ${
+          dates.length === 1 ? 'is' : 'are'
+        } your ${dates.length} visit${
+          dates.length > 1 ? 's' : ''
+        } to <strong> ${vm.$route.params.id}</strong>:`;
+        vm.rewardPoints = true;
+      });
+    },
     getSponsors() {
       this.emitFromClient('getSponsors', 'usa', (sponsors) => {
         console.log('sponsors :>> ', sponsors);
@@ -456,6 +536,9 @@ export default {
   }, // end of Methods
 
   watch: {
+    // selectedReward(sponsor) {
+    //   this.rewardDetails = printJson(sponsor);
+    // },
     selectedSponsor(sponsor) {
       this.getPromos(sponsor);
     },
@@ -475,10 +558,14 @@ export default {
 
   mounted() {
     this.getSponsors();
+    // if this url is .../customer/<sponsor uid>
+    // the first step is to ensure Sponsor is online with a handshake
     if (this.$route.params.id) {
-      this.onEarnReward();
+      const bid = this.$route.params.id;
+      this.offerHandshake({ bid, transaction: 'earn points' });
     }
-    this.onGetRewardPoints();
+    // TODO refactor if we use local storage for visits
+    this.getRewardPointsFor();
 
     console.log('CUSTOMER mounted');
   },

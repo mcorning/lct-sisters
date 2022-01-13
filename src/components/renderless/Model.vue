@@ -7,10 +7,12 @@
 import Setting from '@/models/Setting';
 import Visit from '@/models/Visit';
 import Place from '@/models/Place';
+import Reward from '@/models/Reward';
 import Appointment from '@/models/Appointment';
 
 import { timeMixin } from '@/js/time';
 import { graphMixin } from '@/js/graph';
+import { rewardMixin } from '@/js/reward';
 import { spaceMixin } from '@/js/space';
 import { warningMixin } from '@/js/warning';
 import { redisMixin } from '@/js/redis';
@@ -22,7 +24,14 @@ import { Some } from '@/fp/monads/Maybe.js';
 export default {
   props: {},
 
-  mixins: [graphMixin, spaceMixin, redisMixin, timeMixin, warningMixin],
+  mixins: [
+    graphMixin,
+    rewardMixin,
+    spaceMixin,
+    redisMixin,
+    timeMixin,
+    warningMixin,
+  ],
 
   computed: {
     oid() {
@@ -362,9 +371,9 @@ export default {
         });
       });
     },
-    getRewardPoints({ bid, uid }) {
+    getRewardPoints({ bid, cid }) {
       return new Promise((resolve) => {
-        this.emitFromClient('getRewardPoints', { bid, uid }, (visitedOn) => {
+        this.emitFromClient('getRewardPoints', { bid, cid }, (visitedOn) => {
           console.log('visitedOn', visitedOn);
           resolve(visitedOn);
         });
@@ -434,6 +443,9 @@ export default {
       const s = Setting.query().all();
       return s.length ? s[0] : s;
     },
+    callUpdateRewardPoints({ bid, biz, sid }) {
+      this.updateRewardPoints({ bid, biz, sid });
+    },
   },
 
   watch: {
@@ -452,6 +464,7 @@ export default {
       Setting.$fetch(),
       Place.$fetch(),
       Visit.$fetch(),
+      Reward.$fetch(),
       Appointment.$fetch(),
     ])
       .toEither()
@@ -516,6 +529,9 @@ export default {
       getRewardPoints: this.getRewardPoints,
       addWarnings: this.addWarnings,
       getAlerts: this.getAlerts,
+      callUpdateRewardPoints: this.callUpdateRewardPoints,
+      rewardMap: this.rewardMap,
+      rewardingSponsors: this.rewardingSponsors,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

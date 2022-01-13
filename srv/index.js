@@ -22,8 +22,6 @@ const path = require('path');
 const express = require('express');
 const socketIO = require('socket.io');
 const serveStatic = require('serve-static');
-const crypto = require('crypto');
-const randomId = () => crypto.randomBytes(8).toString('hex');
 const {
   printJson,
   err,
@@ -69,6 +67,8 @@ const {
   getWarnings,
   addVisit,
   getVisits,
+  randomId,
+  getSponsor,
 } = require('./redis/streams');
 
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
@@ -163,6 +163,8 @@ io.on('connection', (socket) => {
   // join the "userID" room
   // we send alerts using the userID stored in redisGraph for visitors
   socket.join(newUserID);
+  // used in tqrHandshake event handler
+  socket.userID = newUserID;
 
   getPendingAlerts(newUserID, socket.id);
 
@@ -252,22 +254,43 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('getRewardPoints', ({ bid, uid }, ack) => {
-    // add to the bid's Reward Stream
-    getRewardPoints({ bid, uid }).then((visitedOn) => {
+  socket.on('getRewardPoints', ({ bid, cid }, ack) => {
+    if (isEmpty(bid)) {
+      return;
+    }
+    getRewardPoints({ bid, cid }).then((visitedOn) => {
       if (ack) {
         ack(visitedOn);
       }
     });
   });
-  socket.on('earnReward', ({ bid, uid }, ack) => {
-    // add to the bid's Reward Stream
-    earnReward({ bid, uid }).then((visitedOn) => {
-      if (ack) {
-        ack(visitedOn);
-      }
-    });
+
+  //#region Earning Reward Points
+  // sent by Customer
+  socket.on('offerHandshake', ({ cid, bid, transaction }) => {
+    console.log('cid, bid, transaction :>> ', cid, bid, transaction); // sent to Sponsor
+    socket.to(bid).emit('shakeHands', { cid, transaction });
   });
+
+  // sent by Sponsor
+  socket.on('readyForBusiness', ({ cid, bid, biz,transaction, country }) => {
+    console.log(
+      'cid, bid, biz, transaction, country :>> ',
+      cid,
+      bid,
+      biz,
+      transaction,
+      country
+    );
+    if (transaction === 'earn points') {
+      earnReward({ bid, biz, cid }).then((sid) => {
+        console.log(sid);
+        // send to Customer
+        socket.to(cid).emit('doingBusinessWith', { bid, biz, country, sid });
+      });
+    }
+  });
+//#endregion
 
   socket.on(
     'addSponsor',

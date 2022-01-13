@@ -9,13 +9,16 @@
       <v-container v-if="!printingCard" fluid class="fill-height">
         <!-- Header -->
         <v-row no-gutters align="center" justify="center">
-          <v-col>
+          <v-col cols="8">
             <v-card-title class="text-sm-h5">TQR Loyalty Tracking</v-card-title>
 
             <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
-              Google Confirmed Business Address:
-              {{ confirmedAddress }}</v-card-text
+              Google confirmed your business address:
+              {{ confirmedAddress }}
+              <br />
+              Your user ID:
+              {{ userID }}</v-card-text
             >
           </v-col>
           <v-col cols="auto">
@@ -31,7 +34,7 @@
             <v-btn
               class="ml-1"
               text
-              color="green"
+              color="green darken-3"
               plain
               @click="printingCard = true"
               >Preview QR</v-btn
@@ -199,11 +202,14 @@
         </v-row>
         <v-row no-gutters justify="center">
           <v-col cols="auto">
-            <span class="text-caption">{{ encodedUri }}</span></v-col
+            <span class="text-caption"
+              >Customers earn rewards using: <br />{{ encodedUri }}</span
+            ></v-col
           ></v-row
         >
       </v-container>
 
+      <!-- QR Card Printout -->
       <v-card v-else>
         <v-card-text>
           <div id="targetDiv" ref="targetDiv" class="text-center">
@@ -271,6 +277,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
       <confirmation-snackbar
         v-if="confSnackbar"
         :centered="true"
@@ -281,7 +288,7 @@
         :confirmationIcon="confirmationIcon"
         :approveString="approveString"
         :disapproveString="disapproveString"
-        @approved="onApproved"
+        @approved="approved"
         @disapprove="confSnackbar = false"
       />
     </v-sheet>
@@ -306,13 +313,13 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    userID() {
+      return this.$socket.client.auth.userID;
+    },
     qrSize() {
-      const { md, sm, xs } = this.$vuetify.breakpoint;
-      console.log('xs, sm, md:>> ', xs, sm, md);
-      function isSmall() {
-        return sm ? 128 : 100;
-      }
-      return md ? 256 : isSmall();
+      const width = 500;
+      const cols = 3;
+      return width * (cols / 12);
     },
 
     enticements() {
@@ -330,9 +337,7 @@ export default {
     },
 
     encodedUri() {
-      return encodeURI(
-        `${window.location.origin}/customer/${this.business.trim()}`
-      );
+      return encodeURI(`${window.location.origin}/customer/${this.userID}`);
     },
     sponsorName() {
       return this.sponsor.biz || this.business;
@@ -365,6 +370,9 @@ export default {
 
   data() {
     return {
+      cid: '',
+      transaction: '',
+      approval: '',
       printingCard: false,
       promotionalDays: 7,
       showAll: false,
@@ -435,7 +443,35 @@ export default {
       easings: Object.keys(easings),
     };
   },
+
+  sockets: {
+    shakeHands({ cid, transaction }) {
+      this.cid = cid;
+      this.transaction = transaction;
+      this.approval = 'approvePoints';
+      this.confirmationTitle = 'Granting Reward Points';
+      this.confirmationMessage = `Customer ${cid} wants to ${transaction}`;
+      this.approveString = 'Approve';
+      this.confSnackbar = true;
+    },
+  },
+
   methods: {
+    approved() {
+      if (this.approval === 'approvePoints') {
+        this.approvePoints();
+      }
+    },
+    approvePoints() {
+      this.emitFromClient('readyForBusiness', {
+        cid: this.cid,
+        bid: this.userID,
+        biz: this.business,
+        transaction: this.transaction,
+        country: this.country,
+      });
+      this.confSnackbar = false;
+    },
     promote() {
       const promoText = this.promoText;
       const sid = this.sponsorID;
@@ -459,7 +495,7 @@ export default {
       const biz = this.business.trim();
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
-      const uid = this.$socket.client.auth.userID;
+      const uid = this.userID;
       const confirmedAddress = this.confirmedAddress;
       const promoText = this.promoText;
       console.log(biz, address, country, uid, confirmedAddress, promoText);
@@ -480,7 +516,7 @@ export default {
       const biz = this.business.trim();
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
-      const uid = this.$socket.client.auth.userID;
+      const uid = this.userID;
       const confirmedAddress = this.confirmedAddress;
       console.log(biz, address, country, uid, confirmedAddress);
 
@@ -563,20 +599,8 @@ export default {
         this.ps = promos;
       });
     },
-    redeemReward(val) {
-      const customer = decodeURIComponent(val.customer);
-      const sponsor = decodeURIComponent(val.sponsor);
-      this.confirmationTitle = `TQR Redemption Center`;
-      this.confirmationSubtitle = `${this.business}`;
-      this.confirmationIcon = 'local_offer';
-      if (sponsor === this.business.trim()) {
-        this.confirmationMessage = `Thank ${customer} for their support.`;
-      } else {
-        this.approveString = '';
-        this.confirmationMessage = `${customer} is trying to redeem ${sponsor}'s reward, not yours.`;
-      }
-      this.confSnackbar = 2;
-    },
+
+    redeemReward(val) {},
   }, // end of Methods
 
   watch: {
@@ -598,7 +622,14 @@ export default {
   },
 
   mounted() {
+    // the only way for a Sponsor to redeem rewards is to scan the Customer's QR
+    // this means the handshake with the Customer starts with the Sponsor here:
     if (!isEmpty(this.$route.query)) {
+      // the query includes the Customer's uid
+      // the Sponsor will ensure that the specified Customer is on the other end of the call
+      // this means that only the original Customer can claim the reward, not some phone with
+      // a different uid impersonating the original Customer.
+      // the query includes a list of SIDS for each visit the Customer and Sponsor logged mutually.
       this.redeemReward(this.$route.query);
     } else {
       this.printing = this.confirmedAddress;
