@@ -82,6 +82,7 @@
                     color="grey lighten-3"
                   ></v-select>
                 </v-card-text>
+                <!-- Legal -->
                 <v-card-text>
                   <v-checkbox v-model="agreement" dark required>
                     <template v-slot:label>
@@ -96,6 +97,7 @@
                     </template>
                   </v-checkbox>
                 </v-card-text>
+                <!-- Buttons -->
                 <v-sheet color="black">
                   <v-card-actions>
                     <v-btn
@@ -200,6 +202,11 @@
             </v-icon>
           </v-col>
         </v-row>
+        <v-row no-gutters justify="center">
+          <v-col cols="auto">
+            <span class="text-caption">{{ userAgent }}</span></v-col
+          ></v-row
+        >
         <v-row no-gutters justify="center">
           <v-col cols="auto">
             <span class="text-caption"
@@ -357,6 +364,9 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    userAgent() {
+      return navigator.userAgent;
+    },
     copyMsg() {
       // copyState starts out false
       // so first hover over says, "Click to select text then copy"
@@ -565,7 +575,8 @@ export default {
       const uid = this.userID;
       const confirmedAddress = this.confirmedAddress;
       const promoText = this.promoText;
-      console.log(biz, address, country, uid, confirmedAddress, promoText);
+      const userAgent = navigator.userAgent;
+      console.log(biz, address, country, uid, confirmedAddress, promoText, userAgent);
       this.updateSponsor({
         biz,
         address,
@@ -573,6 +584,7 @@ export default {
         uid,
         confirmedAddress,
         promoText,
+        userAgent,
       });
 
       this.confSnackbar = false;
@@ -585,9 +597,18 @@ export default {
       const country = address.slice(address.lastIndexOf(',') + 2);
       const uid = this.userID;
       const confirmedAddress = this.confirmedAddress;
-      console.log(biz, address, country, uid, confirmedAddress);
+      const userAgent = navigator.userAgent;
+      console.log(biz, address, country, uid, confirmedAddress, userAgent);
 
-      this.updateSponsor({ biz, address, country, uid, confirmedAddress });
+      this.updateSponsor({
+        biz,
+        address,
+        country,
+        uid,
+        confirmedAddress,
+        userAgent,
+      });
+
       this.registered = true;
       this.$vuetify.goTo(this.$refs.printDiv, this.options);
     },
@@ -640,6 +661,8 @@ export default {
       this.emitFromClient(
         'getPlaceID',
         { address, country: this.country },
+        // formatted_address and place_id come from getPlaceID()
+        // warning comes from confirmPlaceID(). e.g., 'Cannot find an address based on your input.'
         ({ formatted_address, place_id, warning }) => {
           if (warning) {
             vm.confirmationMessage = warning;
@@ -657,6 +680,7 @@ export default {
           <p>If not, enter an address with more or different detail.</p>`;
             vm.confSnackbar = true;
           }
+          // user now (Dis)Approves new Sponsor
         }
       );
     },

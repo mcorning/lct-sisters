@@ -301,7 +301,15 @@ export default {
       this.updateState({ settings: { usernumber: userNumber } });
     },
 
-    updateSponsor({ biz, address, country, uid, confirmedAddress, promoText }) {
+    updateSponsor({
+      biz,
+      address,
+      country,
+      uid,
+      confirmedAddress,
+      promoText,
+      userAgent,
+    }) {
       const countryLowerCase =
         typeof country === 'string' ? country.toLowerCase() : '';
       this.emitFromClient(
@@ -313,6 +321,7 @@ export default {
           uid,
           confirmedAddress,
           promoText,
+          userAgent,
         },
         ({ sid, pid }) => {
           console.log('addSponsor returns:', sid);
@@ -325,6 +334,7 @@ export default {
             uid,
             confirmedAddress,
             promoText,
+            userAgent,
             sid,
             pid,
             'to Setting'
@@ -337,6 +347,7 @@ export default {
             uid,
             confirmedAddress,
             promoText,
+            userAgent,
             sid,
             pid,
           });

@@ -28,7 +28,14 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
-const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
+const addSponsor = ({
+  biz,
+  address,
+  country,
+  uid,
+  confirmedAddress,
+  userAgent,
+}) => {
   const key = `sponsors:${country}`;
   return redis.xadd(
     key,
@@ -40,7 +47,9 @@ const addSponsor = ({ biz, address, country, uid, confirmedAddress }) => {
     'uid',
     uid,
     'confirmedAddress',
-    confirmedAddress
+    confirmedAddress,
+    'userAgent',
+    userAgent
   );
 };
 

@@ -57,6 +57,7 @@ export default class Setting extends Model {
       oid: this.string(),
       // the place_id of an address meaning it does not have to be validated later
       confirmedAddress: this.string(),
+      userAgent:this.string(),
     };
   }
 

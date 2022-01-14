@@ -304,10 +304,13 @@ io.on('connection', (socket) => {
 
   socket.on(
     'addSponsor',
-    ({ biz, address, country, uid, confirmedAddress, promoText }, ack) => {
-      console.log(biz, country, confirmedAddress, promoText);
+    (
+      { biz, address, country, uid, confirmedAddress, promoText, userAgent },
+      ack
+    ) => {
+      console.log(biz, country, confirmedAddress, promoText, userAgent);
       // add to the Sponsor Stream
-      addSponsor({ biz, address, country, uid, confirmedAddress }).then(
+      addSponsor({ biz, address, country, uid, confirmedAddress, userAgent }).then(
         (sid) => {
           if (ack) {
             ack({ sid });

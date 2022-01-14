@@ -444,12 +444,9 @@ export default {
       // remove bid from Reward
       this.redeemReward(bid)
         .then((result) => {
-          // console.log('result :>> ', result);
           this.toastText = `${result.bid} deleted from local storage.`;
           this.toast = true;
-          // this.selectedReward=null
         })
-
         .then(() => (this.selectedReward = { biz: '', bid: '' }))
         .catch((e) => {
           this.toastText = e;
