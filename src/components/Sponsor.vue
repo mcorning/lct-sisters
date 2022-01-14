@@ -40,7 +40,6 @@
                   text
                   plain
                   @click="printingCard = true"
-                  class="ml-2"
                   color="green darken-4"
                   >Preview QR Card</v-btn
                 ></v-col
