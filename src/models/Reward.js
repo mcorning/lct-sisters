@@ -1,6 +1,7 @@
 // Docs: https://vuex-orm.org/guide/model/defining-models.html
 
 import { Model } from '@vuex-orm/core';
+import { nullable } from 'pratica';
 
 console.log('Loading Reward entity');
 
@@ -24,8 +25,11 @@ export default class Reward extends Model {
     };
   }
 
-  static getRewardPoints(bid) {
-    return Reward.find(bid);
+  static getPoints(bid) {
+    return nullable(Reward.find(bid)).cata({
+      Just: (reward) => reward.points,
+      Nothing: () => null,
+    });
   }
 
   static rewardMap() {

@@ -20,6 +20,7 @@ import { redisMixin } from '@/js/redis';
 import { success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
+// import { nullable } from 'pratica';
 
 export default {
   props: {},
@@ -532,6 +533,7 @@ export default {
       callUpdateRewardPoints: this.callUpdateRewardPoints,
       rewardMap: this.rewardMap,
       rewardingSponsors: this.rewardingSponsors,
+      getPointsFromCustomer: this.getPointsFromCustomer,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

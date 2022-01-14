@@ -1,12 +1,8 @@
 import { Some, None } from './monads/Maybe.js';
 import { info, printJson } from '../utils/helpers';
 
-export const firstOrNone = function(array) {
-  return array?.length > 0 ? Some(array[0]) : None();
-};
-export const allOrNone = function(array) {
-  return array?.length > 0 ? Some(array) : None();
-};
+export const firstOrNone = (array) => array?.length > 0 ? Some(array[0]) : None();
+export const allOrNone = (array) => array?.length > 0 ? Some(array) : None();
 
 export const inspect = (v) => {
   console.log(info('Inspecting:', printJson(v)));

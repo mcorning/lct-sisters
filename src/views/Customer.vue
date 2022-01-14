@@ -6,6 +6,7 @@
         state,
         earnReward,
         getRewardPoints,
+        getPointsFromCustomer,
         isConnected,
         rewardMap,
         rewardingSponsors,
@@ -17,8 +18,9 @@
         :earnReward="earnReward"
         :isConnected="isConnected"
         :callUpdateRewardPoints="callUpdateRewardPoints"
-        :rewardMap=rewardMap
-        :rewardingSponsors=rewardingSponsors
+        :rewardMap="rewardMap"
+        :rewardingSponsors="rewardingSponsors"
+        :getPointsFromCustomer="getPointsFromCustomer"
       />
     </div>
   </Model>

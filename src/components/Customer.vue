@@ -7,14 +7,14 @@
       max-width="500"
     >
       <v-container fluid class="fill-height">
-        <v-row no-gutters
+        <v-row no-gutters justify="space-between"
           ><v-col cols="8">
-            <v-card-title class="text-sm-h5 text-xs-subtitle-1"
-              >TQR Loyalty Tracking</v-card-title
+            <v-card-title class="text-subtitle-1 text-sm-h5"
+              >TQR Loyalty Service</v-card-title
             >
             <v-card-subtitle>Customer View</v-card-subtitle>
             <v-card-text class="text-caption">
-              Your user ID:
+              Your Cusomter ID (cid):
               {{ userID }}</v-card-text
             >
           </v-col>
@@ -27,23 +27,10 @@
               :size="qrSize"
             >
             </VueQRCodeComponent>
-            Sponsor will scan your QR code
+            <span class="text-caption text-sm-body-2">For Redemption</span>
           </v-col>
         </v-row>
 
-        <v-row
-          ><v-col>
-            <v-card color="blue-grey darken-2" class="mx-auto" dark>
-              <v-card-title>Active Sponsors: </v-card-title>
-              <v-select
-                v-model="selectedSponsor"
-                :items="activeSponsors"
-                label="Select a Sponsor to see Promotions"
-                outlined
-              ></v-select>
-            </v-card>
-          </v-col>
-        </v-row>
         <v-row
           ><v-col>
             <v-card
@@ -53,6 +40,9 @@
               dark
             >
               <v-card-title>TQR Rewards</v-card-title>
+              <v-card-subtitle
+                >Scan Sponsor's QR Code to earn rewards</v-card-subtitle
+              >
               <div v-if="searchable">
                 <v-card-subtitle
                   >Click a Sponsor to claim your reward</v-card-subtitle
@@ -100,11 +90,12 @@
                 <v-row
                   ><v-col cols="6">
                     <v-select
+                      v-model="selectedReward"
                       :items="getRewardingSponsors"
                       item-text="biz"
                       item-value="bid"
                       return-object
-                      v-model="selectedReward"
+                      label="Rewarding Sponsors"
                   /></v-col>
                   <v-col>
                     <v-text-field
@@ -127,6 +118,14 @@
                     />
                   </v-col>
                 </v-row>
+                <v-row no-gutters justify="center">
+                  <v-col cols="auto">
+                    <v-card-text
+                      v-html="rewardMsg"
+                      class="text-caption"
+                    ></v-card-text
+                  ></v-col>
+                </v-row>
               </v-card-text>
               <v-card-actions>
                 <v-btn
@@ -145,9 +144,24 @@
             </v-card>
           </v-col></v-row
         >
+
+        <v-row
+          ><v-col>
+            <v-card color="blue-grey darken-2" class="mx-auto" dark>
+              <v-card-title>Active Sponsors: </v-card-title>
+              <v-select
+                v-model="selectedSponsor"
+                :items="activeSponsors"
+                label="Select a Sponsor to see their enticements"
+                outlined
+              ></v-select>
+            </v-card>
+          </v-col>
+        </v-row>
+
         <v-row>
           <v-col>
-            <v-card color="blue-grey darken-2" class="mx-auto" dark>
+            <v-card ref=enticements color="blue-grey darken-2" class="mx-auto" dark>
               <v-row>
                 <v-col>
                   <v-card-title>Enticements</v-card-title>
@@ -187,11 +201,6 @@
             </v-icon>
           </v-col>
         </v-row>
-        <v-row no-gutters justify="center">
-          <v-col cols="auto">
-            <v-card-text v-html="rewardMsg" class="text-caption"></v-card-text
-          ></v-col>
-        </v-row>
       </v-container>
     </v-sheet>
 
@@ -225,29 +234,38 @@ export default {
     callUpdateRewardPoints: Function,
     rewardMap: Function,
     rewardingSponsors: Function,
+    getPointsFromCustomer: Function,
   },
   components: {
     VueQRCodeComponent,
     ConfirmationSnackbar,
   },
   computed: {
+    getRewardingSponsors() {
+      const s = this.rewardingSponsors();
+      console.log('rewardingSponsors', printJson(s));
+      return s;
+    },
+    points() {
+      return this.getPointsFromCustomer(this.selectedReward.bid);
+    },
+
     dateFromSid() {
       if (isEmpty(this.selectedReward.sid)) {
         return;
       }
       return getDateFromSid(this.selectedReward.sid);
     },
-    getRewardingSponsors() {
-      const s = this.rewardingSponsors();
-      console.log('rewardingSponsors', printJson(s));
-      return s;
-    },
+
     userID() {
       return this.$socket.client.auth.userID;
     },
 
     qrSize() {
-      const width = 500;
+      const width =
+        this.$vuetify.breakpoint.width < 500
+          ? this.$vuetify.breakpoint.width
+          : 500;
       const cols = 3;
       return width * (cols / 12);
     },
@@ -258,8 +276,7 @@ export default {
     },
 
     rewardUri() {
-      // TODO extend this for dynamic points taken from Reward
-      return `?cid=${this.userID}&points=1`;
+      return `?cid=${this.userID}&points=${this.points}`;
     },
 
     encodedUri() {
@@ -268,7 +285,7 @@ export default {
 
     rewardMsg() {
       return this.rewardingSponsor
-        ? `${this.rewardingSponsor.biz} will redeem your reward using<br/>${this.encodedUri}`
+        ? `<strong>${this.rewardingSponsor.biz}</strong> will redeem your reward using<br/>${this.encodedUri}`
         : 'Still working on earning rewards...';
     },
 
@@ -541,6 +558,7 @@ export default {
     //   this.rewardDetails = printJson(sponsor);
     // },
     selectedSponsor(sponsor) {
+      this.$vuetify.goTo(this.$refs.enticements, this.options)
       this.getPromos(sponsor);
     },
     tree(n, o) {
@@ -566,9 +584,10 @@ export default {
       this.offerHandshake({ bid, transaction: 'earn points' });
     }
     // TODO refactor if we use local storage for visits
-    this.getRewardPointsFor();
-
-    console.log('CUSTOMER mounted');
+    // this.getRewardPointsFor();
+    this.selectedReward = head(this.getRewardingSponsors);
+    console.log('');
+    console.log('CUSTOMER mounted with Sponsor', this.selectedReward.bid);
   },
 };
 </script>

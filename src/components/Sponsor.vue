@@ -10,36 +10,43 @@
         <!-- Header -->
         <v-row no-gutters align="center" justify="center">
           <v-col cols="8">
-            <v-card-title class="text-sm-h5">TQR Loyalty Tracking</v-card-title>
+            <v-card-title class="text-subtitle-1 text-sm-h4"
+              >TQR Loyalty Service</v-card-title
+            >
 
             <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
               Google confirmed your business address:
               {{ confirmedAddress }}
               <br />
-              Your user ID:
+              Your Sponsor ID (sid):
               {{ userID }}</v-card-text
             >
           </v-col>
-          <v-col cols="auto">
-            <VueQRCodeComponent
-              id="qr"
-              ref="qr"
-              :text="encodedUri"
-              error-level="L"
-              :size="qrSize"
-              class="ml-5"
-            >
-            </VueQRCodeComponent>
-            <v-btn
-              class="ml-1"
-              text
-              color="green darken-3"
-              plain
-              @click="printingCard = true"
-              >Preview QR</v-btn
-            >
-          </v-col>
+          <v-col>
+            <v-row no-gutters justify="center">
+              <v-col cols="auto">
+                <VueQRCodeComponent
+                  id="qr"
+                  ref="qr"
+                  :text="encodedUri"
+                  error-level="L"
+                  :size="qrSize"
+                >
+                </VueQRCodeComponent>
+              </v-col>
+              <v-col>
+                <v-btn
+                  text
+                  plain
+                  @click="printingCard = true"
+                  class="ml-2"
+                  color="green darken-4"
+                  >Preview QR Card</v-btn
+                ></v-col
+              >
+            </v-row></v-col
+          >
         </v-row>
 
         <!-- Sponsor Registration Form -->
@@ -210,44 +217,80 @@
       </v-container>
 
       <!-- QR Card Printout -->
-      <v-card v-else>
-        <v-card-text>
-          <div id="targetDiv" ref="targetDiv" class="text-center">
-            <v-row
-              ><v-col
-                >To earn {{ business }} loyalty rewards, scann this QR
-                code</v-col
-              ></v-row
+      <div v-else>
+        <div id="targetDiv" ref="targetDiv" class="text-center">
+          <v-card>
+            <v-card-title
+              >Earn {{ business }} Customer Loyalty Rewards</v-card-title
             >
-            <v-row align="top" justify="center">
-              <v-spacer />
-              <v-col cols="auto" class="text-center">
-                <VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="encodedUri"
-                  error-level="L"
-                >
-                </VueQRCodeComponent>
-              </v-col>
-              <v-spacer />
-            </v-row>
-            <v-row
-              ><v-col>
-                <v-card-text class="text-caption">
-                  Or enter this URL:
-                  {{ encodedUri }}</v-card-text
-                ></v-col
-              ></v-row
+            <v-card-subtitle
+              >To earn those rewards, scan the {{ business }} QR code
+              here</v-card-subtitle
             >
-          </div>
-        </v-card-text>
+            <v-card-text>
+              <v-row align="top" justify="center">
+                <v-spacer />
+                <v-col cols="auto" class="text-center">
+                  <VueQRCodeComponent
+                    id="qr"
+                    ref="qr"
+                    :text="encodedUri"
+                    error-level="L"
+                  >
+                  </VueQRCodeComponent>
+                </v-col>
+                <v-spacer />
+              </v-row>
+              <v-row
+                ><v-col>
+                  <v-card-text class="text-caption">
+                    <p class="mb-1">Or enter this URL in your browser:</p>
+                    <v-tooltip top>
+                      <template v-slot:activator="{ on, attrs }">
+                        <input
+                          v-bind="attrs"
+                          v-on="on"
+                          @mousedown="copyState = false"
+                          @focus="$event.target.select()"
+                          ref="clone"
+                          readonly
+                          :value="encodedUri"
+                          size="45"
+                        />
+                      </template>
+                      <span>{{ copyMsg }}</span>
+                    </v-tooltip>
+                    <v-tooltip top>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="copy"
+                          icon
+                          color="blue-grey darken-2"
+                        >
+                          <v-icon>mdi-content-copy</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Copy selected text</span>
+                    </v-tooltip>
+                  </v-card-text></v-col
+                ></v-row
+              >
+            </v-card-text>
+          </v-card>
+        </div>
+
         <v-card-actions>
-          <v-btn text color="primary" plain @click="stopPrint">Cancel</v-btn>
+          <v-btn text color="blue-grey darken-2" plain @click="stopPrint"
+            >Cancel</v-btn
+          >
           <v-spacer />
-          <v-btn text color="primary" plain @click="printMe">Print</v-btn>
+          <v-btn text color="blue-grey darken-2" plain @click="printMe"
+            >Print</v-btn
+          >
         </v-card-actions>
-      </v-card>
+      </div>
 
       <v-dialog v-model="dialog" absolute max-width="400" persistent>
         <v-card>
@@ -313,11 +356,21 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    copyMsg() {
+      // copyState starts out false
+      // so first hover over says, "Click to select text then copy"
+      // copy() toggles copyState to true
+      // second hover says, "Text copied"
+      return this.copyState ? 'Text copied' : 'Click to select text then copy';
+    },
     userID() {
       return this.$socket.client.auth.userID;
     },
     qrSize() {
-      const width = 500;
+      const width =
+        this.$vuetify.breakpoint.width < 500
+          ? this.$vuetify.breakpoint.width
+          : 500;
       const cols = 3;
       return width * (cols / 12);
     },
@@ -370,6 +423,7 @@ export default {
 
   data() {
     return {
+      copyState: false,
       cid: '',
       transaction: '',
       approval: '',
@@ -563,6 +617,11 @@ export default {
       return new DateTime.fromISO(val).toLocaleString(DateTime.DATE_HUGE);
     },
 
+    copy() {
+      this.$refs.clone.focus();
+      navigator.clipboard.writeText(this.$refs.clone.value);
+      this.copyState = true;
+    },
     printMe() {
       this.printingCard = true;
       window.print();
@@ -601,6 +660,7 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
+
     getPromos() {
       const biz = this.business.trim();
       const country = this.country;
@@ -610,8 +670,12 @@ export default {
       });
     },
 
-    redeemReward({cid, points}) {
-      this.emitFromClient('redeemReward', {bid:this.userID, cid, points}, (ack) => alert(ack));
+    redeemReward({ cid, points }) {
+      this.emitFromClient(
+        'redeemReward',
+        { bid: this.userID, cid, points },
+        (ack) => alert(ack)
+      );
     },
   }, // end of Methods
 
