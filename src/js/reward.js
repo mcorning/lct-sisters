@@ -4,6 +4,9 @@ import Reward from '@/models/Reward';
 export const rewardMixin = {
   name: 'rewardMixin',
   methods: {
+    redeemReward(bid) {
+      return Reward.delete(bid);
+    },
     getPointsFromCustomer(bid) {
       return Reward.getPoints(bid);
     },

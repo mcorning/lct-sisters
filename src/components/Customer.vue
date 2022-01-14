@@ -218,6 +218,15 @@
       :confirmationIcon="local_offer"
       @disapprove="closeSnackbar"
     />
+    <v-snackbar v-model="toast">
+      {{ toastText }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn color="pink" text v-bind="attrs" @click="toast = false">
+          {{ toastButton }}
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -240,6 +249,7 @@ export default {
     rewardMap: Function,
     rewardingSponsors: Function,
     getPointsFromCustomer: Function,
+    redeemReward: Function,
   },
   components: {
     VueQRCodeComponent,
@@ -327,6 +337,9 @@ export default {
 
   data() {
     return {
+      toast: false,
+      toastText: 'You are redeemed',
+      toastButton: 'Thanks',
       selectedReward: { biz: '', bid: '' },
       searchable: false,
       origin: window.location.origin,
@@ -400,8 +413,12 @@ export default {
     };
   },
   sockets: {
-    rewardRedeemed() {
-      alert('You are redeemed');
+    rewardRedeemed(bid) {
+      // remove bid from Reward
+      this.redeemReward(bid);
+      this.toastText=`${bid} has redeemed you.`
+      // TODO extend setting with result of redeem instead of hardwired true
+      this.toast = true;
     },
     // final step in rewards handshake protocol
     doingBusinessWith({ bid, biz, country, sid }) {

@@ -56,8 +56,8 @@ export default class Reward extends Model {
     });
   }
 
-  static delete(val) {
-    return this.$delete(val);
+  static delete(bid) {
+    return this.$delete(bid);
   }
 
   static deleteAll() {

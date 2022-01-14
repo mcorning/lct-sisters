@@ -534,6 +534,7 @@ export default {
       rewardMap: this.rewardMap,
       rewardingSponsors: this.rewardingSponsors,
       getPointsFromCustomer: this.getPointsFromCustomer,
+      redeemReward: this.redeemReward,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

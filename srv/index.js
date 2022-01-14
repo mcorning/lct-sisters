@@ -256,8 +256,10 @@ io.on('connection', (socket) => {
   socket.on('redeemReward', ({ bid, cid, points }, ack) => {
     getRewardPoints({ bid, cid }).then((visitedOn) => {
       if (ack && visitedOn[cid].length >= points) {
-        socket.to(cid).emit('rewardRedeemed')
-        ack('Redeemed');
+        // Customer will remove bid rewards
+        socket.to(cid).emit('rewardRedeemed', bid);
+        // confirm wih Sponsor
+        ack(`They, ${cid}, are redeemed`);
       }
     });
   });

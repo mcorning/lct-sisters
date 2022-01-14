@@ -8,7 +8,7 @@
     >
       <v-container v-if="!printingCard" fluid class="fill-height">
         <!-- Header -->
-        <v-row no-gutters  justify="space-between">
+        <v-row no-gutters justify="space-between">
           <v-col cols="7" sm="8">
             <v-card-title class="text-subtitle-1 text-sm-h4"
               >TQR Loyalty Service</v-card-title
@@ -328,6 +328,14 @@
         @disapprove="confSnackbar = false"
       />
     </v-sheet>
+    <v-snackbar v-model="toast">
+      {{ toastText }}
+      <template v-slot:action="{ attrs }">
+        <v-btn color="pink" text v-bind="attrs" @click="toast = false">
+          {{ toastButton }}
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -416,6 +424,9 @@ export default {
 
   data() {
     return {
+      toast: false,
+      toastText: 'They are redeemed',
+      toastButton: 'Close',
       copyState: false,
       cid: '',
       transaction: '',
@@ -667,7 +678,10 @@ export default {
       this.emitFromClient(
         'redeemReward',
         { bid: this.userID, cid, points },
-        (ack) => alert(ack)
+        (ack) => {
+          this.toastText = ack;
+          this.toast = true;
+        }
       );
     },
   }, // end of Methods

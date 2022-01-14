@@ -10,6 +10,7 @@
         isConnected,
         rewardMap,
         rewardingSponsors,
+        redeemReward,
       }"
     >
       <Customer
@@ -21,6 +22,7 @@
         :rewardMap="rewardMap"
         :rewardingSponsors="rewardingSponsors"
         :getPointsFromCustomer="getPointsFromCustomer"
+        :redeemReward="redeemReward"
       />
     </div>
   </Model>
