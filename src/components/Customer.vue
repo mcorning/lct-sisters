@@ -7,6 +7,7 @@
       max-width="500"
     >
       <v-container fluid class="fill-height">
+        <!-- Header -->
         <v-row no-gutters justify="space-between"
           ><v-col cols="7" sm="8">
             <v-card-title class="text-subtitle-1 text-sm-h5"
@@ -31,6 +32,7 @@
           </v-col>
         </v-row>
 
+        <!-- Rewards -->
         <v-row
           ><v-col>
             <v-card
@@ -128,13 +130,8 @@
                 </v-row>
               </v-card-text>
               <v-card-actions>
-                <v-btn
-                  v-if="snackBtnText"
-                  text
-                  color="#00f500"
-                  @click="rewardPoints = false"
-                >
-                  {{ snackBtnText }}
+                <v-btn text color="pink" @click="deleteReward()">
+                  Delete
                 </v-btn>
                 <v-spacer />
                 <v-btn text color="yellow" @click="earnTokens"
@@ -144,7 +141,7 @@
             </v-card>
           </v-col></v-row
         >
-
+        <!-- Promotions -->
         <v-row
           ><v-col>
             <v-card color="blue-grey darken-2" class="mx-auto" dark>
@@ -159,6 +156,7 @@
           </v-col>
         </v-row>
 
+        <!-- Enticements -->
         <v-row>
           <v-col>
             <v-card
@@ -416,20 +414,21 @@ export default {
     rewardRedeemed(bid) {
       // remove bid from Reward
       this.redeemReward(bid);
-      this.toastText=`${bid} has redeemed you.`
+      this.toastText = `${bid} has redeemed you.`;
       // TODO extend setting with result of redeem instead of hardwired true
       this.toast = true;
     },
     // final step in rewards handshake protocol
     doingBusinessWith({ bid, biz, country, sid }) {
-      const msg = `Earned reward points with ${biz} (${bid}) in ${country} `;
+      const msg = `You just earned reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `Transaction ID: ${sid}`;
+      this.confirmationMessage = `${biz} (${bid}) in ${country} <br/>Transaction ID: ${sid}`;
       this.confSnackbar = true;
       // now add the bid/name to the items array
       this.getRewardPointsFor(bid);
       // now add the bid to local storage
       this.callUpdateRewardPoints({ bid, biz, sid });
+      this.selectedReward.biz = biz;
     },
 
     newPromotion({ biz, promoText }) {
@@ -440,6 +439,23 @@ export default {
   },
 
   methods: {
+    deleteReward() {
+      const bid = this.selectedReward.bid;
+      // remove bid from Reward
+      this.redeemReward(bid)
+        .then((result) => {
+          // console.log('result :>> ', result);
+          this.toastText = `${result.bid} deleted from local storage.`;
+          this.toast = true;
+          // this.selectedReward=null
+        })
+
+        .then(() => (this.selectedReward = { biz: '', bid: '' }))
+        .catch((e) => {
+          this.toastText = e;
+          this.toast = true;
+        });
+    },
     offerHandshake({ bid, transaction }) {
       this.emitFromClient(
         'offerHandshake',
