@@ -8,43 +8,37 @@
     >
       <v-container v-if="!printingCard" fluid class="fill-height">
         <!-- Header -->
-        <v-row no-gutters align="center" justify="center">
-          <v-col cols="8">
+        <v-row no-gutters  justify="space-between">
+          <v-col cols="7" sm="8">
             <v-card-title class="text-subtitle-1 text-sm-h4"
               >TQR Loyalty Service</v-card-title
             >
 
             <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
+              Your Sponsor ID (sid):
+              {{ userID }} <br />
               Google confirmed your business address:
               {{ confirmedAddress }}
-              <br />
-              Your Sponsor ID (sid):
-              {{ userID }}</v-card-text
-            >
+            </v-card-text>
           </v-col>
-          <v-col>
-            <v-row no-gutters justify="center">
-              <v-col cols="auto">
-                <VueQRCodeComponent
-                  id="qr"
-                  ref="qr"
-                  :text="encodedUri"
-                  error-level="L"
-                  :size="qrSize"
-                >
-                </VueQRCodeComponent>
-              </v-col>
-              <v-col>
-                <v-btn
-                  text
-                  plain
-                  @click="printingCard = true"
-                  color="green darken-4"
-                  >Preview QR Card</v-btn
-                ></v-col
-              >
-            </v-row></v-col
+          <v-col cols="auto">
+            <VueQRCodeComponent
+              id="qr"
+              ref="qr"
+              :text="encodedUri"
+              error-level="L"
+              :size="qrSize"
+            >
+            </VueQRCodeComponent>
+            <v-btn
+              text
+              plain
+              class="text-caption text-sm-body-1"
+              @click="printingCard = true"
+              color="green darken-4"
+              >Preview QR</v-btn
+            ></v-col
           >
         </v-row>
 
@@ -367,9 +361,9 @@ export default {
     },
     qrSize() {
       const width =
-        this.$vuetify.breakpoint.width < 500
+        this.$vuetify.breakpoint.width < 600
           ? this.$vuetify.breakpoint.width
-          : 500;
+          : 600;
       const cols = 3;
       return width * (cols / 12);
     },

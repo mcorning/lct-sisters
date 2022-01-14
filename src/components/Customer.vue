@@ -8,7 +8,7 @@
     >
       <v-container fluid class="fill-height">
         <v-row no-gutters justify="space-between"
-          ><v-col cols="8">
+          ><v-col cols="7" sm="8">
             <v-card-title class="text-subtitle-1 text-sm-h5"
               >TQR Loyalty Service</v-card-title
             >
@@ -161,7 +161,12 @@
 
         <v-row>
           <v-col>
-            <v-card ref=enticements color="blue-grey darken-2" class="mx-auto" dark>
+            <v-card
+              ref="enticements"
+              color="blue-grey darken-2"
+              class="mx-auto"
+              dark
+            >
               <v-row>
                 <v-col>
                   <v-card-title>Enticements</v-card-title>
@@ -558,7 +563,7 @@ export default {
     //   this.rewardDetails = printJson(sponsor);
     // },
     selectedSponsor(sponsor) {
-      this.$vuetify.goTo(this.$refs.enticements, this.options)
+      this.$vuetify.goTo(this.$refs.enticements, this.options);
       this.getPromos(sponsor);
     },
     tree(n, o) {
