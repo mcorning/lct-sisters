@@ -68,6 +68,7 @@ const {
   addVisit,
   getVisits,
   randomId,
+  getCountries,
 } = require('./redis/streams');
 
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
@@ -208,9 +209,9 @@ io.on('connection', (socket) => {
     }
   );
 
-  socket.on('getPromotions', ({ biz, country }, ack) => {
-    console.log('getPromotions() biz :>> ', biz);
-    getPromotions({ biz, country }).then((promos) => {
+  socket.on('getPromotions', ({ sid, country }, ack) => {
+    console.log('getPromotions() sid :>> ', sid);
+    getPromotions({ sid, country }).then((promos) => {
       if (ack) {
         ack(promos);
       }
@@ -305,18 +306,23 @@ io.on('connection', (socket) => {
   socket.on(
     'addSponsor',
     (
-      { biz, address, country, uid, confirmedAddress, promoText, userAgent },
+      { biz, address, country, bid, confirmedAddress, promoText, userAgent },
       ack
     ) => {
       console.log(biz, country, confirmedAddress, promoText, userAgent);
       // add to the Sponsor Stream
-      addSponsor({ biz, address, country, uid, confirmedAddress, userAgent }).then(
-        (sid) => {
-          if (ack) {
-            ack({ sid });
-          }
+      addSponsor({
+        biz,
+        address,
+        country,
+        bid,
+        confirmedAddress,
+        userAgent,
+      }).then((sid) => {
+        if (ack) {
+          ack({ sid });
         }
-      );
+      });
     }
   );
   socket.on('getSponsors', (country, ack) => {
@@ -326,6 +332,18 @@ io.on('connection', (socket) => {
         ack(sponsors);
       }
     });
+  });
+
+  socket.on('getCountries', (_, ack) => {
+    getCountries()
+      .then((countries) => {
+        if (ack) {
+          ack(countries);
+        }
+      })
+      .catch((e) => {
+        console.log('e :>> ', e);
+      });
   });
 
   socket.on('addVisit', ({ sid, uid }, ack) => {

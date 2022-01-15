@@ -16,7 +16,7 @@
 
             <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
-              Your Sponsor ID (sid):
+              Your Sponsor ID (bid):
               {{ userID }} <br />
               Google confirmed your business address:
               {{ confirmedAddress }}
@@ -576,7 +576,15 @@ export default {
       const confirmedAddress = this.confirmedAddress;
       const promoText = this.promoText;
       const userAgent = navigator.userAgent;
-      console.log(biz, address, country, uid, confirmedAddress, promoText, userAgent);
+      console.log(
+        biz,
+        address,
+        country,
+        uid,
+        confirmedAddress,
+        promoText,
+        userAgent
+      );
       this.updateSponsor({
         biz,
         address,
@@ -595,16 +603,16 @@ export default {
       const biz = this.business.trim();
       const address = this.address;
       const country = address.slice(address.lastIndexOf(',') + 2);
-      const uid = this.userID;
+      const bid = this.userID;
       const confirmedAddress = this.confirmedAddress;
       const userAgent = navigator.userAgent;
-      console.log(biz, address, country, uid, confirmedAddress, userAgent);
+      console.log(biz, address, country, bid, confirmedAddress, userAgent);
 
       this.updateSponsor({
         biz,
         address,
         country,
-        uid,
+        bid,
         confirmedAddress,
         userAgent,
       });
@@ -690,9 +698,9 @@ export default {
     },
 
     getPromos() {
-      const biz = this.business.trim();
+      const sid = this.sponsorID;
       const country = this.country;
-      this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+      this.emitFromClient('getPromotions', { sid, country }, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
       });

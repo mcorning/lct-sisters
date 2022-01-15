@@ -28,6 +28,7 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
+//#region Sponsor
 const addSponsor = ({
   biz,
   address,
@@ -60,7 +61,7 @@ const getSponsor = ({ country, sponsorID }) => {
   country = country.toLowerCase();
   const key = `sponsors:${country}`;
   return redis
-    .xread('STREAMS', key, 0)
+    .xread(['STREAMS', key, 0])
     .then((stream) => objectFromStream(stream))
     .then((sponsors) => groupBy(sponsors, sponsorID))
     .then((results) => Object.keys(results))
@@ -68,19 +69,54 @@ const getSponsor = ({ country, sponsorID }) => {
 };
 
 const getSponsors = (country) => {
-  if (typeof country !== 'string') {
-    return null;
-  }
   country = country.toLowerCase();
   const key = `sponsors:${country}`;
-  return redis
-    .xread('STREAMS', key, 0)
-    .then((stream) => objectFromStream(stream))
-    .then((sponsors) => groupBy(sponsors, 'biz'))
-    .then((results) => Object.keys(results))
-    .catch((e) => e);
+  return (
+    redis
+      .xread(['STREAMS', key, 0])
+      .then((stream) => objectFromStream(stream))
+      .then((sponsors) => groupBy(sponsors, 'biz'))
+      // .then((results) => Object.keys(results))
+      .catch((e) => e)
+  );
 };
 
+const getCountries = () =>
+  redis
+    .keys('sponsors:*')
+    .then((keys) => {
+      console.log('keys', keys);
+      return keys;
+    })
+    .catch((e) => {
+      console.log('e :>> ', e);
+    });
+//#endregion
+
+//#region  Rewards
+function enterLottery(uid) {
+  return redis.xadd('lottery', '*', 'uid', uid);
+}
+
+function getRewardPoints({ bid }, lastID = 0) {
+  const bizStream = `biz:${bid}`;
+  console.log(bizStream);
+  return redis
+    .xread(['STREAMS', bizStream, lastID])
+    .then((stream) => objectFromStream(stream))
+    .then((visits) => groupBy(visits, 'cid'))
+    .catch((e) => e);
+}
+
+async function earnReward({ bid, cid, lastID = 0 }) {
+  const bizStream = `biz:${bid}`;
+  console.log(highlight('bid, cid, lastID', bid, cid, lastID));
+  // bizStream contains the same data as all the Customers do locally
+  return redis.xadd(bizStream, '*', 'cid', cid);
+}
+//#endregion
+
+//#region Promotions
 async function addPromotion({
   confirmedAddress,
   biz,
@@ -102,8 +138,8 @@ async function addPromotion({
     sid,
     promoText
   );
-  const bizPath = encodeURIComponent(biz);
-  const key = `promotions:${bizPath}`;
+
+  const key = `promotions:${sid}`;
   console.log('addPromotion() key:', key);
   return redis
     .xadd(
@@ -118,24 +154,18 @@ async function addPromotion({
       'sid',
       sid
     )
-    .then((newSid) => {
-      console.log(`XREAD STREAMS ${key} ${newSid}`);
-      // TODO RESEARCH: why can't i get XREAD to work with the newSid?
-      return redis.xrange(key, newSid, newSid);
+    .then(() => {
+      const request = ['STREAMS', key, 0];
+      return redis.xread(request);
     });
 }
 
-function getPromotions({ biz, country }) {
-  if (typeof biz !== 'string') {
-    return null;
-  }
-  // TODO replace with en[de]codeURI[Component]()
-  const bizPath = encodeURIComponent(biz);
-  const key = `promotions:${bizPath}`;
+function getPromotions({ sid, country }) {
+  const key = `promotions:${sid}`;
 
   console.log(`getPromotions (in country ${country}): XREAD STREAMS ${key} 0`);
   return redis
-    .xread('STREAMS', key, '0')
+    .xread(['STREAMS', key, '0'])
     .then((s) => {
       console.log(s);
       return s;
@@ -143,11 +173,13 @@ function getPromotions({ biz, country }) {
     .then((stream) => objectFromStream(stream))
     .catch((e) => e);
 }
+//#endregion
 
+//#region Warnings
 const getWarnings = () => {
   const key = 'warnings';
   return redis
-    .xread('STREAMS', key, '0')
+    .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
     .then((alerts) => groupBy(alerts, 'place_id'))
     .catch((e) => e);
@@ -176,7 +208,9 @@ const addWarnings = ({ visitData, score, reliability }) => {
   );
   return warnings;
 };
+//#endregion
 
+//#region Visits
 const addVisit = ({ sid, uid }) => {
   const key = 'visits';
   return redis.xadd(key, '*', 'sid', sid, 'uid', uid);
@@ -210,27 +244,7 @@ const getVisits = (sid) => {
     return zipped;
   });
 };
-
-function enterLottery(uid) {
-  return redis.xadd('lottery', '*', 'uid', uid);
-}
-
-function getRewardPoints({ bid }, lastID = 0) {
-  const bizStream = `biz:${bid}`;
-  console.log(bizStream);
-  return redis
-    .xread(['STREAMS', bizStream, lastID])
-    .then((stream) => objectFromStream(stream))
-    .then((visits) => groupBy(visits, 'cid'))
-    .catch((e) => e);
-}
-
-async function earnReward({ bid, cid, lastID = 0 }) {
-  const bizStream = `biz:${bid}`;
-  console.log(highlight('bid, cid, lastID', bid, cid, lastID));
-  // bizStream contains the same data as all the Customers do locally
-  return redis.xadd(bizStream, '*', 'cid', cid);
-}
+//#endregion
 
 module.exports = {
   addSponsor,
@@ -246,4 +260,5 @@ module.exports = {
   addWarnings,
   getWarnings,
   randomId,
+  getCountries,
 };

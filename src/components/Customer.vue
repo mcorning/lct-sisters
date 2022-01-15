@@ -146,12 +146,28 @@
           ><v-col>
             <v-card color="blue-grey darken-2" class="mx-auto" dark>
               <v-card-title>Active Sponsors: </v-card-title>
-              <v-select
-                v-model="selectedSponsor"
-                :items="activeSponsors"
-                label="Select a Sponsor to see their enticements"
-                outlined
-              ></v-select>
+              <v-card-text>
+                <v-row>
+                  <v-col cols="3">
+                    <v-select
+                      v-model="country"
+                      :items="countries"
+                      label="Countries"
+                      outlined
+                  /></v-col>
+                  <v-col cols="9">
+                    <v-select
+                      v-model="selectedSponsor"
+                      :items="activeSponsors"
+                      item-text="biz"
+                      item-value="sid"
+                      return-object
+                      label="Select a Sponsor to see their enticements"
+                      outlined
+                    ></v-select>
+                  </v-col>
+                </v-row>
+              </v-card-text>
             </v-card>
           </v-col>
         </v-row>
@@ -335,13 +351,15 @@ export default {
 
   data() {
     return {
+      countries: [],
+      country: '',
       toast: false,
       toastText: 'You are redeemed',
       toastButton: 'Thanks',
-      selectedReward: { biz: '', bid: '' },
+      selectedReward: { biz: '', bid: '', sid: '' },
       searchable: false,
       origin: window.location.origin,
-      selectedSponsor: '',
+      selectedSponsor: { biz: '', bid: '', sid: '' },
       activeSponsors: [],
       annoyed: false,
       activeNodes: [],
@@ -394,9 +412,6 @@ export default {
       confirmationTitle: "A Sponsor's New Promotion",
       confirmationMessage: '',
       confirmationIcon: 'local_offer',
-      countries: ['SG', 'UK', 'USA'],
-
-      country: '',
 
       registered: this.sponsor?.biz ?? false,
       snackBtnText: '',
@@ -467,7 +482,7 @@ export default {
 
     closeSnackbar() {
       this.confSnackbar = false;
-      this.getSponsors();
+      this.getSponsors(this.country);
     },
 
     getRewardPointsFor(bid) {
@@ -518,11 +533,13 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    getPromos(biz, rewards = false) {
+    getPromos(rewards = false) {
       this.promos = [];
       const country = this.country;
-      console.log(`getPromotions({${biz},${country}}`);
-      this.emitFromClient('getPromotions', { biz, country }, (promos) => {
+      const biz = this.selectedSponsor.biz;
+      const sid = this.selectedSponsor.sid;
+      console.log(`getPromotions({${sid},${country}}`);
+      this.emitFromClient('getPromotions', { sid, country }, (promos) => {
         if (rewards) {
           promos.push({
             business: biz,
@@ -580,18 +597,33 @@ export default {
         vm.rewardPoints = true;
       });
     },
-    getSponsors() {
-      this.emitFromClient('getSponsors', 'usa', (sponsors) => {
+    getCountries() {
+      this.emitFromClient('getCountries', null, (keys) => {
+        console.log('keys :>> ', keys);
+        // lift out the country names
+        const vals = keys.map((v) => v.slice(9));
+        this.countries = isEmpty(vals) ? [] : vals;
+      });
+    },
+    getSponsors(country) {
+      this.emitFromClient('getSponsors', country, (sponsors) => {
+        // sponsors will be an object of Sponsor objects
         console.log('sponsors :>> ', sponsors);
-        this.activeSponsors = isEmpty(sponsors) ? [] : sponsors;
+        const s = [];
+        Object.entries(sponsors).forEach(([key, value]) => {
+          // TODO RESEARCH: is it safe to assume value will always and only have one element?
+          s.push({ biz: key, bid: value[0].bid, sid: value[0].sid });
+        });
+        this.activeSponsors = isEmpty(s) ? [] : s;
       });
     },
   }, // end of Methods
 
   watch: {
-    // selectedReward(sponsor) {
-    //   this.rewardDetails = printJson(sponsor);
-    // },
+    country(country) {
+      this.getSponsors(country);
+    },
+
     selectedSponsor(sponsor) {
       this.$vuetify.goTo(this.$refs.enticements, this.options);
       this.getPromos(sponsor);
@@ -611,7 +643,7 @@ export default {
   },
 
   mounted() {
-    this.getSponsors();
+    this.getCountries();
     // if this url is .../customer/<sponsor uid>
     // the first step is to ensure Sponsor is online with a handshake
     if (this.$route.params.id) {

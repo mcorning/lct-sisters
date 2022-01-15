@@ -305,7 +305,7 @@ export default {
       biz,
       address,
       country,
-      uid,
+      bid,
       confirmedAddress,
       promoText,
       userAgent,
@@ -318,20 +318,20 @@ export default {
           biz,
           address,
           country: countryLowerCase,
-          uid,
+          bid,
           confirmedAddress,
           promoText,
           userAgent,
         },
         ({ sid, pid }) => {
-          console.log('addSponsor returns:', sid);
-          console.log('addPromotion returns:', pid);
+          console.log('addSponsor returns sid:', sid);
+          console.log('addPromotion returns pid:', pid);
           console.log(
             'Model passing',
             biz,
             address,
             country,
-            uid,
+            bid,
             confirmedAddress,
             promoText,
             userAgent,
@@ -339,12 +339,14 @@ export default {
             pid,
             'to Setting'
           );
+          // when a browser becomes a Sponsor, 
+          // settings gets a sid
           this.updateSetting({
             id: 1,
             biz,
             address,
             country,
-            uid,
+            bid,
             confirmedAddress,
             promoText,
             userAgent,

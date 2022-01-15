@@ -34,12 +34,14 @@ const indexOn = (arr, key) =>
 
 const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
-    const visitedOn = getTimeFromSid(entry[0]);
+    const sid = entry[0];
+    const visitedOn = getTimeFromSid(sid);
     const dated = getDateFromSid(entry[0]);
     if (i % 2 === 0) {
       a[c] = pairs[i + 1];
       a.visitedOn = visitedOn;
       a.dated = dated;
+      a.sid = sid;
       return a;
     }
     return a;
