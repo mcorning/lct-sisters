@@ -15,8 +15,7 @@
             >
             <v-card-subtitle>Customer View</v-card-subtitle>
             <v-card-text class="text-caption">
-              Your Cusomter ID (cid):
-              {{ userID }}</v-card-text
+              Your Device ID: {{ userID }}</v-card-text
             >
           </v-col>
           <v-col v-if="rewardingSponsor" cols="auto" class="text-center">
@@ -95,13 +94,13 @@
                       v-model="selectedReward"
                       :items="getRewardingSponsors"
                       item-text="biz"
-                      item-value="bid"
+                      item-value="uid"
                       return-object
                       label="Rewarding Sponsors"
                   /></v-col>
                   <v-col>
                     <v-text-field
-                      v-model="selectedReward.bid"
+                      v-model="selectedReward.uid"
                       label="Business ID"
                       readonly
                       dense
@@ -276,7 +275,7 @@ export default {
       return s;
     },
     points() {
-      return this.getPointsFromCustomer(this.selectedReward.bid);
+      return this.getPointsFromCustomer(this.selectedReward.uid);
     },
 
     dateFromSid() {
@@ -356,10 +355,10 @@ export default {
       toast: false,
       toastText: 'You are redeemed',
       toastButton: 'Thanks',
-      selectedReward: { biz: '', bid: '', sid: '' },
+      selectedReward: { biz: '', uid: '', sid: '' },
       searchable: false,
       origin: window.location.origin,
-      selectedSponsor: { biz: '', bid: '', sid: '' },
+      selectedSponsor: { biz: '', uid: '', sid: '' },
       activeSponsors: [],
       annoyed: false,
       activeNodes: [],
@@ -426,23 +425,23 @@ export default {
     };
   },
   sockets: {
-    rewardRedeemed(bid) {
-      // remove bid from Reward
-      this.redeemReward(bid);
-      this.toastText = `${bid} has redeemed you.`;
+    rewardRedeemed(uid) {
+      // remove uid from Reward
+      this.redeemReward(uid);
+      this.toastText = `${uid} has redeemed you.`;
       // TODO extend setting with result of redeem instead of hardwired true
       this.toast = true;
     },
     // final step in rewards handshake protocol
-    doingBusinessWith({ bid, biz, country, sid }) {
+    doingBusinessWith({ uid, biz, country, sid }) {
       const msg = `You just earned reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `${biz} (${bid}) in ${country} <br/>Transaction ID: ${sid}`;
+      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Transaction ID: ${sid}`;
       this.confSnackbar = true;
-      // now add the bid/name to the items array
-      this.getRewardPointsFor(bid);
-      // now add the bid to local storage
-      this.callUpdateRewardPoints({ bid, biz, sid });
+      // now add the uid/name to the items array
+      this.getRewardPointsFor(uid);
+      // now add the uid to local storage
+      this.callUpdateRewardPoints({ uid, biz, sid });
       this.selectedReward.biz = biz;
     },
 
@@ -455,25 +454,25 @@ export default {
 
   methods: {
     deleteReward() {
-      const bid = this.selectedReward.bid;
-      // remove bid from Reward
-      this.redeemReward(bid)
+      const uid = this.selectedReward.uid;
+      // remove uid from Reward
+      this.redeemReward(uid)
         .then((result) => {
-          this.toastText = `${result.bid} deleted from local storage.`;
+          this.toastText = `${result.uid} deleted from local storage.`;
           this.toast = true;
         })
-        .then(() => (this.selectedReward = { biz: '', bid: '' }))
+        .then(() => (this.selectedReward = { biz: '', uid: '' }))
         .catch((e) => {
           this.toastText = e;
           this.toast = true;
         });
     },
-    offerHandshake({ bid, transaction }) {
+    offerHandshake({ uid, transaction }) {
       this.emitFromClient(
         'offerHandshake',
         {
           cid: this.userID,
-          bid,
+          uid,
           transaction,
         },
         (ack) => console.log('ack :>> ', ack)
@@ -485,9 +484,9 @@ export default {
       this.getSponsors(this.country);
     },
 
-    getRewardPointsFor(bid) {
+    getRewardPointsFor(uid) {
       const cid = this.userID;
-      this.getRewardPoints({ bid, cid }).then((visits) => {
+      this.getRewardPoints({ uid, cid }).then((visits) => {
         if (isEmpty(visits)) {
           return;
         }
@@ -573,8 +572,7 @@ export default {
       const vm = this;
       // see Model.vue
       this.earnReward({
-        bid: encodeURIComponent(this.$route.params.id),
-        uid: this.userID,
+        uid: this.$route.params.id,
       }).then((rewards) => {
         const dates = rewards.map((v) => this.convertDateTime(v));
 
@@ -612,7 +610,7 @@ export default {
         const s = [];
         Object.entries(sponsors).forEach(([key, value]) => {
           // TODO RESEARCH: is it safe to assume value will always and only have one element?
-          s.push({ biz: key, bid: value[0].bid, sid: value[0].sid });
+          s.push({ biz: key, uid: value[0].uid, sid: value[0].sid });
         });
         this.activeSponsors = isEmpty(s) ? [] : s;
       });
@@ -647,14 +645,14 @@ export default {
     // if this url is .../customer/<sponsor uid>
     // the first step is to ensure Sponsor is online with a handshake
     if (this.$route.params.id) {
-      const bid = this.$route.params.id;
-      this.offerHandshake({ bid, transaction: 'earn points' });
+      const uid = this.$route.params.id;
+      this.offerHandshake({ uid, transaction: 'earn points' });
     }
     // TODO refactor if we use local storage for visits
     // this.getRewardPointsFor();
     this.selectedReward = head(this.getRewardingSponsors);
     console.log('');
-    console.log('CUSTOMER mounted with Sponsor', this.selectedReward.bid);
+    console.log('CUSTOMER mounted with Sponsor', this.selectedReward.uid);
   },
 };
 </script>
