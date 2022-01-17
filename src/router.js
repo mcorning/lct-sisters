@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import Hub from '@/views/Hub.vue';
 import Customer from '@/views/Customer.vue';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
@@ -9,6 +10,14 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: '/',
+    name: 'Hub',
+    component: Hub,
+    meta: { layout: 'AppLayoutBlank' },
+
+    props: true,
+  },
+  {
+    path: '/space',
     name: 'Space',
     component: Space,
     props: true,

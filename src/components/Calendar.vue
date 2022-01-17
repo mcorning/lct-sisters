@@ -713,8 +713,9 @@ export default {
       console.log(' ');
       let msg;
       if (val.shared) {
+        // TODO refactor given latest TQR
         this.earnReward({
-          bid: val.place_id,
+          pid: val.place_id,
           name: val.name,
           uid: this.$socket.client.auth.userID,
         }).then((visitedOn) => {
@@ -777,7 +778,7 @@ export default {
 
       if (shared) {
         this.earnReward({
-          bid: name,
+          name: name,
           uid: this.$socket.client.auth.userID,
         }).then((sid) => {
           this.confirmationMessage += `<p>You are earning LCT Reward points (Confirmation number: ${sid}</p>`;

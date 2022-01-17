@@ -209,7 +209,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import dateTimeCard from './dateTimeCard.vue';
 import { DateTime, asHour, asMinute } from '@/utils/luxonHelpers';
-import {  isEmpty } from '@/utils/helpers';
+import { isEmpty } from '@/utils/helpers';
 
 export default {
   name: 'InfowindowCard',
@@ -221,7 +221,6 @@ export default {
     onVisitPlace: Function,
     ownThePlace: Function,
     iWorkHere: Function,
-    oid: Function,
     state: Object,
   },
 
@@ -241,8 +240,8 @@ export default {
     },
 
     dialogSubtitle() {
-    if (isEmpty(this.tag)) {
-        return
+      if (isEmpty(this.tag)) {
+        return;
       }
       const text = this.printing ? printPrompt() : showPrompt();
       return text;
@@ -264,20 +263,18 @@ export default {
       return this.employee ? this.decodedShiftUri : this.decodedVisitorUri;
     },
     mailToUri() {
-      // TODO oid should be bound to one or more businesses
-      // TODO also, do we have to account for more than one oid per biz?
-      // if the user has on oid in Settings, use it here and essentially the same value in uid
-      const oid =
-        this.state.settings.oid && this.state.settings.biz === this.placeId
-          ? this.state.settings.oid
-          : undefined;
+      // TODO uid should be bound to one or more businesses
+      // TODO also, do we have to account for more than one uid per biz?
+      // if the user has on uid in Settings, use it here and essentially the same value in uid
+      // const uid =
+      //   this.state.settings.uid && this.state.settings.biz === this.placeId
+      //     ? this.state.settings.uid
+      //     : undefined;
       const uid = this.$socket.client.auth.userID; //otherwise the userID for the visitor sharing the Place
-            // TODO replace with en[de]codeURI[Component]()
-      // const escapedName = this.name.replace(/ /g, '_').replace(/&/g, 'and');
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js
       const uri = encodeURIComponent(
-        `oid=${oid}&uid=${uid}&place_id=${this.placeId}&name=${this.name}`
+        `uid=${uid}&place_id=${this.placeId}&name=${this.name}`
       );
       return `${window.location.origin}/?${uri}`;
     },

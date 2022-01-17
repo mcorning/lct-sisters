@@ -7,7 +7,7 @@ console.log('Loading Reward entity');
 
 export default class Reward extends Model {
   static entity = 'rewards';
-  static primaryKey = 'bid';
+  static primaryKey = 'uid';
 
   static fields() {
     return {
@@ -15,9 +15,9 @@ export default class Reward extends Model {
       biz: this.string(''),
 
       // socket.io userID for Sponsor
-      bid: this.string(''),
+      uid: this.string(''),
 
-      // last sid stored in biz stream for this bid
+      // last sid stored in biz stream for this uid
       sid: this.string(''),
 
       // increments for each visit to biz
@@ -25,8 +25,8 @@ export default class Reward extends Model {
     };
   }
 
-  static getPoints(bid) {
-    return nullable(Reward.find(bid)).cata({
+  static getPoints(uid) {
+    return nullable(Reward.find(uid)).cata({
       Just: (reward) => reward.points,
       Nothing: () => null,
     });
@@ -36,15 +36,15 @@ export default class Reward extends Model {
     const rewards = Reward.all();
     const x = [];
     return rewards.reduce((a, c) => {
-      x.push({ bid: c.bid, sid: c.sid });
+      x.push({ uid: c.uid, sid: c.sid });
       a.set(c.biz, x);
       return a;
     }, new Map());
   }
 
-  static update({ bid, biz, sid }) {
-    console.log('bid, biz, sid :>> ', { bid, biz, sid });
-    const sponsor = Reward.find(bid);
+  static update({ uid, biz, sid }) {
+    console.log('uid, biz, sid :>> ', { uid, biz, sid });
+    const sponsor = Reward.find(uid);
     let points = 1;
     // have we seen sponsor yet? if so, incr points
     if (sponsor) {
@@ -52,12 +52,12 @@ export default class Reward extends Model {
     }
     console.log('\tPOINTS :>>', points);
     return this.$create({
-      data: { bid, biz, sid, points },
+      data: { uid, biz, sid, points },
     });
   }
 
-  static delete(bid) {
-    return this.$delete(bid);
+  static delete(uid) {
+    return this.$delete(uid);
   }
 
   static deleteAll() {

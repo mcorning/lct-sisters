@@ -279,16 +279,15 @@ export default {
   sockets: {
     broadcastedAlert(alerts) {
       // TODO this is where you check for relevant alerts
-      const score=10//alerts[0][1][1][1][7]
-      const reliability=0//alerts[0][1][1][1][9]
-      this.riskScore={score, reliability}
+      const score = 10; //alerts[0][1][1][1][7]
+      const reliability = 0; //alerts[0][1][1][1][9]
+      this.riskScore = { score, reliability };
       this.alert = alerts;
- 
     },
 
-    confirmRewardEntry({ bid, sid }) {
+    confirmRewardEntry({ uid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
-      this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;
+      this.confirmationMessage = `You just earned Reward points from ${uid} (Confirmation number ${sid}).`;
       this.confSnackbar = true;
       this.confBottom = false;
       this.confirmationIcon = 'lottery';
@@ -318,7 +317,6 @@ export default {
       this.riskScore = riskScore;
       this.refresh++;
       this.showBanner = true;
-
     },
     /*
      * 👂 Listen to socket events emitted from the socket server

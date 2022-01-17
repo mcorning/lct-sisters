@@ -37,13 +37,14 @@ export default class Setting extends Model {
       global_code: this.string(),
       default_map_center: this.string(),
       zoom: this.string(),
-      sid: this.string(), // Sponsor ID
-      // place_id if oid has value.
+      ssid: this.string(), // Sponsor Stream ID
+      csid: this.string(), // Customer Stream ID
+      // place_id if uid has value.
       // updated by clicking the changeMapCenter() button on the biz infowindow.
-      // right now, only one oid per place_id.
+      // right now, only one uid per place_id.
       // if same person has two restaurants, there needs to be a computer in both stores,
       // and they need to use the store's computer to generate the store's qr
-      // (so the oid will be different)
+      // (so the uid will be different)
       biz: this.string(),
       // Business address.
       // Stored when first approved.
@@ -52,12 +53,10 @@ export default class Setting extends Model {
       country: this.string(),
       // userID of the owner of biz.
       // updated by clicking the changeMapCenter() button on the biz infowindow.
-      // oid gets added to QR URL.
-      // system thanks oid when a customer scans the biz qr
-      oid: this.string(),
+      // uid gets added to QR URL.
       // the place_id of an address meaning it does not have to be validated later
       confirmedAddress: this.string(),
-      userAgent:this.string(),
+      userAgent: this.string(),
     };
   }
 

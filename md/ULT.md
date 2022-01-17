@@ -34,7 +34,7 @@ The client sends these data to a node server. The server accesses Google `Place`
 
 If the returned adderss is correct, the app adds the Sponsor to a Redis Stream taking the `Business Name` as the stream's identity. The app saves the stream identity as the sponsor ID (`sid`) in the Sponsor's indexedDB local storage.
 
-In addition, the app stores the socket ID (used to communicate with the node server) in local storage as the Owner ID (`oid`).
+In addition, the app stores the socket ID (used to communicate with the node server) in local storage as the Owner ID (`uid`).
 
 Finally, the app stores the `Business Name` in local storage as the `biz` property and the `place_id` as the `place_id` property.
 

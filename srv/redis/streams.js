@@ -6,7 +6,11 @@ const { highlight } = require('../../src/utils/helpers');
 const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
-const { groupBy, objectFromStream } = require('../utils.js');
+const {
+  groupBy,
+  objectFromStream,
+  objectFromStreamEntry,
+} = require('../utils.js');
 let options;
 if (process.env.NODE_ENV === 'production') {
   console.log('Dereferencing process.env');
@@ -27,6 +31,10 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 
 const Redis = require('ioredis');
 const redis = new Redis(options);
+const findLastEntry = (key) =>
+  redis
+    .xrevrange([key, '+', '-', 'COUNT', 1])
+    .then((stream) => objectFromStreamEntry(stream));
 
 //#region Sponsor
 const addSponsor = ({
@@ -55,10 +63,13 @@ const addSponsor = ({
 };
 
 const getSponsor = ({ country, sponsorID }) => {
-  if (typeof country !== 'string') {
-    return null;
-  }
   country = country.toLowerCase();
+  // Example fetching 1642316033501-0
+  // NOTE: so read starts from the last previous ID,
+  // we decrement the timestamp by 1ms
+  // then we ensure the result is our intended ID
+  // not a genuine entry having our hacked ID
+  // XREAD COUNT 1 STREAMS sponsors:usa 1642316033500-0
   const key = `sponsors:${country}`;
   return redis
     .xread(['STREAMS', key, 0])
@@ -98,8 +109,8 @@ function enterLottery(uid) {
   return redis.xadd('lottery', '*', 'uid', uid);
 }
 
-function getRewardPoints({ bid }, lastID = 0) {
-  const bizStream = `biz:${bid}`;
+function getRewardPoints({ uid }, lastID = 0) {
+  const bizStream = `biz:${uid}`;
   console.log(bizStream);
   return redis
     .xread(['STREAMS', bizStream, lastID])
@@ -108,9 +119,9 @@ function getRewardPoints({ bid }, lastID = 0) {
     .catch((e) => e);
 }
 
-async function earnReward({ bid, cid, lastID = 0 }) {
-  const bizStream = `biz:${bid}`;
-  console.log(highlight('bid, cid, lastID', bid, cid, lastID));
+async function earnReward({ uid, cid, lastID = 0 }) {
+  const bizStream = `rewards:${uid}`;
+  console.log(highlight('uid, cid, lastID', uid, cid, lastID));
   // bizStream contains the same data as all the Customers do locally
   return redis.xadd(bizStream, '*', 'cid', cid);
 }
@@ -123,23 +134,23 @@ async function addPromotion({
   country,
   promoText,
   promotionalDays,
-  sid,
+  ssid,
 }) {
   if (typeof biz !== 'string') {
     return null;
   }
   console.log(
-    'name (place_id), sid, promoText',
+    'name (place_id), ssid, promoText',
     biz,
     '(',
     confirmedAddress,
     ')',
     country,
-    sid,
+    ssid,
     promoText
   );
 
-  const key = `promotions:${sid}`;
+  const key = `promotions:${ssid}`;
   console.log('addPromotion() key:', key);
   return redis
     .xadd(
@@ -151,17 +162,14 @@ async function addPromotion({
       promoText,
       'expires',
       promotionalDays,
-      'sid',
-      sid
+      'ssid',
+      ssid
     )
-    .then(() => {
-      const request = ['STREAMS', key, 0];
-      return redis.xread(request);
-    });
+    .then(() => findLastEntry(key));
 }
 
-function getPromotions({ sid, country }) {
-  const key = `promotions:${sid}`;
+function getPromotions({ ssid, country }) {
+  const key = `promotions:${ssid}`;
 
   console.log(`getPromotions (in country ${country}): XREAD STREAMS ${key} 0`);
   return redis
@@ -211,12 +219,12 @@ const addWarnings = ({ visitData, score, reliability }) => {
 //#endregion
 
 //#region Visits
-const addVisit = ({ sid, uid }) => {
+const addVisit = ({ ssid, uid }) => {
   const key = 'visits';
-  return redis.xadd(key, '*', 'sid', sid, 'uid', uid);
+  return redis.xadd(key, '*', 'ssid', ssid, 'uid', uid);
 };
 
-const getVisits = (sid) => {
+const getVisits = (ssid) => {
   const key = 'visits';
   const lastID = 0;
   // TODO REFACTOR using objectFromStream()
@@ -227,7 +235,7 @@ const getVisits = (sid) => {
     console.log(
       `Reading visits from key ${key}, found ${visitMap.size} visits.`
     );
-    console.log(`Looking for Sponsor ID: ${sid}`);
+    console.log(`Looking for Sponsor ID: ${ssid}`);
     let zipped;
     visitMap.forEach((visitData, visitKey) => {
       console.log(visitKey);

@@ -79,9 +79,7 @@
                 <span>Temporarily clears default location setting</span>
               </v-tooltip>
               <v-spacer />
-              <v-btn text @click="volunteer">
-                Volunteer
-              </v-btn>
+              <v-btn text @click="volunteer"> Volunteer </v-btn>
               <v-spacer />
               <v-btn color="primary" icon @click="onOpenDiagnostics">
                 <v-icon>mdi-monitor-dashboard</v-icon>
@@ -147,11 +145,11 @@
       ref="infowin"
       id="infowin"
       :info="info"
-      :oid="oid"
+      :uid="uid"
       :state="state"
       :onVisitPlace="onVisitPlace"
       :ownThePlace="ownThePlace"
-      :iWorkHere=iWorkHere
+      :iWorkHere="iWorkHere"
       @namedGathering="onNamedGathering"
       @deleteMarker="deleteMarker"
       @changeMapCenter="changeMapCenter"
@@ -168,7 +166,7 @@
         <v-btn absolute top right icon @click="snackbarThanks = false"
           ><v-icon>close</v-icon>
         </v-btn>
-        <v-card-text class="text-h6 mx-auto "
+        <v-card-text class="text-h6 mx-auto"
           >Welcome Microsoft Giving Campaign Supporters</v-card-text
         >
         <v-card-subtitle class="pt-1"
@@ -194,19 +192,11 @@
         <v-card-actions>
           <v-row no-gutters dense align="center"
             ><v-col>
-              <v-btn text @click="volunteer">
-                Volunteer
-              </v-btn>
-              <v-btn text @click="goToGithub">
-                Github
-              </v-btn> </v-col
+              <v-btn text @click="volunteer"> Volunteer </v-btn>
+              <v-btn text @click="goToGithub"> Github </v-btn> </v-col
             ><v-spacer /><v-col>
-              <v-btn text @click="goToPolicies">
-                LCT Policies
-              </v-btn>
-              <v-btn text @click="goToDocs">
-                LCT Docs
-              </v-btn>
+              <v-btn text @click="goToPolicies"> LCT Policies </v-btn>
+              <v-btn text @click="goToDocs"> LCT Docs </v-btn>
             </v-col></v-row
           >
         </v-card-actions>
@@ -288,9 +278,9 @@ export default {
     onToWork: Function,
     onShareGethering: Function,
     onVisitPlace: Function,
-    oid: Function,
+    uid: Function,
     ownThePlace: Function,
-    iWorkHere:Function,
+    iWorkHere: Function,
     onSharePlace: Function,
     onMarkerAdded: Function,
     onMarkerClicked: Function,
@@ -307,7 +297,7 @@ export default {
     enterLottery: Function,
     setNamespace: Function,
     getAllSettings: Function,
-    getAlerts:Function,
+    getAlerts: Function,
   },
   components: {
     InfoWindowCard,
@@ -352,7 +342,6 @@ export default {
       return this.state.settings.location
         ? JSON.parse(this.state.settings.location)
         : null;
-
     },
     namespace() {
       return this.state.settings.namespace;
@@ -368,8 +357,7 @@ export default {
     },
     svgMarker() {
       return {
-        path:
-          'M10.453 14.016l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z',
+        path: 'M10.453 14.016l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z',
         fillColor: 'purple',
         fillOpacity: 0.6,
         strokeWeight: 0,
@@ -784,14 +772,14 @@ export default {
         });
       });
 
-      const showInfoWindow = ({  markedPlace, marker,  }) => {
+      const showInfoWindow = ({ markedPlace, marker }) => {
         this.info = markedPlace;
         this.selectedMarker = marker; // for deleting purposes
         infowindow.open(map, marker);
         return markedPlace;
       };
 
-      const makeMarker = ({  markedPlace }) => {
+      const makeMarker = ({ markedPlace }) => {
         const { position, name: title, place_id } = markedPlace;
         let marker = new window.google.maps.Marker({
           title,
@@ -924,7 +912,7 @@ export default {
           console.log('geocode results:', response);
           const { address_components, geometry } = response.results[0];
           const namespace = getNamespace(address_components);
-          const {  viewport } = geometry;
+          const { viewport } = geometry;
           const err = vm.setPoi({
             namespace,
             location: JSON.stringify(location),
@@ -1038,7 +1026,7 @@ export default {
   },
 
   mounted() {
-    this.getAlerts()
+    this.getAlerts();
     const self = this;
     const query = this.$route.query;
 

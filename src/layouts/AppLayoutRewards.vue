@@ -1,9 +1,6 @@
 <template>
   <sponsor v-if="isSponsor" :isConnected="isConnected" :state="state" />
-  <customer
-    v-else
-    :isConnected="isConnected"
-  />
+  <customer v-else :isConnected="isConnected" />
 </template>
 
 <script>
@@ -27,13 +24,12 @@ export default {
     },
   },
   data() {
-    return {
-    };
+    return {};
   },
   sockets: {
-    confirmRewardEntry({ bid, sid }) {
+    confirmRewardEntry({ uid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
-      this.confirmationMessage = `You just earned Reward points from ${bid} (Confirmation number ${sid}).`;
+      this.confirmationMessage = `You just earned Reward points from ${uid} (Confirmation number ${sid}).`;
       this.confSnackbar = true;
       this.confBottom = false;
       this.confirmationIcon = 'lottery';
@@ -136,9 +132,7 @@ export default {
       return msg;
     },
   },
-  watch: {
-
-  },
+  watch: {},
   mounted() {
     console.log(this.connectMe());
     console.log('/tMounted');

@@ -8,17 +8,6 @@ const filterOn = (arr, fn) =>
       return acc;
     }, {});
 
-const groupBy = (arr, fn) =>
-  arr
-    .map(typeof fn === 'function' ? fn : (val) => val[fn])
-    .reduce((acc, val, i) => {
-      acc[val] = (acc[val] || []).concat(arr[i]);
-      return acc;
-    }, {});
-
-const objectFromStream = (stream) =>
-  stream[0][1].map((entry) => getObject(entry));
-
 /**
  *
  * @param {*} arr
@@ -32,16 +21,29 @@ const indexOn = (arr, key) =>
     return obj;
   }, {});
 
+const groupBy = (arr, fn) =>
+  arr
+    .map(typeof fn === 'function' ? fn : (val) => val[fn])
+    .reduce((acc, val, i) => {
+      acc[val] = (acc[val] || []).concat(arr[i]);
+      return acc;
+    }, {});
+
+const objectFromStreamEntry = (stream) => getObject(stream[0]);
+
+const objectFromStream = (stream) =>
+  stream[0][1].map((entry) => getObject(entry));
+
 const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
-    const sid = entry[0];
-    const visitedOn = getTimeFromSid(sid);
+    const ssid = entry[0];
+    const visitedOn = getTimeFromSid(ssid);
     const dated = getDateFromSid(entry[0]);
     if (i % 2 === 0) {
       a[c] = pairs[i + 1];
       a.visitedOn = visitedOn;
       a.dated = dated;
-      a.sid = sid;
+      a.ssid = ssid;
       return a;
     }
     return a;
@@ -55,9 +57,11 @@ const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 module.exports = {
   groupBy,
   filterOn,
+
   indexOn,
   isEmpty,
   objectFromStream,
+  objectFromStreamEntry,
   objectToEntries,
   getDateFromSid,
   getTimeFromSid,

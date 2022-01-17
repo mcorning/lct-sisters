@@ -16,9 +16,11 @@
 
             <v-card-subtitle>Sponsor View </v-card-subtitle>
             <v-card-text class="text-caption">
-              Your Sponsor ID (bid):
+              Your Device ID:
               {{ userID }} <br />
-              Google confirmed your business address:
+              Your Stream ID:
+              {{ sponsorID }} <br />
+              Your Place ID:
               {{ confirmedAddress }}
             </v-card-text>
           </v-col>
@@ -355,7 +357,7 @@ import { printJson, isEmpty } from '@/utils/helpers';
 
 export default {
   name: 'Sponsor',
-  // sponsor is {sid, biz, address}
+  // sponsor is {ssid, biz, address}
   props: {
     isConnected: Boolean,
     updateSponsor: Function,
@@ -413,7 +415,7 @@ export default {
       return this.sponsor.country;
     },
     sponsorID() {
-      return this.sponsor.sid;
+      return this.sponsor.ssid;
     },
     isSponsor() {
       return !this.$route.params.id;
@@ -542,7 +544,7 @@ export default {
     approvePoints() {
       this.emitFromClient('readyForBusiness', {
         cid: this.cid,
-        bid: this.userID,
+        uid: this.userID,
         biz: this.business,
         transaction: this.transaction,
         country: this.country,
@@ -551,14 +553,14 @@ export default {
     },
     promote() {
       const promoText = this.promoText;
-      const sid = this.sponsorID;
+      const ssid = this.sponsorID;
       const biz = this.sponsorName;
       const country = this.country;
       const confirmedAddress = this.confirmedAddress;
       const promotionalDays = this.promotionalDays;
       this.emitFromClient(
         'promote',
-        { confirmedAddress, biz, country, promoText, promotionalDays, sid },
+        { confirmedAddress, biz, country, promoText, promotionalDays, ssid },
         () => this.getPromos()
       );
     },
@@ -599,27 +601,28 @@ export default {
       this.printing = true;
     },
 
-    addSponsor() {
-      const biz = this.business.trim();
-      const address = this.address;
-      const country = address.slice(address.lastIndexOf(',') + 2);
-      const bid = this.userID;
-      const confirmedAddress = this.confirmedAddress;
-      const userAgent = navigator.userAgent;
-      console.log(biz, address, country, bid, confirmedAddress, userAgent);
+    // this.updateSponsor in Model.vue actually emits the 'addSponsor' message to server
+    // addSponsor() {
+    //   const biz = this.business.trim();
+    //   const address = this.address;
+    //   const country = address.slice(address.lastIndexOf(',') + 2);
+    //   const uid = this.userID;
+    //   const confirmedAddress = this.confirmedAddress;
+    //   const userAgent = navigator.userAgent;
+    //   console.log(biz, address, country, uid, confirmedAddress, userAgent);
 
-      this.updateSponsor({
-        biz,
-        address,
-        country,
-        bid,
-        confirmedAddress,
-        userAgent,
-      });
+    //   this.updateSponsor({
+    //     biz,
+    //     address,
+    //     country,
+    //     uid,
+    //     confirmedAddress,
+    //     userAgent,
+    //   });
 
-      this.registered = true;
-      this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    },
+    //   this.registered = true;
+    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
+    // },
 
     renderPromos() {
       if (!this.promotions) {
@@ -698,9 +701,9 @@ export default {
     },
 
     getPromos() {
-      const sid = this.sponsorID;
+      const ssid = this.sponsorID;
       const country = this.country;
-      this.emitFromClient('getPromotions', { sid, country }, (promos) => {
+      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
       });
@@ -709,7 +712,7 @@ export default {
     redeemReward({ cid, points }) {
       this.emitFromClient(
         'redeemReward',
-        { bid: this.userID, cid, points },
+        { uid: this.userID, cid, points },
         (ack) => {
           this.toastText = ack;
           this.toast = true;
@@ -730,9 +733,6 @@ export default {
     },
     promotions(val) {
       this.renderPromos(val);
-    },
-    promoText(val) {
-      console.log(this.business, val);
     },
   },
 

@@ -143,25 +143,25 @@
         <!-- Promotions -->
         <v-row
           ><v-col>
-            <v-card color="blue-grey darken-2" class="mx-auto" dark>
+            <v-card color="blue-grey darken-2" class="mx-auto mobile" dark>
               <v-card-title>Active Sponsors: </v-card-title>
               <v-card-text>
                 <v-row>
-                  <v-col cols="3">
+                  <v-col cols="4">
                     <v-select
                       v-model="country"
                       :items="countries"
-                      label="Countries"
+                      label="Country"
                       outlined
                   /></v-col>
-                  <v-col cols="9">
+                  <v-col cols="8">
                     <v-select
                       v-model="selectedSponsor"
                       :items="activeSponsors"
                       item-text="biz"
-                      item-value="sid"
+                      item-value="ssid"
                       return-object
-                      label="Select a Sponsor to see their enticements"
+                      label="Check enticements from:"
                       outlined
                     ></v-select>
                   </v-col>
@@ -279,10 +279,10 @@ export default {
     },
 
     dateFromSid() {
-      if (isEmpty(this.selectedReward.sid)) {
+      if (isEmpty(this.selectedReward.ssid)) {
         return;
       }
-      return getDateFromSid(this.selectedReward.sid);
+      return getDateFromSid(this.selectedReward.ssid);
     },
 
     userID() {
@@ -355,10 +355,10 @@ export default {
       toast: false,
       toastText: 'You are redeemed',
       toastButton: 'Thanks',
-      selectedReward: { biz: '', uid: '', sid: '' },
+      selectedReward: { biz: '', uid: '', ssid: '' },
       searchable: false,
       origin: window.location.origin,
-      selectedSponsor: { biz: '', uid: '', sid: '' },
+      selectedSponsor: { biz: '', uid: '', ssid: '' },
       activeSponsors: [],
       annoyed: false,
       activeNodes: [],
@@ -433,15 +433,15 @@ export default {
       this.toast = true;
     },
     // final step in rewards handshake protocol
-    doingBusinessWith({ uid, biz, country, sid }) {
+    doingBusinessWith({ uid, biz, country, ssid }) {
       const msg = `You just earned reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Transaction ID: ${sid}`;
+      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Transaction ID: ${ssid}`;
       this.confSnackbar = true;
       // now add the uid/name to the items array
       this.getRewardPointsFor(uid);
       // now add the uid to local storage
-      this.callUpdateRewardPoints({ uid, biz, sid });
+      this.callUpdateRewardPoints({ uid, biz, ssid });
       this.selectedReward.biz = biz;
     },
 
@@ -532,20 +532,12 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    getPromos(rewards = false) {
+    getPromos() {
       this.promos = [];
       const country = this.country;
-      const biz = this.selectedSponsor.biz;
-      const sid = this.selectedSponsor.sid;
-      console.log(`getPromotions({${sid},${country}}`);
-      this.emitFromClient('getPromotions', { sid, country }, (promos) => {
-        if (rewards) {
-          promos.push({
-            business: biz,
-            promoText: 'Reward',
-            color: 'amber darken-2',
-          });
-        }
+      const ssid = this.selectedSponsor.ssid;
+      console.log(`getPromotions({${ssid},${country}}`);
+      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
         this.promotions = promos;
         console.log(`promotions`, printJson(this.promotions));
       });
@@ -563,7 +555,7 @@ export default {
         : [
             {
               color: 'red',
-              msg: `<h3>No enticements from ${this.selectedSponsor} at this time.</h3> Try again, later...`,
+              msg: `<h3>No enticements from ${this.selectedSponsor.biz} at this time.</h3> Try again, later...`,
             },
           ];
     },
@@ -601,6 +593,7 @@ export default {
         // lift out the country names
         const vals = keys.map((v) => v.slice(9));
         this.countries = isEmpty(vals) ? [] : vals;
+        this.country = head(this.countries);
       });
     },
     getSponsors(country) {
@@ -610,9 +603,10 @@ export default {
         const s = [];
         Object.entries(sponsors).forEach(([key, value]) => {
           // TODO RESEARCH: is it safe to assume value will always and only have one element?
-          s.push({ biz: key, uid: value[0].uid, sid: value[0].sid });
+          s.push({ biz: key, uid: value[0].uid, ssid: value[0].ssid });
         });
         this.activeSponsors = isEmpty(s) ? [] : s;
+        this.selectedSponsor=head(this.activeSponsors)
       });
     },
   }, // end of Methods

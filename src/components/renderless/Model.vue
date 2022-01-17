@@ -35,8 +35,8 @@ export default {
   ],
 
   computed: {
-    oid() {
-      return this.settings.oid;
+    uid() {
+      return this.settings.uid;
     },
     namespace() {
       return this.settings.namespace;
@@ -65,8 +65,8 @@ export default {
       return this.settings.sessionID;
     },
     sponsor() {
-      const { sid, biz, address, country, confirmedAddress } = this.settings;
-      return { sid, biz, address, country, confirmedAddress };
+      const { ssid, biz, address, country, confirmedAddress } = this.settings;
+      return { ssid, biz, address, country, confirmedAddress };
     },
     needsUsername() {
       return !this.settings.username;
@@ -115,7 +115,7 @@ export default {
   methods: {
     ownThePlace({ biz }) {
       // assume the caller of this function pressed the centerMap button on the infowindow
-      this.updateSetting({ id: 1, biz, oid: this.$socket.client.auth.userID });
+      this.updateSetting({ id: 1, biz, uid: this.$socket.client.auth.userID });
     },
 
     visitExists(loggedVisitId) {
@@ -305,7 +305,7 @@ export default {
       biz,
       address,
       country,
-      bid,
+      uid,
       confirmedAddress,
       promoText,
       userAgent,
@@ -318,39 +318,39 @@ export default {
           biz,
           address,
           country: countryLowerCase,
-          bid,
+          uid,
           confirmedAddress,
           promoText,
           userAgent,
         },
-        ({ sid, pid }) => {
-          console.log('addSponsor returns sid:', sid);
+        ({ ssid, pid }) => {
+          console.log('addSponsor returns ssid:', ssid);
           console.log('addPromotion returns pid:', pid);
           console.log(
             'Model passing',
             biz,
             address,
             country,
-            bid,
+            uid,
             confirmedAddress,
             promoText,
             userAgent,
-            sid,
+            ssid,
             pid,
             'to Setting'
           );
-          // when a browser becomes a Sponsor, 
+          // when a browser becomes a Sponsor,
           // settings gets a sid
           this.updateSetting({
             id: 1,
             biz,
             address,
             country,
-            bid,
+            uid,
             confirmedAddress,
             promoText,
             userAgent,
-            sid,
+            ssid,
             pid,
           });
         }
@@ -377,17 +377,17 @@ export default {
         this.emitFromClient('enterLottery', uid, (sid) => resolve(sid));
       });
     },
-    earnReward({ bid, uid }) {
+    earnReward({ uid }) {
       return new Promise((resolve) => {
-        this.emitFromClient('earnReward', { bid, uid }, (visitedOn) => {
+        this.emitFromClient('earnReward', { uid }, (visitedOn) => {
           console.log('visitedOn', visitedOn);
           resolve(visitedOn);
         });
       });
     },
-    getRewardPoints({ bid, cid }) {
+    getRewardPoints({ uid, cid }) {
       return new Promise((resolve) => {
-        this.emitFromClient('getRewardPoints', { bid, cid }, (visitedOn) => {
+        this.emitFromClient('getRewardPoints', { uid, cid }, (visitedOn) => {
           console.log('visitedOn', visitedOn);
           resolve(visitedOn);
         });
@@ -457,8 +457,8 @@ export default {
       const s = Setting.query().all();
       return s.length ? s[0] : s;
     },
-    callUpdateRewardPoints({ bid, biz, sid }) {
-      this.updateRewardPoints({ bid, biz, sid });
+    callUpdateRewardPoints({ uid, biz, sid }) {
+      this.updateRewardPoints({ uid, biz, sid });
     },
   },
 
@@ -534,7 +534,7 @@ export default {
       updateSponsor: this.updateSponsor,
       sponsor: this.sponsor,
       ownThePlace: this.ownThePlace,
-      odi: this.oid,
+      uid: this.uid,
       getAllSettings: this.getAllSettings,
 
       // Steam events

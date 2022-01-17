@@ -9,7 +9,7 @@
         onToWork,
         onVisitPlace,
         ownThePlace,
-        oid,
+        uid,
         onSharePlace,
         onShareGathering,
         onDeletePlace,
@@ -38,8 +38,8 @@
         :onToWork="onToWork"
         :onVisitPlace="onVisitPlace"
         :ownThePlace="ownThePlace"
-        :iWorkHere=iWorkHere
-        :oid="oid"
+        :iWorkHere="iWorkHere"
+        :uid="uid"
         :onSharePlace="onSharePlace"
         :onShareGathering="onShareGathering"
         :onMarkerAdded="onMarkerAdded"
@@ -57,7 +57,7 @@
         :enterLottery="enterLottery"
         :setNamespace="setNamespace"
         :getAllSettings="getAllSettings"
-        :getAlerts=getAlerts
+        :getAlerts="getAlerts"
       />
     </div>
   </Model>
