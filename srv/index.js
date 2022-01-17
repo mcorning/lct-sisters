@@ -69,6 +69,7 @@ const {
   getVisits,
   randomId,
   getCountries,
+  audit,
 } = require('./redis/streams');
 
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
@@ -181,6 +182,10 @@ io.on('connection', (socket) => {
   //#endregion Handling socket connection
 
   //#region STREAM handlers
+  socket.on('audit', (msg) => {
+    audit(msg).then((sid) => console.log(`See ${msg.source}:${sid}`));
+  });
+
   socket.on(
     'promote',
     (
