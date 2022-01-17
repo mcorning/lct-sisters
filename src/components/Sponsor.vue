@@ -133,10 +133,7 @@
             <v-card dark color="blue-grey darken-1">
               <v-card-title>{{ business }} Promotions</v-card-title>
               <v-card-subtitle>
-                <v-checkbox
-                  model="showAll"
-                  label="Include all past promotions"
-                ></v-checkbox>
+                Swipe right to delete selected promotion
               </v-card-subtitle>
               <v-simple-table>
                 <template v-slot:default>
@@ -148,7 +145,11 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="item in ps" :key="item.promoText">
+                    <tr
+                      v-for="item in ps"
+                      :key="item.promoText"
+                      v-touch="{ right: () => deleteRow(item) }"
+                    >
                       <td style="text-align: left">{{ item.promoText }}</td>
                       <td style="text-align: left">{{ item.dated }}</td>
                       <td style="text-align: left">{{ item.expires }} days</td>
@@ -160,7 +161,7 @@
                 <!-- Promotion Text -->
                 <v-textarea
                   v-model="promoText"
-                  lines="4"
+                  lines="2"
                   label="New Promotion Message"
                   color="grey lighten-3"
                   dark
@@ -436,6 +437,7 @@ export default {
 
   data() {
     return {
+      selectedPromo: null,
       toast: false,
       toastText: 'They are redeemed',
       toastButton: 'Close',
@@ -527,6 +529,12 @@ export default {
   },
 
   methods: {
+    deleteRow(promo) {
+      if (confirm(`Delete ${promo.promoText}?`)) {
+        this.ps.pop(promo);
+      }
+    },
+
     approved() {
       switch (this.approval) {
         case 'approvePoints':
@@ -600,29 +608,6 @@ export default {
       this.confSnackbar = false;
       this.printing = true;
     },
-
-    // this.updateSponsor in Model.vue actually emits the 'addSponsor' message to server
-    // addSponsor() {
-    //   const biz = this.business.trim();
-    //   const address = this.address;
-    //   const country = address.slice(address.lastIndexOf(',') + 2);
-    //   const uid = this.userID;
-    //   const confirmedAddress = this.confirmedAddress;
-    //   const userAgent = navigator.userAgent;
-    //   console.log(biz, address, country, uid, confirmedAddress, userAgent);
-
-    //   this.updateSponsor({
-    //     biz,
-    //     address,
-    //     country,
-    //     uid,
-    //     confirmedAddress,
-    //     userAgent,
-    //   });
-
-    //   this.registered = true;
-    //   this.$vuetify.goTo(this.$refs.printDiv, this.options);
-    // },
 
     renderPromos() {
       if (!this.promotions) {
