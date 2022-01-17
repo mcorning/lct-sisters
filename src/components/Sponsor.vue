@@ -142,17 +142,19 @@
                       <th id="promo" style="bgcolor: grey">Promotion</th>
                       <th id="from" style="bgcolor: grey">From</th>
                       <th id="for" style="bgcolor: grey">For</th>
+                      <th id="id" style="bgcolor: grey">ID</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr
                       v-for="item in ps"
                       :key="item.promoText"
-                      v-touch="{ right: () => deleteRow(item) }"
+                      v-touch="{ right: () => deleteRow(item.promoText) }"
                     >
                       <td style="text-align: left">{{ item.promoText }}</td>
                       <td style="text-align: left">{{ item.dated }}</td>
                       <td style="text-align: left">{{ item.expires }} days</td>
+                      <td style="text-align: left">{{ item.ssid }}</td>
                     </tr>
                   </tbody>
                 </template>
@@ -326,14 +328,15 @@
 
       <confirmation-snackbar
         v-if="confSnackbar"
-        :centered="true"
-        :top="false"
+        :centered="centered"
+        :bottom="bottom"
         :confirmationTitle="confirmationTitle"
         :confirmationSubtitle="confirmationSubtitle"
         :confirmationMessage="confirmationMessage"
         :confirmationIcon="confirmationIcon"
         :approveString="approveString"
         :disapproveString="disapproveString"
+        :timeout="timeout"
         @approved="approved"
         @disapprove="confSnackbar = false"
       />
@@ -438,6 +441,9 @@ export default {
 
   data() {
     return {
+      centered: false,
+      bottom: false,
+      timeout: -1,
       selectedPromo: null,
       toast: false,
       toastText: 'They are redeemed',
@@ -459,6 +465,7 @@ export default {
         'deep-purple accent-4',
       ],
       ps: [],
+      undo: null,
       promos: [],
       promotions: '',
       promoText: '',
@@ -531,9 +538,26 @@ export default {
 
   methods: {
     deleteRow(promo) {
-      if (confirm(`Delete ${promo.promoText}?`)) {
-        this.ps.pop(promo);
-      }
+      this.undo = this.ps.find((v) => v.promoText === promo);
+      this.confirmationTitle = 'Undo';
+      this.confirmationMessage = `Undo ${promo} deletion?`;
+      this.approval = 'undo';
+      this.approveString = 'Yes';
+      this.disapproveString = '';
+      this.centered = true;
+      this.bottom = true;
+      this.timeout = 5000;
+      this.confSnackbar = true;
+      this.emitFromClient(
+        'deletePromotion',
+        {
+          ssid: this.sponsorID,
+          sid: this.undo.ssid,
+        },
+        (ct) => {
+          console.log(`${ct} entry deleted`);
+        }
+      );
     },
 
     approved() {
@@ -544,36 +568,22 @@ export default {
         case 'approveNewSponsor':
           this.approveNewSponsor();
           break;
+        case 'undo':
+          if (isEmpty(this.undo)) {
+            return
+          }
+          this.confSnackbar = false;
+          // add undo back to stream
+          this.promoText = this.undo.promoText;
+          this.promote();
+          break;
 
         default:
           alert(`Cannot handle approval value of ${this.approval}`);
           break;
       }
     },
-    approvePoints() {
-      this.emitFromClient('readyForBusiness', {
-        cid: this.cid,
-        uid: this.userID,
-        biz: this.business,
-        transaction: this.transaction,
-        country: this.country,
-      });
-      this.confSnackbar = false;
-    },
-    promote() {
-      const promoText = this.promoText;
-      const ssid = this.sponsorID;
-      const biz = this.sponsorName;
-      const country = this.country;
-      const confirmedAddress = this.confirmedAddress;
-      const promotionalDays = this.promotionalDays;
-      this.emitFromClient(
-        'promote',
-        { confirmedAddress, biz, country, promoText, promotionalDays, ssid },
-        () => this.getPromos()
-      );
-    },
-
+        
     approveNewSponsor() {
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
@@ -609,6 +619,41 @@ export default {
       this.confSnackbar = false;
       this.printing = true;
     },
+
+    approvePoints() {
+      this.emitFromClient('readyForBusiness', {
+        cid: this.cid,
+        uid: this.userID,
+        biz: this.business,
+        transaction: this.transaction,
+        country: this.country,
+      });
+      this.confSnackbar = false;
+    },
+    
+    promote() {
+      const promoText = this.promoText;
+      const ssid = this.sponsorID;
+      const biz = this.sponsorName;
+      const country = this.country;
+      const confirmedAddress = this.confirmedAddress;
+      const promotionalDays = this.promotionalDays;
+      this.emitFromClient(
+        'promote',
+        { confirmedAddress, biz, country, promoText, promotionalDays, ssid },
+        () => this.getPromos()
+      );
+    },
+
+    getPromos() {
+      const ssid = this.sponsorID;
+      const country = this.country;
+      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
+        console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
+        this.ps = promos;
+      });
+    },
+
 
     renderPromos() {
       if (!this.promotions) {
@@ -686,14 +731,6 @@ export default {
       this.$socket.client.emit(eventName, data, ack);
     },
 
-    getPromos() {
-      const ssid = this.sponsorID;
-      const country = this.country;
-      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
-        console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
-        this.ps = promos;
-      });
-    },
 
     redeemReward({ cid, points }) {
       this.emitFromClient(
@@ -708,6 +745,9 @@ export default {
   }, // end of Methods
 
   watch: {
+    undo(val) {
+      console.log('val :>> ', val);
+    },
     business() {
       this.validate();
     },

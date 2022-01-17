@@ -62,6 +62,7 @@ const {
   getPromotions,
   enterLottery,
   earnReward,
+  deletePromotion,
   getRewardPoints,
   addWarnings,
   getWarnings,
@@ -186,6 +187,7 @@ io.on('connection', (socket) => {
     audit(msg).then((sid) => console.log(`See ${msg.source}:${sid}`));
   });
 
+  // add Promotion
   socket.on(
     'promote',
     (
@@ -213,6 +215,14 @@ io.on('connection', (socket) => {
       });
     }
   );
+
+  socket.on('deletePromotion', ({ ssid, sid }, ack) => {
+    deletePromotion(`promotions:${ssid}`, sid).then((ct) => {
+      if (ack) {
+        ack(ct);
+      }
+    });
+  });
 
   socket.on('getPromotions', ({ ssid, country }, ack) => {
     console.log('getPromotions() ssid :>> ', ssid);

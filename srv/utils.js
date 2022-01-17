@@ -29,10 +29,11 @@ const groupBy = (arr, fn) =>
       return acc;
     }, {});
 
-const objectFromStreamEntry = (stream) => getObject(stream[0]);
+const objectFromStreamEntry = (stream) =>
+  isEmpty(stream) ? null : getObject(stream[0]);
 
 const objectFromStream = (stream) =>
-  stream[0][1].map((entry) => getObject(entry));
+  isEmpty(stream) ? null : stream[0][1].map((entry) => getObject(entry));
 
 const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
