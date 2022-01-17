@@ -301,6 +301,9 @@ export default {
       this.updateState({ settings: { usernumber: userNumber } });
     },
 
+    audit({ source, context, msg }) {
+      this.emitFromClient('audit', { source, context, msg });
+    },
     updateSponsor({
       biz,
       address,
@@ -310,6 +313,8 @@ export default {
       promoText,
       userAgent,
     }) {
+      const source = 'Model';
+      const context = 'updateSponsor()';
       const countryLowerCase =
         typeof country === 'string' ? country.toLowerCase() : '';
       this.emitFromClient(
@@ -324,8 +329,9 @@ export default {
           userAgent,
         },
         ({ ssid, pid }) => {
-          console.log('addSponsor returns ssid:', ssid);
-          console.log('addPromotion returns pid:', pid);
+          const msg = `addSponsor returns ssid: ${ssid}`;
+          this.audit({ source, context, msg });
+          console.log(msg);
           console.log(
             'Model passing',
             biz,
@@ -457,8 +463,8 @@ export default {
       const s = Setting.query().all();
       return s.length ? s[0] : s;
     },
-    callUpdateRewardPoints({ uid, biz, sid }) {
-      this.updateRewardPoints({ uid, biz, sid });
+    callUpdateRewardPoints({ uid, biz, ssid }) {
+      this.updateRewardPoints({ uid, biz, ssid });
     },
   },
 
@@ -536,6 +542,7 @@ export default {
       ownThePlace: this.ownThePlace,
       uid: this.uid,
       getAllSettings: this.getAllSettings,
+      audit: this.audit,
 
       // Steam events
       enterLottery: this.enterLottery,

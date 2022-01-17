@@ -17,8 +17,8 @@ export default class Reward extends Model {
       // socket.io userID for Sponsor
       uid: this.string(''),
 
-      // last sid stored in biz stream for this uid
-      sid: this.string(''),
+      // last ssid stored in biz stream for this uid
+      ssid: this.string(''),
 
       // increments for each visit to biz
       points: this.number(),
@@ -36,14 +36,14 @@ export default class Reward extends Model {
     const rewards = Reward.all();
     const x = [];
     return rewards.reduce((a, c) => {
-      x.push({ uid: c.uid, sid: c.sid });
+      x.push({ uid: c.uid, ssid: c.ssid });
       a.set(c.biz, x);
       return a;
     }, new Map());
   }
 
-  static update({ uid, biz, sid }) {
-    console.log('uid, biz, sid :>> ', { uid, biz, sid });
+  static update({ uid, biz, ssid }) {
+    console.log('uid, biz, ssid :>> ', { uid, biz, ssid });
     const sponsor = Reward.find(uid);
     let points = 1;
     // have we seen sponsor yet? if so, incr points
@@ -52,7 +52,7 @@ export default class Reward extends Model {
     }
     console.log('\tPOINTS :>>', points);
     return this.$create({
-      data: { uid, biz, sid, points },
+      data: { uid, biz, ssid, points },
     });
   }
 

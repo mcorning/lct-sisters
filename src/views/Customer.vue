@@ -11,6 +11,7 @@
         rewardMap,
         rewardingSponsors,
         redeemReward,
+        audit,
       }"
     >
       <Customer
@@ -23,6 +24,7 @@
         :rewardingSponsors="rewardingSponsors"
         :getPointsFromCustomer="getPointsFromCustomer"
         :redeemReward="redeemReward"
+        :audit="audit"
       />
     </div>
   </Model>

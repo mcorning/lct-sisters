@@ -263,6 +263,7 @@ export default {
     rewardingSponsors: Function,
     getPointsFromCustomer: Function,
     redeemReward: Function,
+    audit: Function,
   },
   components: {
     VueQRCodeComponent,
@@ -436,7 +437,7 @@ export default {
     doingBusinessWith({ uid, biz, country, ssid }) {
       const msg = `You just earned reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Transaction ID: ${ssid}`;
+      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Sponsor Stream ID: ${ssid}`;
       this.confSnackbar = true;
       // now add the uid/name to the items array
       this.getRewardPointsFor(uid);
@@ -606,7 +607,7 @@ export default {
           s.push({ biz: key, uid: value[0].uid, ssid: value[0].ssid });
         });
         this.activeSponsors = isEmpty(s) ? [] : s;
-        this.selectedSponsor=head(this.activeSponsors)
+        this.selectedSponsor = head(this.activeSponsors);
       });
     },
   }, // end of Methods

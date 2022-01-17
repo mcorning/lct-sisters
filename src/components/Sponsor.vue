@@ -364,6 +364,7 @@ export default {
     updateSponsor: Function,
     sponsor: Object,
     earnReward: Function,
+    audit: Function,
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {

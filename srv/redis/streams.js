@@ -31,6 +31,10 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 
 const Redis = require('ioredis');
 const redis = new Redis(options);
+
+const audit = ({ source, context, msg }) =>
+  redis.xadd(`auditor:${source}`, '*', 'context', context, 'msg', msg);
+
 const findLastEntry = (key) =>
   redis
     .xrevrange([key, '+', '-', 'COUNT', 1])
@@ -76,7 +80,9 @@ const getSponsor = ({ country, sponsorID }) => {
     .then((stream) => objectFromStream(stream))
     .then((sponsors) => groupBy(sponsors, sponsorID))
     .then((results) => Object.keys(results))
-    .catch((e) => e);
+    .catch((e) =>
+      audit({ source: 'streams', context: 'getSponsor()', msg: e })
+    );
 };
 
 const getSponsors = (country) => {
@@ -88,7 +94,9 @@ const getSponsors = (country) => {
       .then((stream) => objectFromStream(stream))
       .then((sponsors) => groupBy(sponsors, 'biz'))
       // .then((results) => Object.keys(results))
-      .catch((e) => e)
+      .catch((e) =>
+        audit({ source: 'streams', context: 'getSponsors()', msg: e })
+      )
   );
 };
 
@@ -96,12 +104,17 @@ const getCountries = () =>
   redis
     .keys('sponsors:*')
     .then((keys) => {
+      const source = 'streams';
+      const context = 'getCountries()';
+      const msg = `keys: ${keys}`;
+      audit({ source, context, msg });
       console.log('keys', keys);
       return keys;
     })
-    .catch((e) => {
-      console.log('e :>> ', e);
-    });
+    .catch((e) =>
+      audit({ source: 'streams', context: 'getCountries()', msg: e })
+    );
+
 //#endregion
 
 //#region  Rewards
@@ -110,20 +123,22 @@ function enterLottery(uid) {
 }
 
 function getRewardPoints({ uid }, lastID = 0) {
-  const bizStream = `biz:${uid}`;
-  console.log(bizStream);
+  const key = `rewards:${uid}`;
+  console.log(key);
   return redis
-    .xread(['STREAMS', bizStream, lastID])
+    .xread(['STREAMS', key, lastID])
     .then((stream) => objectFromStream(stream))
     .then((visits) => groupBy(visits, 'cid'))
-    .catch((e) => e);
+    .catch((e) =>
+      audit({ source: 'streams', context: 'getRewardPoints()', msg: e })
+    );
 }
 
 async function earnReward({ uid, cid, lastID = 0 }) {
-  const bizStream = `rewards:${uid}`;
+  const key = `rewards:${uid}`;
   console.log(highlight('uid, cid, lastID', uid, cid, lastID));
   // bizStream contains the same data as all the Customers do locally
-  return redis.xadd(bizStream, '*', 'cid', cid);
+  return redis.xadd(key, '*', 'cid', cid);
 }
 //#endregion
 
@@ -165,7 +180,7 @@ async function addPromotion({
       'ssid',
       ssid
     )
-    .then(() => findLastEntry(key));
+    .then((psid) => psid);
 }
 
 function getPromotions({ ssid, country }) {
@@ -179,7 +194,9 @@ function getPromotions({ ssid, country }) {
       return s;
     })
     .then((stream) => objectFromStream(stream))
-    .catch((e) => e);
+    .catch((e) =>
+      audit({ source: 'streams', context: 'getPromotions()', msg: e })
+    );
 }
 //#endregion
 
@@ -190,7 +207,9 @@ const getWarnings = () => {
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
     .then((alerts) => groupBy(alerts, 'place_id'))
-    .catch((e) => e);
+    .catch((e) =>
+      audit({ source: 'streams', context: 'getWarnings()', msg: e })
+    );
 };
 
 const addWarnings = ({ visitData, score, reliability }) => {
@@ -258,6 +277,8 @@ module.exports = {
   addSponsor,
   addPromotion,
   addVisit,
+  audit,
+  findLastEntry,
   getPromotions,
   getSponsor,
   getSponsors,

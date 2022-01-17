@@ -16,8 +16,8 @@ export const rewardMixin = {
     rewardingSponsors() {
       return Reward.query().orderBy('biz').get();
     },
-    updateRewardPoints({ uid, biz, sid }) {
-      Reward.update({ uid, biz, sid })
+    updateRewardPoints({ uid, biz, ssid }) {
+      Reward.update({ uid, biz, ssid })
         .then((result) =>
           console.log(
             success('updateRewardPoints result :>> ', printJson(result))
