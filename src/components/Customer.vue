@@ -250,7 +250,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { getDateFromSid } from '../../srv/utils';
-import { printJson, head, isEmpty } from '@/utils/helpers';
+import { printJson, head, isEmpty, objectToKeyedArray } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
@@ -539,13 +539,12 @@ export default {
       const ssid = this.selectedSponsor.ssid;
       console.log(`getPromotions({${ssid},${country}}`);
       this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
-        this.promotions = promos;
+        this.promotions = promos??[];
         console.log(`promotions`, printJson(this.promotions));
       });
     },
 
     renderPromos() {
-      console.log('this.promotions.length :>> ', this.promotions.length);
       this.promos = this.promotions.length
         ? this.promotions.map((v) => {
             return {
@@ -597,16 +596,19 @@ export default {
         this.country = head(this.countries);
       });
     },
+
     getSponsors(country) {
+      const fromVals = (vals) =>
+        vals.reduce((a, c) => {
+          const {biz, uid, ssid}=c[0]
+          a.push({ biz, uid, ssid });
+          return a;
+        }, []);
       this.emitFromClient('getSponsors', country, (sponsors) => {
-        // sponsors will be an object of Sponsor objects
         console.log('sponsors :>> ', sponsors);
-        const s = [];
-        Object.entries(sponsors).forEach(([key, value]) => {
-          // TODO RESEARCH: is it safe to assume value will always and only have one element?
-          s.push({ biz: key, uid: value[0].uid, ssid: value[0].ssid });
-        });
-        this.activeSponsors = isEmpty(s) ? [] : s;
+        const s = objectToKeyedArray(sponsors);
+
+        this.activeSponsors = fromVals(s);
         this.selectedSponsor = head(this.activeSponsors);
       });
     },

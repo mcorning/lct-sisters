@@ -344,6 +344,7 @@ io.on('connection', (socket) => {
   socket.on('getSponsors', (country, ack) => {
     console.log(`getSponsors(${country})`);
     getSponsors(country).then((sponsors) => {
+      console.log('sponsors :>> ', printJson(sponsors));
       if (ack) {
         ack(sponsors);
       }
