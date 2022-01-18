@@ -156,9 +156,10 @@ export default {
         const id = eventToHandle.id;
         const placeID = eventToHandle.placeID;
         const name = eventToHandle.name;
-        const graphID = eventToHandle.loggedVisitId;
+        const loggedVisitId = eventToHandle.loggedVisitId;
+        const graphName=eventToHandle.graphName
         this.deleteVisit(id);
-        this.$emit('updatedModel', { placeID, name, id, graphID, deleteVisit });
+        this.$emit('updatedModel', { placeID, name, id, loggedVisitId, graphName, deleteVisit });
         return;
       }
 

@@ -727,7 +727,7 @@ export default {
         });
       } else if (val.deleteVisit) {
         this.confirmationColor = 'orange';
-        msg = `Deleted visit to ${val.name} `;
+        msg = `Deleted visit to ${val.name} (namely, the ${val.loggedVisitId} node on the ${val.graphName} graph)`;
         // code is acting weird and delete is not seeing the loggedVisitId. investigating...
         // msg = `Deleted visit to ${val.name} graph visited ID: ${val.loggedVisitId}`;
       } else {
