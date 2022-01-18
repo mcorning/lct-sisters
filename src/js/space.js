@@ -117,7 +117,8 @@ export const spaceMixin = {
     // works when connected and when not connected
     callVisitUpdate({ place_id, start, end, name, shared, gatheringName }) {
       const getNs = () => {
-        return this.getAllSettings().namespace;
+        const x = this.getAllSettings().namespace;
+        return x ?? 'Sisters OR';
       };
       let visit = {
         id: randomId(),
@@ -168,9 +169,9 @@ export const spaceMixin = {
           name: name || gatheringName,
           gatheringName,
         });
-        return true
+        return true;
       } catch (error) {
-        return (error)
+        return error;
       }
     },
 

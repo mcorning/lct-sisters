@@ -731,7 +731,7 @@ export default {
         // code is acting weird and delete is not seeing the loggedVisitId. investigating...
         // msg = `Deleted visit to ${val.name} graph visited ID: ${val.loggedVisitId}`;
       } else {
-        msg = `Added visit to ${val.name} in graph returning nodeID: ${val.loggedVisitId}`;
+        msg = `Added visit to ${val.name} in ${val.graphName} graph returning nodeID: ${val.loggedVisitId}`;
       }
       this.showConfirmation(msg);
     },

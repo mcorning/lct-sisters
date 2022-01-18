@@ -54,17 +54,15 @@ export const graphMixin = {
     onLogVisit(visit) {
       return new Promise((resolve, reject) => {
         console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
+        const graphName = visit.graphName
+          ? visit.graphName
+          : prompt(
+              'Unexpected state: we have no graph. Please enter your City and State'
+            );
 
-        const {
-          id,
-          name,
-          place_id,
-          start,
-          end,
-          loggedVisitId,
-          graphName,
-          interval,
-        } = visit;
+        const { id, name, place_id, start, end, loggedVisitId, interval } =
+          visit;
+
         const query = {
           username: this.username,
           userID: this.$socket.client.auth.userID,
