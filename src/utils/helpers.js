@@ -27,8 +27,9 @@ function printNow() {
 }
 
 const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
-const head = (val) => (Array.isArray(val) && !isEmpty(val)) ?val[0]:'';
-const truthCheckCollection = (collection, pre) => collection.every(obj => obj[pre]);
+const head = (val) => (Array.isArray(val) && !isEmpty(val) ? val[0] : '');
+const truthCheckCollection = (collection, pre) =>
+  collection.every((obj) => obj[pre]);
 
 function getRandomIntInclusive(min, max) {
   min = Math.ceil(min);
@@ -101,7 +102,7 @@ const objectToKeyedArray = (obj) => {
       if (prop === 'values') return values;
       if (prop === Symbol.iterator)
         return function* () {
-          for (value of values) yield value;
+          for (const value of values) yield value;
           return;
         };
       else return Reflect.get(...arguments);
