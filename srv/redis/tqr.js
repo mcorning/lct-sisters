@@ -5,85 +5,85 @@ cursor    all streams in database:
 ----------------------------------------------------
 0         auditor:streams                    
           promotions:1642533459959-0
-          usa:1642533459959-0
-          usa:1642533459959-0:promos
-          sponsors:usa
+          tqr:us1642533459959-0
+          tqr:us1642533459959-0:promos
+          sponsors:us
 
-Command: >scan 0 match usa*[^promos]
+Command: >scan 0 match us*[^promos]
       Returns
 cursor    all USA Sponsors:
 ----------------------------------------------------
-0         usa:1642533459959-0
+0         tqr:us1642533459959-0
 
-Command: >scan 0 match usa*
+Command: >scan 0 match us*
       Returns
 cursor    all streams in USA:
 ----------------------------------------------------
-0         usa:1642533459959-0
-          usa:1642533459959-0:promos
+0         tqr:us1642533459959-0
+          tqr:us1642533459959-0:promos
 
-Command: >scan 0 match usa*rewards
+Command: >scan 0 match us*rewards
       Returns
 cursor    all Rewards in USA:
 ----------------------------------------------------
-0         usa:1642533459959-0:rewards
+0         tqr:us1642533459959-0:rewards
 
-Command: >scan 0 match usa*promos
+Command: >scan 0 match us*promos
       Returns
 cursor    all Promotions in USA:
 ----------------------------------------------------
-0         usa:1642533459959-0:promos
+0         tqr:us1642533459959-0:promos
 
-Command: >scan 0 match usa:1642533459959-0*
+Command: >scan 0 match tqr:us1642533459959-0*
       Returns
 cursor    all streams for Sponsor 1642533459959-0:
 ----------------------------------------------------
-0         usa:1642533459959-0:rewards
-          usa:1642533459959-0
-          usa:1642533459959-0:promos
+0         tqr:us1642533459959-0:rewards
+          tqr:us1642533459959-0
+          tqr:us1642533459959-0:promos
 
-Command: >scan 0 match usa:*[^:promos][^:rewards]
+Command: >scan 0 match tqr:us::*[^:promos][^:rewards]
       Returns
 cursor    then array of values:
 ----------------------------------------------------
-0         usa:1642533459959-0
+0         tqr:us1642533459959-0
 
 
-> xadd usa * biz SCC uid 2cc4954d5cabe49a
+> xadd us * biz SCC uid 2cc4954d5cabe49a
 1642558471131-0
 
-> xrange usa 1642558471131-0 1642558471131-0
+> xrange us 1642558471131-0 1642558471131-0
 1642558471131-0
 biz
 SCC
 uid
 2cc4954d5cabe49a
 
-> xadd usa * biz "Outlaw Barbers" uid 9bb09370e625baf7
+> xadd us * biz "Outlaw Barbers" uid 9bb09370e625baf7
 1642558736304-0
-> xrange usa 1642558736304-0 1642558736304-0
+> xrange us 1642558736304-0 1642558736304-0
 1642558736304-0
 biz
 Outlaw Barbers
 uid
 9bb09370e625baf7
 
-> xadd usa:1642558736304-0:promos * biz "Outlaw Barbers" text 'Twenty percent for Vets on Vets Day'
+> xadd tqr:us1642558736304-0:promos * biz "Outlaw Barbers" text 'Twenty percent for Vets on Vets Day'
 1642558906193-0
-> xread streams usa:1642558736304-0:promos 0
-usa:1642558736304-0:promos
+> xread streams tqr:us1642558736304-0:promos 0
+us:1642558736304-0:promos
 1642558906193-0
 biz
 Outlaw Barbers
 text
 Twenty percent for Vets on Vets Day
 
-> xadd usa:1642558471131-0:promos * biz "SCC" text 'Early Spring Break'
+> xadd tqr:us1642558471131-0:promos * biz "SCC" text 'Early Spring Break'
 1642562389544-0
-> xadd usa:1642558471131-0:promos * biz "SCC" text 'Get a break on breakfast'
+> xadd tqr:us1642558471131-0:promos * biz "SCC" text 'Get a break on breakfast'
 1642562437423-0
-> xread streams usa:1642558471131-0:promos 0
-usa:1642558471131-0:promos
+> xread streams tqr:us1642558471131-0:promos 0
+us:1642558471131-0:promos
 1642562389544-0
 biz
 SCC
@@ -146,45 +146,34 @@ const forPromo = (sponsor) =>
     return a;
   }, []);
 
-const forCountries = (country) =>
-  country.reduce((a, c) => {
-    const { name } = c;
-    a.push({ name });
-    return a;
-  }, []);
 //#endregion Helpers
 
 //#region API
 //#region CREATE
 // xadd countries * name sg
 // const addCountry = (country) => redis.xadd('countries', '*', 'name', country);
-// xadd usa * biz "Outlaw Barbers" uid 9bb09370e625baf7
+// xadd us * biz "Outlaw Barbers" uid 9bb09370e625baf7
 const addSponsor = (country, biz, uid) =>
   redis.xadd(country, '*', 'biz', biz, 'uid', uid);
 
-// > xadd usa:1642558736304-0:promos * biz "Fika" text 'Welcome back Renee'
+// > xadd tqr:us1642558736304-0:promos * biz "Fika" text 'Welcome back Renee'
 const addPromo = (key, biz, text) =>
   redis.xadd(key, '*', 'biz', biz, 'text', text);
 
-// > xadd usa:1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
+// > xadd tqr:us1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
 const addReward = (key, biz, cid) =>
   redis.xadd(key, '*', 'biz', biz, 'cid', cid);
 
 //#endregion CREATE
 //#region DELETE
 const deletePromo = (key, sid) => redis.xdel(key, sid);
+
 //#endregion DELETE
 
 //#region READ
-// xread streams countries 0
-const getCountries = () =>
-  redis
-    .xread('STREAMS', 'countries', '0')
-    .then((stream) => objectFromStream(stream))
-    .then((countries) => objectToKeyedArray(countries))
-    .then((data) => forCountries(data));
+const getCountries = () => redis.scan('0', 'MATCH', 'tqr:??');
 
-// xread streams usa 0
+// xread streams us 0
 const getSponsors = (country) =>
   redis
     .xread('STREAMS', country, '0')
@@ -192,14 +181,14 @@ const getSponsors = (country) =>
     .then((sponsors) => objectToKeyedArray(sponsors))
     .then((data) => forSponsor(data));
 
-// xrange usa 1642558471131-0 1642558471131-0
+// xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) =>
   redis
     .xrange(country, ssid, ssid)
     .then((stream) => objectFromStreamEntry(stream))
     .then((sponsor) => forThisSponsor(sponsor));
 
-// xread country:usa:1642558471131-0:promos 0
+// xread country:us:1642558471131-0:promos 0
 const getPromos = (key) =>
   redis
     .xread('STREAMS', key, '0')
@@ -207,7 +196,7 @@ const getPromos = (key) =>
     .then((sponsors) => objectToKeyedArray(sponsors))
     .then((data) => forPromo(data));
 
-// xread country:usa:1642558471131-0:rewards 0
+// xread country:us:1642558471131-0:rewards 0
 const getRewards = (key) =>
   redis.xread('STREAMS', key, '0').then((stream) => objectFromStream(stream));
 //#endregion READ
@@ -225,7 +214,7 @@ if (TESTING) {
   ];
   const promos = [
     { biz: 'Fika', text: 'Welcome back Renee' },
-    { biz: 'Fika', sid: '1642567941789-0', text: 'Discount for card players' },
+    { biz: 'Fika', sid: '', text: 'Discount for card players' },
     { biz: 'Outlaw Barbers', text: 'Twenty percent for Vets on Vets Day' },
   ];
   const cids = [
@@ -240,12 +229,15 @@ if (TESTING) {
     return updatedBid.sid;
   };
   // We archive tests when TESTING is false (default)
-  const COUNTRY = 'country:usa';
+  const COUNTRY = 'tqr:us';
   const biz = bids[0].biz;
   const uid = bids[0].uid;
-  const sid = bids[0].sid;
   const biz2 = bids[1].biz;
   const uid2 = bids[1].uid;
+
+  const p0 = addSponsor('tqr:sg', biz, uid).then(() =>
+    addSponsor('tqr:sg', biz2, uid2)
+  );
 
   const p1 = addSponsor(COUNTRY, biz, uid)
     .then((ssid) => updateBid(uid, ssid))
@@ -258,7 +250,7 @@ if (TESTING) {
     .then((sponsor) => log(print(sponsor), 'Sponsor'))
     .then(() => getSponsors(COUNTRY));
 
-  Promise.all([p1, p2])
+  Promise.all([p0, p1, p2])
     .then((promises) => log(print(promises), 'Sponsors'))
     .then(() =>
       addReward(`${COUNTRY}:${bids[0].sid}:rewards`, biz, cids[0].uid)
@@ -272,8 +264,18 @@ if (TESTING) {
         promos[1].text
       )
     )
+    .then(() =>
+      addPromo(
+        `${COUNTRY}:${bids[0].sid}:promos`,
+        promos[2].biz,
+        promos[2].text
+      )
+    )
+    .then((sid) => deletePromo(`${COUNTRY}:${bids[0].sid}:promos`, sid))
     .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))
-    .then((ps) => log(print(ps), 'Promos'));
+    .then((ps) => log(print(ps), 'Promos'))
+    .then(() => getCountries())
+    .then((countries) => log(print(countries)));
   // NOTE: We return all Reward data, not a subset like the others
 }
 //#endregion Tests

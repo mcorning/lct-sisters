@@ -56,20 +56,12 @@ const {
 
 // experimental. not used as of 12.13.21
 const {
-  addSponsor,
-  getSponsors,
-  addPromotion,
-  getPromotions,
   enterLottery,
-  earnReward,
-  deletePromotion,
-  getRewardPoints,
   addWarnings,
   getWarnings,
   addVisit,
   getVisits,
   randomId,
-  getCountries,
   audit,
 } = require('./redis/streams');
 
