@@ -119,11 +119,13 @@ const redis = new Redis(options);
 
 //#region Data
 const bids = [
+  { biz: 'Fika', uid: '9f8b77197764881a', sid: '1642567941789-0' },
   { biz: 'SCC', uid: '2cc4954d5cabe49a', sid: '1642558471131-0' },
   { biz: 'Outlaw Barbers', uid: '9bb09370e625baf7', sid: '1642558736304-0' },
 ];
 const promos = [
-  { biz: 'SCC', text: 'Welcome back Renee' },
+  { biz: 'Fika', text: 'Welcome back Renee' },
+  { biz: 'Fika', sid: '1642567941789-0', text: 'Discount for card players' },
   { biz: 'Outlaw Barbers', text: 'Twenty percent for Vets on Vets Day' },
 ];
 const cids = [
@@ -133,56 +135,139 @@ const cids = [
 //#endregion Data
 
 //#region Helpers
+const TESTING = false;
+
 const {
   objectFromStream,
   objectFromStreamEntry,
   objectToKeyedArray,
 } = require('../utils');
+
 const print = (json) => JSON.stringify(json, null, 2);
 const log = (text, label = 'data') => console.log(`${label} :>> `, text, '\n');
-const TESTING = true;
+
+const updateBid = (sid) => {
+  bids[0].sid = sid;
+  return sid;
+};
+const forSponsor = (sponsor) =>
+  sponsor.reduce((a, c) => {
+    const { biz, uid, ssid } = c;
+    a.push({ biz, uid, ssid });
+    return a;
+  }, []);
+const forThisSponsor = (sponsor) => ({
+  biz: sponsor.biz,
+  uid: sponsor.uid,
+  ssid: sponsor.uid,
+});
+
+const forPromo = (sponsor) =>
+  sponsor.reduce((a, c) => {
+    const { biz, text } = c;
+    a.push({ biz, text });
+    return a;
+  }, []);
+
+const forCountries = (country) =>
+  country.reduce((a, c) => {
+    const { name } = c;
+    a.push({ name });
+    return a;
+  }, []);
 //#endregion Helpers
 
 //#region API
+//#region CREATE
+// xadd countries * name sg
+const addCountry = (country) => redis.xadd('countries', '*', 'name', country);
+// xadd usa * biz "Outlaw Barbers" uid 9bb09370e625baf7
+const addSponsor = (country, biz, uid) =>
+  redis.xadd(country, '*', 'biz', biz, 'uid', uid);
+
+// > xadd usa:1642558736304-0:promos * biz "Fika" text 'Welcome back Renee'
+const addPromo = (country, ssid, biz, text) =>
+  redis.xadd(`${country}:${ssid}:promos`, '*', 'biz', biz, 'text', text);
+
+// > xadd usa:1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
+const addReward = (country, ssid, biz, cid) =>
+  redis.xadd(`${country}:${ssid}:rewards`, '*', 'biz', biz, 'cid', cid);
+
+//#endregion CREATE
+
+//#region READ
+// xread streams countries 0
+const getCountries = () =>
+  redis
+    .xread('STREAMS', 'countries', '0')
+    .then((stream) => objectFromStream(stream))
+    .then((countries) => objectToKeyedArray(countries))
+    .then((data) => forCountries(data));
+
 // xread streams usa 0
-const getSponsors = (country) => {
-  const fromSponsor = (sponsor) =>
-    sponsor.reduce((a, c) => {
-      const { biz, uid, ssid } = c;
-      a.push({ biz, uid, ssid });
-      return a;
-    }, []);
-  return redis
+const getSponsors = (country) =>
+  redis
     .xread('STREAMS', country, '0')
     .then((stream) => objectFromStream(stream))
     .then((sponsors) => objectToKeyedArray(sponsors))
-    .then((data) => fromSponsor(data));
-};
+    .then((data) => forSponsor(data));
 
 // xrange usa 1642558471131-0 1642558471131-0
-const getSponsor = (country, ssid) => {
-  return redis
+const getSponsor = (country, ssid) =>
+  redis
     .xrange(country, ssid, ssid)
-    .then((stream) => objectFromStreamEntry(stream));
-};
+    .then((stream) => objectFromStreamEntry(stream))
+    .then((sponsor) => forThisSponsor(sponsor));
 
 // xread `trtext1642558471131-0:promos 0
-const getPromos = (country, ssid) => {
-  const command = `${country}:${ssid}:promos`;
-  return redis
-    .xread('STREAMS', command, '0')
+const getPromos = (country, ssid) =>
+  redis
+    .xread('STREAMS', `${country}:${ssid}:promos`, '0')
+    .then((stream) => objectFromStream(stream))
+    .then((sponsors) => objectToKeyedArray(sponsors))
+    .then((data) => forPromo(data));
+
+// xread `trtext1642558471131-0:rewards 0
+const getRewards = (country, ssid) =>
+  redis
+    .xread('STREAMS', `${country}:${ssid}:rewards`, '0')
     .then((stream) => objectFromStream(stream));
-};
+//#endregion READ
 //#endregion API
 
 //#region Tests
-if (TESTING) {
-  getSponsors('usa').then((sponsors) => log(print(sponsors), 'Sponsors'));
+// We archive tests when TESTING is false (default)
+const COUNTRY = 'usa';
 
-  getSponsor('usa', '1642558471131-0').then((sponsor) =>
-    log(print(sponsor), 'Sponsor')
+getSponsor(COUNTRY, bids[0].sid).then((sponsor) =>
+  log(print(sponsor), 'Sponsor')
+);
+
+if (TESTING) {
+  addCountry('uk').then((country) => log(country, 'Country SID:'));
+  getCountries().then((countries) => log(print(countries), 'Countries:'));
+
+  addPromo(COUNTRY, promos[1].sid, promos[1].biz, promos[1].text).then(
+    (sid) => console.log('Promo sid :>> ', sid) //1642569755842-0
+  );
+  getPromos(COUNTRY, promos[1].sid).then((x) => log(print(x), 'Promos'));
+
+  // > xadd usa:1642569430431-0:reward * biz "Fika" cid '9f8b77197764881a'
+  addReward(`usa:${bids[0].sid}:rewards`, bids[0].biz, cids[0].uid).then(
+    (sid) => console.log('Reward sid :>> ', sid) //1642569430431-0
   );
 
-  getPromos('usa', '1642558471131-0').then((x) => log(print(x), 'Promos'));
+  // NOTE: We return all Reward data, not a subset like the others
+  getRewards(COUNTRY, bids[0].sid).then((x) => log(print(x), 'Rewards'));
+
+  getSponsors(COUNTRY).then((sponsors) => log(print(sponsors), 'Sponsors'));
+
+  addSponsor(COUNTRY, bids[0].biz, bids[0].uid)
+    .then((sid) => updateBid(sid))
+    .then((sid) => console.log('sid :>> ', sid));
+
+  getSponsor(COUNTRY, '1642558471131-0').then((sponsor) =>
+    log(print(sponsor), 'Sponsor')
+  );
 }
 //#endregion Tests
