@@ -117,7 +117,6 @@ const Redis = require('ioredis');
 const redis = new Redis(options);
 //#endregion
 //#region Helpers
-const TESTING = true;
 
 const {
   objectFromStream,
@@ -214,12 +213,14 @@ const getRewards = (key) =>
 //#endregion READ
 //#endregion API
 
+const TESTING = true;
+
 //#region Tests
 if (TESTING) {
   //#region Test Data
   const bids = [
-    { biz: 'Fika', uid: '9f8b77197764881a', sid: '1642567941789-0' },
-    { biz: 'SCC', uid: '2cc4954d5cabe49a', sid: '1642558471131-0' },
+    { biz: 'Fika', uid: '9f8b77197764881a', sid: '' },
+    { biz: 'SCC', uid: '2cc4954d5cabe49a', sid: '' },
     { biz: 'Outlaw Barbers', uid: '9bb09370e625baf7', sid: '1642558736304-0' },
   ];
   const promos = [
@@ -232,9 +233,11 @@ if (TESTING) {
     { name: 'Firefox', uid: '9b7c302f6f1b1fa4' },
   ];
   //#endregion Test Data
-  const updateBid = (sid) => {
-    bids[0].sid = sid;
-    return sid;
+  const updateBid = (bidUid, ssid) => {
+    const updatedBid = bids.find((v) => v.uid === bidUid);
+    updatedBid.sid = ssid;
+    console.assert(updatedBid.sid == ssid, 'failed isometric truth test');
+    return updatedBid.sid;
   };
   // We archive tests when TESTING is false (default)
   const COUNTRY = 'country:usa';
@@ -245,25 +248,31 @@ if (TESTING) {
   const uid2 = bids[1].uid;
 
   const p1 = addSponsor(COUNTRY, biz, uid)
-    .then((ssid) => updateBid(ssid))
+    .then((ssid) => updateBid(uid, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
     .then((sponsor) => log(print(sponsor), 'Sponsor'))
     .then(() => getSponsors(COUNTRY));
   const p2 = addSponsor(COUNTRY, biz2, uid2)
-    .then((ssid) => updateBid(ssid))
+    .then((ssid) => updateBid(uid2, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
     .then((sponsor) => log(print(sponsor), 'Sponsor'))
     .then(() => getSponsors(COUNTRY));
 
   Promise.all([p1, p2])
     .then((promises) => log(print(promises), 'Sponsors'))
-    .then(() => addReward(`${COUNTRY}:${sid}:rewards`, biz, cids[0].uid))
-    .then(() => getRewards(`${COUNTRY}:${sid}:rewards`))
+    .then(() =>
+      addReward(`${COUNTRY}:${bids[0].sid}:rewards`, biz, cids[0].uid)
+    )
+    .then(() => getRewards(`${COUNTRY}:${bids[0].sid}:rewards`))
     .then((rewards) => log(print(rewards), 'Rewards'))
     .then(() =>
-      addPromo(`${COUNTRY}:${sid}:promos`, promos[1].biz, promos[1].text)
+      addPromo(
+        `${COUNTRY}:${bids[1].sid}:promos`,
+        promos[1].biz,
+        promos[1].text
+      )
     )
-    .then(() => getPromos(`${COUNTRY}:${sid}:promos`))
+    .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))
     .then((ps) => log(print(ps), 'Promos'));
   // NOTE: We return all Reward data, not a subset like the others
 }
