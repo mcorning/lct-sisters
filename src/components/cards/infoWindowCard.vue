@@ -273,9 +273,10 @@ export default {
       const uid = this.$socket.client.auth.userID; //otherwise the userID for the visitor sharing the Place
       // do normal url encoding for the rest of the args
       // we will reverse this edit in space.js
-      const uri = encodeURIComponent(
-        `uid=${uid}&place_id=${this.placeId}&name=${this.name}`
-      );
+      const uri = `uid=${uid}&place_id=${
+        this.placeId
+      }&name=${encodeURIComponent(this.name)}`;
+
       return `${window.location.origin}/?${uri}`;
     },
 
