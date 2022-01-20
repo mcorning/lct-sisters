@@ -1,20 +1,6 @@
 <template>
   <v-footer app dark color="primary" class="white--text">
-    <v-btn color="primary" plain absolute bottom left @click="open('Sponsor')">
-    </v-btn>
-    <v-btn color="primary" plain @click="open('Customer')"> </v-btn>
-    <!-- status bar -->
-
     <!-- View buttons -->
-
-    <!-- <v-bottom-navigation
-      v-model="value"
-      color="secondary"
-      background-color="primary"
-      dark
-      shift
-    > -->
-    <!-- <span class="center mx-0 my-0">{{ status }}</span>-->
     <v-spacer />
 
     <v-btn plain value="Space" @click="open('Space')">

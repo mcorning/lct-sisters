@@ -1,39 +1,107 @@
-This is the second installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
+# A COVID Early Warning System
 
-SHARING
-Last time we saw Seth introduce Katy to a tool Seth believes can help the residents of Sisters minimize the impact of the virus on their health and the city's economy.
+This is the third installment of our story of Seth, a physical therapist in Sisters, OR who uses software to keep his patients safe from the ravages of COVID-19.
 
-As Seth takes Katy's temperature, he watches Katy scan the clinic's QR code and says, "Good job. When we're done today, I'll show you how you can share the app and enter a "crush the virus" lottery."
+Previously...we saw Seth show Katy how to share a tool Seth believes can help the residents of Sisters minimize the impact of the virus on their health and their city's economy.
 
-Katy says, "Ok, show me this lottery thingy."
+In this episode, Seth shows Katy what happens when the rubber meets the road...
+
+## EPISODE 3: IT COULD BE WORSE
+
+By now, Katy knows the drill. First, PT. Then another lesson in armchair epidemiology.
+
+### Page 1: WHERE IN THE WORLD
+
+"Ok, Katy, today I'll show you how the app keeps us safe.
+"But first, we need to take a little detour because Google doesn't know which building we are in.
+"So, open the app, please."
+
+Katy clicks the app's icon on her phone's Home screen.
+
+Seth says, "The app opens on the map. Now scroll the map to the intersection of Highway 20 and W Barclay Drive."
+
+Katy uses her finger to northwest on the map until she finds the intesection.
+
+"You see familiar landmarks here, yeah?"
+
+Katy nods and adds, "But where is `Step and Spine`?
+
+"That's the problem. Actually there are two problems. First, our clinic is too small in Google's eyes to justify a marker on the map. Fine.
+But here's a bigger problem: start typing 'step' in the map search box"
+
+By the time Katy finishes the word, 'Step and Spine' appears at the top of the list.
+
+"I see us." Katy touches the entry, and the map zooms to a new marker on the map. "What's this? we aren't in the middle of the grocery store!'
+
+"That's OK. the app can handle this," Seth says.
+"Touch the marker...then drag it over here where we are, the grey box next to Sisters Inn and Suites.
+"Now, the next time you open the app, our map marker will be in the correct location.
+"Right, let's get to the good stuff."
+
+--------------------------------------------------------------------------------------
+
+### Page 3: The BRB
+
+"Today, Katy, I will introduce you to the crux of the app. We are going to talk about the third primary button on the app, the `Big Red Button`.
+
+"Imagine you get home today and your neighbor tells you her husband isn't feeling well.
+"So you grab your inhome COVID test kit (you have one, right?), and sure enough, you, too are positive.
+"First thing you do is call you Primary Care Physician and get a prescription for that new anti-viral theraputic the FDA granted Emergency Use Authorization.
+"As soon as you get off the phone with the doctor, you open your app...
+
+"Ready? click that `Big Red Button`."
+
+Katy clicks the BRB on her app and opens the `Exposure` view.
+
+--------------------------------------------------------------------------------------
+
+### Page 4: This is a drill. This is only a drill.
+
+"For today," Seth begins, "ignore the details on this page. The only thing we do here is choose the kind of warning we send to the server."
+
+Seth directs Katy's attention to the bottom of the screen.
+
+"Click the `DRILL` button".
+
+She clicks, and sees a Confirmation that the server can alert some number of people.
 
 
-... [open FireFox]
+--------------------------------------------------------------------------------------
 
-Seth tells her to open the app. "See that QR code icon in the upper left corner of the screen?" "Yeah." "Click it."
+### Page 5: What's in it from me?
 
-Katy's phone shows a QR code. This time, the only data in the code is Katy's userID. 
+"Since we both have an entry in our calendars," Seth says, "I should see an `Exposure Alert` when I open my app."
 
-Seth explains, "That random string is the only thing the app needs to be able to alert you later if you get exposed to the virus.
-"Now, next time you are with somebody who wants to crush the virus too, have them scan this QR. Here, let's try it now so you can see what happens."
+Seth opens his app and they see a large green banner on Seth's app.
 
+"Since you pressed the `DRILL` button, my alert is green and its message is: DO NOT ACT."
 
-... [open Chrome on an old smart phone laying around]
-Seth scans the code and notes the messages that appear on each phone.
+Katy nods, "OK"
 
-"I can see that the system is rewarding you for sharing the app, and it suggests i do the same thing so i can enter the lottery.
-"You see the confirmation number that tells you that your chance of winning just went up."
+If this had been a real alert, I would get tested, and if positive, I would hit the BRB. And so it goes until we've crushed the virus in our fair city."
 
-Katy smiles. "Cool."
+--------------------------------------------------------------------------------------
 
-Seth says, "Sharing this app is vital to its success and our safety. The more your share it, the more likely you are to win the lottery."
+### The Rest of the Story
 
-Kay, "Ok. I'll tell my girlfriends at cards on Thursday. We meet at Fika once a week. This will help make Fika a safer place in town as well, won't it?"
+"When a test or physician diagnoses you with COVID, you are having a bad day. But it could be much worse.
 
-"If we all use it all the time, yes. If we don't use it and don't share it, we are no better off than we were last year.
-"On Thursday I'll show you how the app works on that day when you get perhaps the worst news of your life..."
+There could be dozens of people infected the same way you were, but they don't know it yet.
 
+> Today, for example, in our little zip code of 7,000 residents, COVID infection when up by 19 cases. That's an increase from 825/10,000 to 850/10,000.
 
+Armed with the app, as soon as you know you're exposed, everybody you shared space and time with knows there's a good chance they are carrying the virus, too.
 
+So if, as a group, we all get tested on the same day of our alert, we deprive the virus of up to two weeks to replicate and mutate.
+
+Without the app, time is now our ally.
+
+With it, time is not an ally for the variants. Frankly, the virus hasn't got a chance in our town.
+
+--------------------------------------------------------------------------------------
+
+### To be continued
+
+Seth's closing remarks to Katy are, "Next time I'll show you how you can invite me to your Thursday card games..."
 
 As Katy leaves, Seth says,"Until then, Katy, stay safe out there..."
