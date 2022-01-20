@@ -712,20 +712,21 @@ export default {
       console.log(val);
       console.log(' ');
       let msg;
-      if (val.shared) {
-        // TODO refactor given latest TQR
-        this.earnReward({
-          pid: val.place_id,
-          name: val.name,
-          uid: this.$socket.client.auth.userID,
-        }).then((visitedOn) => {
-          const dates = visitedOn.map((v) => this.convertDateTime(v));
-          msg = `<p>You are earning LCT Reward points with ${
-            val.name
-          } with these visits:</p>${dates.join('<br/>')}`;
-          this.showConfirmation(msg);
-        });
-      } else if (val.deleteVisit) {
+      //   // TODO refactor given latest TQR
+      // if (val.shared) {
+      //   this.earnReward({
+      //     pid: val.place_id,
+      //     name: val.name,
+      //     uid: this.$socket.client.auth.userID,
+      //   }).then((visitedOn) => {
+      //     const dates = visitedOn.map((v) => this.convertDateTime(v));
+      //     msg = `<p>You are earning LCT Reward points with ${
+      //       val.name
+      //     } with these visits:</p>${dates.join('<br/>')}`;
+      //     this.showConfirmation(msg);
+      //   });
+      // } else 
+      if (val.deleteVisit) {
         this.confirmationColor = 'orange';
         msg = `Deleted visit to ${val.name} (namely, the ${val.loggedVisitId} node on the ${val.graphName} graph)`;
         // code is acting weird and delete is not seeing the loggedVisitId. investigating...

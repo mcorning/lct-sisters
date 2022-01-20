@@ -108,7 +108,24 @@
               }}</v-card-subtitle>
 
               <v-card-text v-if="!printing">
-                <v-tabs v-model="tab" grow background-color="transparent">
+                <v-card flat>
+                  <v-card-text v-if="!employee">
+                    <v-row align="center"
+                      ><v-col cols="9" sm="5">
+                        <v-text-field
+                          v-model="avgStay"
+                          label="Visitor average stay (minutes)"
+                        ></v-text-field></v-col
+                      ><v-spacer />
+                      <v-col cols="2">
+                        <v-btn icon color="primary" plain @click="onPrintQR"
+                          ><v-icon>print</v-icon></v-btn
+                        ></v-col
+                      ></v-row
+                    >
+                  </v-card-text></v-card
+                >
+                <!-- <v-tabs v-model="tab" grow background-color="transparent">
                   <v-tab v-for="item in items" :key="item.tab">
                     {{ item.tab }}
                   </v-tab>
@@ -144,7 +161,7 @@
                       </v-row>
                     </v-card>
                   </v-tab-item>
-                </v-tabs-items>
+                </v-tabs-items> -->
               </v-card-text>
               <!-- VueQRCodeComponent in here -->
               <v-card-text>
@@ -207,7 +224,7 @@
 // https://www.npmjs.com/package/vue-qr-generator
 import VueQRCodeComponent from 'vue-qr-generator';
 
-import dateTimeCard from './dateTimeCard.vue';
+// import dateTimeCard from './dateTimeCard.vue';
 import { DateTime, asHour, asMinute } from '@/utils/luxonHelpers';
 import { isEmpty } from '@/utils/helpers';
 
@@ -226,7 +243,7 @@ export default {
 
   components: {
     VueQRCodeComponent,
-    dateTimeCard,
+    // dateTimeCard,
   },
 
   computed: {
@@ -275,7 +292,7 @@ export default {
       // we will reverse this edit in space.js
       const uri = `uid=${uid}&place_id=${
         this.placeId
-      }&name=${encodeURIComponent(this.name)}`;
+      }&name=${encodeURIComponent(this.name)}&avgStay=${this.avgStay}`;
 
       return `${window.location.origin}/?${uri}`;
     },
