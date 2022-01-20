@@ -154,7 +154,7 @@
                     <VueQRCodeComponent
                       id="qr"
                       ref="qr"
-                      :text="decodedUri"
+                      :text="mailToUri"
                       :size="256"
                       error-level="L"
                     >
@@ -166,7 +166,7 @@
                 <v-divider class="my-3"></v-divider>
                 <v-card-title>Event Link</v-card-title>
                 <v-card-text class="text-caption text-sm-body-2">{{
-                  decodedUri
+                  mailToUri
                 }}</v-card-text>
               </v-card-text>
             </div>

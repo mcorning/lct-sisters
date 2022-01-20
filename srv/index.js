@@ -189,40 +189,40 @@ io.on('connection', (socket) => {
       console.log(
         `promote(${biz} (${confirmedAddress}), ${promoText}, ${promotionalDays}`
       );
-      addPromotion({
-        confirmedAddress,
-        biz,
-        country,
-        promoText,
-        promotionalDays,
-        ssid,
-      }).then((newPromo) => {
-        if (ack) {
-          ack(newPromo);
-        }
-        // let everybody online now see the new promo
-        const msg = { biz, promoText: newPromo.promoText };
-        console.log(`newPromotion, ${printJson(msg)}`);
-        socket.broadcast.emit('newPromotion', msg);
-      });
+      // addPromotion({
+      //   confirmedAddress,
+      //   biz,
+      //   country,
+      //   promoText,
+      //   promotionalDays,
+      //   ssid,
+      // }).then((newPromo) => {
+      //   if (ack) {
+      //     ack(newPromo);
+      //   }
+      //   // let everybody online now see the new promo
+      //   const msg = { biz, promoText: newPromo.promoText };
+      //   console.log(`newPromotion, ${printJson(msg)}`);
+      //   socket.broadcast.emit('newPromotion', msg);
+      // });
     }
   );
 
   socket.on('deletePromotion', ({ ssid, sid }, ack) => {
-    deletePromotion(`promotions:${ssid}`, sid).then((ct) => {
-      if (ack) {
-        ack(ct);
-      }
-    });
+    // deletePromotion(`promotions:${ssid}`, sid).then((ct) => {
+    //   if (ack) {
+    //     ack(ct);
+    //   }
+    // });
   });
 
   socket.on('getPromotions', ({ ssid, country }, ack) => {
     console.log('getPromotions() ssid :>> ', ssid);
-    getPromotions({ ssid, country }).then((promos) => {
-      if (ack) {
-        ack(promos);
-      }
-    });
+    // getPromotions({ ssid, country }).then((promos) => {
+    //   if (ack) {
+    //     ack(promos);
+    //   }
+    // });
   });
 
   socket.on('addWarnings', ({ visitData, score, reliability }, ack) => {
@@ -262,25 +262,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('redeemReward', ({ uid, cid, points }, ack) => {
-    getRewardPoints({ uid, cid }).then((visitedOn) => {
-      if (ack && visitedOn[cid].length >= points) {
-        // Customer will remove uid rewards
-        socket.to(cid).emit('rewardRedeemed', uid);
-        // confirm wih Sponsor
-        ack(`They, ${cid}, are redeemed`);
-      }
-    });
+    // getRewardPoints({ uid, cid }).then((visitedOn) => {
+    //   if (ack && visitedOn[cid].length >= points) {
+    //     // Customer will remove uid rewards
+    //     socket.to(cid).emit('rewardRedeemed', uid);
+    //     // confirm wih Sponsor
+    //     ack(`They, ${cid}, are redeemed`);
+    //   }
+    // });
   });
 
   socket.on('getRewardPoints', ({ uid, cid }, ack) => {
     if (isEmpty(uid)) {
       return;
     }
-    getRewardPoints({ uid, cid }).then((visitedOn) => {
-      if (ack) {
-        ack(visitedOn);
-      }
-    });
+    // getRewardPoints({ uid, cid }).then((visitedOn) => {
+    //   if (ack) {
+    //     ack(visitedOn);
+    //   }
+    // });
   });
 
   //#region Earning Reward Points
@@ -301,11 +301,11 @@ io.on('connection', (socket) => {
       country
     );
     if (transaction === 'earn points') {
-      earnReward({ uid, biz, cid }).then((ssid) => {
-        console.log(ssid);
-        // send to Customer
-        socket.to(cid).emit('doingBusinessWith', { uid, biz, country, ssid });
-      });
+      // earnReward({ uid, biz, cid }).then((ssid) => {
+      //   console.log(ssid);
+      //   // send to Customer
+      //   socket.to(cid).emit('doingBusinessWith', { uid, biz, country, ssid });
+      // });
     }
   });
   //#endregion
@@ -318,41 +318,41 @@ io.on('connection', (socket) => {
     ) => {
       console.log(biz, country, confirmedAddress, promoText, userAgent);
       // add to the Sponsor Stream
-      addSponsor({
-        biz,
-        address,
-        country,
-        uid,
-        confirmedAddress,
-        userAgent,
-      }).then((ssid) => {
-        if (ack) {
-          console.log('ssid :>> ', ssid);
-          ack({ ssid });
-        }
-      });
+      // addSponsor({
+      //   biz,
+      //   address,
+      //   country,
+      //   uid,
+      //   confirmedAddress,
+      //   userAgent,
+      // }).then((ssid) => {
+      //   if (ack) {
+      //     console.log('ssid :>> ', ssid);
+      //     ack({ ssid });
+      //   }
+      // });
     }
   );
   socket.on('getSponsors', (country, ack) => {
     console.log(`getSponsors(${country})`);
-    getSponsors(country).then((sponsors) => {
-      console.log('sponsors :>> ', printJson(sponsors));
-      if (ack) {
-        ack(sponsors);
-      }
-    });
+    // getSponsors(country).then((sponsors) => {
+    //   console.log('sponsors :>> ', printJson(sponsors));
+    //   if (ack) {
+    //     ack(sponsors);
+    //   }
+    // });
   });
 
   socket.on('getCountries', (_, ack) => {
-    getCountries()
-      .then((countries) => {
-        if (ack) {
-          ack(countries);
-        }
-      })
-      .catch((e) => {
-        console.log('e :>> ', e);
-      });
+    // getCountries()
+    //   .then((countries) => {
+    //     if (ack) {
+    //       ack(countries);
+    //     }
+    //   })
+    //   .catch((e) => {
+    //     console.log('e :>> ', e);
+    //   });
   });
 
   socket.on('addVisit', ({ ssid, uid }, ack) => {
