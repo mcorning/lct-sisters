@@ -103,7 +103,6 @@ const objectToKeyedArray = (obj) => {
       if (prop === Symbol.iterator)
         return function* () {
           for (const value of values) yield value;
-          return;
         };
       else return Reflect.get(...arguments);
     },

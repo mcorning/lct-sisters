@@ -5,6 +5,8 @@ import Customer from '@/views/Customer.vue';
 import Space from '@/views/Space.vue';
 import Time from '@/views/Time.vue';
 import Sponsor from '@/views/Sponsor.vue';
+import Warning from '@/views/Warning.vue';
+import Cvew from '@/views/Cvew.vue';
 Vue.use(VueRouter);
 
 const routes = [
@@ -16,12 +18,7 @@ const routes = [
 
     props: true,
   },
-  {
-    path: '/',
-    name: 'Space',
-    component: Space,
-    props: true,
-  },
+
   {
     path: '/sponsor',
     name: 'Sponsor',
@@ -45,29 +42,46 @@ const routes = [
   },
   {
     path: '/customer',
-    // path:'/',
     name: 'Customer',
     component: Customer,
     meta: { layout: 'AppLayoutRewards' },
+    props: true,
+  },
+  {
+    path: '/',
+    name: 'Space',
+    component: Space,
+    props: true,
+  },
+  {
+    path: '/',
+    name: 'Cvew',
+    component: Cvew,
+    props: true,
+  },
+  {
+    path: '/cvew',
+    name: 'Cvew',
+    component: Cvew,
     props: true,
   },
 
   {
     path: '/warning',
     name: 'Warn',
-    component: () => import('@/views/Warning.vue'),
-    props: true,
-  },
-  {
-    path: '/lab',
-    name: 'Lab',
-    component: () => import('@/views/Lab.vue'),
+    component: Warning,
     props: true,
   },
   {
     path: '/time',
     name: 'Time',
     component: Time,
+    props: true,
+  },
+  {
+    path: '/lab',
+    name: 'Lab',
+    component: () => import('@/views/Lab.vue'),
     props: true,
   },
   {

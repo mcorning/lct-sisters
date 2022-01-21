@@ -8,7 +8,7 @@ When a visitor hits the BRB, they pass a score to Model that in turns emits `onE
 
 The redis server queries each graphName the given userID visited, and returns a list of userIDS that shared the same spacetime.
 
-### CVEW
+### Cvew
 
 ID   | Browser | Device
 -----|---------|--------

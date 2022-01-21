@@ -8,31 +8,29 @@
       >
     </v-overlay>
     <!-- PWA snackbar -->
-    <!-- <div v-if="snackWithButtons"> -->
-      <v-snackbar
-        v-model="snackWithButtons"
-        bottom
-        left
-        timeout="-1"
-        height="100px"
-      >
-        {{ snackWithBtnText }}
-        <template v-slot:action="{ attrs }">
-          <v-btn
-            v-if="snackBtnText"
-            text
-            color="#00f500"
-            v-bind="attrs"
-            @click.stop="refreshApp"
-          >
-            {{ snackBtnText }}
-          </v-btn>
-          <v-btn icon class="ml-4" @click="snackWithButtons = false">
-            <v-icon>close</v-icon>
-          </v-btn>
-        </template>
-      </v-snackbar>
-    <!-- </div> -->
+    <v-snackbar
+      v-model="snackWithButtons"
+      bottom
+      left
+      timeout="-1"
+      height="100px"
+    >
+      {{ snackWithBtnText }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          v-if="snackBtnText"
+          text
+          color="#00f500"
+          v-bind="attrs"
+          @click.stop="refreshApp"
+        >
+          {{ snackBtnText }}
+        </v-btn>
+        <v-btn icon class="ml-4" @click="snackWithButtons = false">
+          <v-icon>close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
     <!-- End PWA snackbar -->
     <!-- NOTE: ApplyLayout is configured in main.js -->
     <AppLayout>
@@ -71,9 +69,6 @@ export default {
   },
 
   methods: {
-    onExposureWarning(reason) {
-      alert('success' + JSON.stringify(reason, null, 3));
-    },
     showRefreshUI(e) {
       // TODO add back a generic <snackBar> component (see line 140 of AppOrig.js)
       // Display a snackbar inviting the user to refresh/reload the app due
@@ -88,9 +83,6 @@ export default {
       this.snackWithBtnText = 'New version available!';
       this.snackWithButtons = true;
       console.log('Rendering Refesh snackbar');
-      // this.$router.push({
-      //   name: 'Space',
-      // });
       console.log('Pushed router to Space.vue');
     },
     showOfflineUI() {

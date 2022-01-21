@@ -189,6 +189,7 @@ function getPromotions({ ssid, country }) {
 //#endregion
 
 //#region Warnings
+// TODO shouldn't this be getAlerts()?
 const getWarnings = () => {
   const key = 'warnings';
   return redis
@@ -198,6 +199,11 @@ const getWarnings = () => {
     .catch((e) => audit({ source, context: 'getWarnings()', msg: e }));
 };
 
+/**
+ *
+ * @param {Array, Number, Number} param0 Array of place_ids with their start/end times
+ * @returns Array of Stream IDs, one for each visit
+ */
 const addWarnings = ({ visitData, score, reliability }) => {
   const key = 'warnings';
   const warnings = [];

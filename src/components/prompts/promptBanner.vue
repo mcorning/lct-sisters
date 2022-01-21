@@ -59,10 +59,9 @@ export default {
 
     alertMessage() {
       const { score, reliability } = this.riskScore;
-      const details = Object.entries(this.alert)[0][1][1];
-      console.log('details :>> ', JSON.stringify(details, null, 2));
-      const alerts = details.map((v) => v[1]);
-      console.log('alerts :>> ', alerts);
+      // const details = objectToKeyedArray(this.alert);
+      // console.log('details :>> ', JSON.stringify(details, null, 2));
+      // const alerts = details.map((v) => v[1]);
       return `${score} ${reliability}`;
     },
 

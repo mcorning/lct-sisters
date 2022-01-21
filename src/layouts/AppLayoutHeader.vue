@@ -161,6 +161,7 @@ import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
 import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
+import { objectToKeyedArray } from '../utils/helpers';
 
 export default {
   name: 'AppLayoutHeader',
@@ -279,10 +280,15 @@ export default {
   sockets: {
     broadcastedAlert(alerts) {
       // TODO this is where you check for relevant alerts
+      const x = objectToKeyedArray(alerts);
+      const places = this.state.visits;
+      const y = x.filter((v) => places.includes(v));
+      console.log('y :>> ', y);
+
       const score = 10; //alerts[0][1][1][1][7]
       const reliability = 0; //alerts[0][1][1][1][9]
       this.riskScore = { score, reliability };
-      this.alert = alerts;
+      this.alert = y;
     },
 
     confirmRewardEntry({ uid, sid }) {

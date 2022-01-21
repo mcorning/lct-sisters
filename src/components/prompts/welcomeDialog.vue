@@ -1,11 +1,9 @@
 <template>
   <v-dialog v-model="dialog" max-width="333">
     <v-card>
-      <v-card-title class="text-sm-h6  wrapMe ">
-        Welcome to LCT
-      </v-card-title>
+      <v-card-title class="text-sm-h6 wrapMe"> Welcome to LCT </v-card-title>
       <v-card-subtitle
-        >Your own personal COVID Early Warning System (CVEW)</v-card-subtitle
+        >Your own personal COVID Early Warning System (Cvew)</v-card-subtitle
       >
       <v-card-text>
         To get started, we need to know where to start, literally. Enter the
@@ -24,9 +22,7 @@
           Disagree
         </v-btn>
 
-        <v-btn color="green darken-1" text @click="proceed">
-          Agree
-        </v-btn>
+        <v-btn color="green darken-1" text @click="proceed"> Agree </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

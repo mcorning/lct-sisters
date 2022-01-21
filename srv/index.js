@@ -225,13 +225,18 @@ io.on('connection', (socket) => {
     // });
   });
 
+  // TODO this event is misnamed. we add warnings and send alerts in one place
   socket.on('addWarnings', ({ visitData, score, reliability }, ack) => {
     if (isEmpty(visitData) && ack) {
       ack('No Visit Data. Server should not be called.');
     }
 
+    // addWarnings returns an array of Stream IDs...
     addWarnings({ visitData, score, reliability });
+    //...that we ignore?
 
+    // now get all entries in the warnings stream
+    // TODO shouldn't this be getAlerts() that returns alerts?
     getWarnings().then((warningIDS) => {
       console.log('warningIDS :>> ', warningIDS);
       if (ack) {

@@ -211,7 +211,7 @@ import { formatTime } from '../utils/luxonHelpers';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 
 export default {
-  name: 'Warning',
+  name: 'Exposure',
   props: {
     isConnected: Boolean,
     state: Object,

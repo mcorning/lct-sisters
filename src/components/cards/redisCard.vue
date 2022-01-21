@@ -6,7 +6,7 @@
         <v-card-title class="text-subtitle-1 text-sm-h5">
           CoVid Early Warning System
         </v-card-title>
-        <v-card-subtitle>(CVEW)</v-card-subtitle>
+        <v-card-subtitle>(Cvew)</v-card-subtitle>
       </v-col>
       <v-col>
         <v-card-subtitle class="text-subtitle-2 text-sm-subtitle-1"
