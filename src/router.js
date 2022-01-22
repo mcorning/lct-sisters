@@ -48,7 +48,7 @@ const routes = [
     props: true,
   },
   {
-    path: '/',
+    path: '/space',
     name: 'Space',
     component: Space,
     props: true,
@@ -66,12 +66,12 @@ const routes = [
     props: true,
   },
 
-  {
-    path: '/warning',
-    name: 'Warn',
-    component: Warning,
-    props: true,
-  },
+  // {
+  //   path: '/warning',
+  //   name: 'Warn',
+  //   component: Warning,
+  //   props: true,
+  // },
   {
     path: '/time',
     name: 'Time',

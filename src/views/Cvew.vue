@@ -1,14 +1,19 @@
 <template>
-  <cvew />
+  <Model @error="onError">
+    <div slot-scope="{ state }">
+      <acts :state="state" />
+    </div>
+  </Model>
 </template>
 
 <script>
-import cvew from '@/components/cvew.vue';
+import acts from '../components/acts.vue';
+import Model from '@/components/renderless/Model.vue';
 
 export default {
   name: 'CvewView',
   props: {},
-  components: { cvew },
+  components: { Model, acts },
   computed: {},
   data() {
     return {};
@@ -18,7 +23,9 @@ export default {
 
   watch: {},
 
-  async mounted() {},
+  async mounted() {
+    console.log('Cvew mounted');
+  },
 };
 </script>
 

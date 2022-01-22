@@ -1,6 +1,7 @@
 <template>
   <v-container fluid>
     <v-card-title>CoVid Early Warning System</v-card-title>
+    <pre>{{ visits }}</pre>
     <v-row>
       <v-col cols="12" md="8"> </v-col>
       <v-col> </v-col>
@@ -10,19 +11,23 @@
 
 <script>
 export default {
-  name: 'cvewComponent',
+  name: 'acts',
   components: {},
-  props: {},
-  computed: {},
+  props: {
+    state: Object,
+  },
+  computed: {
+    visits() {
+      return this.state.visits;
+    },
+  },
   data() {
-    return {
-      visits: null,
-    };
+    return {};
   },
   methods: {},
   watch: {},
   mounted() {
-    console.log('Cvew component mounted:');
+    console.log('Act component mounted:');
     console.log(' ');
   },
 };
