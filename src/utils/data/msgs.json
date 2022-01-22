@@ -1,0 +1,65 @@
+[
+    [
+        {
+            "place_id": "ChIJEwMfWko3v1QRCH3s6Ly-udI",
+            "start": 1642473900000,
+            "end": 1642475700000,
+            "on": "2022-01-18T02:45:00.000Z",
+            "hours": "0.50"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642640400000,
+            "end": 1642643100000,
+            "on": "2022-01-20T01:00:00.000Z",
+            "hours": "0.75"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642640400000,
+            "end": 1642643100000,
+            "on": "2022-01-20T01:00:00.000Z",
+            "hours": "0.75"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642835700000,
+            "end": 1642837500000,
+            "on": "2022-01-22T07:15:00.000Z",
+            "hours": "0.50"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642835700000,
+            "end": 1642837500000,
+            "on": "2022-01-22T07:15:00.000Z",
+            "hours": "0.50"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642835700000,
+            "end": 1642837500000,
+            "on": "2022-01-22T07:15:00.000Z",
+            "hours": "0.50"
+        }
+    ],
+    [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "start": 1642835700000,
+            "end": 1642837500000,
+            "on": "2022-01-22T07:15:00.000Z",
+            "hours": "0.50"
+        }
+    ]
+]

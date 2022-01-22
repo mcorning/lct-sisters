@@ -111,12 +111,34 @@ const objectToKeyedArray = (obj) => {
   return new Proxy(obj, handler);
 };
 
+// example: const keys = ['vid', 'ssid'];
+const liftKeysFrom = (keys, object) =>
+  object.map((o) =>
+    keys.reduce((acc, key) => {
+      acc[key] = o[key];
+      return acc;
+    }, {})
+  );
+
+// example: const keys = [{ fm: 'vid', to: 'id' }, 'ssid'];
+// NOTE: this is the general case, so keys=['vid','ssid'] work as well
+const liftMappedKeysFrom = (keys, object) =>
+  object.map((o) =>
+    keys.reduce((acc, key) => {
+      const { fm, to } = key;
+      acc[to ?? key] = o[fm ?? key];
+      return acc;
+    }, {})
+  );
+
 module.exports = {
   head,
   isEmpty,
   truthCheckCollection,
   columns,
   getRandomIntInclusive,
+  liftKeysFrom,
+  liftMappedKeysFrom,
   printJson,
   getNow,
   objectToKeyedArray,

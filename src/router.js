@@ -66,12 +66,12 @@ const routes = [
     props: true,
   },
 
-  // {
-  //   path: '/warning',
-  //   name: 'Warn',
-  //   component: Warning,
-  //   props: true,
-  // },
+  {
+    path: '/warning',
+    name: 'Warn',
+    component: Warning,
+    props: true,
+  },
   {
     path: '/time',
     name: 'Time',

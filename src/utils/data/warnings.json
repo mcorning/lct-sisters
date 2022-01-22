@@ -1,0 +1,50 @@
+{
+    "ChIJEwMfWko3v1QRCH3s6Ly-udI": [
+        {
+            "place_id": "ChIJEwMfWko3v1QRCH3s6Ly-udI",
+            "visitedOn": "1/21/2022, 11:23 PM",
+            "dated": "2022-01-18T02:45:00.000Z",
+            "ssid": "1642836206826-0",
+            "start": "1642473900000",
+            "end": "1642475700000",
+            "score": "",
+            "reliability": "",
+            "vid": "d5222561b8b6606c"
+        }
+    ],
+    "ChIJZwFJJrUwv1QRcwpiZ9KJppc": [
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "visitedOn": "1/21/2022, 11:23 PM",
+            "dated": "2022-01-20T01:00:00.000Z",
+            "ssid": "1642836206757-0",
+            "start": "1642640400000",
+            "end": "1642643100000",
+            "score": "",
+            "reliability": "",
+            "vid": "273bc157a8da758b"
+        },
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "visitedOn": "1/21/2022, 11:23 PM",
+            "dated": "2022-01-22T07:15:00.000Z",
+            "ssid": "1642836206764-0",
+            "start": "1642835700000",
+            "end": "1642837500000",
+            "score": "",
+            "reliability": "",
+            "vid": "911935b12dc4b7b5"
+        },
+        {
+            "place_id": "ChIJZwFJJrUwv1QRcwpiZ9KJppc",
+            "visitedOn": "1/21/2022, 11:27 PM",
+            "dated": "2022-01-22T07:15:00.000Z",
+            "ssid": "1642836459871-0",
+            "start": "1642835700000",
+            "end": "1642837500000",
+            "score": "",
+            "reliability": "",
+            "vid": "feaa163d372d44aa"
+        }
+    ]
+}

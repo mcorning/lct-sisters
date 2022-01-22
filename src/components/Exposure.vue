@@ -482,68 +482,49 @@ export default {
       console.log(this.score, this.pctWeight);
 
       // we are getting warnings from the graph with this function
-      // this.onExposureWarning(
-      //   {
-      //     score: this.score,
-      //     reliability,
-      //   },
-      //   (results) => {
-      //     const alertsToSend = Object.values(results).flat();
-      //     console.log(
-      //       'exposureWarnings',
-      //       JSON.stringify(alertsToSend, null, 3)
-      //     );
-      //     const visits = alertsToSend.length === 1 ? 'place' : 'places';
-      //     console.log(
-      //       `${this.$socket.client.auth.userID} sent exposure alerts to ${alertsToSend.length} ${visits}`
-      //     );
+      this.onExposureWarning(
+        {
+          score: this.score,
+          reliability,
+        },
+        (results) => {
+          const alertsToSend = Object.values(results).flat();
+          console.log(
+            'exposureWarnings',
+            JSON.stringify(alertsToSend, null, 3)
+          );
+          const visits = alertsToSend.length === 1 ? 'place' : 'places';
+          console.log(
+            `${this.$socket.client.auth.userID} sent exposure alerts to ${alertsToSend.length} ${visits}`
+          );
 
-      //     let places;
-      //     switch (alertsToSend.length) {
-      //       case 0:
-      //         this.confirmationMessage =
-      //           'Good news! You exposed no one else at the places you visited.';
-      //         this.confirmationIcon = 'thumb_up_alt';
-      //         break;
-      //       case 1:
-      //         this.confirmationMessage = `Thanks. You sent an exposure alert to ${alertsToSend[0].placeID} warning them that the virus is lurking in your community.`;
-      //         this.confirmationIcon = 'cloud_done';
-      //         break;
+          let places;
+          switch (alertsToSend.length) {
+            case 0:
+              this.confirmationMessage =
+                'Good news! You exposed no one else at the places you visited.';
+              this.confirmationIcon = 'thumb_up_alt';
+              break;
+            case 1:
+              this.confirmationMessage = `Thanks. You sent an exposure alert to ${alertsToSend[0].placeID} warning them that the virus is lurking in your community.`;
+              this.confirmationIcon = 'cloud_done';
+              break;
 
-      //       default:
-      //         places = alertsToSend.map((v) => v.placeID);
-      //         this.confirmationMessage = `Well done. You sent exposure alerts that the virus is lurking in your community to ${
-      //           alertsToSend.length
-      //         } ${visits}: ${places.join(
-      //           '<br/> '
-      //         )}. <p>Soon, there will be no where for those virions to hide...</p>`;
-      //         this.confirmationIcon = 'cloud_done';
-      //         break;
-      //     }
+            default:
+              places = alertsToSend.map((v) => v.placeID);
+              this.confirmationMessage = `Well done. You sent exposure alerts that the virus is lurking in your community to ${
+                alertsToSend.length
+              } ${visits}: ${places.join(
+                '<br/> '
+              )}. <p>Soon, there will be no where for those virions to hide...</p>`;
+              this.confirmationIcon = 'cloud_done';
+              break;
+          }
 
-      //     this.confirmationTitle = 'Results of Exposure Warning';
-      //     this.confSnackbar = true;
-      //   }
-      // );
-
-      // we are adding warnings to the warning Stream in srv/redis/stream.js
-      const visitData = this.state.visits.map((v) => {
-        console.log(v.place_id, v.start, v.end);
-        return { place_id: v.place_id, start: v.start, end: v.end };
-      });
-      // TODO NOTE: Experimental alternative: Stream-based alerts
-      console.log(
-        `warnThem() sending ${
-          this.$socket.client.auth.userID
-        } visits: ${JSON.stringify(visitData, null, 2)}`
+          this.confirmationTitle = 'Results of Exposure Warning';
+          this.confSnackbar = true;
+        }
       );
-      this.addWarnings({
-        visitData,
-        score: this.score,
-        reliability,
-      }).then((w) => {
-        alert(JSON.stringify(w, null, 2));
-      });
     },
   }, // end methods:
 

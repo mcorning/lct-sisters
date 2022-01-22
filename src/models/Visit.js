@@ -7,6 +7,7 @@ console.log('Loading Visit entity');
 export default class Visit extends Model {
   static entity = 'visits';
   ageOfExpiredEvents = 14;
+  static primaryKey = 'id';
 
   static fields() {
     return {
@@ -32,6 +33,9 @@ export default class Visit extends Model {
       graphName: this.string(''), // graphname may be set by sponsor
 
       shared: this.boolean(false), // set true when someone shares an event
+
+      // for Redis Stream-based code, we need a cross-ref to the Stream ID of the warning
+      wsid: this.string(''),
     };
   }
 

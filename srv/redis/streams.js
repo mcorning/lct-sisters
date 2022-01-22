@@ -221,7 +221,9 @@ const addWarnings = ({ visitData, score, reliability }) => {
         'score',
         score,
         'reliability',
-        reliability
+        reliability,
+        'vid',
+        visit.id
       );
     })
   );

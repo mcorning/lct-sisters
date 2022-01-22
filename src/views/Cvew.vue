@@ -1,7 +1,11 @@
 <template>
   <Model @error="onError">
-    <div slot-scope="{ state }">
-      <acts :state="state" />
+    <div slot-scope="{ state, addWarnings, updateVisit }">
+      <acts
+        :state="state"
+        :addWarnings="addWarnings"
+        :updateVisit="updateVisit"
+      />
     </div>
   </Model>
 </template>

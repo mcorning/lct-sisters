@@ -134,11 +134,11 @@
         </v-row>
       </v-card>
     </v-dialog>
-    <prompt-banner
+    <!-- <prompt-banner
       :alert="alert"
       :riskScore="riskScore"
       :refresh="refresh"
-    ></prompt-banner>
+    ></prompt-banner> -->
 
     <feedback-card
       v-if="feedbackDialog"
@@ -157,7 +157,7 @@
 <script>
 import { getNow } from '@/utils/luxonHelpers';
 import { info, success, warn, printJson } from '@/utils/helpers';
-import PromptBanner from '../components/prompts/promptBanner.vue';
+// import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
 import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
@@ -176,7 +176,7 @@ export default {
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
-    PromptBanner,
+    // PromptBanner,
     FeedbackCard,
     VueQRCodeComponent,
     ConfirmationSnackbar,
@@ -278,17 +278,19 @@ export default {
     };
   },
   sockets: {
+    // moved to acts.vue
     broadcastedAlert(alerts) {
-      // TODO this is where you check for relevant alerts
-      const x = objectToKeyedArray(alerts);
-      const places = this.state.visits;
-      const y = x.filter((v) => places.includes(v));
-      console.log('y :>> ', y);
+      alert(alerts)
+    //   // TODO this is where you check for relevant alerts
+    //   const x = objectToKeyedArray(alerts);
+    //   const places = this.state.visits;
+    //   const y = x.filter((v) => places.includes(v));
+    //   console.log('y :>> ', y);
 
-      const score = 10; //alerts[0][1][1][1][7]
-      const reliability = 0; //alerts[0][1][1][1][9]
-      this.riskScore = { score, reliability };
-      this.alert = y;
+    //   const score = 10; //alerts[0][1][1][1][7]
+    //   const reliability = 0; //alerts[0][1][1][1][9]
+    //   this.riskScore = { score, reliability };
+    //   this.alert = y;
     },
 
     confirmRewardEntry({ uid, sid }) {
@@ -305,6 +307,8 @@ export default {
       this.confBottom = true;
       this.confirmationIcon = 'lottery';
     },
+
+    // broadcastedAlert replaces exposureAlert
     exposureAlert({ alert, riskScore }) {
       const audio = new AudioContext();
       function beep(vol, freq, duration) {

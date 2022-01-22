@@ -157,9 +157,16 @@ export default {
         const placeID = eventToHandle.placeID;
         const name = eventToHandle.name;
         const loggedVisitId = eventToHandle.loggedVisitId;
-        const graphName=eventToHandle.graphName
+        const graphName = eventToHandle.graphName;
         this.deleteVisit(id);
-        this.$emit('updatedModel', { placeID, name, id, loggedVisitId, graphName, deleteVisit });
+        this.$emit('updatedModel', {
+          placeID,
+          name,
+          id,
+          loggedVisitId,
+          graphName,
+          deleteVisit,
+        });
         return;
       }
 
@@ -437,6 +444,7 @@ export default {
       });
     },
 
+    // visitData includes: {id:v.id, place_id: v.place_id, start: v.start, end: v.end };
     addWarnings({ visitData, score, reliability }) {
       console.log('visitData, score, reliability');
       console.log(visitData, score, reliability);
@@ -585,6 +593,7 @@ export default {
       visitExists: this.visitExists,
       updateGraphVisit: this.updateGraphVisit,
       getVisitByID: this.getVisitByID,
+      updateVisit: this.updateVisit,
 
       //Warning assets
       visitCount: this.visitCount,

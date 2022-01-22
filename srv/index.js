@@ -230,27 +230,27 @@ io.on('connection', (socket) => {
     if (isEmpty(visitData) && ack) {
       ack('No Visit Data. Server should not be called.');
     }
-
+    console.log('index.js: visitData', printJson(visitData));
     // addWarnings returns an array of Stream IDs...
     addWarnings({ visitData, score, reliability });
     //...that we ignore?
 
     // now get all entries in the warnings stream
     // TODO shouldn't this be getAlerts() that returns alerts?
-    getWarnings().then((warningIDS) => {
-      console.log('warningIDS :>> ', warningIDS);
+    getWarnings().then((warnings) => {
+      console.log('warnings :>> ', printJson(warnings));
       if (ack) {
-        ack(warningIDS);
+        ack(warnings);
       }
-      socket.broadcast.emit('broadcastedAlert', warningIDS);
+      socket.broadcast.emit('broadcastedAlert', warnings);
       socket.emit('alertsSent');
     });
   });
 
   socket.on('getWarnings', (_, ack) => {
-    getWarnings().then((alerts) => {
+    getWarnings().then((warnings) => {
       if (ack) {
-        ack(alerts);
+        ack(warnings);
       }
     });
   });

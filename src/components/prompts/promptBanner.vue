@@ -29,6 +29,8 @@
 </template>
 
 <script>
+import { printJson, isEmpty } from '@/utils/helpers';
+
 export default {
   name: 'promptBanner',
   props: {
@@ -48,6 +50,9 @@ export default {
         Quarantine and warn others, if necessary.`;
     },
     getAlertColor() {
+      if (isEmpty(this.riskScore)) {
+        return;
+      }
       const { reliability } = this.riskScore;
       if (reliability === 0) {
         return 'green';
@@ -57,7 +62,7 @@ export default {
       return 'red';
     },
 
-    alertMessage() {
+    alertMessageX() {
       const { score, reliability } = this.riskScore;
       // const details = objectToKeyedArray(this.alert);
       // console.log('details :>> ', JSON.stringify(details, null, 2));
@@ -65,8 +70,10 @@ export default {
       return `${score} ${reliability}`;
     },
 
-    alertMessage2() {
+    alertMessage() {
+      return
       const { score, reliability } = this.riskScore;
+
       const details = Object.entries(this.alert)[0][1][1];
 
       let msg = `<p>
@@ -102,7 +109,7 @@ export default {
   methods: {},
   watch: {
     ready() {
-      console.log(JSON.stringify(this.alert, null, 3));
+      console.log(printJson(this.alert), 'alert:>>');
     },
     showBanner(n, o) {
       console.log(n, o);
