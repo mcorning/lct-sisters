@@ -29,6 +29,7 @@ export default {
   props: {
     state: Object,
     addWarnings: Function,
+    Warnings: Function,
     updateVisit: Function,
   },
   computed: {
@@ -45,7 +46,9 @@ export default {
   },
   sockets: {
     //NOTE: the one emitting the alert is not going to see the alert handled here
-    // The only ones to handle are waiting for it
+    // The only ones to handle the alerts are the ones waiting for it
+    // NOTE: this is one of two times we getAlerts()
+    // The second time is when we launch the app in AppLayoutDefault.vue.
     broadcastedAlert(alerts) {
       this.alert = getAlerts(this.state.visits, alerts).flat();
     },
@@ -68,17 +71,25 @@ export default {
       }).then((warnings) => {
         // update visits with warning sids
         // each warning as the original vid and the new ssid
-        const data=Object.values(warnings).flat()
-        log(print(data),'warning data')
-        const x=liftMappedKeysFrom([{ fm: 'vid', to: 'id' }, {fm:'ssid', to:'wsid'}],data)
-        log(print(x),'updating data')
-        this.updateVisit(x)
+        const data = Object.values(warnings).flat();
+        log(print(data), 'warning data');
+        const x = liftMappedKeysFrom(
+          [
+            { fm: 'vid', to: 'id' },
+            { fm: 'ssid', to: 'wsid' },
+          ],
+          data
+        );
+        log(print(x), 'updating data');
+        this.updateVisit(x);
         this.alerts = warnings;
       });
     },
   },
   watch: {},
   mounted() {
+    // if AppLayoutDefault calls acts.vue, pick up the warnings here
+    this.alert=this.$route.params.alerts
     console.log('Act component mounted:');
     console.log(' ');
   },

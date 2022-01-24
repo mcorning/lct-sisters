@@ -48,13 +48,13 @@ const routes = [
     props: true,
   },
   {
-    path: '/space',
+    path: '/',
     name: 'Space',
     component: Space,
     props: true,
   },
   {
-    path: '/',
+    path: '/cvew',
     name: 'Cvew',
     component: Cvew,
     props: true,

@@ -1,7 +1,6 @@
 import Setting from '@/models/Setting';
 import 'either-async';
 import { firstOrNone } from '@/fp/utils';
-import { getAlerts } from '@/utils/alerts';
 
 export const warningMixin = {
   name: 'warningMixin',
@@ -27,10 +26,6 @@ export const warningMixin = {
           }
         }
       );
-    },
-
-    test(visits, alerts) {
-      getAlerts(visits, alerts);
     },
 
     incrementWarnings() {

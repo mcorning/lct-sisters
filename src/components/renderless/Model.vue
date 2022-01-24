@@ -415,34 +415,6 @@ export default {
         });
       });
     },
-    getAlerts() {
-      this.getWarnings().then((alerts) => {
-        // alerts is an object of warning objects
-        // if (isEmpty(alerts)) {
-        //   alert('Whew. No evidence of exposure.');
-        //   return null;
-        // }
-        // check for workplace exposure
-        const workplace = this.state.settings.workplace;
-        console.log('workplace:>> ', workplace);
-        console.log('Alerts:>>', printJson(alerts));
-        Object.entries(alerts).forEach(([key, value]) => {
-          if (key === workplace) {
-            console.log('value[0] :>> ', value[0]);
-            const score = value[0].score;
-            const reliability = value[0].reliability;
-            this.riskScore = { score, reliability };
-            alert(
-              `You have been exposed to COVID 19 at work ${
-                value.length
-              } times. \nTypical risk profile:\n${printJson(this.riskScore)}`
-            );
-          }
-        });
-
-        // check for public exposure
-      });
-    },
 
     // visitData includes: {id:v.id, place_id: v.place_id, start: v.start, end: v.end };
     addWarnings({ visitData, score, reliability }) {
@@ -558,12 +530,12 @@ export default {
       earnReward: this.earnReward,
       getRewardPoints: this.getRewardPoints,
       addWarnings: this.addWarnings,
-      getAlerts: this.getAlerts,
       callUpdateRewardPoints: this.callUpdateRewardPoints,
       rewardMap: this.rewardMap,
       rewardingSponsors: this.rewardingSponsors,
       getPointsFromCustomer: this.getPointsFromCustomer,
       redeemReward: this.redeemReward,
+      getWarnings: this.getWarnings,
 
       // Space assets in space.js
       onMarkerClicked: this.onMarkerClicked,

@@ -222,7 +222,6 @@ export default {
     setVaccinationStatus: Function,
     emergency: Boolean,
     addWarnings: Function,
-    getAlerts: Function,
   },
   components: {
     ConfirmationSnackbar,

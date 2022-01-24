@@ -13,7 +13,6 @@
 </template>
 
 <script>
-// import { getAlerts, log, print } from '../utils/alerts';
 export default {
   data() {
     return {
@@ -25,11 +24,7 @@ export default {
       openDiagnostics: false,
     };
   },
-  methods: {
-    // getAlertMessages(visits, alerts) {
-    //   log(print(getAlerts(visits, alerts)));
-    // },
-  },
+  methods: {},
   mounted() {
     this.ready = true;
     const query = this.$route.query;

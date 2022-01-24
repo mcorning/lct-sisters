@@ -1,4 +1,5 @@
 // see https://www.npmjs.com/package/cli-color
+const {DateTime} = require('luxon');
 
 const clc = require('cli-color');
 const success = clc.green.bold;
@@ -131,6 +132,20 @@ const liftMappedKeysFrom = (keys, object) =>
     }, {})
   );
 
+// TODO NOTE: we fixed the field name to 'hours' here,
+// but processing warnings takes duration string as arg
+// probably should use whatever is in the Visit model; viz., 'hours"
+const getOnHours = (start, end) => {
+  const duration = 'hours';
+
+  const started = DateTime.fromMillis(start);
+  const on = started.toLocaleString(DateTime.DATETIME_MED);
+
+  const dur = DateTime.fromMillis(end).diff(started, duration);
+  const hours = dur[duration].toFixed(2);
+  return { on, hours };
+};
+
 module.exports = {
   head,
   isEmpty,
@@ -141,6 +156,7 @@ module.exports = {
   liftMappedKeysFrom,
   printJson,
   getNow,
+  getOnHours,
   objectToKeyedArray,
   printNow,
   success,

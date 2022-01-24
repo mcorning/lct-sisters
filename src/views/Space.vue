@@ -27,7 +27,7 @@
         setNamespace,
         getAllSettings,
         iWorkHere,
-        getAlerts,
+        getWarnings,
       }"
     >
       <Spaces
@@ -57,7 +57,7 @@
         :enterLottery="enterLottery"
         :setNamespace="setNamespace"
         :getAllSettings="getAllSettings"
-        :getAlerts="getAlerts"
+        :getWarnings="getWarnings"
       />
     </div>
   </Model>

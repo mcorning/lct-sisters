@@ -195,7 +195,7 @@ import EventEditCard from '@/components/cards/eventEditCard';
 import VueQRCodeComponent from 'vue-qr-generator';
 
 import { DateTime, makeTimes, userSince } from '@/utils/luxonHelpers';
-import { printJson } from '@/utils/helpers';
+import { printJson,getOnHours } from '@/utils/helpers';
 
 export default {
   name: 'Calendar',
@@ -453,20 +453,7 @@ export default {
       this.update('graph');
     },
 
-    // TODO REFACTOR: Move this to utils so space.js, time,js, and alerts.js can use it
-    // TODO NOTE: we fixed the field name to 'hours' here,
-    // but processing warnings takes duration string as arg
-    // probably should use whatever is in the Visit model; viz., 'hours"
-    getOnHours(start, end) {
-      const duration = 'hours';
 
-      const started = DateTime.fromMillis(start);
-      const on = started.toLocaleString(DateTime.DATETIME_MED);
-
-      const dur = DateTime.fromMillis(end).diff(started, duration);
-      const hours = dur[duration].toFixed(2);
-      return { on, hours };
-    },
 
     onCloseDateTimeCard(dto) {
       if (dto === 0) {
@@ -474,7 +461,7 @@ export default {
         return;
       }
       const { date, start, end } = dto;
-      const { on, hours } = this.getOnHours(start, end);
+      const { on, hours } = getOnHours(start, end);
       this.selectedEvent.date = date;
       // TODO DCR use functional code to track invalid/reason/explanation
       this.selectedEvent.start = start;

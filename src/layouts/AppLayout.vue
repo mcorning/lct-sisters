@@ -10,6 +10,7 @@
           namespace,
           setNamespace,
           getNamespace,
+          getWarnings,
           state,
           updateSession,
         }"
@@ -22,7 +23,8 @@
           :earnReward="earnReward"
           :getNamespace="getNamespace"
           :state="state"
-          :updateSession=updateSession
+          :getWarnings="getWarnings"
+          :updateSession="updateSession"
         >
           <slot />
         </component>
@@ -56,7 +58,7 @@ export default {
     },
     firstTime() {
       // TODO Jason didn't want this message in Singapore, and i'm not sure we need it anyway.
-      return false; 
+      return false;
     },
   },
 

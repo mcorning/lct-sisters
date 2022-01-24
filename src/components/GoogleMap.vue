@@ -297,7 +297,7 @@ export default {
     enterLottery: Function,
     setNamespace: Function,
     getAllSettings: Function,
-    getAlerts: Function,
+    getWarnings: Function,
   },
   components: {
     InfoWindowCard,
@@ -1026,10 +1026,18 @@ export default {
   },
 
   mounted() {
-    this.getAlerts();
     const self = this;
     const query = this.$route.query;
-
+    self.getWarnings().then((alerts) => {
+      console.log('alerts', alerts);
+      if (alerts) {
+        console.log('AppLayoutDefault delegating alerts to acts.vue');
+        this.$router.push({
+          name: 'Cvew',
+          params: alerts,
+        });
+      }
+    });
     self.sponsor = query.sponsor;
     self.openDiagnostics = query.d && query.d === '1';
     self.log(`${self.openDiagnostics ? 'Enabled diagnostics' : ''}`);

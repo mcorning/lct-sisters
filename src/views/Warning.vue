@@ -11,7 +11,6 @@
         getUnloggedVisits,
         setVaccinationStatus,
         addWarnings,
-        getAlerts,
       }"
     >
       <exposure
@@ -25,7 +24,6 @@
         :setVaccinationStatus="setVaccinationStatus"
         :emergency="emergency"
         :addWarnings="addWarnings"
-        :getAlerts="getAlerts"
       />
     </div>
   </Model>

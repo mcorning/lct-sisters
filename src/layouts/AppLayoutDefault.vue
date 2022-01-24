@@ -11,6 +11,7 @@
         usernumber,
         getPoi,
         incrementWarningsReceived,
+        getWarnings,
       }"
     >
       <AppLayoutHeader
@@ -21,6 +22,7 @@
         :usernumber="usernumber"
         :getPoi="getPoi"
         :incrementWarningsReceived="incrementWarningsReceived"
+        :getWarnings="getWarnings"
       />
       <CaptureErrorSnackbar>
         <!-- send props to components through their master vue files -->
@@ -55,6 +57,7 @@ export default {
     getPoi: Function,
     getVisitors: Function,
     earnReward: Function,
+
   },
   computed: {
     status() {

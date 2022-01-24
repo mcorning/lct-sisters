@@ -1,5 +1,4 @@
-import { highlight, success, printJson } from '@/utils/helpers';
-import { DateTime } from 'luxon';
+import { highlight, success, printJson, getOnHours } from '@/utils/helpers';
 export const graphMixin = {
   name: 'graphHelpers',
 
@@ -127,18 +126,3 @@ export const graphMixin = {
     },
   },
 };
-
-// TODO REFACTOR: Move this to utils so Calendar.vue doesn't duplicate this there
-// TODO NOTE: we fixed the field name to 'hours' here,
-// but processing warnings takes duration string as arg
-// probably should use whatever is in the Visit model; viz., 'hours"
-function getOnHours(start, end) {
-  const duration = 'hours';
-
-  const started = DateTime.fromMillis(start);
-  const on = started.toLocaleString(DateTime.DATETIME_MED);
-
-  const dur = DateTime.fromMillis(end).diff(started, duration);
-  const hours = dur[duration].toFixed(2);
-  return { on, hours };
-}
