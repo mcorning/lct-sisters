@@ -47,7 +47,7 @@ export default {
     //NOTE: the one emitting the alert is not going to see the alert handled here
     // The only ones to handle are waiting for it
     broadcastedAlert(alerts) {
-      this.alert = getAlerts(this.state.visits, alerts);
+      this.alert = getAlerts(this.state.visits, alerts).flat();
     },
   },
   methods: {

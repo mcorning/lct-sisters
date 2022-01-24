@@ -1,4 +1,5 @@
 import { highlight, success, printJson } from '@/utils/helpers';
+import { DateTime } from 'luxon';
 export const graphMixin = {
   name: 'graphHelpers',
 
@@ -52,6 +53,7 @@ export const graphMixin = {
     },
 
     onLogVisit(visit) {
+      // TODO this should be an either-async
       return new Promise((resolve, reject) => {
         console.log(highlight(`App.js: Visit to process: ${printJson(visit)}`));
         const graphName = visit.graphName
@@ -62,6 +64,17 @@ export const graphMixin = {
 
         const { id, name, place_id, start, end, loggedVisitId, interval } =
           visit;
+
+        // TODO NOTE: we fixed the field name to 'hours' here,
+        // but processing warnings takes duration string as arg
+        // probably should use whatever is in the Visit model; viz., 'hours"
+        const duration = 'hours';
+
+        const started = DateTime.fromMillis(start);
+        const on = started.toLocaleString(DateTime.DATETIME_MED);
+
+        const dur = DateTime.fromMillis(end).diff(started, duration);
+        const hours = dur[duration].toFixed(2);
 
         const query = {
           username: this.username,
@@ -74,6 +87,8 @@ export const graphMixin = {
           interval,
           loggedVisitId,
           graphName,
+          on,
+          hours,
         };
         console.log(highlight(`App.js: Visit query: ${printJson(query)}`));
 

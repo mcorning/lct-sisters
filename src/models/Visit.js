@@ -36,6 +36,9 @@ export default class Visit extends Model {
 
       // for Redis Stream-based code, we need a cross-ref to the Stream ID of the warning
       wsid: this.string(''),
+      // these values visibly tie a list of visits to a list of warnings
+      on: this.string(''),
+      hours: this.number(),
     };
   }
 

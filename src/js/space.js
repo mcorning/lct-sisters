@@ -120,7 +120,17 @@ export const spaceMixin = {
         const x = this.getAllSettings().namespace;
         return x ?? 'Sisters OR';
       };
-      let visit = {
+      // TODO NOTE: we fixed the field name to 'hours' here,
+      // but processing warnings takes duration string as arg
+      // probably should use whatever is in the Visit model; viz., 'hours"
+      const duration = 'hours';
+
+      const started = DateTime.fromMillis(start);
+      const on = started.toLocaleString(DateTime.DATETIME_MED);
+
+      const dur = DateTime.fromMillis(end).diff(started, duration);
+      const hours = dur[duration].toFixed(2);
+      const visit = {
         id: randomId(),
         name: gatheringName || name,
         place_id,
@@ -133,6 +143,8 @@ export const spaceMixin = {
         timed: true,
         marked: getNow(),
         graphName: this.namespace ?? getNs(),
+        on,
+        hours,
       };
       if (this.$socket.connected) {
         // onLogVisit() is in graph.js
@@ -154,6 +166,7 @@ export const spaceMixin = {
       }
     },
 
+    // called by InfoWindow.vue's callOnVisitPlace()
     onVisitPlace(data) {
       // it's possible that there can be no record in Place with the given placeId. Rare, but possible.
       const { placeId, gatheringName } = data;

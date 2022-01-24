@@ -278,21 +278,6 @@ export default {
     };
   },
   sockets: {
-    // moved to acts.vue
-    broadcastedAlert(alerts) {
-      alert(alerts)
-    //   // TODO this is where you check for relevant alerts
-    //   const x = objectToKeyedArray(alerts);
-    //   const places = this.state.visits;
-    //   const y = x.filter((v) => places.includes(v));
-    //   console.log('y :>> ', y);
-
-    //   const score = 10; //alerts[0][1][1][1][7]
-    //   const reliability = 0; //alerts[0][1][1][1][9]
-    //   this.riskScore = { score, reliability };
-    //   this.alert = y;
-    },
-
     confirmRewardEntry({ uid, sid }) {
       this.confirmationTitle = `Congratulations, ${this.$socket.client.auth.userID}`;
       this.confirmationMessage = `You just earned Reward points from ${uid} (Confirmation number ${sid}).`;
