@@ -59,12 +59,7 @@ const routes = [
     component: Cvew,
     props: true,
   },
-  {
-    path: '/cvew',
-    name: 'Cvew',
-    component: Cvew,
-    props: true,
-  },
+
 
   {
     path: '/warning',

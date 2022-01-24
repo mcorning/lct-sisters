@@ -29,8 +29,8 @@ export default {
   props: {
     state: Object,
     addWarnings: Function,
-    Warnings: Function,
     updateVisit: Function,
+    warnings: Object,
   },
   computed: {
     visits() {
@@ -82,16 +82,14 @@ export default {
         );
         log(print(x), 'updating data');
         this.updateVisit(x);
-        this.alerts = warnings;
+        this.alert = warnings;
       });
     },
   },
   watch: {},
   mounted() {
-    // if AppLayoutDefault calls acts.vue, pick up the warnings here
-    this.alert=this.$route.params.alerts
-    console.log('Act component mounted:');
-    console.log(' ');
+    // in case the alerts come at login...
+    this.alert=this.warnings
   },
 };
 </script>

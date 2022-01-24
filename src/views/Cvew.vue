@@ -5,6 +5,7 @@
         :state="state"
         :addWarnings="addWarnings"
         :updateVisit="updateVisit"
+        :warnings="warnings"
       />
     </div>
   </Model>
@@ -20,14 +21,19 @@ export default {
   components: { Model, acts },
   computed: {},
   data() {
-    return {};
+    return {
+      warnings: '',
+    };
   },
 
   methods: {},
 
   watch: {},
 
-  async mounted() {
+  mounted() {
+    // if AppLayoutDefault calls acts.vue, pick up the warnings here
+    console.log('params', JSON.stringify(this.$route.params, null, 2));
+    this.warnings = this.$route.params;
     console.log('Cvew mounted');
   },
 };

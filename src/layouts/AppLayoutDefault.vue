@@ -11,7 +11,6 @@
         usernumber,
         getPoi,
         incrementWarningsReceived,
-        getWarnings,
       }"
     >
       <AppLayoutHeader
@@ -22,7 +21,6 @@
         :usernumber="usernumber"
         :getPoi="getPoi"
         :incrementWarningsReceived="incrementWarningsReceived"
-        :getWarnings="getWarnings"
       />
       <CaptureErrorSnackbar>
         <!-- send props to components through their master vue files -->
@@ -57,7 +55,7 @@ export default {
     getPoi: Function,
     getVisitors: Function,
     earnReward: Function,
-
+    getWarnings: Function,
   },
   computed: {
     status() {
@@ -83,7 +81,21 @@ export default {
   methods: {},
   watch: {
     ready() {
-      console.log('ready');
+      console.log('ready', this.$route);
+      if (this.$route.path === '/') {
+        this.getWarnings().then((warnings) => {
+          console.log('warnings', warnings);
+          if (warnings) {
+            console.log('AppLayoutDefault delegating alerts to acts.vue');
+            // this.$route.query=`?warnings=${warnings}`
+            console.log('warnings', JSON.stringify(warnings, null, 2));
+            this.$router.push({
+              name: 'Cvew',
+              params: warnings,
+            });
+          }
+        });
+      }
     },
   },
   mounted() {
