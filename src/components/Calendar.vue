@@ -453,17 +453,35 @@ export default {
       this.update('graph');
     },
 
+    // TODO REFACTOR: Move this to utils so space.js, time,js, and alerts.js can use it
+    // TODO NOTE: we fixed the field name to 'hours' here,
+    // but processing warnings takes duration string as arg
+    // probably should use whatever is in the Visit model; viz., 'hours"
+    getOnHours(start, end) {
+      const duration = 'hours';
+
+      const started = DateTime.fromMillis(start);
+      const on = started.toLocaleString(DateTime.DATETIME_MED);
+
+      const dur = DateTime.fromMillis(end).diff(started, duration);
+      const hours = dur[duration].toFixed(2);
+      return { on, hours };
+    },
+
     onCloseDateTimeCard(dto) {
       if (dto === 0) {
         this.seePickers = false;
         return;
       }
       const { date, start, end } = dto;
+      const { on, hours } = this.getOnHours(start, end);
       this.selectedEvent.date = date;
       // TODO DCR use functional code to track invalid/reason/explanation
       this.selectedEvent.start = start;
       this.selectedEvent.end = end;
-
+      // added for warnings Redis Stream
+      this.selectedEvent.on = on;
+      this.selectedEvent.hours = hours;
       this.update('cache');
 
       const graphName = this.selectedEvent.graphName;
@@ -475,6 +493,7 @@ export default {
       // without chaning the API
       this.updateGraphVisit(param).then((result) => {
         this.log(result.msg);
+        this.seePickers = false;
       });
     },
 
@@ -725,7 +744,7 @@ export default {
       //     } with these visits:</p>${dates.join('<br/>')}`;
       //     this.showConfirmation(msg);
       //   });
-      // } else 
+      // } else
       if (val.deleteVisit) {
         this.confirmationColor = 'orange';
         msg = `Deleted visit to ${val.name} (namely, the ${val.loggedVisitId} node on the ${val.graphName} graph)`;

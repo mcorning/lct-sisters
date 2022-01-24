@@ -72,8 +72,8 @@ export const timeMixin = {
           error: (err) => {
             // let global error handler take over so we see the error in the snackbar.
             // TODO REFACTOR: ensure any client calling this function is wired into the global error handler
-            err.message += 'Visit.update() had issues';
-            throw err;
+            const message = `Visit.update() had issues: ${err.message}`;
+            throw new Error(message);
           },
         });
     },

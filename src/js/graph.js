@@ -65,16 +65,7 @@ export const graphMixin = {
         const { id, name, place_id, start, end, loggedVisitId, interval } =
           visit;
 
-        // TODO NOTE: we fixed the field name to 'hours' here,
-        // but processing warnings takes duration string as arg
-        // probably should use whatever is in the Visit model; viz., 'hours"
-        const duration = 'hours';
-
-        const started = DateTime.fromMillis(start);
-        const on = started.toLocaleString(DateTime.DATETIME_MED);
-
-        const dur = DateTime.fromMillis(end).diff(started, duration);
-        const hours = dur[duration].toFixed(2);
+        const { on, hours } = getOnHours(start, end);
 
         const query = {
           username: this.username,
@@ -116,7 +107,7 @@ export const graphMixin = {
 
     // called by event edit process
     updateGraphVisit(param) {
-      console.log('query params:', printJson(param));
+      console.log('Incoming query params:', printJson(param));
       return new Promise((resolve, reject) => {
         // send message to server
         try {
@@ -136,3 +127,18 @@ export const graphMixin = {
     },
   },
 };
+
+// TODO REFACTOR: Move this to utils so Calendar.vue doesn't duplicate this there
+// TODO NOTE: we fixed the field name to 'hours' here,
+// but processing warnings takes duration string as arg
+// probably should use whatever is in the Visit model; viz., 'hours"
+function getOnHours(start, end) {
+  const duration = 'hours';
+
+  const started = DateTime.fromMillis(start);
+  const on = started.toLocaleString(DateTime.DATETIME_MED);
+
+  const dur = DateTime.fromMillis(end).diff(started, duration);
+  const hours = dur[duration].toFixed(2);
+  return { on, hours };
+}
