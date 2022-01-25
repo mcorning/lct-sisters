@@ -422,7 +422,7 @@ export default {
       return this.sponsor.country?.toUpperCase();
     },
     sponsorID() {
-      return this.sponsor.ssid;
+      return this.ssid || this.sponsor.sponsorID;
     },
     isSponsor() {
       return !this.$route.params.id;
@@ -443,6 +443,7 @@ export default {
 
   data() {
     return {
+      ssid: '',
       centered: false,
       bottom: false,
       timeout: -1,
@@ -563,7 +564,9 @@ export default {
       }
     },
     // TODO REFACTOR: this should be a guard on the Sponsor model
-    checkForCityState(cityStateCandidate) {
+    checkForCityState() {
+      const startOfCountry = this.address.lastIndexOf(',') + 2;
+      const cityStateCandidate = this.address.slice(startOfCountry);
       return cityStateCandidate.includes('Singapore')
         ? 'sg'
         : cityStateCandidate.slice(0, 2).toLowerCase();
@@ -576,36 +579,45 @@ export default {
         return;
       }
       const biz = this.business.trim();
-      const address = this.address;
-      const country = this.checkForCityState(
-        address.slice(address.lastIndexOf(',') + 2)
-      );
+      const country = this.checkForCityState();
       const uid = this.userID;
-      const confirmedAddress = this.confirmedAddress;
-      const promoText = this.promoText;
-      const userAgent = navigator.userAgent;
-      console.log(
-        biz,
-        address,
+      this.addSponsor({
         country,
-        uid,
-        confirmedAddress,
-        promoText,
-        userAgent
-      );
-      // this.country picks up its value after this call to update Setting model
-      this.updateSponsor({
         biz,
-        address,
-        country,
         uid,
-        confirmedAddress,
-        promoText,
-        userAgent,
       });
-
       this.confSnackbar = false;
       this.printing = true;
+    },
+
+    addSponsor({ country, biz, uid }) {
+      const key = `tqr:${country.slice(0, 2).toLowerCase()}`;
+      this.emitFromClient(
+        'addSponsor',
+        {
+          key,
+          biz,
+          uid,
+        },
+        (ssid) => {
+          this.ssid = ssid;
+          const address = this.address;
+          const confirmedAddress = this.confirmedAddress;
+          const userAgent = navigator.userAgent;
+          // when a browser becomes a Sponsor,
+          // settings gets a ssid
+          this.updateSponsor({
+            id: 1,
+            biz,
+            country,
+            uid,
+            ssid,
+            address,
+            confirmedAddress,
+            userAgent,
+          });
+        }
+      );
     },
 
     approvePoints() {
@@ -771,6 +783,9 @@ export default {
     promotions(val) {
       this.renderPromos(val);
     },
+    sponsor(val) {
+      console.log('sponsor :>> ', val);
+    },
   },
 
   mounted() {
@@ -786,7 +801,11 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
     }
-    this.getPromos();
+
+    this.ssid = this.sponsor.ssid;
+    if (this.ssid) {
+      this.getPromos();
+    }
 
     console.log('SPONSOR mounted');
   },

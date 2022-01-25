@@ -43,7 +43,7 @@ export const warningMixin = {
                 console.log('Setting.update() results: ', value);
                 this.updateState(value);
               },
-              None: () => console.log(`There is no Settings to update `),
+              None: () => console.log(`No Settings to update `),
             }),
           error: (err) => {
             // let global error handler take over so we see the error in the snackbar.

@@ -298,7 +298,7 @@ io.on('connection', (socket) => {
     }).then((ssid) => {
       if (ack) {
         console.log('ssid :>> ', ssid);
-        ack({ ssid });
+        ack(ssid);
       }
     });
   });

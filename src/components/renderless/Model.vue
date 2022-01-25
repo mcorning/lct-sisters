@@ -20,7 +20,6 @@ import { redisMixin } from '@/js/redis';
 import { success, printJson } from '@/utils/helpers';
 import { firstOrNone, allOrNone } from '@/fp/utils.js';
 import { Some } from '@/fp/monads/Maybe.js';
-// import { nullable } from 'pratica';
 
 export default {
   props: {},
@@ -234,10 +233,7 @@ export default {
       // should we be using Maybes here?
       // TODO CONSIDER: using getters on the entities instead of this state object
       this.state = { ...this.state, ...newState };
-      if (this.$DEBUG) {
-        console.log('Updated state:');
-        console.log(printJson(this.state));
-      }
+      return this.state;
     },
 
     getSomeEntityData(source) {
@@ -313,61 +309,34 @@ export default {
       this.emitFromClient('audit', { source, context, msg });
     },
 
-
     updateSponsor({
       biz,
-      address,
       country,
       uid,
+      ssid,
+      address,
       confirmedAddress,
-      promoText,
       userAgent,
     }) {
       const source = 'Model';
       const context = 'updateSponsor()';
-     // ensure STREAM only sees two character country lower case name
-     const key=`tqr:${ country.slice(0,2).toLowerCase()}`
-     this.emitFromClient(
-        'addSponsor',
-        {
-          key,
-          biz,
-          uid,
-        },
-        ({ ssid, pid }) => {
-          const msg = `addSponsor returns ssid: ${ssid}`;
-          this.audit({ source, context, msg });
-          console.log(msg);
-          console.log(
-            'Model passing',
-            biz,
-            address,
-            country,
-            uid,
-            confirmedAddress,
-            promoText,
-            userAgent,
-            ssid,
-            pid,
-            'to Setting'
-          );
-          // when a browser becomes a Sponsor,
-          // settings gets a sid
-          this.updateSetting({
-            id: 1,
-            biz,
-            address,
-            country,
-            uid,
-            confirmedAddress,
-            promoText,
-            userAgent,
-            ssid,
-            pid,
-          });
-        }
-      );
+      const msg = `addSponsor returns ssid: ${ssid}`;
+      this.audit({ source, context, msg });
+
+      // when a browser becomes a Sponsor,
+      // settings gets a ssid
+      this.updateSetting({
+        id: 1,
+        biz,
+        country,
+        uid,
+        ssid,
+        address,
+        confirmedAddress,
+        userAgent,
+      });
     },
+
     updateSession(data) {
       console.log('Model passing', data, 'to Setting');
       this.updateSetting({ id: 1, ...data });
@@ -408,7 +377,7 @@ export default {
     getWarnings() {
       return new Promise((resolve) => {
         this.emitFromClient('getWarnings', null, (warnings) => {
-          console.log('warnings', warnings);
+          console.log('warnings', printJson(warnings));
           resolve(warnings);
         });
       });
