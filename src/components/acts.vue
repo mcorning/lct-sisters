@@ -56,10 +56,12 @@ export default {
   methods: {
     act() {
       // we are adding warnings to the warning Stream in srv/redis/stream.js
-      const visitData = this.state.visits.map((v) => {
-        console.log(log(print(v.id, v.place_id, v.start, v.end)), 'warnings');
-        return { id: v.id, place_id: v.place_id, start: v.start, end: v.end };
-      });
+      const visitData = this.state.visits
+        .filter((v) => !v.wsid)
+        .map((v) => {
+          console.log(log(print(v.id, v.place_id, v.start, v.end)), 'warnings');
+          return { id: v.id, place_id: v.place_id, start: v.start, end: v.end };
+        });
       console.log(
         `warnThem() sending ${
           this.$socket.client.auth.userID
@@ -72,7 +74,7 @@ export default {
         // update visits with warning sids
         // each warning as the original vid and the new ssid
         const data = Object.values(warnings).flat();
-        log(print(data), 'warning data');
+        log(print(data), 'Full warning data');
         const x = liftMappedKeysFrom(
           [
             { fm: 'vid', to: 'id' },
@@ -80,16 +82,16 @@ export default {
           ],
           data
         );
-        log(print(x), 'updating data');
+        log(print(x), 'Updating Visit data with:');
         this.updateVisit(x);
-        this.alert = warnings;
+        this.alert = `You raised ${x.length} exposure warnings for others to evaluate. Well Done.`;
       });
     },
   },
   watch: {},
   mounted() {
     // in case the alerts come at login...
-    this.alert=this.warnings
+    this.alert = this.warnings;
   },
 };
 </script>

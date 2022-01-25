@@ -46,7 +46,7 @@ export default {
         ? `<p><strong>This is a drill. This is ONLY A DRILL.</strong><p/>
         If this had been an actual EXPOSURE ALERT you would get tested for COVID immediately. <br/>This drill simulates getting such an ALERT. 
         <p><strong>DO NOT ACT ON THIS INCIDENT.</strong></p>`
-        : `<p>For this reason, please get tested <strong>now</strong>. Otherwise time is not our ally in this war against the virus.<p/> 
+        : `<p>For this reason, please get tested <strong>now</strong>. Remember, time is <strong>not</strong> our ally in this war against the virus.<p/> 
         Quarantine and warn others, if necessary.`;
     },
     getAlertColor() {
@@ -71,7 +71,7 @@ export default {
     },
 
     alertMessage() {
-      return
+      return;
       const { score, reliability } = this.riskScore;
 
       const details = Object.entries(this.alert)[0][1][1];

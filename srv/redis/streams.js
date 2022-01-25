@@ -2,6 +2,7 @@
 // very helpfull as a starter to understand the usescases and the parameters used
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { highlight } = require('../../src/utils/helpers');
+const { isEmpty } = require('../utils');
 const source = 'streams';
 const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
@@ -191,12 +192,15 @@ function getPromotions({ ssid, country }) {
 //#region Warnings
 // TODO shouldn't this be getAlerts()?
 const getWarnings = () => {
+  const safeGroup = (alerts) =>
+    isEmpty(alerts) ? [] : groupBy(alerts, 'place_id');
+
   const key = 'warnings';
   return redis
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
-    .then((alerts) => groupBy(alerts, 'place_id'))
-    .catch((e) => audit({ source, context: 'getWarnings()', msg: e }));
+    .then((alerts) => safeGroup(alerts))
+    .catch((e) => audit({ source, context: 'streams:getWarnings()', msg: e }));
 };
 
 /**
