@@ -419,7 +419,7 @@ export default {
       return this.sponsor.address;
     },
     sponsorCountry() {
-      return this.sponsor.country;
+      return this.sponsor.country?.toUpperCase();
     },
     sponsorID() {
       return this.sponsor.ssid;
@@ -510,7 +510,7 @@ export default {
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: this.sponsor?.country.toUpperCase() ?? 'SG',
+      country: this.sponsor?.country ?? 'SG',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
