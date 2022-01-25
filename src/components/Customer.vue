@@ -250,7 +250,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { getDateFromSid } from '../../srv/utils';
-import { printJson, head, isEmpty, objectToKeyedArray } from '@/utils/helpers';
+import { printJson, head, isEmpty,  } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
@@ -334,11 +334,6 @@ export default {
       return this.biz || this.address;
     },
 
-    // TODO Why is this here?
-    decodedUri() {
-      const b = encodeURIComponent(this.business);
-      return `${window.location.origin}/sponsor/${b}`;
-    },
 
     options() {
       return {
@@ -535,10 +530,10 @@ export default {
 
     getPromos() {
       this.promos = [];
-      const country = this.country;
       const ssid = this.selectedSponsor.ssid;
-      console.log(`getPromotions({${ssid},${country}}`);
-      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
+      const country = this.country;
+      const key = `tqr:${country}:${ssid}:promos`;
+      this.emitFromClient('getPromotions', key, (promos) => {
         this.promotions = promos ?? [];
         console.log(`promotions`, printJson(this.promotions));
       });
@@ -549,7 +544,7 @@ export default {
         ? this.promotions.map((v) => {
             return {
               color: v.color,
-              msg: `<h3>At ${v.business}</h3><p class="text-subtitle-2 pt-3">${v.promoText}</p>`,
+              msg: `<h3>At ${v.biz}</h3><p class="text-subtitle-2 pt-3">${v.promoText}</p>`,
             };
           })
         : [
