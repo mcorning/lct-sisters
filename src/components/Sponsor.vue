@@ -506,11 +506,11 @@ export default {
       confirmationSubtitle: '',
       confirmationMessage: '',
       confirmationIcon: 'check',
-      countries: ['SG', 'UK', 'USA'],
+      countries: ['SG', 'UK', 'US'],
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: this.sponsor?.country ?? 'SG',
+      country: this.sponsor?.country.toUpperCase() ?? 'SG',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
@@ -562,10 +562,11 @@ export default {
           break;
       }
     },
+    // TODO REFACTOR: this should be a guard on the Sponsor model
     checkForCityState(cityStateCandidate) {
       return cityStateCandidate.includes('Singapore')
         ? 'sg'
-        : cityStateCandidate;
+        : cityStateCandidate.slice(0, 2).toLowerCase();
     },
 
     approveNewSponsor() {
@@ -621,7 +622,7 @@ export default {
     promote() {
       const ssid = this.sponsorID;
       const biz = this.sponsorName;
-      const country = this.country;
+      const country = this.country.slice(0, 2).toLowerCase();
       const key = `tqr:${country}:${ssid}:promos`;
       const promoText = this.promoText;
       this.emitFromClient('promote', { key, biz, promoText }, () =>
@@ -631,7 +632,9 @@ export default {
 
     deletePromo(promo) {
       this.undo = this.ps.find((v) => v.promoText === promo);
-      const key = `tqr:${this.country}:${this.sponsorID}:promos`;
+      const country = this.country.slice(0, 2).toLowerCase();
+
+      const key = `tqr:${country}:${this.sponsorID}:promos`;
       this.confirmationTitle = 'Undo';
       this.confirmationMessage = `Undo ${promo} deletion?`;
       this.approval = 'undo';
@@ -656,7 +659,7 @@ export default {
 
     getPromos() {
       const ssid = this.sponsorID;
-      const country = this.country;
+      const country = this.country.slice(0, 2).toLowerCase();
       const key = `tqr:${country}:${ssid}:promos`;
       this.emitFromClient('getPromotions', key, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));

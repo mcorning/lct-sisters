@@ -120,6 +120,7 @@ console.log('options:>>', options);
 //#region Helpers
 
 const {
+  isEmpty,
   objectFromStream,
   objectFromStreamEntry,
   objectToKeyedArray,
@@ -140,12 +141,16 @@ const forThisSponsor = (sponsor) => ({
   ssid: sponsor.uid,
 });
 
-const forPromo = (sponsor) =>
-  sponsor.reduce((a, c) => {
+const forPromo = (sponsor) => {
+  if (isEmpty(sponsor)) {
+    return null;
+  }
+  return sponsor.reduce((a, c) => {
     const { biz, promoText, dated, ssid } = c;
     a.push({ biz, promoText, dated, ssid });
     return a;
   }, []);
+};
 
 //#endregion Helpers
 

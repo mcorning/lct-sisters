@@ -288,11 +288,11 @@ io.on('connection', (socket) => {
   });
   //#endregion
 
-  socket.on('addSponsor', ({ country, biz, uid }, ack) => {
-    console.log(country, biz, uid);
+  socket.on('addSponsor', ({ key, biz, uid }, ack) => {
+    console.log(key, biz, uid);
     // add to the Sponsor Stream
     addSponsor({
-      country,
+      key,
       biz,
       uid,
     }).then((ssid) => {
@@ -303,7 +303,7 @@ io.on('connection', (socket) => {
     });
   });
   socket.on('promote', ({ key, biz, promoText }, ack) => {
-    console.log(key, biz, promoText);
+    console.log(`promote(${key}, ${biz}, ${promoText})`);
     // add to the Sponsor Stream
     addPromo({
       key,

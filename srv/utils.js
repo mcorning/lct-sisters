@@ -55,6 +55,9 @@ const getTimeFromSid = (sid) => formatTime(Number(sid.slice(0, 13)));
 const getDateFromSid = (sid) => formatDate(Number(sid.slice(0, 13)));
 const isEmpty = (val) => val == null || !(Object.keys(val) || val).length;
 const objectToKeyedArray = (obj) => {
+  if (isEmpty(obj)) {
+    return null;
+  }
   const methods = {
     map(target) {
       return (callback) =>

@@ -312,6 +312,8 @@ export default {
     audit({ source, context, msg }) {
       this.emitFromClient('audit', { source, context, msg });
     },
+
+
     updateSponsor({
       biz,
       address,
@@ -323,19 +325,14 @@ export default {
     }) {
       const source = 'Model';
       const context = 'updateSponsor()';
-      const countryLowerCase =
-        typeof country === 'string' ? country.toLowerCase() : '';
-     const key=`tqr:${ countryLowerCase}`
+     // ensure STREAM only sees two character country lower case name
+     const key=`tqr:${ country.slice(0,2).toLowerCase()}`
      this.emitFromClient(
         'addSponsor',
         {
-          biz,
-          address,
           key,
+          biz,
           uid,
-          confirmedAddress,
-          promoText,
-          userAgent,
         },
         ({ ssid, pid }) => {
           const msg = `addSponsor returns ssid: ${ssid}`;
