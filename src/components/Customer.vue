@@ -584,10 +584,9 @@ export default {
     },
     getCountries() {
       const self = this;
-      this.emitFromClient('getCountries', null, (keys) => {
-        console.log('keys :>> ', keys);
-        self.countries = isEmpty(keys) ? [] : keys;
-        self.country = head(self.countries);
+      this.emitFromClient('getCountries', null, (countries) => {
+        console.log('countries :>> ', printJson(countries));
+        self.country = head(countries);
         console.log('country :>> ', self.country);
       });
     },

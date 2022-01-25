@@ -340,6 +340,7 @@ io.on('connection', (socket) => {
     getCountries()
       .then((countries) => {
         if (ack) {
+          console.log('countries :>> ', printJson(countries));
           ack(countries);
         }
       })
