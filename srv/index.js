@@ -65,6 +65,16 @@ const {
   audit,
 } = require('./redis/streams');
 
+// tqr.js has the most efficient code
+const {
+  addSponsor,
+  addPromo,
+  getPromos,
+  deletePromo,
+  getSponsors,
+  getCountries,
+} = require('./redis/tqr');
+
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/json');
@@ -179,50 +189,13 @@ io.on('connection', (socket) => {
     audit(msg).then((sid) => console.log(`See ${msg.source}:${sid}`));
   });
 
-  // add Promotion
-  socket.on(
-    'promote',
-    (
-      { confirmedAddress, biz, country, promoText, promotionalDays, ssid },
-      ack
-    ) => {
-      console.log(
-        `promote(${biz} (${confirmedAddress}), ${promoText}, ${promotionalDays}`
-      );
-      // addPromotion({
-      //   confirmedAddress,
-      //   biz,
-      //   country,
-      //   promoText,
-      //   promotionalDays,
-      //   ssid,
-      // }).then((newPromo) => {
-      //   if (ack) {
-      //     ack(newPromo);
-      //   }
-      //   // let everybody online now see the new promo
-      //   const msg = { biz, promoText: newPromo.promoText };
-      //   console.log(`newPromotion, ${printJson(msg)}`);
-      //   socket.broadcast.emit('newPromotion', msg);
-      // });
-    }
-  );
-
-  socket.on('deletePromotion', ({ ssid, sid }, ack) => {
-    // deletePromotion(`promotions:${ssid}`, sid).then((ct) => {
-    //   if (ack) {
-    //     ack(ct);
-    //   }
-    // });
-  });
-
-  socket.on('getPromotions', ({ ssid, country }, ack) => {
-    console.log('getPromotions() ssid :>> ', ssid);
-    // getPromotions({ ssid, country }).then((promos) => {
-    //   if (ack) {
-    //     ack(promos);
-    //   }
-    // });
+  socket.on('deletePromotion', ({ key, sid }, ack) => {
+    console.log('key, sid', key, sid);
+    deletePromo(key, sid).then((ct) => {
+      if (ack) {
+        ack(ct);
+      }
+    });
   });
 
   // TODO this event is misnamed. we add warnings and send alerts in one place
@@ -315,49 +288,64 @@ io.on('connection', (socket) => {
   });
   //#endregion
 
-  socket.on(
-    'addSponsor',
-    (
-      { biz, address, country, uid, confirmedAddress, promoText, userAgent },
-      ack
-    ) => {
-      console.log(biz, country, confirmedAddress, promoText, userAgent);
-      // add to the Sponsor Stream
-      // addSponsor({
-      //   biz,
-      //   address,
-      //   country,
-      //   uid,
-      //   confirmedAddress,
-      //   userAgent,
-      // }).then((ssid) => {
-      //   if (ack) {
-      //     console.log('ssid :>> ', ssid);
-      //     ack({ ssid });
-      //   }
-      // });
-    }
-  );
+  socket.on('addSponsor', ({ country, biz, uid }, ack) => {
+    console.log(country, biz, uid);
+    // add to the Sponsor Stream
+    addSponsor({
+      country,
+      biz,
+      uid,
+    }).then((ssid) => {
+      if (ack) {
+        console.log('ssid :>> ', ssid);
+        ack({ ssid });
+      }
+    });
+  });
+  socket.on('promote', ({ key, biz, promoText }, ack) => {
+    console.log(key, biz, promoText);
+    // add to the Sponsor Stream
+    addPromo({
+      key,
+      biz,
+      promoText,
+    }).then((psid) => {
+      if (ack) {
+        console.log('psid :>> ', psid);
+        ack({ psid });
+      }
+    });
+  });
+  socket.on('getPromotions', (key, ack) => {
+    console.log('getPromotions() key :>> ', key);
+    getPromos(key).then((promos) => {
+      if (ack) {
+        ack(promos);
+      }
+    });
+  });
+
   socket.on('getSponsors', (country, ack) => {
     console.log(`getSponsors(${country})`);
-    // getSponsors(country).then((sponsors) => {
-    //   console.log('sponsors :>> ', printJson(sponsors));
-    //   if (ack) {
-    //     ack(sponsors);
-    //   }
-    // });
+    const key = `tqr:${country}`;
+    getSponsors(key).then((sponsors) => {
+      console.log('sponsors :>> ', printJson(sponsors));
+      if (ack) {
+        ack(sponsors);
+      }
+    });
   });
 
   socket.on('getCountries', (_, ack) => {
-    // getCountries()
-    //   .then((countries) => {
-    //     if (ack) {
-    //       ack(countries);
-    //     }
-    //   })
-    //   .catch((e) => {
-    //     console.log('e :>> ', e);
-    //   });
+    getCountries()
+      .then((countries) => {
+        if (ack) {
+          ack(countries);
+        }
+      })
+      .catch((e) => {
+        console.log('e :>> ', e);
+      });
   });
 
   socket.on('addVisit', ({ ssid, uid }, ack) => {

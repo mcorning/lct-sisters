@@ -539,7 +539,7 @@ export default {
       const ssid = this.selectedSponsor.ssid;
       console.log(`getPromotions({${ssid},${country}}`);
       this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
-        this.promotions = promos??[];
+        this.promotions = promos ?? [];
         console.log(`promotions`, printJson(this.promotions));
       });
     },
@@ -588,27 +588,19 @@ export default {
       });
     },
     getCountries() {
+      const self = this;
       this.emitFromClient('getCountries', null, (keys) => {
         console.log('keys :>> ', keys);
-        // lift out the country names
-        const vals = keys.map((v) => v.slice(9));
-        this.countries = isEmpty(vals) ? [] : vals;
-        this.country = head(this.countries);
+        self.countries = isEmpty(keys) ? [] : keys;
+        self.country = head(self.countries);
+        console.log('country :>> ', self.country);
       });
     },
 
     getSponsors(country) {
-      const fromVals = (vals) =>
-        vals.reduce((a, c) => {
-          const {biz, uid, ssid}=c[0]
-          a.push({ biz, uid, ssid });
-          return a;
-        }, []);
       this.emitFromClient('getSponsors', country, (sponsors) => {
-        console.log('sponsors :>> ', sponsors);
-        const s = objectToKeyedArray(sponsors);
-
-        this.activeSponsors = fromVals(s);
+        console.log('sponsors :>> ', printJson(sponsors));
+        this.activeSponsors = sponsors;
         this.selectedSponsor = head(this.activeSponsors);
       });
     },

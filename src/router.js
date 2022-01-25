@@ -11,7 +11,7 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/hub',
+    path: '/',
     name: 'Hub',
     component: Hub,
     meta: { layout: 'AppLayoutBlank' },
@@ -48,7 +48,7 @@ const routes = [
     props: true,
   },
   {
-    path: '/',
+    path: '/space',
     name: 'Space',
     component: Space,
     props: true,

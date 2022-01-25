@@ -325,12 +325,13 @@ export default {
       const context = 'updateSponsor()';
       const countryLowerCase =
         typeof country === 'string' ? country.toLowerCase() : '';
-      this.emitFromClient(
+     const key=`tqr:${ countryLowerCase}`
+     this.emitFromClient(
         'addSponsor',
         {
           biz,
           address,
-          country: countryLowerCase,
+          key,
           uid,
           confirmedAddress,
           promoText,

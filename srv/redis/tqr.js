@@ -68,31 +68,31 @@ Outlaw Barbers
 uid
 9bb09370e625baf7
 
-> xadd tqr:us1642558736304-0:promos * biz "Outlaw Barbers" text 'Twenty percent for Vets on Vets Day'
+> xadd tqr:us1642558736304-0:promos * biz "Outlaw Barbers" promoText 'Twenty percent for Vets on Vets Day'
 1642558906193-0
 > xread streams tqr:us1642558736304-0:promos 0
 us:1642558736304-0:promos
 1642558906193-0
 biz
 Outlaw Barbers
-text
+promoText
 Twenty percent for Vets on Vets Day
 
-> xadd tqr:us1642558471131-0:promos * biz "SCC" text 'Early Spring Break'
+> xadd tqr:us1642558471131-0:promos * biz "SCC" promoText 'Early Spring Break'
 1642562389544-0
-> xadd tqr:us1642558471131-0:promos * biz "SCC" text 'Get a break on breakfast'
+> xadd tqr:us1642558471131-0:promos * biz "SCC" promoText 'Get a break on breakfast'
 1642562437423-0
 > xread streams tqr:us1642558471131-0:promos 0
 us:1642558471131-0:promos
 1642562389544-0
 biz
 SCC
-text
+promoText
 Early Spring Break
 1642562437423-0
 biz
 SCC
-text
+promoText
 Get a break on breakfast
 */
 
@@ -115,6 +115,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 const Redis = require('ioredis');
 const redis = new Redis(options);
+console.log('options:>>', options);
 //#endregion
 //#region Helpers
 
@@ -141,8 +142,8 @@ const forThisSponsor = (sponsor) => ({
 
 const forPromo = (sponsor) =>
   sponsor.reduce((a, c) => {
-    const { biz, text } = c;
-    a.push({ biz, text });
+    const { biz, promoText, dated, ssid } = c;
+    a.push({ biz, promoText, dated, ssid });
     return a;
   }, []);
 
@@ -153,12 +154,27 @@ const forPromo = (sponsor) =>
 // xadd countries * name sg
 // const addCountry = (country) => redis.xadd('countries', '*', 'name', country);
 // xadd us * biz "Outlaw Barbers" uid 9bb09370e625baf7
-const addSponsor = (country, biz, uid) =>
-  redis.xadd(country, '*', 'biz', biz, 'uid', uid);
+const addSponsor = ({ key, biz, uid }) =>
+  redis.xadd(`${key}`, '*', 'biz', biz, 'uid', uid);
 
-// > xadd tqr:us1642558736304-0:promos * biz "Fika" text 'Welcome back Renee'
-const addPromo = (key, biz, text) =>
-  redis.xadd(key, '*', 'biz', biz, 'text', text);
+// > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
+const addPromo = ({ key, biz, promoText }) =>
+  redis.xadd(key, '*', 'biz', biz, 'promoText', promoText);
+
+// xread tqr:us:1642558471131-0:promos 0
+const getPromos = (key) =>
+  redis
+    .xread('STREAMS', key, '0')
+    .then((stream) => objectFromStream(stream))
+    .then((sponsors) => objectToKeyedArray(sponsors))
+    .then((data) => forPromo(data));
+
+const getSponsors = (key) =>
+  redis
+    .xread('STREAMS', key, '0')
+    .then((stream) => objectFromStream(stream))
+    .then((sponsors) => objectToKeyedArray(sponsors))
+    .then((data) => forSponsor(data));
 
 // > xadd tqr:us1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
 const addReward = (key, biz, cid) =>
@@ -171,15 +187,12 @@ const deletePromo = (key, sid) => redis.xdel(key, sid);
 //#endregion DELETE
 
 //#region READ
-const getCountries = () => redis.scan('0', 'MATCH', 'tqr:??');
-
-// xread streams us 0
-const getSponsors = (country) =>
+const getCountries = () =>
   redis
-    .xread('STREAMS', country, '0')
-    .then((stream) => objectFromStream(stream))
-    .then((sponsors) => objectToKeyedArray(sponsors))
-    .then((data) => forSponsor(data));
+    .scan('0', 'MATCH', 'tqr:??')
+    .then((countries) => countries.filter((v, i) => i > 0))
+    // TODO REFACTOR: confirm a SCAN returning multiple countries works here
+    .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4))));
 
 // xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) =>
@@ -188,21 +201,13 @@ const getSponsor = (country, ssid) =>
     .then((stream) => objectFromStreamEntry(stream))
     .then((sponsor) => forThisSponsor(sponsor));
 
-// xread country:us:1642558471131-0:promos 0
-const getPromos = (key) =>
-  redis
-    .xread('STREAMS', key, '0')
-    .then((stream) => objectFromStream(stream))
-    .then((sponsors) => objectToKeyedArray(sponsors))
-    .then((data) => forPromo(data));
-
 // xread country:us:1642558471131-0:rewards 0
 const getRewards = (key) =>
   redis.xread('STREAMS', key, '0').then((stream) => objectFromStream(stream));
 //#endregion READ
 //#endregion API
 
-const TESTING = true;
+const TESTING = false;
 
 //#region Tests
 if (TESTING) {
@@ -213,15 +218,16 @@ if (TESTING) {
     { biz: 'Outlaw Barbers', uid: '9bb09370e625baf7', sid: '1642558736304-0' },
   ];
   const promos = [
-    { biz: 'Fika', text: 'Welcome back Renee' },
-    { biz: 'Fika', sid: '', text: 'Discount for card players' },
-    { biz: 'Outlaw Barbers', text: 'Twenty percent for Vets on Vets Day' },
+    { biz: 'Fika', promoText: 'Welcome back Renee' },
+    { biz: 'Fika', sid: '', promoText: 'Discount for card players' },
+    { biz: 'Outlaw Barbers', promoText: 'Twenty percent for Vets on Vets Day' },
   ];
   const cids = [
     { name: 'debug', uid: '9f8b77197764881a' },
     { name: 'Firefox', uid: '9b7c302f6f1b1fa4' },
   ];
   //#endregion Test Data
+
   const updateBid = (bidUid, ssid) => {
     const updatedBid = bids.find((v) => v.uid === bidUid);
     updatedBid.sid = ssid;
@@ -229,22 +235,22 @@ if (TESTING) {
     return updatedBid.sid;
   };
   // We archive tests when TESTING is false (default)
-  const COUNTRY = 'tqr:us';
+  const COUNTRY = 'tqr:sg';
   const biz = bids[0].biz;
   const uid = bids[0].uid;
   const biz2 = bids[1].biz;
   const uid2 = bids[1].uid;
 
-  const p0 = addSponsor('tqr:sg', biz, uid).then(() =>
-    addSponsor('tqr:sg', biz2, uid2)
+  const p0 = addSponsor({ country: 'tqr:sg', biz, uid }).then(() =>
+    addSponsor({ country: 'tqr:sg', biz, uid })
   );
 
-  const p1 = addSponsor(COUNTRY, biz, uid)
+  const p1 = addSponsor({ country: COUNTRY, biz, uid })
     .then((ssid) => updateBid(uid, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
     .then((sponsor) => log(print(sponsor), 'Sponsor'))
     .then(() => getSponsors(COUNTRY));
-  const p2 = addSponsor(COUNTRY, biz2, uid2)
+  const p2 = addSponsor({ country: COUNTRY, biz: biz2, uid: uid2 })
     .then((ssid) => updateBid(uid2, ssid))
     .then((ssid) => getSponsor(COUNTRY, ssid))
     .then((sponsor) => log(print(sponsor), 'Sponsor'))
@@ -258,18 +264,18 @@ if (TESTING) {
     .then(() => getRewards(`${COUNTRY}:${bids[0].sid}:rewards`))
     .then((rewards) => log(print(rewards), 'Rewards'))
     .then(() =>
-      addPromo(
-        `${COUNTRY}:${bids[1].sid}:promos`,
-        promos[1].biz,
-        promos[1].text
-      )
+      addPromo({
+        country: `${COUNTRY}:${bids[1].sid}:promos`,
+        biz: promos[1].biz,
+        promoText: promos[1].promoText,
+      })
     )
     .then(() =>
-      addPromo(
-        `${COUNTRY}:${bids[0].sid}:promos`,
-        promos[2].biz,
-        promos[2].text
-      )
+      addPromo({
+        country: `${COUNTRY}:${bids[0].sid}:promos`,
+        biz: promos[2].biz,
+        promoText: promos[2].promoText,
+      })
     )
     .then((sid) => deletePromo(`${COUNTRY}:${bids[0].sid}:promos`, sid))
     .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))

@@ -32,7 +32,7 @@
 
 <script>
 import Model from '@/components/renderless/Model.vue';
-import Customer from '@/components/Customer.vue';
+import Customer from '@/components/customer.vue';
 
 export default {
   name: 'CustomerView',

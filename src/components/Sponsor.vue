@@ -149,11 +149,13 @@
                     <tr
                       v-for="item in ps"
                       :key="item.promoText"
-                      v-touch="{ right: () => deleteRow(item.promoText) }"
+                      v-touch="{ right: () => deletePromo(item.promoText) }"
                     >
                       <td style="text-align: left">{{ item.promoText }}</td>
                       <td style="text-align: left">{{ item.dated }}</td>
-                      <td style="text-align: left">{{ item.expires }} days</td>
+                      <td style="text-align: left">
+                        {{ promotionalDays }} days
+                      </td>
                       <td style="text-align: left">{{ item.ssid }}</td>
                     </tr>
                   </tbody>
@@ -537,29 +539,6 @@ export default {
   },
 
   methods: {
-    deleteRow(promo) {
-      this.undo = this.ps.find((v) => v.promoText === promo);
-      this.confirmationTitle = 'Undo';
-      this.confirmationMessage = `Undo ${promo} deletion?`;
-      this.approval = 'undo';
-      this.approveString = 'Yes';
-      this.disapproveString = '';
-      this.centered = true;
-      this.bottom = true;
-      this.timeout = 5000;
-      this.confSnackbar = true;
-      this.emitFromClient(
-        'deletePromotion',
-        {
-          ssid: this.sponsorID,
-          sid: this.undo.ssid,
-        },
-        (ct) => {
-          console.log(`${ct} entry deleted`);
-        }
-      );
-    },
-
     approved() {
       switch (this.approval) {
         case 'approvePoints':
@@ -570,7 +549,7 @@ export default {
           break;
         case 'undo':
           if (isEmpty(this.undo)) {
-            return
+            return;
           }
           this.confSnackbar = false;
           // add undo back to stream
@@ -583,7 +562,12 @@ export default {
           break;
       }
     },
-        
+    checkForCityState(cityStateCandidate) {
+      return cityStateCandidate.includes('Singapore')
+        ? 'sg'
+        : cityStateCandidate;
+    },
+
     approveNewSponsor() {
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
@@ -592,7 +576,9 @@ export default {
       }
       const biz = this.business.trim();
       const address = this.address;
-      const country = address.slice(address.lastIndexOf(',') + 2);
+      const country = this.checkForCityState(
+        address.slice(address.lastIndexOf(',') + 2)
+      );
       const uid = this.userID;
       const confirmedAddress = this.confirmedAddress;
       const promoText = this.promoText;
@@ -606,6 +592,7 @@ export default {
         promoText,
         userAgent
       );
+      // this.country picks up its value after this call to update Setting model
       this.updateSponsor({
         biz,
         address,
@@ -630,30 +617,52 @@ export default {
       });
       this.confSnackbar = false;
     },
-    
+
     promote() {
-      const promoText = this.promoText;
       const ssid = this.sponsorID;
       const biz = this.sponsorName;
       const country = this.country;
-      const confirmedAddress = this.confirmedAddress;
-      const promotionalDays = this.promotionalDays;
+      const key = `tqr:${country}:${ssid}:promos`;
+      const promoText = this.promoText;
+      this.emitFromClient('promote', { key, biz, promoText }, () =>
+        this.getPromos(key)
+      );
+    },
+
+    deletePromo(promo) {
+      this.undo = this.ps.find((v) => v.promoText === promo);
+      const key = `tqr:${this.country}:${this.sponsorID}:promos`;
+      this.confirmationTitle = 'Undo';
+      this.confirmationMessage = `Undo ${promo} deletion?`;
+      this.approval = 'undo';
+      this.approveString = 'Yes';
+      this.disapproveString = 'No';
+      this.centered = true;
+      this.bottom = true;
+      this.timeout = 5000;
+      this.confSnackbar = true;
       this.emitFromClient(
-        'promote',
-        { confirmedAddress, biz, country, promoText, promotionalDays, ssid },
-        () => this.getPromos()
+        'deletePromotion',
+        {
+          key,
+          sid: this.undo.ssid,
+        },
+        (ct) => {
+          console.log(`${ct} entry deleted`);
+          this.getPromos();
+        }
       );
     },
 
     getPromos() {
       const ssid = this.sponsorID;
       const country = this.country;
-      this.emitFromClient('getPromotions', { ssid, country }, (promos) => {
+      const key = `tqr:${country}:${ssid}:promos`;
+      this.emitFromClient('getPromotions', key, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
       });
     },
-
 
     renderPromos() {
       if (!this.promotions) {
@@ -730,7 +739,6 @@ export default {
     emitFromClient(eventName, data, ack) {
       this.$socket.client.emit(eventName, data, ack);
     },
-
 
     redeemReward({ cid, points }) {
       this.emitFromClient(

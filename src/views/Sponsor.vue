@@ -16,7 +16,7 @@
 
 <script>
 import Model from '@/components/renderless/Model.vue';
-import Sponsor from '@/components/Sponsor.vue';
+import Sponsor from '@/components/sponsor.vue';
 
 export default {
   name: 'SponsorView',
