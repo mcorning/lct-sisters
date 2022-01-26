@@ -31,184 +31,213 @@
           </v-col>
         </v-row>
 
-        <!-- Rewards -->
-        <v-row
-          ><v-col>
-            <v-card
-              v-model="rewardPoints"
-              color="blue-grey darken-2"
-              class="mx-auto"
-              dark
-            >
-              <v-card-title>TQR Rewards</v-card-title>
-              <v-card-subtitle
-                >Scan Sponsor's QR Code to earn rewards</v-card-subtitle
-              >
-              <div v-if="searchable">
-                <v-card-subtitle
-                  >Click a Sponsor to claim your reward</v-card-subtitle
-                >
+        <!-- Promotions -->
+        <vcard>
+          <v-card-title>Bringing You In</v-card-title>
+          <v-row
+            ><v-col>
+              <v-card color="blue-grey darken-2" class="mx-auto mobile" dark>
+                <v-card-title>Active Sponsors: </v-card-title>
                 <v-card-text>
                   <v-row>
-                    <v-text-field
-                      v-model="search"
-                      label="Search visited establishments here"
-                      dark
-                      flat
-                      solo-inverted
-                      hide-details
-                      clearable
-                    ></v-text-field>
-                    <v-checkbox
-                      v-model="caseSensitive"
-                      dark
-                      hide-details
-                      class="text-caption"
-                      append-icon="mdi-case-sensitive-alt"
-                    ></v-checkbox>
+                    <v-col cols="4">
+                      <v-select
+                        v-model="country"
+                        :items="countries"
+                        label="Country"
+                        outlined
+                    /></v-col>
+                    <v-col cols="8">
+                      <v-select
+                        v-model="selectedSponsor"
+                        :items="activeSponsors"
+                        item-text="biz"
+                        item-value="ssid"
+                        return-object
+                        label="Check enticements from:"
+                        outlined
+                      ></v-select>
+                    </v-col>
                   </v-row>
                 </v-card-text>
-                <v-card-text>
-                  <v-divider />
-                  <v-treeview
-                    v-model="tree"
-                    :items="items"
-                    :search="search"
-                    :filter="filter"
-                    selectable
-                    open-all
-                    open-on-click
-                    return-object
-                    dense
-                    dark
-                    selected-color="green darken-1"
-                    color="green lighten-1"
-                  >
-                  </v-treeview>
-                </v-card-text>
-              </div>
-              <v-card-text v-else>
-                <v-row
-                  ><v-col cols="6">
-                    <v-select
-                      v-model="selectedReward"
-                      :items="getRewardingSponsors"
-                      item-text="biz"
-                      item-value="uid"
-                      return-object
-                      label="Rewarding Sponsors"
-                  /></v-col>
-                  <v-col>
-                    <v-text-field
-                      v-model="selectedReward.uid"
-                      label="Business ID"
-                      readonly
-                      dense
-                    />
-                    <v-text-field
-                      v-model="dateFromSid"
-                      label="Last visit on"
-                      readonly
-                      dense
-                    />
-                    <v-text-field
-                      v-model="selectedReward.points"
-                      label="Reward Points"
-                      readonly
-                      dense
-                    />
-                  </v-col>
-                </v-row>
-                <v-row no-gutters justify="center">
-                  <v-col cols="auto">
-                    <v-card-text
-                      v-html="rewardMsg"
-                      class="text-caption"
-                    ></v-card-text
-                  ></v-col>
-                </v-row>
-              </v-card-text>
-              <v-card-actions>
-                <v-btn text color="pink" @click="deleteReward()">
-                  Delete
-                </v-btn>
-                <v-spacer />
-                <v-btn text color="yellow" @click="earnTokens"
-                  >Earn more tokens</v-btn
-                >
-              </v-card-actions>
-            </v-card>
-          </v-col></v-row
-        >
-        <!-- Promotions -->
-        <v-row
-          ><v-col>
-            <v-card color="blue-grey darken-2" class="mx-auto mobile" dark>
-              <v-card-title>Active Sponsors: </v-card-title>
-              <v-card-text>
-                <v-row>
-                  <v-col cols="4">
-                    <v-select
-                      v-model="country"
-                      :items="countries"
-                      label="Country"
-                      outlined
-                  /></v-col>
-                  <v-col cols="8">
-                    <v-select
-                      v-model="selectedSponsor"
-                      :items="activeSponsors"
-                      item-text="biz"
-                      item-value="ssid"
-                      return-object
-                      label="Check enticements from:"
-                      outlined
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+              </v-card>
+            </v-col>
+          </v-row>
 
-        <!-- Enticements -->
-        <v-row>
-          <v-col>
-            <v-card
-              ref="enticements"
-              color="blue-grey darken-2"
-              class="mx-auto"
-              dark
-            >
-              <v-row>
-                <v-col>
-                  <v-card-title>Enticements</v-card-title>
-                </v-col>
-              </v-row>
-
-              <v-carousel
-                cycle
-                height="200"
-                hide-delimiter-background
-                show-arrows-on-hover
+          <!-- Enticements -->
+          <v-row>
+            <v-col>
+              <v-card
+                ref="enticements"
+                color="blue-grey darken-2"
+                class="mx-auto"
+                dark
               >
-                <v-carousel-item v-for="(promo, i) in promos" :key="i">
-                  <v-sheet dark :color="promo.color" height="100%">
-                    <v-row class="fill-height" align="center" justify="center">
-                      <v-card-text
-                        class="text-center"
-                        v-html="promo.msg"
-                      ></v-card-text>
-                    </v-row>
-                  </v-sheet>
-                </v-carousel-item>
-              </v-carousel>
-            </v-card>
-          </v-col>
-        </v-row>
+                <v-row>
+                  <v-col>
+                    <v-card-title>Enticements</v-card-title>
+                  </v-col>
+                </v-row>
 
+                <v-carousel
+                  cycle
+                  height="200"
+                  hide-delimiter-background
+                  show-arrows-on-hover
+                >
+                  <v-carousel-item v-for="(promo, i) in promos" :key="i">
+                    <v-sheet dark :color="promo.color" height="100%">
+                      <v-row
+                        class="fill-height"
+                        align="center"
+                        justify="center"
+                      >
+                        <v-card-text
+                          class="text-center"
+                          v-html="promo.msg"
+                        ></v-card-text>
+                      </v-row>
+                    </v-sheet>
+                  </v-carousel-item>
+                </v-carousel>
+              </v-card>
+            </v-col>
+          </v-row>
+        </vcard>
+
+        <vcard>
+          <v-card-title class="pt-3">Bringing You Back</v-card-title>
+          <!-- Rewards -->
+          <v-row v-if="rewardingSponsor"
+            ><v-col>
+              <v-card
+                v-model="rewardPoints"
+                color="blue-grey darken-2"
+                class="mx-auto"
+                dark
+              >
+                <v-card-title>TQR Rewards</v-card-title>
+                <v-card-subtitle
+                  >Scan Sponsor's QR Code to earn rewards</v-card-subtitle
+                >
+                <div v-if="searchable">
+                  <v-card-subtitle
+                    >Click a Sponsor to claim your reward</v-card-subtitle
+                  >
+                  <v-card-text>
+                    <v-row>
+                      <v-text-field
+                        v-model="search"
+                        label="Search visited establishments here"
+                        dark
+                        flat
+                        solo-inverted
+                        hide-details
+                        clearable
+                      ></v-text-field>
+                      <v-checkbox
+                        v-model="caseSensitive"
+                        dark
+                        hide-details
+                        class="text-caption"
+                        append-icon="mdi-case-sensitive-alt"
+                      ></v-checkbox>
+                    </v-row>
+                  </v-card-text>
+                  <v-card-text>
+                    <v-divider />
+                    <v-treeview
+                      v-model="tree"
+                      :items="items"
+                      :search="search"
+                      :filter="filter"
+                      selectable
+                      open-all
+                      open-on-click
+                      return-object
+                      dense
+                      dark
+                      selected-color="green darken-1"
+                      color="green lighten-1"
+                    >
+                    </v-treeview>
+                  </v-card-text>
+                </div>
+                <v-card-text v-else>
+                  <v-row
+                    ><v-col cols="6">
+                      <v-select
+                        v-model="selectedReward"
+                        :items="getRewardingSponsors"
+                        item-text="biz"
+                        item-value="uid"
+                        return-object
+                        label="Rewarding Sponsors"
+                    /></v-col>
+                    <v-col>
+                      <v-text-field
+                        v-model="selectedReward.uid"
+                        label="Business ID"
+                        readonly
+                        dense
+                      />
+                      <v-text-field
+                        v-model="dateFromSid"
+                        label="Last visit on"
+                        readonly
+                        dense
+                      />
+                      <v-text-field
+                        v-model="selectedReward.points"
+                        label="Reward Points"
+                        readonly
+                        dense
+                      />
+                    </v-col>
+                  </v-row>
+                  <v-row no-gutters justify="center">
+                    <v-col cols="auto">
+                      <v-card-text
+                        v-html="rewardMsg"
+                        class="text-caption"
+                      ></v-card-text
+                    ></v-col>
+                  </v-row>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn text color="pink" @click="deleteReward()">
+                    Delete
+                  </v-btn>
+                  <v-spacer />
+                  <v-btn text color="yellow" @click="earnTokens"
+                    >Earn more tokens</v-btn
+                  >
+                </v-card-actions>
+              </v-card>
+            </v-col></v-row
+          >
+          <v-row v-else>
+            <v-card>
+              <v-card-title>TQR Rewards Info</v-card-title>
+              <v-card-subtitle
+                >Here's how you can earn loyalty rewards</v-card-subtitle
+              >
+              <v-card-text
+                >Participating Sponsors have TQR QR codes in their
+                establishments. If you scan them, you earn points. This part of
+                the app will then show you where you are earning points and how
+                many you've accumlated.</v-card-text
+              >
+              <v-card-text
+                >Soon, TQR will enable Sponsors to scan your personal QR code so
+                you can to redeem these loyalty points all across your fair
+                city.</v-card-text
+              >
+            </v-card>
+          </v-row>
+        </vcard>
         <!-- Footer card -->
-        <v-row no-gutters justify="space-between" class="mt-2">
+        <v-row no-gutters justify="space-between" class="pt-2">
           <v-col>
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>

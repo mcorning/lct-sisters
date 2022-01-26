@@ -359,7 +359,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import { DateTime } from '@/utils/luxonHelpers';
-import { printJson, isEmpty } from '@/utils/helpers';
+import { printJson, isEmpty, head } from '@/utils/helpers';
 
 export default {
   name: 'Sponsor',
@@ -507,11 +507,11 @@ export default {
       confirmationSubtitle: '',
       confirmationMessage: '',
       confirmationIcon: 'check',
-      countries: ['SG', 'UK', 'US'],
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      country: this.sponsor?.country ?? 'SG',
+      countries: '', //['SG', 'UK', 'US'],
+      country: this.sponsor?.country ?? '',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
       registered: this.sponsor?.biz ?? false,
@@ -540,6 +540,16 @@ export default {
   },
 
   methods: {
+    getCountries() {
+      const self = this;
+      this.emitFromClient('getCountries', null, (countries) => {
+        console.log('countries :>> ', printJson(countries));
+        self.countries = countries;
+        self.countries = [...head(countries)];
+        self.country = this.sponsor.country || head(self.countries);
+        console.log('country :>> ', self.country);
+      });
+    },
     approved() {
       switch (this.approval) {
         case 'approvePoints':
@@ -789,6 +799,7 @@ export default {
   },
 
   mounted() {
+    this.getCountries();
     // the only way for a Sponsor to redeem rewards is to scan the Customer's QR
     // this means the handshake with the Customer starts with the Sponsor here:
     if (!isEmpty(this.$route.query)) {
@@ -801,7 +812,8 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
     }
-
+    // TODO REFACTOR: should this guard be in getPromos()? is there any place else that needs ssid?
+    // or is ensuring ssid value in mounted() sufficient?
     this.ssid = this.sponsor.ssid;
     if (this.ssid) {
       this.getPromos();
