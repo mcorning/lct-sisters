@@ -190,13 +190,12 @@ const addReward = (key, biz, cid) =>
 const deletePromo = (key, sid) => redis.xdel(key, sid);
 
 //#endregion DELETE
-
+const tail = arr => (arr.length > 1 ? arr.slice(1) : arr);
 //#region READ
 const getCountries = () =>
   redis
     .scan('0', 'MATCH', 'tqr:??')
     .then((countries) => countries.filter((v, i) => i > 0))
-    // TODO REFACTOR: confirm a SCAN returning multiple countries works here
     .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4))));
 
 // xrange us 1642558471131-0 1642558471131-0

@@ -250,7 +250,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { getDateFromSid } from '../../srv/utils';
-import { printJson, head, isEmpty,  } from '@/utils/helpers';
+import { printJson, head, isEmpty } from '@/utils/helpers';
 export default {
   name: 'CustomerView',
   props: {
@@ -333,7 +333,6 @@ export default {
     disableRegistration() {
       return this.biz || this.address;
     },
-
 
     options() {
       return {
@@ -531,7 +530,7 @@ export default {
     getPromos() {
       this.promos = [];
       const ssid = this.selectedSponsor.ssid;
-      const country = this.country.slice(0,2).toLowerCase();
+      const country = this.country;
       const key = `tqr:${country}:${ssid}:promos`;
       this.emitFromClient('getPromotions', key, (promos) => {
         this.promotions = promos ?? [];
@@ -586,7 +585,9 @@ export default {
       const self = this;
       this.emitFromClient('getCountries', null, (countries) => {
         console.log('countries :>> ', printJson(countries));
-        self.country = head(countries);
+        self.countries = countries;
+        self.countries = [...head(countries)];
+        self.country = head(self.countries);
         console.log('country :>> ', self.country);
       });
     },
