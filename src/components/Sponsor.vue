@@ -72,17 +72,17 @@
                     dark
                     color="grey lighten-3"
                   ></v-text-field>
-                  <v-select
+                  <v-combobox
                     v-model="country"
                     :items="countries"
                     :rules="[(v) => !!v || 'Country is required']"
                     label="Country"
-                    hint="To help validate your address, select a Country"
+                    hint="Select (or enter) a two character Country"
                     persistent-hint
                     required
                     dark
                     color="grey lighten-3"
-                  ></v-select>
+                  ></v-combobox>
                 </v-card-text>
                 <!-- Legal -->
                 <v-card-text>

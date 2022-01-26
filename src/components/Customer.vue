@@ -18,7 +18,7 @@
               Your Device ID: {{ userID }}</v-card-text
             >
           </v-col>
-          <v-col v-if="rewardingSponsor" cols="auto" class="text-center">
+          <v-col cols="auto" class="text-center">
             <VueQRCodeComponent
               id="qr"
               ref="qr"
@@ -33,7 +33,7 @@
 
         <!-- Promotions -->
         <vcard>
-          <v-card-title>Bringing You In</v-card-title>
+          <v-card-title class="pb-1">Enticements Bring You In</v-card-title>
           <v-row
             ><v-col>
               <v-card color="blue-grey darken-2" class="mx-auto mobile" dark>
@@ -106,7 +106,7 @@
         </vcard>
 
         <vcard>
-          <v-card-title class="pt-3">Bringing You Back</v-card-title>
+          <v-card-title class="pt-3">Rewards Bring You Back</v-card-title>
           <!-- Rewards -->
           <v-row v-if="rewardingSponsor"
             ><v-col>
@@ -223,10 +223,12 @@
                 >Here's how you can earn loyalty rewards</v-card-subtitle
               >
               <v-card-text
-                >Participating Sponsors have TQR QR codes in their
-                establishments. If you scan them, you earn points. This part of
-                the app will then show you where you are earning points and how
-                many you've accumlated.</v-card-text
+                >Participating Sponsors have TQR cards in their establishments.
+                You earn points when you scan the QR codes.
+              </v-card-text>
+              <v-card-text>
+                This section of the app shows you where you are earning points
+                and how many you've accumlated.</v-card-text
               >
               <v-card-text
                 >Soon, TQR will enable Sponsors to scan your personal QR code so
@@ -237,7 +239,7 @@
           </v-row>
         </vcard>
         <!-- Footer card -->
-        <v-row no-gutters justify="space-between" class="pt-2">
+        <v-row no-gutters justify="space-between" class="pt-5">
           <v-col>
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
