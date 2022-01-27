@@ -135,6 +135,7 @@ const forSponsor = (sponsor) =>
     a.push({ biz, uid, ssid });
     return a;
   }, []);
+
 const forThisSponsor = (sponsor) => ({
   biz: sponsor.biz,
   uid: sponsor.uid,
@@ -182,15 +183,15 @@ const getSponsors = (key) =>
     .then((data) => forSponsor(data));
 
 // > xadd tqr:us1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
-const addReward = (key, biz, cid) =>
-  redis.xadd(key, '*', 'biz', biz, 'cid', cid);
+const addReward = ({ key, biz, cid, sid }) =>
+  redis.xadd(key, '*', 'biz', biz, 'sid',sid,'cid', cid);
 
 //#endregion CREATE
 //#region DELETE
-const deletePromo = (key, sid) => redis.xdel(key, sid);
+const deleteKeyedID = (key, sid) => redis.xdel(key, sid);
 
 //#endregion DELETE
-const tail = arr => (arr.length > 1 ? arr.slice(1) : arr);
+
 //#region READ
 const getCountries = () =>
   redis
@@ -205,10 +206,10 @@ const getSponsor = (country, ssid) =>
     .then((stream) => objectFromStreamEntry(stream))
     .then((sponsor) => forThisSponsor(sponsor));
 
-// xread country:us:1642558471131-0:rewards 0
-const getRewards = (key) =>
+// xread tqr:us:1642558471131-0:rewards 0
+const getRewards = ({ key }) =>
   redis.xread('STREAMS', key, '0').then((stream) => objectFromStream(stream));
-//#endregion READ
+//#0endregion READ
 //#endregion API
 
 const TESTING = false;
@@ -263,7 +264,11 @@ if (TESTING) {
   Promise.all([p0, p1, p2])
     .then((promises) => log(print(promises), 'Sponsors'))
     .then(() =>
-      addReward(`${COUNTRY}:${bids[0].sid}:rewards`, biz, cids[0].uid)
+      addReward({
+        key: `${COUNTRY}:${bids[0].sid}:rewards`,
+        biz,
+        cid: cids[0].uid,
+      })
     )
     .then(() => getRewards(`${COUNTRY}:${bids[0].sid}:rewards`))
     .then((rewards) => log(print(rewards), 'Rewards'))
@@ -281,7 +286,7 @@ if (TESTING) {
         promoText: promos[2].promoText,
       })
     )
-    .then((sid) => deletePromo(`${COUNTRY}:${bids[0].sid}:promos`, sid))
+    .then((sid) => deleteKeyedID(`${COUNTRY}:${bids[0].sid}:promos`, sid))
     .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))
     .then((ps) => log(print(ps), 'Promos'))
     .then(() => getCountries())
@@ -294,7 +299,7 @@ module.exports = {
   addPromo,
   addReward,
   addSponsor,
-  deletePromo,
+  deleteKeyedID,
   getCountries,
   getPromos,
   getSponsor,

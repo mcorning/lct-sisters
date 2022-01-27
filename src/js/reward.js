@@ -4,20 +4,22 @@ import Reward from '@/models/Reward';
 export const rewardMixin = {
   name: 'rewardMixin',
   methods: {
-    redeemReward(uid) {
-      return Reward.delete(uid);
+    redeemReward(rsid) {
+      return Reward.delete(rsid);
     },
-    getPointsFromCustomer(uid) {
-      return Reward.getPoints(uid);
+    getPointsFromCustomer(sid) {
+      return Reward.getPoints(sid);
     },
-    rewardMap() {
-      return Reward.rewardMap();
+
+    getSponsorRewards(sid){
+      return Reward.query().where('sid',sid).orderBy('rid').get()
     },
+
     rewardingSponsors() {
       return Reward.query().orderBy('biz').get();
     },
-    updateRewardPoints({ uid, biz, ssid }) {
-      Reward.update({ uid, biz, ssid })
+    updateRewardPoints({ rid, sid, biz }) {
+      Reward.update({ rid, sid, biz })
         .then((result) =>
           console.log(
             success('updateRewardPoints result :>> ', printJson(result))

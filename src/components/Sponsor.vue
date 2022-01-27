@@ -39,7 +39,7 @@
               class="text-caption text-sm-body-1"
               @click="printingCard = true"
               color="green darken-4"
-              >Preview QR</v-btn
+              >For Rewards</v-btn
             ></v-col
           >
         </v-row>
@@ -359,7 +359,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
 import { DateTime } from '@/utils/luxonHelpers';
-import { printJson, isEmpty, head } from '@/utils/helpers';
+import { printJson, info, isEmpty, head, success } from '@/utils/helpers';
 
 export default {
   name: 'Sponsor',
@@ -422,7 +422,7 @@ export default {
       return this.sponsor.country?.toUpperCase();
     },
     sponsorID() {
-      return this.ssid || this.sponsor.sponsorID;
+      return this.ssid || this.sponsor.ssid;
     },
     isSponsor() {
       return !this.$route.params.id;
@@ -510,7 +510,7 @@ export default {
 
       business: this.sponsor?.biz ?? '',
       address: this.sponsor?.address ?? '',
-      countries: '', //['SG', 'UK', 'US'],
+      countries: '',
       country: this.sponsor?.country ?? '',
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
@@ -531,7 +531,7 @@ export default {
     shakeHands({ cid, transaction }) {
       this.cid = cid;
       this.transaction = transaction;
-      this.approval = 'approvePoints';
+      this.approval = 'addReward';
       this.confirmationTitle = 'Granting Reward Points';
       this.confirmationMessage = `Customer ${cid} wants to ${transaction}`;
       this.approveString = 'Approve';
@@ -552,11 +552,11 @@ export default {
     },
     approved() {
       switch (this.approval) {
-        case 'approvePoints':
-          this.approvePoints();
+        case 'addReward':
+          this.addReward();
           break;
-        case 'approveNewSponsor':
-          this.approveNewSponsor();
+        case 'addSponsor':
+          this.addSponsor();
           break;
         case 'undo':
           if (isEmpty(this.undo)) {
@@ -582,26 +582,18 @@ export default {
         : cityStateCandidate.slice(0, 2).toLowerCase();
     },
 
-    approveNewSponsor() {
+    addSponsor() {
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
         this.confSnackbar = false;
         return;
       }
+      const uid = this.userID;
       const biz = this.business.trim();
       const country = this.checkForCityState();
-      const uid = this.userID;
-      this.addSponsor({
-        country,
-        biz,
-        uid,
-      });
-      this.confSnackbar = false;
-      this.printing = true;
-    },
-
-    addSponsor({ country, biz, uid }) {
       const key = `tqr:${country.slice(0, 2).toLowerCase()}`;
+      console.log(info('addSponsor() key :>> ', key));
+
       this.emitFromClient(
         'addSponsor',
         {
@@ -626,19 +618,26 @@ export default {
             confirmedAddress,
             userAgent,
           });
+          this.confSnackbar = false;
+          this.printing = true;
         }
       );
     },
 
-    approvePoints() {
-      this.emitFromClient('readyForBusiness', {
+    addReward() {
+      const country = this.country.slice(0, 2).toLowerCase();
+      const key = `tqr:${country}:${this.sponsorID}:rewards`;
+      console.log(info('addReward() key :>> ', key));
+      this.confSnackbar = false;
+      // back to server
+      this.emitFromClient('addReward', {
+        key,
         cid: this.cid,
-        uid: this.userID,
+        sid: this.userID,
         biz: this.business,
         transaction: this.transaction,
-        country: this.country,
       });
-      this.confSnackbar = false;
+      // nothing else for Sponsor to do
     },
 
     promote() {
@@ -646,6 +645,8 @@ export default {
       const biz = this.sponsorName;
       const country = this.country.slice(0, 2).toLowerCase();
       const key = `tqr:${country}:${ssid}:promos`;
+      console.log(info('promote() key :>> ', key));
+
       const promoText = this.promoText;
       this.emitFromClient('promote', { key, biz, promoText }, () =>
         this.getPromos(key)
@@ -657,6 +658,8 @@ export default {
       const country = this.country.slice(0, 2).toLowerCase();
 
       const key = `tqr:${country}:${this.sponsorID}:promos`;
+      console.log(info('deletePromo() key :>> ', key));
+
       this.confirmationTitle = 'Undo';
       this.confirmationMessage = `Undo ${promo} deletion?`;
       this.approval = 'undo';
@@ -683,6 +686,7 @@ export default {
       const ssid = this.sponsorID;
       const country = this.country.slice(0, 2).toLowerCase();
       const key = `tqr:${country}:${ssid}:promos`;
+      console.log(info('getPromos() key :>> ', key));
       this.emitFromClient('getPromotions', key, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
@@ -746,7 +750,7 @@ export default {
             vm.approveString = null;
             vm.confSnackbar = true;
           } else {
-            vm.approval = 'approveNewSponsor';
+            vm.approval = 'addSponsor';
             vm.approveString = 'Approve';
             vm.disapproveString = 'Disapprove';
             vm.confirmedAddress = place_id;
@@ -766,9 +770,11 @@ export default {
     },
 
     redeemReward({ cid, points }) {
+      const country = this.checkForCityState().slice(0, 2).toLowerCase();
+
       this.emitFromClient(
         'redeemReward',
-        { uid: this.userID, cid, points },
+        { country, ssid: this.sponsor.ssid, cid, points },
         (ack) => {
           this.toastText = ack;
           this.toast = true;
@@ -794,7 +800,7 @@ export default {
       this.renderPromos(val);
     },
     sponsor(val) {
-      console.log('sponsor :>> ', val);
+      console.log(info('sponsor :>> ', val));
     },
   },
 
@@ -812,14 +818,14 @@ export default {
     } else {
       this.printing = this.confirmedAddress;
     }
-    // TODO REFACTOR: should this guard be in getPromos()? is there any place else that needs ssid?
-    // or is ensuring ssid value in mounted() sufficient?
+    // TODO REFACTOR: this way of handling ssid stinks
+    // NOTE: this.sponsor gets its data from local storage
     this.ssid = this.sponsor.ssid;
     if (this.ssid) {
       this.getPromos();
     }
 
-    console.log('SPONSOR mounted');
+    console.log(success(`\tSPONSOR ${this.sponsorID} mounted`));
   },
 };
 </script>

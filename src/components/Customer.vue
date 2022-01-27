@@ -33,7 +33,9 @@
 
         <!-- Promotions -->
         <vcard>
-          <v-card-title class="pb-1">Enticements Bring You In</v-card-title>
+          <v-card-title class="pb-1"
+            >Enticements to bring you In...</v-card-title
+          >
           <v-row
             ><v-col>
               <v-card color="blue-grey darken-2" class="mx-auto mobile" dark>
@@ -106,9 +108,9 @@
         </vcard>
 
         <vcard>
-          <v-card-title class="pt-3">Rewards Bring You Back</v-card-title>
+          <v-card-title class="pb-4">...Rewards to bring you back</v-card-title>
           <!-- Rewards -->
-          <v-row v-if="rewardingSponsor"
+          <v-row v-if="hasRewards"
             ><v-col>
               <v-card
                 v-model="rewardPoints"
@@ -170,29 +172,41 @@
                         v-model="selectedReward"
                         :items="getRewardingSponsors"
                         item-text="biz"
-                        item-value="uid"
+                        item-value="sid"
                         return-object
                         label="Rewarding Sponsors"
+                        :hint="selectedRewardSid"
+                        persistent-hint
                     /></v-col>
                     <v-col>
-                      <v-text-field
-                        v-model="selectedReward.uid"
-                        label="Business ID"
-                        readonly
-                        dense
-                      />
-                      <v-text-field
-                        v-model="dateFromSid"
-                        label="Last visit on"
-                        readonly
-                        dense
-                      />
-                      <v-text-field
-                        v-model="selectedReward.points"
-                        label="Reward Points"
-                        readonly
-                        dense
-                      />
+                      <v-simple-table>
+                        <template v-slot:default>
+                          <thead>
+                            <tr>
+                              <th id="promo" style="bgcolor: grey">
+                                Reward ID
+                              </th>
+                              <th id="from" style="bgcolor: grey">Earned On</th>
+                              <th id="promo" style="bgcolor: grey">
+                                Sponsor ID
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr
+                              v-for="item in sponsorRewards"
+                              :key="item.rid"
+                              v-touch="{ right: () => deleteReward(item.rid) }"
+                            >
+                              <td style="text-align: left">{{ item.rid }}</td>
+                              <td style="text-align: left">
+                                {{ getDateFromRid(item.rid) }}
+                              </td>
+                              <td style="text-align: left">{{ item.sid }}</td>
+                            </tr>
+                          </tbody>
+                        </template>
+                      </v-simple-table>
                     </v-col>
                   </v-row>
                   <v-row no-gutters justify="center">
@@ -205,9 +219,6 @@
                   </v-row>
                 </v-card-text>
                 <v-card-actions>
-                  <v-btn text color="pink" @click="deleteReward()">
-                    Delete
-                  </v-btn>
                   <v-spacer />
                   <v-btn text color="yellow" @click="earnTokens"
                     >Earn more tokens</v-btn
@@ -282,6 +293,7 @@ import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { getDateFromSid } from '../../srv/utils';
 import { printJson, head, isEmpty } from '@/utils/helpers';
+
 export default {
   name: 'CustomerView',
   props: {
@@ -290,8 +302,8 @@ export default {
     getRewardPoints: Function,
     earnReward: Function,
     callUpdateRewardPoints: Function,
-    rewardMap: Function,
     rewardingSponsors: Function,
+    getSponsorRewards: Function,
     getPointsFromCustomer: Function,
     redeemReward: Function,
     audit: Function,
@@ -301,20 +313,20 @@ export default {
     ConfirmationSnackbar,
   },
   computed: {
+    selectedRewardSid() {
+      return `ID: ${this.selectedReward.sid}`;
+    },
+    sponsorRewards() {
+      return this.getSponsorRewards(this.selectedReward.sid);
+    },
+    hasRewards() {
+      return !isEmpty(this.getRewardingSponsors);
+    },
+
     getRewardingSponsors() {
       const s = this.rewardingSponsors();
       console.log('rewardingSponsors', printJson(s));
       return s;
-    },
-    points() {
-      return this.getPointsFromCustomer(this.selectedReward.uid);
-    },
-
-    dateFromSid() {
-      if (isEmpty(this.selectedReward.ssid)) {
-        return;
-      }
-      return getDateFromSid(this.selectedReward.ssid);
     },
 
     userID() {
@@ -336,7 +348,7 @@ export default {
     },
 
     rewardUri() {
-      return `?cid=${this.userID}&points=${this.points}`;
+      return `?cid=${this.userID}&points=${this.sponsorRewards.length}`;
     },
 
     encodedUri() {
@@ -381,7 +393,7 @@ export default {
       toast: false,
       toastText: 'You are redeemed',
       toastButton: 'Thanks',
-      selectedReward: { biz: '', uid: '', ssid: '' },
+      selectedReward: { biz: '', sid: '', ssid: '' },
       searchable: false,
       origin: window.location.origin,
       selectedSponsor: { biz: '', uid: '', ssid: '' },
@@ -451,24 +463,24 @@ export default {
     };
   },
   sockets: {
-    rewardRedeemed(uid) {
+    rewardRedeemed(rsid) {
       // remove uid from Reward
-      this.redeemReward(uid);
-      this.toastText = `${uid} has redeemed you.`;
+      this.redeemReward(rsid);
+      this.toastText = `Reward ${rsid} is redeemed.`;
       // TODO extend setting with result of redeem instead of hardwired true
       this.toast = true;
     },
     // final step in rewards handshake protocol
-    doingBusinessWith({ uid, biz, country, ssid }) {
-      const msg = `You just earned reward points from`;
+    doingBusinessWith({ rid, sid, biz }) {
+      const msg = `Added reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `${biz} (${uid}) in ${country} <br/>Sponsor Stream ID: ${ssid}`;
+      this.confirmationMessage = `${biz} (${sid}) in ${this.country} <br/>Reward Stream ID: ${rid}`;
       this.confSnackbar = true;
       // now add the uid/name to the items array
-      this.getRewardPointsFor(uid);
+      this.getRewardPointsFor({ sid });
       // now add the uid to local storage
-      this.callUpdateRewardPoints({ uid, biz, ssid });
-      this.selectedReward.biz = biz;
+      this.callUpdateRewardPoints({ rid, sid, biz });
+      this.selectedReward = head(this.getRewardingSponsors);
     },
 
     newPromotion({ biz, promoText }) {
@@ -479,26 +491,29 @@ export default {
   },
 
   methods: {
+    getDateFromRid(rid) {
+      return getDateFromSid(rid);
+    },
     deleteReward() {
-      const uid = this.selectedReward.uid;
+      const sid = this.selectedReward.sid;
       // remove uid from Reward
-      this.redeemReward(uid)
+      this.redeemReward(sid)
         .then((result) => {
-          this.toastText = `${result.uid} deleted from local storage.`;
+          this.toastText = `${result.sid} deleted from local storage.`;
           this.toast = true;
         })
-        .then(() => (this.selectedReward = { biz: '', uid: '' }))
+        .then(() => (this.selectedReward = { biz: '', sid: '' }))
         .catch((e) => {
           this.toastText = e;
           this.toast = true;
         });
     },
-    offerHandshake({ uid, transaction }) {
+    offerHandshake({ sid, transaction }) {
       this.emitFromClient(
         'offerHandshake',
         {
           cid: this.userID,
-          uid,
+          sid,
           transaction,
         },
         (ack) => console.log('ack :>> ', ack)
@@ -510,9 +525,9 @@ export default {
       this.getSponsors(this.country);
     },
 
-    getRewardPointsFor(uid) {
+    getRewardPointsFor({ sid }) {
       const cid = this.userID;
-      this.getRewardPoints({ uid, cid }).then((visits) => {
+      this.getRewardPoints({ sid, cid }).then((visits) => {
         if (isEmpty(visits)) {
           return;
         }
@@ -657,17 +672,15 @@ export default {
 
   mounted() {
     this.getCountries();
+    const sid = this.$route.params.id;
     // if this url is .../customer/<sponsor uid>
-    // the first step is to ensure Sponsor is online with a handshake
-    if (this.$route.params.id) {
-      const uid = this.$route.params.id;
-      this.offerHandshake({ uid, transaction: 'earn points' });
+    // the first step is to have offerHandshake provide Sponsor with cid
+    if (sid) {
+      this.offerHandshake({ sid, transaction: 'earn points' });
     }
-    // TODO refactor if we use local storage for visits
-    // this.getRewardPointsFor();
+
     this.selectedReward = head(this.getRewardingSponsors);
-    console.log('');
-    console.log('CUSTOMER mounted with Sponsor', this.selectedReward.uid);
+    console.log('CUSTOMER mounted with Sponsor', this.selectedReward.sid);
   },
 };
 </script>

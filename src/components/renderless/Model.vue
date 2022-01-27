@@ -411,8 +411,8 @@ export default {
       const s = Setting.query().all();
       return s.length ? s[0] : s;
     },
-    callUpdateRewardPoints({ uid, biz, ssid }) {
-      this.updateRewardPoints({ uid, biz, ssid });
+    callUpdateRewardPoints({ rid, sid, biz }) {
+      this.updateRewardPoints({ rid, sid, biz });
     },
   },
 
@@ -500,6 +500,7 @@ export default {
       callUpdateRewardPoints: this.callUpdateRewardPoints,
       rewardMap: this.rewardMap,
       rewardingSponsors: this.rewardingSponsors,
+      getSponsorRewards: this.getSponsorRewards,
       getPointsFromCustomer: this.getPointsFromCustomer,
       redeemReward: this.redeemReward,
       getWarnings: this.getWarnings,

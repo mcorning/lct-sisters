@@ -69,8 +69,10 @@ const {
 const {
   addSponsor,
   addPromo,
+  addReward,
+  deleteKeyedID,
   getPromos,
-  deletePromo,
+  getRewards,
   getSponsors,
   getCountries,
 } = require('./redis/tqr');
@@ -191,7 +193,7 @@ io.on('connection', (socket) => {
 
   socket.on('deletePromotion', ({ key, sid }, ack) => {
     console.log('key, sid', key, sid);
-    deletePromo(key, sid).then((ct) => {
+    deleteKeyedID(key, sid).then((ct) => {
       if (ack) {
         ack(ct);
       }
@@ -239,51 +241,64 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('redeemReward', ({ uid, cid, points }, ack) => {
-    // getRewardPoints({ uid, cid }).then((visitedOn) => {
-    //   if (ack && visitedOn[cid].length >= points) {
-    //     // Customer will remove uid rewards
-    //     socket.to(cid).emit('rewardRedeemed', uid);
-    //     // confirm wih Sponsor
-    //     ack(`They, ${cid}, are redeemed`);
-    //   }
-    // });
+  // from Sponsor
+  socket.on('redeemReward', ({ country, ssid, cid, points }, ack) => {
+    const key = `tqr:${country}:${ssid}:rewards`;
+    console.log(info('redeemReward() key :>> ', key));
+
+    // delegate to tqr.js
+    getRewards({ key }).then((visitedOn) => {
+      // TODO work on visitedOn if tqr.js is returning all rewards for all Sponsors
+      if (ack && visitedOn.filter((v) => v.cid === cid).length >= points) {
+        // Customer will remove ssid rewards
+        // (ssid ensures referential integrity: Rewards in localstorage tie to reward Stream using ssid keys)
+        socket.to(cid).emit('rewardRedeemed', ssid);
+        // confirm wih Sponsor
+        // (after we remove the reward Stream's ssid)
+        deleteKeyedID(key, ssid).then((ct) => {
+          ack(`They, ${cid}, are redeemed (${ct} rewards deleted)`);
+        });
+      } else {
+        ack('No reward to redeem');
+      }
+    });
   });
 
-  socket.on('getRewardPoints', ({ uid, cid }, ack) => {
-    if (isEmpty(uid)) {
+  socket.on('getRewards', ({ sid, cid }, ack) => {
+    if (isEmpty(sid)) {
       return;
     }
-    // getRewardPoints({ uid, cid }).then((visitedOn) => {
-    //   if (ack) {
-    //     ack(visitedOn);
-    //   }
-    // });
+    getRewards({ sid, cid }).then((visitedOn) => {
+      if (ack) {
+        ack(visitedOn);
+      }
+    });
   });
 
   //#region Earning Reward Points
   // sent by Customer
-  socket.on('offerHandshake', ({ cid, uid, transaction }) => {
-    console.log('cid, uid, transaction :>> ', cid, uid, transaction); // sent to Sponsor
-    socket.to(uid).emit('shakeHands', { cid, transaction });
+  socket.on('offerHandshake', ({ cid, sid, transaction }) => {
+    console.log('cid, sid, transaction :>> ', cid, sid, transaction); // sent to Sponsor
+    socket.to(sid).emit('shakeHands', { cid, transaction });
   });
 
   // sent by Sponsor
-  socket.on('readyForBusiness', ({ cid, uid, biz, transaction, country }) => {
+  socket.on('addReward', ({ key, cid, sid, biz, transaction }) => {
     console.log(
-      'cid, uid, biz, transaction, country :>> ',
+      'key, cid, sid, biz, transaction :>> ',
+      key,
       cid,
-      uid,
+      sid,
       biz,
-      transaction,
-      country
+      transaction
     );
     if (transaction === 'earn points') {
-      // earnReward({ uid, biz, cid }).then((ssid) => {
-      //   console.log(ssid);
-      //   // send to Customer
-      //   socket.to(cid).emit('doingBusinessWith', { uid, biz, country, ssid });
-      // });
+      // delegate to tqr.js
+      addReward({ key, biz, cid }).then((rid) => {
+        console.log('Reward ID back to customer:',rid);
+        // back to Customer
+        socket.to(cid).emit('doingBusinessWith', { rid, sid, biz });
+      });
     }
   });
   //#endregion

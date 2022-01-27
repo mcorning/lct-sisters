@@ -9,6 +9,7 @@
         getPointsFromCustomer,
         isConnected,
         rewardMap,
+        getSponsorRewards,
         rewardingSponsors,
         redeemReward,
         audit,
@@ -22,6 +23,7 @@
         :callUpdateRewardPoints="callUpdateRewardPoints"
         :rewardMap="rewardMap"
         :rewardingSponsors="rewardingSponsors"
+        :getSponsorRewards="getSponsorRewards"
         :getPointsFromCustomer="getPointsFromCustomer"
         :redeemReward="redeemReward"
         :audit="audit"
