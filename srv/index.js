@@ -72,6 +72,7 @@ const {
   addReward,
   deleteStream,
   getCountries,
+  getLoyalists,
   getPromos,
   getRewards,
   getSponsors,
@@ -399,6 +400,15 @@ io.on('connection', (socket) => {
     getPromos(key).then((promos) => {
       if (ack) {
         ack(promos);
+      }
+    });
+  });
+  socket.on('getLoyalists', ({ country, ssid }, ack) => {
+    const key = getKey({ country, ssid, type: 'rewards' });
+    console.log('getLoyalists() key :>> ', key);
+    getLoyalists(`${key}*`).then((loyalists) => {
+      if (ack) {
+        ack(loyalists);
       }
     });
   });

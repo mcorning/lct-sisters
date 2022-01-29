@@ -234,7 +234,9 @@
                     <tr v-for="item in loyalists" :key="item.cid">
                       <td style="text-align: left">{{ item.cid }}</td>
                       <td style="text-align: left">{{ item.points }}</td>
-                      <td style="text-align: left">{{ item.dated }}</td>
+                      <td style="text-align: left">
+                        {{ getFormattedDateTime(item.dated) }}
+                      </td>
                     </tr>
                   </tbody>
                 </template>
@@ -404,7 +406,7 @@
 import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import ConfirmationSnackbar from './prompts/confirmationSnackbar.vue';
-import { DateTime } from '@/utils/luxonHelpers';
+import { DateTime, formatTime } from '@/utils/luxonHelpers';
 import { printJson, info, isEmpty, head, success } from '@/utils/helpers';
 
 export default {
@@ -422,9 +424,7 @@ export default {
     place_id() {
       return `Place ID: ${this.confirmedAddress}`;
     },
-    loyalists() {
-      return [{ cid: 'Under' }, { cid: 'Construction' }];
-    },
+
     userAgent() {
       return navigator.userAgent;
     },
@@ -494,6 +494,7 @@ export default {
 
   data() {
     return {
+      loyalists: [],
       registered: false,
       // registered: this.sponsor?.biz ?? false,
       ssid: '',
@@ -602,6 +603,10 @@ export default {
   },
 
   methods: {
+    getFormattedDateTime(val) {
+      return formatTime(Number(val));
+    },
+
     compactCityOrState(cityOrState, tails) {
       const heads = head(cityOrState);
 
@@ -700,8 +705,8 @@ export default {
 
     addReward() {
       if (isEmpty(this.sponsor)) {
-        alert("Houston, we have a problem. Please reload me.")
-        return
+        alert('Houston, we have a problem. Please reload me.');
+        return;
       }
       // Sponsor has to be online to approve Reward
       this.confSnackbar = false;
@@ -753,8 +758,8 @@ export default {
         'deletePromo',
         {
           country,
-          biz:this.sponsor.biz,
-          ssid:this.sponsorID,
+          biz: this.sponsor.biz,
+          ssid: this.sponsorID,
           sid: this.undo.ssid,
         },
         (ct) => {
@@ -870,12 +875,20 @@ export default {
     redeemReward({ cid, points }) {
       this.emitFromClient(
         'redeemReward',
-        { country:this.sponsor.country, ssid: this.sponsor.ssid, cid, points },
+        { country: this.sponsor.country, ssid: this.sponsor.ssid, cid, points },
         (ack) => {
           this.toastText = ack;
           this.toast = true;
         }
       );
+    },
+
+    getLoyalists(ssid) {
+      const country = this.country;
+      this.emitFromClient('getLoyalists', { country, ssid }, (loyalists) => {
+        this.loyalists = loyalists;
+        console.log('loyalists :>> ', printJson(loyalists));
+      });
     },
   }, // end of Methods
 
@@ -923,6 +936,7 @@ export default {
     this.ssid = this.sponsor.ssid;
     if (this.ssid) {
       this.getPromos();
+      this.getLoyalists(this.ssid);
     }
 
     console.log(success(`\tSPONSOR ${this.sponsorID} mounted`));

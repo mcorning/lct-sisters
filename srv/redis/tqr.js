@@ -117,8 +117,9 @@ const Redis = require('ioredis');
 const redis = new Redis(options);
 console.log('options:>>', options);
 //#endregion
-//#region Helpers
 
+//#region Helpers
+const { err, success, printJson } = require('../../src/utils/helpers.js');
 const {
   isEmpty,
   objectFromStream,
@@ -193,6 +194,44 @@ const deleteStream = (key, ids) => redis.xdel(key, ids);
 //#endregion DELETE
 
 //#region READ
+const getLoyalists = async (key) => {
+  async function promises(arr) {
+    const unresolved = arr.map(async (key) => {
+      const points = await redis.xlen(key);
+      const cid = key.slice(key.lastIndexOf(':') + 1);
+      const rewards = await redis.xrange(key, '-', '+');
+      const dated = rewards.map((v) => v[0].slice(0, 13))[0];
+      return { cid, points, dated };
+    });
+
+    return await Promise.all(unresolved);
+  }
+  // > scan 0 match tqr:us:1643426433242-0:rewards*
+  const scanned = await redis.scan('0', 'MATCH', key);
+  const keys = scanned[1];
+  console.log(success(printJson(keys)));
+  const results = await promises(keys);
+  console.log('results :>> ', printJson(results));
+
+  return results;
+
+  // try {
+  //   redis
+  //     .scan('0', 'MATCH', key)
+  //     .then((customers) => {
+  //       console.log(success(customers));
+  //       return customers;
+  //     })
+  //     .catch((e) => {
+  //       console.log(err(e));
+  //     });
+
+  //   // > xrange tqr:us:1643426433242-0:rewards:833dfba67f058dc4 - +
+  // } catch (error) {
+  //   console.log(err(error));
+  // }
+};
+
 const getCountries = () =>
   redis
     .scan('0', 'MATCH', 'tqr:??')
@@ -301,6 +340,7 @@ module.exports = {
   addSponsor,
   deleteStream,
   getCountries,
+  getLoyalists,
   getPromos,
   getSponsor,
   getRewards,
