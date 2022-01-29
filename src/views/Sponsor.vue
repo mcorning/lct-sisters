@@ -31,8 +31,8 @@ export default {
   methods: {
     onError(error) {
       // let the global error handler pick up and display this error
-      error.message = `Commercial.vue error message: ${error.message}`;
-      throw error;
+      const msg = `Sponsor.vue error message: ${error.message}`;
+      throw Error(msg);
     },
   },
   mounted() {

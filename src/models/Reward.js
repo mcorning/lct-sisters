@@ -6,7 +6,7 @@ console.log('Loading Reward entity');
 
 export default class Reward extends Model {
   static entity = 'rewards';
-  static primaryKey = 'rid';
+  static primaryKey = 'rsid';
 
   static fields() {
     return {
@@ -17,9 +17,7 @@ export default class Reward extends Model {
       sid: this.string(''),
 
       // sid in reward stream
-      rid: this.string(''),
-
-
+      rsid: this.string(''),
     };
   }
 
@@ -27,15 +25,15 @@ export default class Reward extends Model {
     return Reward.query().where('sid', sid).length;
   }
 
-  static update({ sid, biz, rid }) {
-    console.log('rid, sid, biz :>> ', { rid, sid, biz });
+  static update({ rsid, sid, biz }) {
+    console.log('rsid, sid, biz :>> ', { rsid, sid, biz });
     return this.$create({
-      data: { rid, sid, biz },
+      data: { rsid, sid, biz },
     });
   }
 
-  static delete(rid) {
-    return this.$delete(rid);
+  static delete(rsid) {
+    return this.$delete(rsid);
   }
 
   static deleteAll() {

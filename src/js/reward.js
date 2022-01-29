@@ -11,15 +11,15 @@ export const rewardMixin = {
       return Reward.getPoints(sid);
     },
 
-    getSponsorRewards(sid){
-      return Reward.query().where('sid',sid).orderBy('rid').get()
+    getSponsorRewards(sid) {
+      return Reward.query().where('sid', sid).orderBy('rid').get();
     },
 
     rewardingSponsors() {
       return Reward.query().orderBy('biz').get();
     },
-    updateRewardPoints({ rid, sid, biz }) {
-      Reward.update({ rid, sid, biz })
+    updateRewardPoints({ rsid, sid, biz }) {
+      Reward.update({ rsid, sid, biz })
         .then((result) =>
           console.log(
             success('updateRewardPoints result :>> ', printJson(result))

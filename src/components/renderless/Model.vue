@@ -411,8 +411,8 @@ export default {
       const s = Setting.query().all();
       return s.length ? s[0] : s;
     },
-    callUpdateRewardPoints({ rid, sid, biz }) {
-      this.updateRewardPoints({ rid, sid, biz });
+    callUpdateRewardPoints({ rsid, sid, biz }) {
+      this.updateRewardPoints({ rsid, sid, biz });
     },
   },
 

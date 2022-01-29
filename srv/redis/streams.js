@@ -3,7 +3,7 @@
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 const { highlight } = require('../../src/utils/helpers');
 const { isEmpty } = require('../utils');
-const source = 'streams';
+const here = 'streams';
 const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
 
@@ -33,7 +33,7 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
-const audit = ({ context, msg }) =>
+const audit = ({ context, msg, source = here }) =>
   redis.xadd(`auditor:${source}`, '*', 'context', context, 'msg', msg);
 
 const findLastEntry = (key) =>
@@ -81,7 +81,7 @@ const getSponsor = ({ country, sponsorID }) => {
     .then((stream) => objectFromStream(stream))
     .then((sponsors) => groupBy(sponsors, sponsorID))
     .then((results) => Object.keys(results))
-    .catch((e) => audit({ source, context: 'getSponsor()', msg: e }));
+    .catch((e) => audit({ context: 'getSponsor()', msg: e }));
 };
 
 const getSponsors = (country) => {
@@ -93,7 +93,7 @@ const getSponsors = (country) => {
       .then((stream) => objectFromStream(stream))
       .then((sponsors) => groupBy(sponsors, 'biz'))
       // .then((results) => Object.keys(results))
-      .catch((e) => audit({ source, context: 'getSponsors()', msg: e }))
+      .catch((e) => audit({ context: 'getSponsors()', msg: e }))
   );
 };
 
@@ -103,11 +103,11 @@ const getCountries = () =>
     .then((keys) => {
       const context = 'getCountries()';
       const msg = `keys: ${keys}`;
-      audit({ source, context, msg });
+      audit({ context, msg });
       console.log('keys', keys);
       return keys;
     })
-    .catch((e) => audit({ source, context, msg: e }));
+    .catch((e) => audit({ context: 'catch()', msg: e }));
 
 //#endregion
 
@@ -123,7 +123,7 @@ function getRewardPoints({ uid }, lastID = 0) {
     .xread(['STREAMS', key, lastID])
     .then((stream) => objectFromStream(stream))
     .then((visits) => groupBy(visits, 'cid'))
-    .catch((e) => audit({ source, context: 'getRewardPoints()', msg: e }));
+    .catch((e) => audit({ context: 'getRewardPoints()', msg: e }));
 }
 
 async function earnReward({ uid, cid, lastID = 0 }) {
@@ -178,14 +178,13 @@ function getPromotions({ ssid, country }) {
   const key = `promotions:${ssid}`;
   const context = `getPromotions(${ssid}, ${country})`;
   audit({
-    source,
     context,
     msg: `XREAD STREAMS ${key} 0`,
   });
   return redis
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
-    .catch((e) => audit({ source, context, msg: e }));
+    .catch((e) => audit({ context, msg: e }));
 }
 //#endregion
 
@@ -200,7 +199,7 @@ const getWarnings = () => {
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
     .then((alerts) => safeGroup(alerts))
-    .catch((e) => audit({ source, context: 'streams:getWarnings()', msg: e }));
+    .catch((e) => audit({ context: 'streams:getWarnings()', msg: e }));
 };
 
 /**

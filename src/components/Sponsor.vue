@@ -19,9 +19,7 @@
               Your Device ID:
               {{ userID }} <br />
               Your Stream ID:
-              {{ sponsorID }} <br />
-              Your Place ID:
-              {{ confirmedAddress }}
+              {{ sponsorID }}
             </v-card-text>
           </v-col>
           <v-col cols="auto">
@@ -54,35 +52,53 @@
                   <v-text-field
                     v-model="business"
                     :counter="nameMaxLength"
+                    required
                     :rules="nameRules"
                     label="Your business name"
-                    required
                     clearable
                     dark
                     color="grey lighten-3"
                   ></v-text-field>
-                  <v-text-field
-                    v-model="address"
-                    :counter="addressMaxLength"
-                    :rules="addressRules"
-                    label="Your business address"
-                    placeholder="Minimum: City [State]"
-                    required
-                    clearable
-                    dark
-                    color="grey lighten-3"
-                  ></v-text-field>
-                  <v-combobox
-                    v-model="country"
-                    :items="countries"
-                    :rules="[(v) => !!v || 'Country is required']"
-                    label="Country"
-                    hint="Select (or enter) a two character Country"
-                    persistent-hint
-                    required
-                    dark
-                    color="grey lighten-3"
-                  ></v-combobox>
+                  <!-- Normal rendering of address-->
+                  <div v-if="address">
+                    <v-text-field
+                      class="mt-5"
+                      v-model="address"
+                      label="Your official address"
+                      dark
+                      readonly
+                      color="grey lighten-3"
+                      :hint="place_id"
+                      persistent-hint
+                    ></v-text-field>
+                  </div>
+
+                  <!-- Registration form -->
+                  <div v-else>
+                    <v-combobox
+                      v-model="city"
+                      :items="cities"
+                      label="City"
+                      required
+                      :rules="[(v) => !!v || 'City is required']"
+                      clearable
+                      dark
+                      color="grey lighten-3"
+                    ></v-combobox>
+
+                    <v-combobox
+                      v-model="countryAbbr"
+                      :items="countries"
+                      :rules="countryRules"
+                      required
+                      label="Country Abbreviation"
+                      hint="Select (or enter) a two character Country"
+                      persistent-hint
+                      clearable
+                      dark
+                      color="grey lighten-3"
+                    ></v-combobox>
+                  </div>
                 </v-card-text>
                 <!-- Legal -->
                 <v-card-text>
@@ -103,13 +119,13 @@
                 <v-sheet color="black">
                   <v-card-actions>
                     <v-btn
+                      v-if="registered && !address"
                       text
-                      :disabled="!isValid"
                       color="yellow"
                       class="mr-4"
-                      @click="getPlaceID"
+                      @click="register"
                     >
-                      Confirm
+                      Register Sponsor
                     </v-btn>
                     <v-spacer />
                     <v-btn
@@ -188,7 +204,7 @@
                   text
                   color="brown lighten-3"
                   class="white--text mr-4"
-                  @click="promote"
+                  @click="addPromo"
                 >
                   Promote
                 </v-btn>
@@ -197,8 +213,38 @@
           </v-col>
         </v-row>
 
+        <!-- Loyalists -->
+        <v-row
+          ><v-col>
+            <v-card dark color="blue-grey darken-1">
+              <v-card-title>{{ business }} Loyalists</v-card-title>
+              <v-card-subtitle>
+                These customers are earning loyalty reward points
+              </v-card-subtitle>
+              <v-simple-table>
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th id="promo" style="bgcolor: grey">Customer ID</th>
+                      <th id="from" style="bgcolor: grey">Points</th>
+                      <th id="for" style="bgcolor: grey">Last Visit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in loyalists" :key="item.cid">
+                      <td style="text-align: left">{{ item.cid }}</td>
+                      <td style="text-align: left">{{ item.points }}</td>
+                      <td style="text-align: left">{{ item.dated }}</td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </v-card>
+          </v-col></v-row
+        >
+
         <!-- Footer card -->
-        <v-row no-gutters justify="space-between">
+        <v-row dense justify="space-between">
           <v-col cols="11">
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
@@ -373,6 +419,12 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    place_id() {
+      return `Place ID: ${this.confirmedAddress}`;
+    },
+    loyalists() {
+      return [{ cid: 'Under' }, { cid: 'Construction' }];
+    },
     userAgent() {
       return navigator.userAgent;
     },
@@ -401,16 +453,15 @@ export default {
       });
       return x.join('\n');
     },
-    isValid() {
-      return this.business && this.address && this.country;
-    },
 
     disableRegistration() {
       return this.biz || this.address;
     },
 
     encodedUri() {
-      return encodeURI(`${window.location.origin}/customer/${this.userID}`);
+      return this.isConnected
+        ? encodeURI(`${window.location.origin}/customer/${this.userID}`)
+        : 'You are not online yet.';
     },
     sponsorName() {
       return this.sponsor.biz || this.business;
@@ -419,7 +470,7 @@ export default {
       return this.sponsor.address;
     },
     sponsorCountry() {
-      return this.sponsor.country?.toUpperCase();
+      return this.sponsor.country;
     },
     sponsorID() {
       return this.ssid || this.sponsor.ssid;
@@ -443,6 +494,8 @@ export default {
 
   data() {
     return {
+      registered: false,
+      // registered: this.sponsor?.biz ?? false,
       ssid: '',
       centered: false,
       bottom: false,
@@ -486,6 +539,12 @@ export default {
           (v && v.length <= this.nameMaxLength) ||
           `Name must be less than ${this.nameMaxLength} characters`,
       ],
+      countryRules: [
+        (v) => !!v || 'Country is required',
+        (v) =>
+          (v && v.length === 2) ||
+          `Country must be two characters (and will be lowercase)`,
+      ],
       addressRules: [
         (v) =>
           !!v ||
@@ -512,9 +571,12 @@ export default {
       address: this.sponsor?.address ?? '',
       countries: '',
       country: this.sponsor?.country ?? '',
+      countryAbbr: '',
+      city: '',
+      // TODO REFACTOR: follow the lead on countries and make this array dynamic
+      cities: ['Manchester', 'Sisters', 'Singapore'],
       confirmedAddress: this.sponsor?.confirmedAddress ?? '',
 
-      registered: this.sponsor?.biz ?? false,
       snackBtnText: '',
       snackBarMessage: 'Ready to get started?',
       snackBarActionIndex: 0,
@@ -540,14 +602,25 @@ export default {
   },
 
   methods: {
+    compactCityOrState(cityOrState, tails) {
+      const heads = head(cityOrState);
+
+      const headsAndTails = [...heads, ...tails];
+      const set = [...new Set(headsAndTails)];
+      console.log('set', printJson(set));
+      return set;
+    },
+
     getCountries() {
-      const self = this;
       this.emitFromClient('getCountries', null, (countries) => {
-        console.log('countries :>> ', printJson(countries));
-        self.countries = countries;
-        self.countries = [...head(countries)];
-        self.country = this.sponsor.country || head(self.countries);
-        console.log('country :>> ', self.country);
+        const tails = ['sg', 'uk', 'us'];
+        this.countries = this.compactCityOrState(countries, tails);
+      });
+    },
+    getCities() {
+      this.emitFromClient('getCities', null, (cities) => {
+        const tails = ['Manchester', 'Sisters', 'Singapore'];
+        this.cities = this.compactCityOrState(cities, tails);
       });
     },
     approved() {
@@ -565,7 +638,7 @@ export default {
           this.confSnackbar = false;
           // add undo back to stream
           this.promoText = this.undo.promoText;
-          this.promote();
+          this.addPromo();
           break;
 
         default:
@@ -583,6 +656,7 @@ export default {
     },
 
     addSponsor() {
+      this.registered = true;
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
         this.confSnackbar = false;
@@ -625,13 +699,18 @@ export default {
     },
 
     addReward() {
-      const country = this.country.slice(0, 2).toLowerCase();
-      const key = `tqr:${country}:${this.sponsorID}:rewards`;
-      console.log(info('addReward() key :>> ', key));
+      if (isEmpty(this.sponsor)) {
+        alert("Houston, we have a problem. Please reload me.")
+        return
+      }
+      // Sponsor has to be online to approve Reward
       this.confSnackbar = false;
+
+      const country = this.sponsorCountry;
       // back to server
       this.emitFromClient('addReward', {
-        key,
+        country,
+        ssid: this.sponsorID,
         cid: this.cid,
         sid: this.userID,
         biz: this.business,
@@ -640,25 +719,26 @@ export default {
       // nothing else for Sponsor to do
     },
 
-    promote() {
+    addPromo() {
+      if (!this.isConnected) {
+        alert('You are not online yet.');
+        return;
+      }
       const ssid = this.sponsorID;
       const biz = this.sponsorName;
-      const country = this.country.slice(0, 2).toLowerCase();
+      const country = this.sponsorCountry;
       const key = `tqr:${country}:${ssid}:promos`;
-      console.log(info('promote() key :>> ', key));
+      console.log(info('addPromo() key :>> ', key));
 
       const promoText = this.promoText;
-      this.emitFromClient('promote', { key, biz, promoText }, () =>
+      this.emitFromClient('addPromo', { key, biz, promoText }, () =>
         this.getPromos(key)
       );
     },
 
     deletePromo(promo) {
       this.undo = this.ps.find((v) => v.promoText === promo);
-      const country = this.country.slice(0, 2).toLowerCase();
-
-      const key = `tqr:${country}:${this.sponsorID}:promos`;
-      console.log(info('deletePromo() key :>> ', key));
+      const country = this.sponsorCountry;
 
       this.confirmationTitle = 'Undo';
       this.confirmationMessage = `Undo ${promo} deletion?`;
@@ -670,9 +750,11 @@ export default {
       this.timeout = 5000;
       this.confSnackbar = true;
       this.emitFromClient(
-        'deletePromotion',
+        'deletePromo',
         {
-          key,
+          country,
+          biz:this.sponsor.biz,
+          ssid:this.sponsorID,
           sid: this.undo.ssid,
         },
         (ct) => {
@@ -684,7 +766,7 @@ export default {
 
     getPromos() {
       const ssid = this.sponsorID;
-      const country = this.country.slice(0, 2).toLowerCase();
+      const country = this.sponsorCountry;
       const key = `tqr:${country}:${ssid}:promos`;
       console.log(info('getPromos() key :>> ', key));
       this.emitFromClient('getPromotions', key, (promos) => {
@@ -712,9 +794,25 @@ export default {
     },
     validate() {
       this.$refs.form.validate();
+      const x =
+        isEmpty(this.city) ||
+        isEmpty(this.countryAbbr) ||
+        isEmpty(this.business);
+
+      // if any field is empty, we are not registered
+      this.registered = !x;
     },
     reset() {
       this.$refs.form.reset();
+      this.registered = false;
+      this.updateSponsor({
+        id: 1,
+        biz: '',
+        country: '',
+        ssid: '',
+        address: '',
+        confirmedAddress: '',
+      });
     },
 
     convertDateTime(val) {
@@ -735,12 +833,12 @@ export default {
       this.printingCard = false;
     },
 
-    getPlaceID() {
-      const address = `${this.business} ${this.address}`;
+    register() {
+      const address = `${this.business} ${this.city}`;
       const vm = this;
       this.emitFromClient(
         'getPlaceID',
-        { address, country: this.country },
+        { address, country: this.countryAbbr },
         // formatted_address and place_id come from getPlaceID()
         // warning comes from confirmPlaceID(). e.g., 'Cannot find an address based on your input.'
         ({ formatted_address, place_id, warning }) => {
@@ -770,11 +868,9 @@ export default {
     },
 
     redeemReward({ cid, points }) {
-      const country = this.checkForCityState().slice(0, 2).toLowerCase();
-
       this.emitFromClient(
         'redeemReward',
-        { country, ssid: this.sponsor.ssid, cid, points },
+        { country:this.sponsor.country, ssid: this.sponsor.ssid, cid, points },
         (ack) => {
           this.toastText = ack;
           this.toast = true;
@@ -785,26 +881,30 @@ export default {
 
   watch: {
     undo(val) {
-      console.log('val :>> ', val);
+      console.log('undo val :>> ', val);
     },
     business() {
       this.validate();
     },
-    address() {
+    city() {
       this.validate();
     },
-    country() {
+    countryAbbr() {
       this.validate();
     },
     promotions(val) {
       this.renderPromos(val);
     },
-    sponsor(val) {
-      console.log(info('sponsor :>> ', val));
+    registered(n, o) {
+      console.log(info('registered val (n/o) :>> ', n, o));
     },
   },
 
   mounted() {
+    // if this.sponsor is empty, enable registration
+    this.registered = !isEmpty(this.sponsor.address);
+
+    // to fill in items for the country combobox (if needed)
     this.getCountries();
     // the only way for a Sponsor to redeem rewards is to scan the Customer's QR
     // this means the handshake with the Customer starts with the Sponsor here:

@@ -58,10 +58,11 @@ export default {
     logged(loggedVisitId) {
       return loggedVisitId >= 0;
     },
+
     onError(error) {
       // let the global error handler pick up and display this error
-      error.message = `Time.vue error message: ${error.message}`;
-      throw error;
+      const msg = `Time.vue error message: ${error.message}`;
+      throw Error(msg);
     },
 
     /** Event handler that composes a confirmation message when user changes a visit

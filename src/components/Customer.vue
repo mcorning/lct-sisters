@@ -195,12 +195,14 @@
                           <tbody>
                             <tr
                               v-for="item in sponsorRewards"
-                              :key="item.rid"
-                              v-touch="{ right: () => deleteReward(item.rid) }"
+                              :key="item.rsid"
+                              v-touch="{
+                                right: () => deleteReward(item.rsid, false),
+                              }"
                             >
-                              <td style="text-align: left">{{ item.rid }}</td>
+                              <td style="text-align: left">{{ item.rsid }}</td>
                               <td style="text-align: left">
-                                {{ getDateFromRid(item.rid) }}
+                                {{ getDateFromRid(item.rsid) }}
                               </td>
                               <td style="text-align: left">{{ item.sid }}</td>
                             </tr>
@@ -267,8 +269,9 @@
     <confirmation-snackbar
       v-if="confSnackbar"
       :centered="true"
-      :top="true"
+      :top="false"
       :confirmationTitle="confirmationTitle"
+      :confirmationSubtitle="confirmationSubtitle"
       :confirmationMessage="confirmationMessage"
       :confirmationIcon="local_offer"
       @disapprove="closeSnackbar"
@@ -292,7 +295,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
 import { getDateFromSid } from '../../srv/utils';
-import { printJson, head, isEmpty } from '@/utils/helpers';
+import { printJson, head, info, isEmpty } from '@/utils/helpers';
 
 export default {
   name: 'CustomerView',
@@ -447,6 +450,7 @@ export default {
       rewardPointsMessage: '',
       confSnackbar: false,
       confirmationTitle: "A Sponsor's New Promotion",
+      confirmationSubtitle: '',
       confirmationMessage: '',
       confirmationIcon: 'local_offer',
 
@@ -463,48 +467,63 @@ export default {
     };
   },
   sockets: {
-    rewardRedeemed(rsid) {
+    rewardRedeemed(reward) {
+      if (isEmpty(reward)) {
+        this.toastText = 'Your Sponsor had difficulty redeeming your rewards.';
+        this.toast = true;
+        return;
+      }
       // remove uid from Reward
-      this.redeemReward(rsid);
-      this.toastText = `Reward ${rsid} is redeemed.`;
-      // TODO extend setting with result of redeem instead of hardwired true
-      this.toast = true;
+      // TODO ssid is misnamed. it should be rsid.
+      // however, getObject() is stream type agnostic
+      // and changing the field name may be a risky effort
+      this.deleteReward(reward.ssid);
     },
     // final step in rewards handshake protocol
-    doingBusinessWith({ rid, sid, biz }) {
+    doingBusinessWith({ rsid, sid, biz }) {
       const msg = `Added reward points from`;
       this.confirmationTitle = msg;
-      this.confirmationMessage = `${biz} (${sid}) in ${this.country} <br/>Reward Stream ID: ${rid}`;
+      this.confirmationSubtitle = biz;
+      this.confirmationMessage = `(Sponsor ID: ${sid}) in ${this.country} <br/>Reward Stream ID: ${rsid}`;
       this.confSnackbar = true;
       // now add the uid/name to the items array
       this.getRewardPointsFor({ sid });
       // now add the uid to local storage
-      this.callUpdateRewardPoints({ rid, sid, biz });
+      this.callUpdateRewardPoints({ rsid, sid, biz });
       this.selectedReward = head(this.getRewardingSponsors);
     },
 
-    newPromotion({ biz, promoText }) {
+    newPromo({ biz, promoText }) {
       this.confirmationTitle = "A Sponsor's New Promotion";
       this.confirmationMessage = `<h5>From ${biz}:</h5><span>${promoText}</span>`;
       this.confSnackbar = true;
     },
+    promoExpired({ biz, sid }) {
+      this.toastText = `${biz} expired promo ${sid}`;
+      this.toast = true;
+      this.getPromos();
+    },
   },
 
   methods: {
-    getDateFromRid(rid) {
-      return getDateFromSid(rid);
+    getDateFromRid(rsid) {
+      return getDateFromSid(rsid);
     },
-    deleteReward() {
-      const sid = this.selectedReward.sid;
-      // remove uid from Reward
-      this.redeemReward(sid)
+    deleteReward(rsid, redeeming = true) {
+      console.log(info('deleteReward() rsid :>> '), rsid);
+      // remove rsid from Reward
+      this.redeemReward(rsid)
         .then((result) => {
-          this.toastText = `${result.sid} deleted from local storage.`;
+          this.toastText = redeeming
+            ? `Reward ${rsid} is redeemed.`
+            : `${result.sid} deleted from local storage.`;
+          this.toastButton = 'Thanks';
           this.toast = true;
         })
         .then(() => (this.selectedReward = { biz: '', sid: '' }))
         .catch((e) => {
           this.toastText = e;
+          this.toastButton = 'Oops';
           this.toast = true;
         });
     },

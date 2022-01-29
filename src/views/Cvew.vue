@@ -26,7 +26,13 @@ export default {
     };
   },
 
-  methods: {},
+  methods: {
+    onError(error) {
+      // let the global error handler pick up and display this error
+      const msg = `Cvew.vue error message: ${error.message}`;
+      throw Error(msg);
+    },
+  },
 
   watch: {},
 

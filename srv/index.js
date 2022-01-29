@@ -70,16 +70,17 @@ const {
   addSponsor,
   addPromo,
   addReward,
-  deleteKeyedID,
+  deleteStream,
+  getCountries,
   getPromos,
   getRewards,
   getSponsors,
-  getCountries,
 } = require('./redis/tqr');
 
 const { confirmPlaceID, getPlaceID } = require('./googlemaps');
 
 const cache = require('./redis/json');
+const here = 'index';
 cache.connectCache(true).then(() => {
   console.log(getNow());
   console.log('RedisGraph host:', host);
@@ -120,7 +121,16 @@ const deleteCacheItem = (key, to) => {
 const setCacheItem = (key, to, val) => {
   cache.set(key, to, val);
 };
-
+const getKey = ({ country, ssid, type, cid, context }) => {
+  const customer = cid ? `:${cid}` : '';
+  const key = `tqr:${country}:${ssid}:${type}${customer}`;
+  const msg = `getKey:>> ${key}`;
+  const sourceKey = `${here}:${context}`;
+  audit({ source: here, context, msg }).then((sid) =>
+    console.log(`Auditor: See ${sourceKey}:${sid}`)
+  );
+  return key;
+};
 //#endregion
 
 const server = express()
@@ -188,15 +198,17 @@ io.on('connection', (socket) => {
 
   //#region STREAM handlers
   socket.on('audit', (msg) => {
-    audit(msg).then((sid) => console.log(`See ${msg.source}:${sid}`));
+    audit(msg).then((sid) => console.log(`Auditor: See ${msg.source}:${sid}`));
   });
 
-  socket.on('deletePromotion', ({ key, sid }, ack) => {
-    console.log('key, sid', key, sid);
-    deleteKeyedID(key, sid).then((ct) => {
+  socket.on('deletePromo', ({ country, biz, ssid, sid }, ack) => {
+    const key = `tqr:${country}:${ssid}:promos`;
+    addToAudit('deletePromo', `key:>> ${key}`);
+    deleteStream(key, sid).then((ct) => {
       if (ack) {
         ack(ct);
       }
+      socket.broadcast.emit('promoExpired', { biz, sid });
     });
   });
 
@@ -242,33 +254,77 @@ io.on('connection', (socket) => {
   });
 
   // from Sponsor
-  socket.on('redeemReward', ({ country, ssid, cid, points }, ack) => {
-    const key = `tqr:${country}:${ssid}:rewards`;
+  socket.on('redeemReward', ({ country, ssid, cid }, ack) => {
+    const type = 'rewards';
+    const key = getKey({
+      country,
+      ssid,
+      type,
+      cid,
+      context: 'on redeemReward: key',
+    });
     console.log(info('redeemReward() key :>> ', key));
-
-    // delegate to tqr.js
-    getRewards({ key }).then((visitedOn) => {
-      // TODO work on visitedOn if tqr.js is returning all rewards for all Sponsors
-      if (ack && visitedOn.filter((v) => v.cid === cid).length >= points) {
-        // Customer will remove ssid rewards
-        // (ssid ensures referential integrity: Rewards in localstorage tie to reward Stream using ssid keys)
-        socket.to(cid).emit('rewardRedeemed', ssid);
-        // confirm wih Sponsor
-        // (after we remove the reward Stream's ssid)
-        deleteKeyedID(key, ssid).then((ct) => {
-          ack(`They, ${cid}, are redeemed (${ct} rewards deleted)`);
-        });
-      } else {
-        ack('No reward to redeem');
+    // get the rewards
+    getRewards(key).then((rewards) => {
+      if (ack && isEmpty(rewards)) {
+        ack('No rewards to redeem.');
+        return;
       }
+      console.log('rewards :>> ', printJson(rewards));
+      // ssid ensures referential integrity:
+      // Rewards in localstorage tie to reward Stream using ssid/cid keys
+      // const ids = rewards.map((v) => v.ssid).join(' ');
+      // const cmd = `xdel ${key} ${ids}`;
+      // console.log('command :>> ', cmd);
+      // addToAudit('deleteStream', cmd);
+      const rewardCt = rewards.length;
+      rewards.forEach((reward) => {
+        const cmd = `xdel ${key} ${reward.ssid}`;
+
+        // delegate to tqr.js
+        deleteStream(key, reward.ssid)
+          .then(() => {
+            // Customer will remove rewards with rsids stored in stream
+            socket.to(cid).emit('rewardRedeemed', reward);
+
+            if (ack) {
+              // confirm wih Sponsor
+              ack(`They, ${cid}, are redeemed (${rewardCt} rewards deleted)`);
+            }
+          })
+          .catch((e) => {
+            addToAudit('deleteStream', e.message);
+            if (ack) {
+              // warn Sponsor
+              ack(`Trouble running command: ${cmd}. Retry, please.`);
+            }
+            socket.to(cid).emit('rewardRedeemed', null);
+          });
+      });
     });
   });
 
-  socket.on('getRewards', ({ sid, cid }, ack) => {
+  // TODO Move this up next to audit()
+  const addToAudit = (context, message) => {
+    const sourceKey = `${here}:${context}`;
+    audit({ source: here, msg: message, context }).then((sid) =>
+      console.log(`Auditor: See ${sourceKey}:${sid} `)
+    );
+  };
+
+  socket.on('getRewards', ({ country, sid, cid }, ack) => {
+    console.log(info('getRewards() key :>> ', key));
     if (isEmpty(sid)) {
       return;
     }
-    getRewards({ sid, cid }).then((visitedOn) => {
+    const key = getKey({
+      country,
+      sid,
+      type: 'rewards',
+      cid,
+      context: 'on getRewards: key',
+    });
+    getRewards(key).then((visitedOn) => {
       if (ack) {
         ack(visitedOn);
       }
@@ -283,21 +339,24 @@ io.on('connection', (socket) => {
   });
 
   // sent by Sponsor
-  socket.on('addReward', ({ key, cid, sid, biz, transaction }) => {
-    console.log(
-      'key, cid, sid, biz, transaction :>> ',
-      key,
+  socket.on('addReward', ({ country, ssid, cid, sid, biz, transaction }) => {
+    const type = 'rewards';
+    const key = getKey({
+      country,
+      ssid,
+      type,
       cid,
-      sid,
-      biz,
-      transaction
-    );
+      context: 'on addReward: key',
+    });
+
+    console.log(info('addReward key:>>'), key);
+
     if (transaction === 'earn points') {
       // delegate to tqr.js
-      addReward({ key, biz, cid }).then((rid) => {
-        console.log('Reward ID back to customer:',rid);
+      addReward({ key, biz, sid }).then((rsid) => {
+        console.log('Reward ID back to customer:', rsid);
         // back to Customer
-        socket.to(cid).emit('doingBusinessWith', { rid, sid, biz });
+        socket.to(cid).emit('doingBusinessWith', { rsid, sid, biz });
       });
     }
   });
@@ -317,8 +376,11 @@ io.on('connection', (socket) => {
       }
     });
   });
-  socket.on('promote', ({ key, biz, promoText }, ack) => {
-    console.log(`promote(${key}, ${biz}, ${promoText})`);
+  socket.on('addPromo', ({ key, biz, promoText }, ack) => {
+    const msg = `addPromo(${key}, ${biz}, ${promoText})`;
+    console.log(msg);
+    addToAudit('addPromo', msg);
+
     // add to the Sponsor Stream
     addPromo({
       key,
@@ -329,6 +391,7 @@ io.on('connection', (socket) => {
         console.log('psid :>> ', psid);
         ack({ psid });
       }
+      socket.broadcast.emit('newPromo', { biz, promoText });
     });
   });
   socket.on('getPromotions', (key, ack) => {

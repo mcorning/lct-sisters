@@ -183,12 +183,12 @@ const getSponsors = (key) =>
     .then((data) => forSponsor(data));
 
 // > xadd tqr:us1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
-const addReward = ({ key, biz, cid, sid }) =>
-  redis.xadd(key, '*', 'biz', biz, 'sid',sid,'cid', cid);
+const addReward = ({ key, biz, sid }) =>
+  redis.xadd(key, '*', 'biz', biz, 'sid', sid);
 
 //#endregion CREATE
 //#region DELETE
-const deleteKeyedID = (key, sid) => redis.xdel(key, sid);
+const deleteStream = (key, ids) => redis.xdel(key, ids);
 
 //#endregion DELETE
 
@@ -206,8 +206,8 @@ const getSponsor = (country, ssid) =>
     .then((stream) => objectFromStreamEntry(stream))
     .then((sponsor) => forThisSponsor(sponsor));
 
-// xread tqr:us:1642558471131-0:rewards 0
-const getRewards = ({ key }) =>
+// xread STREAMS tqr:us:1642558471131-0:rewards:{cid} 0
+const getRewards = (key) =>
   redis.xread('STREAMS', key, '0').then((stream) => objectFromStream(stream));
 //#0endregion READ
 //#endregion API
@@ -286,7 +286,7 @@ if (TESTING) {
         promoText: promos[2].promoText,
       })
     )
-    .then((sid) => deleteKeyedID(`${COUNTRY}:${bids[0].sid}:promos`, sid))
+    .then(() => deleteStream(`${COUNTRY}:${bids[0].sid}:promos:${cids[0]}`))
     .then(() => getPromos(`${COUNTRY}:${bids[1].sid}:promos`))
     .then((ps) => log(print(ps), 'Promos'))
     .then(() => getCountries())
@@ -299,7 +299,7 @@ module.exports = {
   addPromo,
   addReward,
   addSponsor,
-  deleteKeyedID,
+  deleteStream,
   getCountries,
   getPromos,
   getSponsor,
