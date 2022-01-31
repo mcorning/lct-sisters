@@ -33,8 +33,18 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
-const audit = ({ context, msg, source = here }) =>
-  redis.xadd(`auditor:${source}`, '*', 'context', context, 'msg', msg);
+// TODO REFACTOR: Give each Sponsor it's own Auditor by using the source arg
+const audit = ({ context, msg, tag, source = here }) =>
+  redis.xadd(
+    `auditor:${source}`,
+    '*',
+    'context',
+    context,
+    'tag',
+    tag,
+    'msg',
+    msg
+  );
 
 const findLastEntry = (key) =>
   redis

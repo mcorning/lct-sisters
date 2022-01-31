@@ -162,7 +162,9 @@ const forPromo = (sponsor) => {
 // const addCountry = (country) => redis.xadd('countries', '*', 'name', country);
 // xadd us * biz "Outlaw Barbers" uid 9bb09370e625baf7
 const addSponsor = ({ key, biz, uid }) =>
-  redis.xadd(`${key}`, '*', 'biz', biz, 'uid', uid);
+  redis
+    .xadd(`${key}`, '*', 'biz', biz, 'uid', uid)
+    .catch((e) => console.log(err(e)));
 
 // > xadd tqr:us1642558736304-0:promos * biz "Fika" promoText 'Welcome back Renee'
 const addPromo = ({ key, biz, promoText }) =>
@@ -247,7 +249,10 @@ const getSponsor = (country, ssid) =>
 
 // xread STREAMS tqr:us:1642558471131-0:rewards:{cid} 0
 const getRewards = (key) =>
-  redis.xread('STREAMS', key, '0').then((stream) => objectFromStream(stream));
+  redis
+    .xread('STREAMS', key, '0')
+    .then((stream) => objectFromStream(stream))
+    .catch((e) => console.log(err(e)));
 //#0endregion READ
 //#endregion API
 

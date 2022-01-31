@@ -58,6 +58,7 @@
                     clearable
                     dark
                     color="grey lighten-3"
+                    @blur="saveBiz"
                   ></v-text-field>
                   <!-- Normal rendering of address-->
                   <div v-if="address">
@@ -75,6 +76,16 @@
 
                   <!-- Registration form -->
                   <div v-else>
+                    <v-text-field
+                      class="mt-5"
+                      v-model="anAddress"
+                      label="Find this address"
+                      dark
+                      :rules="[(v) => !!v || 'Address is required']"
+                      color="grey lighten-3"
+                      :hint="place_id"
+                      persistent-hint
+                    ></v-text-field>
                     <v-combobox
                       v-model="city"
                       :items="cities"
@@ -494,6 +505,7 @@ export default {
 
   data() {
     return {
+      anAddress: '',
       loyalists: [],
       registered: false,
       // registered: this.sponsor?.biz ?? false,
@@ -603,6 +615,10 @@ export default {
   },
 
   methods: {
+    saveBiz()
+    {if (confirm('Save to local storage?')) {
+      this.updateSponsor({biz:this.business})
+    }},
     getFormattedDateTime(val) {
       return formatTime(Number(val));
     },
@@ -696,6 +712,7 @@ export default {
             address,
             confirmedAddress,
             userAgent,
+            tag: 'sponsore.vue:addSponsor()',
           });
           this.confSnackbar = false;
           this.printing = true;
@@ -817,6 +834,7 @@ export default {
         ssid: '',
         address: '',
         confirmedAddress: '',
+        tag: 'sponsore.vue:reset()',
       });
     },
 
@@ -839,7 +857,9 @@ export default {
     },
 
     register() {
-      const address = `${this.business} ${this.city}`;
+      // const address = `${this.business} ${this.city}`;
+      const address = `${this.business} ${this.anAddress}`;
+
       const vm = this;
       this.emitFromClient(
         'getPlaceID',

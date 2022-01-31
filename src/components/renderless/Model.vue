@@ -317,11 +317,12 @@ export default {
       address,
       confirmedAddress,
       userAgent,
+      tag,
     }) {
-      const source = 'Model';
+      const source = `${ssid}:Model`;
       const context = 'updateSponsor()';
       const msg = `addSponsor returns ssid: ${ssid}`;
-      this.audit({ source, context, msg });
+      this.audit({ source, context, msg, tag });
 
       // when a browser becomes a Sponsor,
       // settings gets a ssid
