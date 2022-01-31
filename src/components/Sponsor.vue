@@ -168,8 +168,8 @@
                     <tr>
                       <th id="promo" style="bgcolor: grey">Promotion</th>
                       <th id="from" style="bgcolor: grey">From</th>
-                      <th id="for" style="bgcolor: grey">For</th>
-                      <th id="id" style="bgcolor: grey">ID</th>
+                      <th id="for" style="bgcolor: grey">Days</th>
+                      
                     </tr>
                   </thead>
                   <tbody>
@@ -181,9 +181,8 @@
                       <td style="text-align: left">{{ item.promoText }}</td>
                       <td style="text-align: left">{{ item.dated }}</td>
                       <td style="text-align: left">
-                        {{ promotionalDays }} days
+                        {{ promotionalDays }} 
                       </td>
-                      <td style="text-align: left">{{ item.ssid }}</td>
                     </tr>
                   </tbody>
                 </template>
@@ -615,10 +614,11 @@ export default {
   },
 
   methods: {
-    saveBiz()
-    {if (confirm('Save to local storage?')) {
-      this.updateSponsor({biz:this.business})
-    }},
+    saveBiz() {
+      if (this.address && confirm('Save to local storage?')) {
+        this.updateSponsor({ biz: this.business });
+      }
+    },
     getFormattedDateTime(val) {
       return formatTime(Number(val));
     },
@@ -746,15 +746,13 @@ export default {
         alert('You are not online yet.');
         return;
       }
-      const ssid = this.sponsorID;
-      const biz = this.sponsorName;
-      const country = this.sponsorCountry;
-      const key = `tqr:${country}:${ssid}:promos`;
-      console.log(info('addPromo() key :>> ', key));
-
+      const { country, ssid, biz } = this.sponsor;
+      // const key = `tqr:${country}:${ssid}:promos`;
       const promoText = this.promoText;
-      this.emitFromClient('addPromo', { key, biz, promoText }, () =>
-        this.getPromos(key)
+      console.log(info('addPromo()  :>> ', country, ssid, biz, promoText));
+
+      this.emitFromClient('addPromo', { country, ssid, biz, promoText }, () =>
+        this.getPromos()
       );
     },
 
@@ -787,11 +785,10 @@ export default {
     },
 
     getPromos() {
-      const ssid = this.sponsorID;
-      const country = this.sponsorCountry;
-      const key = `tqr:${country}:${ssid}:promos`;
-      console.log(info('getPromos() key :>> ', key));
-      this.emitFromClient('getPromotions', key, (promos) => {
+      const { country, ssid } = this.sponsor;
+
+      console.log(info('getPromos() key :>> ', country, ssid));
+      this.emitFromClient('getPromos', { country, ssid }, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
         this.ps = promos;
       });
@@ -917,6 +914,9 @@ export default {
       console.log('undo val :>> ', val);
     },
     business() {
+      this.validate();
+    },
+    address() {
       this.validate();
     },
     city() {

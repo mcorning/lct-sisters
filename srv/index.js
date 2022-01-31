@@ -377,9 +377,16 @@ io.on('connection', (socket) => {
       }
     });
   });
-  socket.on('addPromo', ({ key, biz, promoText }, ack) => {
-    const msg = `addPromo(${key}, ${biz}, ${promoText})`;
+  socket.on('addPromo', ({ country, ssid, biz, promoText }, ack) => {
+    const key = getKey({
+      country,
+      ssid,
+      type: 'promos',
+      context: 'on addPromo: key',
+    });
+    const msg = `addPromo(${country}, ${ssid} ${biz}, ${promoText})`;
     console.log(msg);
+
     addToAudit('addPromo', msg);
 
     // add to the Sponsor Stream
@@ -395,8 +402,13 @@ io.on('connection', (socket) => {
       socket.broadcast.emit('newPromo', { biz, promoText });
     });
   });
-  socket.on('getPromotions', (key, ack) => {
-    console.log('getPromotions() key :>> ', key);
+  socket.on('getPromos', ({ country, ssid }, ack) => {
+    const key = getKey({
+      country,
+      ssid,
+      type: 'promos',
+      context: 'on getPromo: key',
+    });
     getPromos(key).then((promos) => {
       if (ack) {
         ack(promos);

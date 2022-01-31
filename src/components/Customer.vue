@@ -596,8 +596,7 @@ export default {
       this.promos = [];
       const ssid = this.selectedSponsor.ssid;
       const country = this.country;
-      const key = `tqr:${country}:${ssid}:promos`;
-      this.emitFromClient('getPromotions', key, (promos) => {
+            this.emitFromClient('getPromos', { country, ssid }, (promos) => {
         this.promotions = promos ?? [];
         console.log(`promotions`, printJson(this.promotions));
       });

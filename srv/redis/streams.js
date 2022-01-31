@@ -33,6 +33,17 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 
+const getKey = ({ country, ssid, type, cid, context }) => {
+  const customer = cid ? `:${cid}` : '';
+  const key = `tqr:${country}:${ssid}:${type}${customer}`;
+  const msg = `getKey:>> ${key}`;
+  const sourceKey = `${here}:${context}`;
+  audit({ source: here, context, msg }).then((sid) =>
+    console.log(`Auditor: See ${sourceKey}:${sid}`)
+  );
+  return key;
+};
+
 // TODO REFACTOR: Give each Sponsor it's own Auditor by using the source arg
 const audit = ({ context, msg, tag, source = here }) =>
   redis.xadd(
@@ -119,30 +130,7 @@ const getCountries = () =>
     })
     .catch((e) => audit({ context: 'catch()', msg: e }));
 
-//#endregion
-
-//#region  Rewards
-function enterLottery(uid) {
-  return redis.xadd('lottery', '*', 'uid', uid);
-}
-
-function getRewardPoints({ uid }, lastID = 0) {
-  const key = `rewards:${uid}`;
-  console.log(key);
-  return redis
-    .xread(['STREAMS', key, lastID])
-    .then((stream) => objectFromStream(stream))
-    .then((visits) => groupBy(visits, 'cid'))
-    .catch((e) => audit({ context: 'getRewardPoints()', msg: e }));
-}
-
-async function earnReward({ uid, cid, lastID = 0 }) {
-  const key = `rewards:${uid}`;
-  console.log(highlight('uid, cid, lastID', uid, cid, lastID));
-  // bizStream contains the same data as all the Customers do locally
-  return redis.xadd(key, '*', 'cid', cid);
-}
-//#endregion
+//#endregion Sponsor
 
 //#region Promotions
 async function addPromotion({
@@ -154,7 +142,7 @@ async function addPromotion({
   ssid,
 }) {
   console.log(
-    'name (place_id), ssid, promoText',
+    'name (place_id), country, ssid, promoText',
     biz,
     '(',
     confirmedAddress,
@@ -163,8 +151,10 @@ async function addPromotion({
     ssid,
     promoText
   );
-
-  const key = `promotions:${ssid}`;
+  const type = 'promos';
+  const context = 'addPromo';
+  // const key = `promotions:${ssid}`;
+  const key = getKey({ country, ssid, type, context });
   console.log('addPromotion() key:', key);
   return redis
     .xadd(
@@ -195,6 +185,29 @@ function getPromotions({ ssid, country }) {
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
     .catch((e) => audit({ context, msg: e }));
+}
+//#endregion Promos
+
+//#region  Rewards
+function enterLottery(uid) {
+  return redis.xadd('lottery', '*', 'uid', uid);
+}
+
+function getRewardPoints({ uid }, lastID = 0) {
+  const key = `rewards:${uid}`;
+  console.log(key);
+  return redis
+    .xread(['STREAMS', key, lastID])
+    .then((stream) => objectFromStream(stream))
+    .then((visits) => groupBy(visits, 'cid'))
+    .catch((e) => audit({ context: 'getRewardPoints()', msg: e }));
+}
+
+async function earnReward({ uid, cid, lastID = 0 }) {
+  const key = `rewards:${uid}`;
+  console.log(highlight('uid, cid, lastID', uid, cid, lastID));
+  // bizStream contains the same data as all the Customers do locally
+  return redis.xadd(key, '*', 'cid', cid);
 }
 //#endregion
 
