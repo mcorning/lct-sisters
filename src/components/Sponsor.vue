@@ -4,7 +4,6 @@
       class="overflow-x:hidden fill-height"
       outlined
       color="grey lighten-1"
-      max-width="600"
     >
       <v-container v-if="!printingCard" fluid class="fill-height">
         <!-- Header -->
@@ -60,10 +59,10 @@
                     color="grey lighten-3"
                   ></v-text-field>
                   <!-- Normal rendering of address-->
-                  <div v-if="officialAddress">
+                  <div v-if="confirmedAddress">
                     <v-text-field
                       v-model="officialAddress"
-                      label="Your official address"
+                      label="Your official address from Google"
                       dark
                       readonly
                       class="mt-5"
@@ -74,71 +73,94 @@
                   </div>
 
                   <!-- Registration form -->
-                  <row v-show="needsData">
-                    <!-- address helpers -->
-                    <v-col>
-                      <v-combobox
-                        v-model="city"
-                        :items="cities"
-                        label="City"
-                        clearable
-                        dark
-                        color="grey lighten-3"
-                      ></v-combobox>
-
-                      <v-combobox
-                        v-model="country"
-                        :items="countries"
-                        label="Country Abbreviation"
-                        hint="Select (or enter) a two character Country"
-                        persistent-hint
-                        clearable
-                        dark
-                        color="grey lighten-3"
-                      ></v-combobox>
-                    </v-col>
+                  <div v-else>
+                    <v-row no-gutters justify="space-between">
+                      <!-- address helpers -->
+                      <v-col cols="8">
+                        <v-combobox
+                          v-model="city"
+                          :items="cities"
+                          required
+                          :rules="cityRules"
+                          label="City"
+                          clearable
+                          dark
+                          color="grey lighten-3"
+                          disable-lookup
+                        ></v-combobox>
+                      </v-col>
+                      <!-- <v-spacer /> -->
+                      <v-col cols="3">
+                        <v-combobox
+                          v-model="country"
+                          :items="countries"
+                          required
+                          :rules="countryRules"
+                          label="Country"
+                          hint="Select (or enter)"
+                          persistent-hint
+                          clearable
+                          dark
+                          color="grey lighten-3"
+                          disable-lookup
+                        ></v-combobox>
+                      </v-col>
+                    </v-row>
                     <!-- end helpers -->
-                    <v-text-field
-                      v-model="address"
-                      @blur="validate"
-                      label="Will Google find this address?"
-                      dark
-                      required
-                      :rules="[(v) => !!v || 'Address is required']"
-                      :hint="place_id"
-                      persistent-hint
-                      class="mt-5"
-                      color="grey lighten-3"
-                    ></v-text-field>
-                  </row>
+                    <v-row no-gutters align="center">
+                      <v-col cols="12" sm="8">
+                        <v-text-field
+                          v-model="address"
+                          label="Street address"
+                          dark
+                          required
+                          :rules="[(v) => !!v || 'Address is required']"
+                          :hint="place_id"
+                          persistent-hint
+                          class="mt-5"
+                          color="grey lighten-3"
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="12">
+                        <v-btn
+                          :disabled="needsData"
+                          text
+                          color="yellow"
+                          @click="register"
+                        >
+                          Confirm Address
+                        </v-btn>
+                      </v-col>
+                    </v-row>
+                  </div>
+                  <!-- Regsitration Form -->
                 </v-card-text>
                 <!-- Legal -->
-                <v-card-text v-if=needsData>
+                <v-card-text v-if="needsData">
                   <v-checkbox v-model="agreement" dark required>
                     <template v-slot:label>
-                      I agree to the&nbsp;
-                      <a href="#" @click.stop.prevent="dialog = true"
-                        >Terms of Service</a
-                      >
-                      &nbsp;and&nbsp;
-                      <a href="#" @click.stop.prevent="dialog = true"
-                        >Privacy Policy</a
-                      >*
+                      <v-row>
+                        <v-col>
+                          <a href="#" @click.stop.prevent="dialog = true"
+                            >Terms of Service</a
+                          >
+                        </v-col>
+                        <v-col>
+                          <a href="#" @click.stop.prevent="dialog = true"
+                            >Privacy Policy</a
+                          >*
+                        </v-col>
+                      </v-row>
+                      <v-row>
+                        <v-col> I agree to both&nbsp;</v-col>
+                      </v-row>
                     </template>
                   </v-checkbox>
                 </v-card-text>
                 <!-- Buttons -->
                 <v-sheet color="black">
                   <v-card-actions>
-                    <v-btn
-                      v-if="!needsData && !confirmedAddress"
-                      text
-                      color="yellow"
-                      class="mr-4"
-                      @click="register"
-                    >
-                      Register Sponsor
-                    </v-btn>
                     <v-spacer />
                     <v-btn
                       text
@@ -146,7 +168,7 @@
                       class="mr-4"
                       @click="reset"
                     >
-                      Clear
+                      Clear Form
                     </v-btn>
                   </v-card-actions>
                 </v-sheet>
@@ -398,10 +420,10 @@
         :disapproveString="disapproveString"
         :timeout="timeout"
         @approved="approved"
-        @disapprove="confSnackbar = false"
+        @disapprove="disapprove"
       />
     </v-sheet>
-    <v-snackbar v-model="toast" right=true>
+    <v-snackbar v-model="toast" right="true">
       {{ toastText }}
       <template v-slot:action="{ attrs }">
         <v-btn color="pink" text v-bind="attrs" @click="toast = false">
@@ -431,6 +453,9 @@ export default {
   },
   components: { VueQRCodeComponent, ConfirmationSnackbar },
   computed: {
+    upperCaseCountry() {
+      return this.country ? this.country.toUpperCase() : '';
+    },
     place_id() {
       return `Place ID: ${this.confirmedAddress}`;
     },
@@ -463,8 +488,6 @@ export default {
       });
       return x.join('\n');
     },
-
-
 
     encodedUri() {
       return this.isConnected
@@ -548,11 +571,10 @@ export default {
           (v && v.length <= this.nameMaxLength) ||
           `Name must be less than ${this.nameMaxLength} characters`,
       ],
+      cityRules: [(v) => !!v || 'City is required'],
       countryRules: [
         (v) => !!v || 'Country is required',
-        (v) =>
-          (v && v.length === 2) ||
-          `Country must be two characters (and will be lowercase)`,
+        (v) => (v && v.length === 2) || `New country must be two characters`,
       ],
       addressRules: [
         (v) =>
@@ -642,6 +664,11 @@ export default {
         this.cities = this.compactCityOrState(cities, tails);
       });
     },
+    disapprove() {
+      this.confSnackbar = false;
+      this.needsData = true;
+      this.confirmedAddress = '';
+    },
     approved() {
       switch (this.approval) {
         case 'addReward':
@@ -728,14 +755,18 @@ export default {
 
       const country = this.sponsorCountry;
       // back to server
-      this.emitFromClient('addReward', {
-        country,
-        ssid: this.sponsorID,
-        cid: this.cid,
-        sid: this.userID,
-        biz: this.business,
-        transaction: this.transaction,
-      });
+      this.emitFromClient(
+        'addReward',
+        {
+          country,
+          ssid: this.sponsorID,
+          cid: this.cid,
+          sid: this.userID,
+          biz: this.business,
+          transaction: this.transaction,
+        },
+        (ssid) => this.getLoyalists(ssid)
+      );
       // nothing else for Sponsor to do
     },
 
@@ -813,7 +844,11 @@ export default {
     validate() {
       this.$refs.form.validate();
       // if any field is empty, we need data
-      this.needsData = isEmpty(this.address) || isEmpty(this.business);
+      this.needsData =
+        isEmpty(this.address) ||
+        isEmpty(this.business) ||
+        isEmpty(this.city) ||
+        isEmpty(this.country);
     },
     reset() {
       this.$refs.form.reset();
@@ -911,10 +946,12 @@ export default {
       console.log('undo val :>> ', val);
     },
     city() {
-      this.address = `${this.city}, ${this.country}`;
+      this.address = [this.city, this.upperCaseCountry].join(', ');
+      this.validate();
     },
     country() {
-      this.address = `${this.city}, ${this.country}`;
+      this.address = [this.city, this.upperCaseCountry].join(', ');
+      this.validate();
     },
     promotions(val) {
       this.renderPromos(val);
@@ -932,9 +969,9 @@ export default {
   mounted() {
     // if this.sponsor is empty, enable registration
     this.needsData = isEmpty(this.sponsor.address);
-    this.officialAddress=this.sponsor.address
-    this.confirmedAddress=this.sponsor.confirmedAddress
-    this.business=this.sponsor.biz
+    this.officialAddress = this.sponsor.address;
+    this.confirmedAddress = this.sponsor.confirmedAddress;
+    this.business = this.sponsor.biz;
 
     this.toastText = this.needsData ? 'Please register' : 'Registered';
     this.toast = true;

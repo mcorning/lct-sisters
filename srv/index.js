@@ -340,27 +340,34 @@ io.on('connection', (socket) => {
   });
 
   // sent by Sponsor
-  socket.on('addReward', ({ country, ssid, cid, sid, biz, transaction }) => {
-    const type = 'rewards';
-    const key = getKey({
-      country,
-      ssid,
-      type,
-      cid,
-      context: 'on addReward: key',
-    });
-
-    console.log(info('addReward key:>>'), key);
-
-    if (transaction === 'earn points') {
-      // delegate to tqr.js
-      addReward({ key, biz, sid }).then((rsid) => {
-        console.log('Reward ID back to customer:', rsid);
-        // back to Customer
-        socket.to(cid).emit('doingBusinessWith', { rsid, sid, biz });
+  socket.on(
+    'addReward',
+    ({ country, ssid, cid, sid, biz, transaction }, ack) => {
+      const type = 'rewards';
+      const key = getKey({
+        country,
+        ssid,
+        type,
+        cid,
+        context: 'on addReward: key',
       });
+
+      console.log(info('addReward key:>>'), key);
+
+      if (transaction === 'earn points') {
+        // delegate to tqr.js
+        addReward({ key, biz, sid }).then((rsid) => {
+          console.log('Reward ID back to customer:', rsid);
+          // back to Customer
+          socket.to(cid).emit('doingBusinessWith', { rsid, sid, biz });
+          // advise Sponsor
+          if (ack) {
+            ack(ssid);
+          }
+        });
+      }
     }
-  });
+  );
   //#endregion
 
   socket.on('addSponsor', ({ key, biz, uid }, ack) => {
