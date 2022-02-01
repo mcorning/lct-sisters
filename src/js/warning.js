@@ -1,6 +1,7 @@
 import Setting from '@/models/Setting';
 import 'either-async';
 import { firstOrNone } from '@/fp/utils';
+import { printJson, info } from '@/utils/helpers';
 
 export const warningMixin = {
   name: 'warningMixin',
@@ -40,7 +41,9 @@ export const warningMixin = {
           ok: (v) =>
             firstOrNone(v).match({
               Some: (value) => {
-                console.log('Setting.update() results: ', value);
+                console.log(
+                  info('Setting.update() results: ', printJson(value))
+                );
                 this.updateState(value);
               },
               None: () => console.log(`No Settings to update `),

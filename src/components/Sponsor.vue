@@ -41,7 +41,6 @@
             ></v-col
           >
         </v-row>
-
         <!-- Sponsor Registration Form -->
         <v-row justify="center">
           <v-col cols="12">
@@ -51,6 +50,7 @@
                 <v-card-text>
                   <v-text-field
                     v-model="business"
+                    @blur="saveBiz"
                     :counter="nameMaxLength"
                     required
                     :rules="nameRules"
@@ -58,16 +58,15 @@
                     clearable
                     dark
                     color="grey lighten-3"
-                    @blur="saveBiz"
                   ></v-text-field>
                   <!-- Normal rendering of address-->
-                  <div v-if="address">
+                  <div v-if="officialAddress">
                     <v-text-field
-                      class="mt-5"
-                      v-model="address"
+                      v-model="officialAddress"
                       label="Your official address"
                       dark
                       readonly
+                      class="mt-5"
                       color="grey lighten-3"
                       :hint="place_id"
                       persistent-hint
@@ -75,44 +74,46 @@
                   </div>
 
                   <!-- Registration form -->
-                  <div v-else>
+                  <row v-show="needsData">
+                    <!-- address helpers -->
+                    <v-col>
+                      <v-combobox
+                        v-model="city"
+                        :items="cities"
+                        label="City"
+                        clearable
+                        dark
+                        color="grey lighten-3"
+                      ></v-combobox>
+
+                      <v-combobox
+                        v-model="country"
+                        :items="countries"
+                        label="Country Abbreviation"
+                        hint="Select (or enter) a two character Country"
+                        persistent-hint
+                        clearable
+                        dark
+                        color="grey lighten-3"
+                      ></v-combobox>
+                    </v-col>
+                    <!-- end helpers -->
                     <v-text-field
-                      class="mt-5"
-                      v-model="anAddress"
-                      label="Find this address"
+                      v-model="address"
+                      @blur="validate"
+                      label="Will Google find this address?"
                       dark
+                      required
                       :rules="[(v) => !!v || 'Address is required']"
-                      color="grey lighten-3"
                       :hint="place_id"
                       persistent-hint
+                      class="mt-5"
+                      color="grey lighten-3"
                     ></v-text-field>
-                    <v-combobox
-                      v-model="city"
-                      :items="cities"
-                      label="City"
-                      required
-                      :rules="[(v) => !!v || 'City is required']"
-                      clearable
-                      dark
-                      color="grey lighten-3"
-                    ></v-combobox>
-
-                    <v-combobox
-                      v-model="countryAbbr"
-                      :items="countries"
-                      :rules="countryRules"
-                      required
-                      label="Country Abbreviation"
-                      hint="Select (or enter) a two character Country"
-                      persistent-hint
-                      clearable
-                      dark
-                      color="grey lighten-3"
-                    ></v-combobox>
-                  </div>
+                  </row>
                 </v-card-text>
                 <!-- Legal -->
-                <v-card-text>
+                <v-card-text v-if=needsData>
                   <v-checkbox v-model="agreement" dark required>
                     <template v-slot:label>
                       I agree to the&nbsp;
@@ -130,7 +131,7 @@
                 <v-sheet color="black">
                   <v-card-actions>
                     <v-btn
-                      v-if="registered && !address"
+                      v-if="!needsData && !confirmedAddress"
                       text
                       color="yellow"
                       class="mr-4"
@@ -169,7 +170,6 @@
                       <th id="promo" style="bgcolor: grey">Promotion</th>
                       <th id="from" style="bgcolor: grey">From</th>
                       <th id="for" style="bgcolor: grey">Days</th>
-                      
                     </tr>
                   </thead>
                   <tbody>
@@ -181,7 +181,7 @@
                       <td style="text-align: left">{{ item.promoText }}</td>
                       <td style="text-align: left">{{ item.dated }}</td>
                       <td style="text-align: left">
-                        {{ promotionalDays }} 
+                        {{ promotionalDays }}
                       </td>
                     </tr>
                   </tbody>
@@ -401,7 +401,7 @@
         @disapprove="confSnackbar = false"
       />
     </v-sheet>
-    <v-snackbar v-model="toast">
+    <v-snackbar v-model="toast" right=true>
       {{ toastText }}
       <template v-slot:action="{ attrs }">
         <v-btn color="pink" text v-bind="attrs" @click="toast = false">
@@ -464,9 +464,7 @@ export default {
       return x.join('\n');
     },
 
-    disableRegistration() {
-      return this.biz || this.address;
-    },
+
 
     encodedUri() {
       return this.isConnected
@@ -477,10 +475,10 @@ export default {
       return this.sponsor.biz || this.business;
     },
     sponsorAddress() {
-      return this.sponsor.address;
+      return this.sponsor.address || this.address;
     },
     sponsorCountry() {
-      return this.sponsor.country;
+      return this.sponsor.country || this.country;
     },
     sponsorID() {
       return this.ssid || this.sponsor.ssid;
@@ -504,10 +502,9 @@ export default {
 
   data() {
     return {
-      anAddress: '',
+      officialAddress: '',
       loyalists: [],
-      registered: false,
-      // registered: this.sponsor?.biz ?? false,
+      needsData: true,
       ssid: '',
       centered: false,
       bottom: false,
@@ -579,15 +576,15 @@ export default {
       confirmationMessage: '',
       confirmationIcon: 'check',
 
-      business: this.sponsor?.biz ?? '',
-      address: this.sponsor?.address ?? '',
+      business: '',
+      address: '',
       countries: '',
-      country: this.sponsor?.country ?? '',
-      countryAbbr: '',
+      country: '',
+      // countryAbbr: '',
       city: '',
       // TODO REFACTOR: follow the lead on countries and make this array dynamic
       cities: ['Manchester', 'Sisters', 'Singapore'],
-      confirmedAddress: this.sponsor?.confirmedAddress ?? '',
+      confirmedAddress: '',
 
       snackBtnText: '',
       snackBarMessage: 'Ready to get started?',
@@ -615,7 +612,8 @@ export default {
 
   methods: {
     saveBiz() {
-      if (this.address && confirm('Save to local storage?')) {
+      this.validate();
+      if (this.officialAddress && confirm('Save to local storage?')) {
         this.updateSponsor({ biz: this.business });
       }
     },
@@ -669,24 +667,24 @@ export default {
     },
     // TODO REFACTOR: this should be a guard on the Sponsor model
     checkForCityState() {
-      const startOfCountry = this.address.lastIndexOf(',') + 2;
-      const cityStateCandidate = this.address.slice(startOfCountry);
+      const startOfCountry = this.officialAddress.lastIndexOf(',') + 2;
+      const cityStateCandidate = this.officialAddress.slice(startOfCountry);
       return cityStateCandidate.includes('Singapore')
         ? 'sg'
         : cityStateCandidate.slice(0, 2).toLowerCase();
     },
 
     addSponsor() {
-      this.registered = true;
+      this.needsData = false;
       // if the confirmation is for rewards, don't process new/updated sponsor
       if (this.confSnackbar === 2) {
         this.confSnackbar = false;
         return;
       }
       const uid = this.userID;
-      const biz = this.business.trim();
-      const country = this.checkForCityState();
-      const key = `tqr:${country.slice(0, 2).toLowerCase()}`;
+      const biz = this.sponsorName;
+      const country = this.sponsorCountry;
+      const key = `tqr:${country}`;
       console.log(info('addSponsor() key :>> ', key));
 
       this.emitFromClient(
@@ -698,7 +696,7 @@ export default {
         },
         (ssid) => {
           this.ssid = ssid;
-          const address = this.address;
+          const address = this.officialAddress;
           const confirmedAddress = this.confirmedAddress;
           const userAgent = navigator.userAgent;
           // when a browser becomes a Sponsor,
@@ -746,8 +744,9 @@ export default {
         alert('You are not online yet.');
         return;
       }
-      const { country, ssid, biz } = this.sponsor;
-      // const key = `tqr:${country}:${ssid}:promos`;
+      const country = this.sponsorCountry;
+      const ssid = this.ssid;
+      const biz = this.sponsorName;
       const promoText = this.promoText;
       console.log(info('addPromo()  :>> ', country, ssid, biz, promoText));
 
@@ -773,7 +772,7 @@ export default {
         'deletePromo',
         {
           country,
-          biz: this.sponsor.biz,
+          biz: this.sponsorName,
           ssid: this.sponsorID,
           sid: this.undo.ssid,
         },
@@ -785,8 +784,8 @@ export default {
     },
 
     getPromos() {
-      const { country, ssid } = this.sponsor;
-
+      const country = this.sponsorCountry;
+      const ssid = this.ssid;
       console.log(info('getPromos() key :>> ', country, ssid));
       this.emitFromClient('getPromos', { country, ssid }, (promos) => {
         console.log('Sponsor.vue promos for', 'biz:', printJson(promos));
@@ -813,24 +812,22 @@ export default {
     },
     validate() {
       this.$refs.form.validate();
-      const x =
-        isEmpty(this.city) ||
-        isEmpty(this.countryAbbr) ||
-        isEmpty(this.business);
-
-      // if any field is empty, we are not registered
-      this.registered = !x;
+      // if any field is empty, we need data
+      this.needsData = isEmpty(this.address) || isEmpty(this.business);
     },
     reset() {
       this.$refs.form.reset();
-      this.registered = false;
+      this.needsData = true;
+      // this value controls the visibility of the Register button
+      this.confirmedAddress = '';
+
       this.updateSponsor({
         id: 1,
         biz: '',
         country: '',
         ssid: '',
         address: '',
-        confirmedAddress: '',
+        confirmedAddress: this.confirmedAddress,
         tag: 'sponsore.vue:reset()',
       });
     },
@@ -854,13 +851,13 @@ export default {
     },
 
     register() {
-      // const address = `${this.business} ${this.city}`;
-      const address = `${this.business} ${this.anAddress}`;
-
+      // this.address can be as simple as a City
+      const address = `${this.business} ${this.address}`;
+      const country = this.country;
       const vm = this;
       this.emitFromClient(
         'getPlaceID',
-        { address, country: this.countryAbbr },
+        { address, country },
         // formatted_address and place_id come from getPlaceID()
         // warning comes from confirmPlaceID(). e.g., 'Cannot find an address based on your input.'
         ({ formatted_address, place_id, warning }) => {
@@ -874,7 +871,7 @@ export default {
             vm.approveString = 'Approve';
             vm.disapproveString = 'Disapprove';
             vm.confirmedAddress = place_id;
-            vm.address = formatted_address;
+            vm.officialAddress = formatted_address;
             vm.confirmationMessage = `<p>Google found this address:<br/> ${formatted_address}
           <p>If <strong>correct</strong>, your place_id is:<br/> ${place_id}</p>
           <p>If not, enter an address with more or different detail.</p>`;
@@ -892,7 +889,7 @@ export default {
     redeemReward({ cid, points }) {
       this.emitFromClient(
         'redeemReward',
-        { country: this.sponsor.country, ssid: this.sponsor.ssid, cid, points },
+        { country: this.sponsorCountry, ssid: this.sponsorID, cid, points },
         (ack) => {
           this.toastText = ack;
           this.toast = true;
@@ -901,7 +898,7 @@ export default {
     },
 
     getLoyalists(ssid) {
-      const country = this.country;
+      const country = this.sponsorCountry;
       this.emitFromClient('getLoyalists', { country, ssid }, (loyalists) => {
         this.loyalists = loyalists;
         console.log('loyalists :>> ', printJson(loyalists));
@@ -913,29 +910,34 @@ export default {
     undo(val) {
       console.log('undo val :>> ', val);
     },
-    business() {
-      this.validate();
-    },
-    address() {
-      this.validate();
-    },
     city() {
-      this.validate();
+      this.address = `${this.city}, ${this.country}`;
     },
-    countryAbbr() {
-      this.validate();
+    country() {
+      this.address = `${this.city}, ${this.country}`;
     },
     promotions(val) {
       this.renderPromos(val);
     },
-    registered(n, o) {
-      console.log(info('registered val (n/o) :>> ', n, o));
+    needsData() {
+      this.toastText = this.needsData ? 'Please register' : 'Registered';
+      this.toast = true;
+    },
+    sponsor(n, o) {
+      console.log(info('sponsor:\n'), printJson(n), printJson(o));
+      console.log(' ');
     },
   },
 
   mounted() {
     // if this.sponsor is empty, enable registration
-    this.registered = !isEmpty(this.sponsor.address);
+    this.needsData = isEmpty(this.sponsor.address);
+    this.officialAddress=this.sponsor.address
+    this.confirmedAddress=this.sponsor.confirmedAddress
+    this.business=this.sponsor.biz
+
+    this.toastText = this.needsData ? 'Please register' : 'Registered';
+    this.toast = true;
 
     // to fill in items for the country combobox (if needed)
     this.getCountries();

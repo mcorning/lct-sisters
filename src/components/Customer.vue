@@ -183,12 +183,11 @@
                         <template v-slot:default>
                           <thead>
                             <tr>
-                              <th id="promo" style="bgcolor: grey">
+                              <th id="rewardId" style="bgcolor: grey">
                                 Reward ID
                               </th>
-                              <th id="from" style="bgcolor: grey">Earned On</th>
-                              <th id="promo" style="bgcolor: grey">
-                                Sponsor ID
+                              <th id="earnedOn" style="bgcolor: grey">
+                                Earned On
                               </th>
                             </tr>
                           </thead>
@@ -204,7 +203,6 @@
                               <td style="text-align: left">
                                 {{ getDateFromRid(item.rsid) }}
                               </td>
-                              <td style="text-align: left">{{ item.sid }}</td>
                             </tr>
                           </tbody>
                         </template>
@@ -294,7 +292,7 @@ import VueQRCodeComponent from 'vue-qr-generator';
 
 import * as easings from 'vuetify/lib/services/goto/easing-patterns';
 import { DateTime } from '@/utils/luxonHelpers';
-import { getDateFromSid } from '../../srv/utils';
+import { getTimeFromSid } from '../../srv/utils';
 import { printJson, head, info, isEmpty } from '@/utils/helpers';
 
 export default {
@@ -507,7 +505,7 @@ export default {
 
   methods: {
     getDateFromRid(rsid) {
-      return getDateFromSid(rsid);
+      return getTimeFromSid(rsid);
     },
     deleteReward(rsid, redeeming = true) {
       console.log(info('deleteReward() rsid :>> '), rsid);
@@ -596,7 +594,7 @@ export default {
       this.promos = [];
       const ssid = this.selectedSponsor.ssid;
       const country = this.country;
-            this.emitFromClient('getPromos', { country, ssid }, (promos) => {
+      this.emitFromClient('getPromos', { country, ssid }, (promos) => {
         this.promotions = promos ?? [];
         console.log(`promotions`, printJson(this.promotions));
       });

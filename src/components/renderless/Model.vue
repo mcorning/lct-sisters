@@ -326,6 +326,7 @@ export default {
 
       // when a browser becomes a Sponsor,
       // settings gets a ssid
+      // see warning.js
       this.updateSetting({
         id: 1,
         biz,
@@ -336,6 +337,8 @@ export default {
         confirmedAddress,
         userAgent,
       });
+      console.log(success(printJson(this.sponsor)));
+      console.log(' ' );      
     },
 
     updateSession(data) {

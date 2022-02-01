@@ -39,7 +39,7 @@ const getObject = (entry) => {
   return entry[1].reduce((a, c, i, pairs) => {
     const ssid = entry[0];
     const visitedOn = getTimeFromSid(ssid);
-    const dated = getDateFromSid(entry[0]);
+    const dated = getTimeFromSid(entry[0]);
     if (i % 2 === 0) {
       a[c] = pairs[i + 1];
       a.visitedOn = visitedOn;
