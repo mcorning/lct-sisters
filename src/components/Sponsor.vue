@@ -140,20 +140,18 @@
                 <v-card-text v-if="needsData">
                   <v-checkbox v-model="agreement" dark required>
                     <template v-slot:label>
-                      <v-row>
-                        <v-col>
+                      I agree to both:<br />
+                      <v-row no-gutters>
+                        <v-col cols="6">
                           <a href="#" @click.stop.prevent="dialog = true"
                             >Terms of Service</a
                           >
                         </v-col>
-                        <v-col>
+                        <v-col cols="6">
                           <a href="#" @click.stop.prevent="dialog = true"
                             >Privacy Policy</a
                           >*
                         </v-col>
-                      </v-row>
-                      <v-row>
-                        <v-col> I agree to both&nbsp;</v-col>
                       </v-row>
                     </template>
                   </v-checkbox>
@@ -279,9 +277,13 @@
 
         <!-- Footer card -->
         <v-row dense justify="space-between">
-          <v-col cols="11">
+          <v-col cols="3">
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
+
+          <v-col cols="8">
+            <span class="text-caption">{{ userAgent }}</span></v-col
+          >
 
           <v-col cols="1">
             <v-icon right
@@ -289,18 +291,19 @@
             </v-icon>
           </v-col>
         </v-row>
-        <v-row no-gutters justify="center">
+        <!-- <v-row no-gutters justify="center">
           <v-col cols="auto">
             <span class="text-caption">{{ userAgent }}</span></v-col
           ></v-row
-        >
-        <v-row no-gutters justify="center">
+        > -->
+
+        <v-row no-gutters justify="center" v-if="isConnected">
           <v-col cols="auto">
             <span class="text-caption"
               >Customers earn rewards using: <br />{{ encodedUri }}</span
             ></v-col
-          ></v-row
-        >
+          >
+        </v-row>
       </v-container>
 
       <!-- QR Card Printout -->
@@ -461,7 +464,7 @@ export default {
     },
 
     userAgent() {
-      return navigator.userAgent;
+      return printJson(navigator.userAgentData.brands[1]);
     },
     copyMsg() {
       // copyState starts out false
@@ -781,9 +784,10 @@ export default {
       const promoText = this.promoText;
       console.log(info('addPromo()  :>> ', country, ssid, biz, promoText));
 
-      this.emitFromClient('addPromo', { country, ssid, biz, promoText }, () =>
-        this.getPromos()
-      );
+      this.emitFromClient('addPromo', { country, ssid, biz, promoText }, () => {
+        this.getPromos();
+        this.promoText = '';
+      });
     },
 
     deletePromo(promo) {
@@ -956,8 +960,13 @@ export default {
     promotions(val) {
       this.renderPromos(val);
     },
+
     needsData() {
-      this.toastText = this.needsData ? 'Please register' : 'Registered';
+      const isRegistered = () =>
+        this.confirmedAddress
+          ? 'You are registered'
+          : 'Ready to confirm registration';
+      this.toastText = this.needsData ? 'Please register' : isRegistered();
       this.toast = true;
     },
     sponsor(n, o) {
