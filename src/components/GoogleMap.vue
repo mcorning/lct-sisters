@@ -15,95 +15,99 @@
       floating
       id="autocompleteToolbar"
     >
-      <div class="text-center">
-        <v-menu
-          v-model="menu"
-          :close-on-content-click="false"
-          :nudge-width="200"
-          offset-x
-        >
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn icon v-bind="attrs" v-on="on">
-              <v-icon>mdi-dots-vertical</v-icon>
-            </v-btn>
-          </template>
-          <v-card>
-            <v-row dense no-gutters
-              ><v-col cols="10"
-                ><img src="https://picsum.photos/200/200" alt="nice" />
-              </v-col>
-
-              <v-col col="1" class="text-right">
-                <v-btn color="primary" icon @click="menu = false">
-                  <v-icon>close</v-icon>
-                </v-btn></v-col
-              >
-            </v-row>
-            <v-divider></v-divider>
-            <v-card-actions>
-              <v-tooltip top>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    @click="changeMapCenter"
-                    icon
-                    color="primary"
-                  >
-                    <v-icon>save</v-icon>
-                  </v-btn>
-                </template>
-                <span>Save map center</span>
-              </v-tooltip>
-              <span class="text-caption pl-2"
-                >Default location: {{ showMapCenter() }}</span
-              >
-              <v-spacer />
-            </v-card-actions>
-
-            <v-divider></v-divider>
-
-            <v-card-actions>
-              <v-tooltip top>
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    @click="clearMyLocationSettings"
-                    icon
-                    color="primary"
-                  >
-                    <v-icon>gps_off</v-icon>
-                  </v-btn>
-                </template>
-                <span>Temporarily clears default location setting</span>
-              </v-tooltip>
-              <v-spacer />
-              <v-btn text @click="volunteer"> Volunteer </v-btn>
-              <v-spacer />
-              <v-btn color="primary" icon @click="onOpenDiagnostics">
-                <v-icon>mdi-monitor-dashboard</v-icon>
+      <v-row align="center">
+        <v-col cols="9">
+          <v-text-field
+            hide-details
+            prepend-icon="mdi-magnify"
+            single-line
+            dense
+            id="autoCompleteInput"
+            placeholder="Type here to search"
+          >
+          </v-text-field>
+        </v-col>
+        <v-col cols="1">
+          <btn-with-tooltip
+            tip="Pan to your location"
+            :click="panToCurrentLocation"
+            icon="mdi-crosshairs-gps"
+          />
+        </v-col>
+        <v-col cols="1">
+          <v-menu
+            v-model="menu"
+            :close-on-content-click="false"
+            :nudge-width="200"
+            offset-x
+          >
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon v-bind="attrs" v-on="on">
+                <v-icon>mdi-dots-vertical</v-icon>
               </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-menu>
-      </div>
+            </template>
+            <v-card>
+              <v-row dense no-gutters
+                ><v-col cols="10"
+                  ><img src="https://picsum.photos/200/200" alt="nice" />
+                </v-col>
 
-      <v-text-field
-        hide-details
-        prepend-icon="mdi-magnify"
-        single-line
-        class="ml-3"
-        dense
-        id="autoCompleteInput"
-        placeholder="Type here to search"
-      >
-      </v-text-field>
-      <btn-with-tooltip
-        tip="Pan to your location"
-        :click="panToCurrentLocation"
-        icon="mdi-crosshairs-gps"
-      />
+                <v-col col="1" class="text-right">
+                  <v-btn color="primary" icon @click="menu = false">
+                    <v-icon>close</v-icon>
+                  </v-btn></v-col
+                >
+              </v-row>
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-tooltip top>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                      @click="changeMapCenter"
+                      icon
+                      color="primary"
+                    >
+                      <v-icon>save</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Save map center</span>
+                </v-tooltip>
+                <span class="text-caption pl-2"
+                  >Default location: {{ showMapCenter() }}</span
+                >
+                <v-spacer />
+              </v-card-actions>
+
+              <v-divider></v-divider>
+
+              <v-card-actions>
+                <v-tooltip top>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                      @click="clearMyLocationSettings"
+                      icon
+                      color="primary"
+                    >
+                      <v-icon>gps_off</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Temporarily clears default location setting</span>
+                </v-tooltip>
+                <v-spacer />
+                <v-btn text @click="volunteer"> Volunteer </v-btn>
+                <v-spacer />
+                <v-btn color="primary" icon @click="onOpenDiagnostics">
+                  <v-icon>mdi-monitor-dashboard</v-icon>
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-menu>
+        </v-col>
+      </v-row>
     </v-toolbar>
 
     <!-- Map container inside-->
@@ -1081,6 +1085,9 @@ export default {
 </script>
 
 <style>
+.v-text-field {
+  width: 300px;
+}
 html,
 body {
   margin: 0;

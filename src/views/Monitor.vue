@@ -63,8 +63,8 @@ export default {
   methods: {
     onError(error) {
       // let the global error handler pick up and display this error
-      error.message = `Time.vue error message: ${error.message}`;
-      throw error;
+      const msg = `Time.vue error message: ${error.message}`;
+      throw Error(msg);
     },
 
     onVisitors({ msg, visitors }) {

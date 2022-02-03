@@ -39,6 +39,8 @@ Vue.prototype.$userID = '';
 Vue.prototype.$connected = false;
 
 Vue.config.productionTip = false;
+Vue.config.devtools = true;
+
 
 new Vue({
   vuetify,

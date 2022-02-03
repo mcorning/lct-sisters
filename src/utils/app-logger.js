@@ -42,7 +42,7 @@ class AppLogger {
       this.logToServer = (err) => {
         /** temp added to print in the console during production */
         console.log(err);
-
+// TODO put Auditor here...
         /** TODO: API integration for logging to server or any custom logic in case of Production environment */
       };
     }

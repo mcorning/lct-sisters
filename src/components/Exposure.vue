@@ -460,8 +460,9 @@ export default {
     },
     onError(error) {
       // let the global error handler pick up and display this error
-      error.message = `Space.vue error message: ${error.message}`;
-      throw error;
+      // TODO refactor error handling and put code in a util
+      const msg = `Space.vue error message: ${error.message}`;
+      throw Error(msg);
     },
 
     returnToSpaces() {
