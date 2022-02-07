@@ -45,7 +45,7 @@ export default {
   methods: {
     onError(error) {
       // let the global error handler pick up and display this error
-      const msg = `Warning.vue error message: ${error.message}`;
+      const msg = `Warning.vue error message: ${error}`;
       throw Error(msg);
     },
   },

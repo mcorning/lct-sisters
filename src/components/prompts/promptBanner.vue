@@ -109,7 +109,9 @@ export default {
   methods: {},
   watch: {
     ready() {
-      console.log(printJson(this.alert), 'alert:>>');
+      if (this.alert) {
+        console.log(printJson(this.alert), 'alert:>>');
+      }
     },
     showBanner(n, o) {
       console.log(n, o);

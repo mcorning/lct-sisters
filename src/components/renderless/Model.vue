@@ -187,6 +187,10 @@ export default {
         global_code: '',
         zoom: '',
       });
+      this.updateSetting({
+        id: 1,
+        workplace: '',
+      });
     },
     setDefaultMapCenter(center) {
       const centerVal = center ? JSON.stringify(center) : center;
@@ -338,7 +342,7 @@ export default {
         userAgent,
       });
       console.log(success(printJson(this.sponsor)));
-      console.log(' ' );      
+      console.log(' ');
     },
 
     updateSession(data) {
@@ -388,9 +392,10 @@ export default {
     },
 
     // visitData includes: {id:v.id, place_id: v.place_id, start: v.start, end: v.end };
-    addWarnings({ visitData, score, reliability }) {
+    // TODO replace with real score data
+    addWarnings({ visitData, score = 76, reliability = 10 }) {
       console.log('visitData, score, reliability');
-      console.log(visitData, score, reliability);
+      console.log(printJson(visitData), score, reliability);
       return new Promise((resolve) => {
         this.emitFromClient(
           'addWarnings',

@@ -728,7 +728,7 @@ export default {
           this.ssid = ssid;
           const address = this.officialAddress;
           const confirmedAddress = this.confirmedAddress;
-          const userAgent = navigator.userAgent;
+          const userAgent = userAgent;
           // when a browser becomes a Sponsor,
           // settings gets a ssid
           this.updateSponsor({

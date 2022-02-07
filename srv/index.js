@@ -63,7 +63,7 @@ const {
   getVisits,
   randomId,
   audit,
-} = require('./redis/streams');
+} = require('./redis/act');
 
 // tqr.js has the most efficient code
 const {
@@ -214,13 +214,13 @@ io.on('connection', (socket) => {
   });
 
   // TODO this event is misnamed. we add warnings and send alerts in one place
-  socket.on('addWarnings', ({ visitData, score, reliability }, ack) => {
-    if (isEmpty(visitData) && ack) {
+  socket.on('addWarnings', ({ visitsWithoutWsid, score, reliability }, ack) => {
+    if (isEmpty(visitsWithoutWsid) && ack) {
       ack('No Visit Data. Server should not be called.');
     }
-    console.log('index.js: visitData', printJson(visitData));
+    console.log('index.js: visitsWithoutWsid', printJson(visitsWithoutWsid));
     // addWarnings returns an array of Stream IDs...
-    addWarnings({ visitData, score, reliability });
+    addWarnings({ visitsWithoutWsid, score, reliability });
     //...that we ignore?
 
     // now get all entries in the warnings stream

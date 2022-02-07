@@ -19,7 +19,7 @@
           class="red"
           @click="open('Warn')"
         >
-          <v-icon>mdi-alert</v-icon>
+          <v-icon large>mdi-biohazard</v-icon>
         </v-btn>
       </template>
       <span

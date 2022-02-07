@@ -10,6 +10,12 @@ import Cvew from '@/views/Cvew.vue';
 Vue.use(VueRouter);
 
 const routes = [
+  // {
+  //   path: '/',
+  //   name: 'Space',
+  //   component: Space,
+  //   props: true,
+  // },
   {
     path: '/',
     name: 'Hub',
@@ -55,14 +61,13 @@ const routes = [
   },
   {
     path: '/cvew',
-    name: 'Cvew',
+    name: 'Warning',
     component: Cvew,
     props: true,
   },
 
-
   {
-    path: '/warning',
+    path: '/warn',
     name: 'Warn',
     component: Warning,
     props: true,

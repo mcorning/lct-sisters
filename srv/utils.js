@@ -1,5 +1,20 @@
 const { formatTime, formatDate } = require('../src/utils/luxonHelpers');
+const { highlight } = require('../src/utils/helpers');
 
+/**
+ * It takes a list of promises and waits for them to resolve.
+ * @param data - { key, score, reliability, arr }
+ * @param fn - the function to run
+ */
+async function keepPromises(data, fn) {
+  const { key, score, reliability, arr } = data;
+  const unresolved = arr.map((vals) => fn(key, score, reliability, vals));
+
+  const resolved = await Promise.all(unresolved).catch((e) => {
+    console.log(e);
+  });
+  console.log(highlight('resolved', resolved));
+}
 const filterOn = (arr, fn) =>
   arr
     .filter(typeof fn === 'function' ? fn : (val) => val[fn])
@@ -133,7 +148,6 @@ const objectToKeyedArray = (obj) => {
 module.exports = {
   groupBy,
   filterOn,
-
   indexOn,
   isEmpty,
   objectFromStream,
@@ -142,4 +156,5 @@ module.exports = {
   objectToKeyedArray,
   getDateFromSid,
   getTimeFromSid,
+  keepPromises,
 };

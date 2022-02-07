@@ -134,11 +134,11 @@
         </v-row>
       </v-card>
     </v-dialog>
-    <!-- <prompt-banner
+    <prompt-banner
       :alert="alert"
       :riskScore="riskScore"
       :refresh="refresh"
-    ></prompt-banner> -->
+    ></prompt-banner>
 
     <feedback-card
       v-if="feedbackDialog"
@@ -157,7 +157,7 @@
 <script>
 import { getNow } from '@/utils/luxonHelpers';
 import { info, success, warn, printJson } from '@/utils/helpers';
-// import PromptBanner from '../components/prompts/promptBanner.vue';
+import PromptBanner from '../components/prompts/promptBanner.vue';
 import FeedbackCard from '../components/cards/feedbackCard.vue';
 import VueQRCodeComponent from 'vue-qr-generator';
 import ConfirmationSnackbar from '../components/prompts/confirmationSnackbar.vue';
@@ -176,7 +176,7 @@ export default {
   },
   components: {
     nestedMenu: () => import('../components/menus/nestedMenu.vue'),
-    // PromptBanner,
+    PromptBanner,
     FeedbackCard,
     VueQRCodeComponent,
     ConfirmationSnackbar,
@@ -295,6 +295,7 @@ export default {
 
     // broadcastedAlert replaces exposureAlert
     exposureAlert({ alert, riskScore }) {
+      console.log('alert :>> ', printJson(alert));
       const audio = new AudioContext();
       function beep(vol, freq, duration) {
         const v = audio.createOscillator();

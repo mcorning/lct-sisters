@@ -9,13 +9,14 @@ export const warningMixin = {
     onExposureWarning(riskScore, ack) {
       const graphName = this.getPoi().namespace;
       if (!graphName) {
-        this.$emit('error', 'No graphName provided');
-        return;
+        throw Error('warning.js: onExposureWarning():>> No graphName provided');
       }
       if (!ack) {
-        this.$emit('error', 'No ack function available');
-        return;
+        throw Error(
+          'warning.js: onExposureWarning():>> No ack function available'
+        );
       }
+
       this.emitFromClient(
         'exposureWarning',
         { graphName, riskScore },
@@ -50,8 +51,8 @@ export const warningMixin = {
             }),
           error: (err) => {
             // let global error handler take over so we see the error in the snackbar.
-            err.message = +'Setting.update() had issues';
-            throw err;
+            const msg = `Setting.update() had issues: ${err.message}`;
+            throw Error(msg);
           },
         });
     },
