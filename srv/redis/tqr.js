@@ -104,6 +104,7 @@ if (process.env.NODE_ENV === 'production') {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD,
+    keyPrefix: 'tqr:',
   };
 } else {
   const lctJsonOptions = require('./redisJson.options.js');
@@ -111,6 +112,8 @@ if (process.env.NODE_ENV === 'production') {
     host: lctJsonOptions.redisHost,
     port: lctJsonOptions.redisPort,
     password: lctJsonOptions.redisPassword,
+    showFriendlyErrorStack: true,
+    keyPrefix: 'tqr:',
   };
 }
 const Redis = require('ioredis');

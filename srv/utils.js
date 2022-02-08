@@ -14,6 +14,7 @@ async function keepPromises(data, fn) {
     console.log(e);
   });
   console.log(highlight('resolved', resolved));
+  return resolved;
 }
 const filterOn = (arr, fn) =>
   arr
@@ -60,6 +61,26 @@ const getObject = (entry) => {
       a.visitedOn = visitedOn;
       a.dated = dated;
       a.ssid = ssid;
+      return a;
+    }
+    return a;
+  }, {});
+};
+
+const entryFromStream = (stream) =>
+  isEmpty(stream)
+    ? null
+    : stream.reduce((a, c) => {
+        const key = c[0];
+        const value = getEntry(c[1]);
+        a.push({ key, value });
+        return a;
+      }, []);
+
+const getEntry = (entry) => {
+  return entry.reduce((a, c, i, pairs) => {
+    if (i % 2 === 0) {
+      a[c] = pairs[i + 1];
       return a;
     }
     return a;
@@ -146,8 +167,9 @@ const objectToKeyedArray = (obj) => {
   return new Proxy(obj, handler);
 };
 module.exports = {
-  groupBy,
+  entryFromStream,
   filterOn,
+  groupBy,
   indexOn,
   isEmpty,
   objectFromStream,

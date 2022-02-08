@@ -10,8 +10,7 @@ const {
   printJson,
 } = require('../../src/utils/helpers');
 const { isEmpty } = require('../utils');
-const here = 'consumers';
-
+const { DateTime, formatTime } = require('../../src/utils/luxonHelpers');
 const {
   groupBy,
   objectFromStream,
@@ -40,130 +39,121 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 
 //#endregion Setup
 
-const key = 'act:warnings',
-  groupName = 'alerts',
-  consumer = 'mpc',
-  consumer2 = 'klc',
-  newMessages = '>',
-  allMessages = '0',
-  IDs = newMessages;
+const set = 'last-delivered-id';
+const key = 'act:warnings';
 
-const initialize = async () => {
-  // if group exists, returns a harmless message
-  await redis
-    .xgroup('CREATE', key, groupName, '$', 'MKSTREAM')
-    .then((msg) => console.log(notice('msg :>> ', msg)))
-    .catch(() => console.log(err('Group already exists')));
+function getLastDeliveredID(consumer) {
+  return redis
+    .hget(set, consumer)
+    .then((id) => id)
+    .catch((e) => console.log(err(e)));
+}
+function updateLastDeliveredID(consumer, id) {
+  function report() {
+    console.log(' ');
+    console.log(notice(`HSET ${set} ${consumer} ${id}`));
+    console.log(success(`last-delivered-id for ${consumer}: ${id}`));
+  }
+  return redis
+    .hset(set, consumer, id)
+    .then(() => report())
+    .catch((e) => console.log(err(e)));
+}
 
-  console.log(notice(`XGROUP CREATECONSUMER ${key} ${groupName} ${consumer}`));
-  await redis
-    .xgroup('CREATECONSUMER', key, groupName, consumer)
-    .then((info) => console.log(highlight('mpc info :>> ', info)));
+function addWarnings(biz) {
+  if (!biz) {
+    return;
+  }
+  const start = DateTime.now();
+  const tag = formatTime(start.toMillis());
+  console.log(tag);
+  const end = '==================================';
+  return redis.xadd(
+    key,
+    '*',
+    'tag',
+    tag,
+    'place_id',
+    biz,
+    // ' start',
+    // start,
+    ' end',
+    end
+  );
+}
 
-  console.log(notice(`XGROUP CREATECONSUMER ${key} ${groupName} ${consumer2}`));
-  await redis
-    .xgroup('CREATECONSUMER', key, groupName, consumer2)
-    .then((info) => console.log(highlight('klc info :>> ', info)));
+//#region Functions
+const TIMEOUT = 1000;
+function blockForNewWarnings() {
+  function report(id) {
+    console.log(' ');
+    console.log(notice(`XREAD BLOCK TIMEOUT STREAMS ${key} $`));
+    console.log(success('BLOCKing on FIRST new message FROM:', printJson(id)));
+    return id;
+  }
 
-  console.log(notice(`XINFO GROUPS ${key} `));
-  await redis
-    .xinfo('GROUPS', key)
-    .then((info) => console.log(highlight('Group info:', printJson(info))));
-  console.log('=======================================================\n');
-};
+  return redis
+    .xread('BLOCK', TIMEOUT, 'STREAMS', key, '$')
+    .then(() => addWarnings('anything'))
+    .then((id) => report(id))
+    .then((id) => getWarnings(id))
+    .catch((e) => console.log(err(e)));
+}
 
-async function start() {
-  await initialize();
-  const add = true;
-  if (add) {
+function getWarnings(ID = '0') {
+  console.log('ID :>> ', ID);
+  function report(id) {
+    console.log(' ');
+    console.log(notice(`XREAD BLOCK TIMEOUT STREAMS ${key} ${ID}`));
+    console.log(success('BLOCKing on new message FROM:', printJson(id)));
+    return id;
+  }
+
+  return (
     redis
-      .xadd(
-        key,
-        '*',
-        'place_id',
-        'Fika',
-        ' start',
-        new Date().toLocaleString(),
-        ' end',
-        ' 1644019200000',
-        ' score',
-        ' 76',
-        ' reliability',
-        ' 10',
-        ' vid',
-        ' 1b417c4079d9245a'
-      )
-      .then(() =>
-        redis.xadd(
-          key,
-          '*',
-          'place_id',
-          'SCC',
-          ' start',
-          new Date().toLocaleString(),
-          ' end',
-          ' 1644019200000',
-          ' score',
-          ' 76',
-          ' reliability',
-          ' 10',
-          ' vid',
-          ' 1b417c4079d9245a'
-        )
-      )
-      .then(() => console.log(notice(`XINFO CONSUMERS ${key} ${groupName}`)))
-      .then(() =>
-        redis
-          .xinfo('CONSUMERS', key, groupName)
-          .then((info) =>
-            console.log(highlight('1) Consumer info:', printJson(info)))
-          )
-      )
-      .then(() =>
-        console.log(
-          notice(
-            `XREADGROUP GROUP ${groupName} ${consumer} STREAMS ${key} ${IDs}`
-          )
-        )
-      )
-      .then(() =>
-        // NOTE: you cannot read all messages in a group
-        // unless you first read new messages
-        // XREADGROUP GROUP alerts mpc STREAMS act:warnings >
-        redis
-          .xreadgroup('GROUP', groupName, consumer, 'STREAMS', key, IDs)
-          .then((messages) =>
-            console.log(
-              success(
-                IDs === allMessages ? 'All messages:' : 'New Messages',
-                `for ${consumer}`,
-                printJson(messages)
-              )
-            )
-          )
-          .catch((e) => console.log(err(e)))
-      )
-      .then(() =>
-        // NOTE: you cannot read all messages in a group
-        // unless you first read new messages
-        // XREADGROUP GROUP alerts mpc STREAMS act:warnings 0
-        redis
-          .xreadgroup('GROUP', groupName, consumer, 'STREAMS', key, allMessages)
-          .then((messages) =>
-            console.log(
-              success('All messages:', `for ${consumer}`, printJson(messages))
-            )
-          )
-          .catch((e) => console.log(err(e)))
-      );
-    // .then(() =>
-    //   redis
-    //     .xgroup('DELCONSUMER', key, groupName, consumer2)
-    //     .then((info) =>
-    //       console.log(err('After deleting consumer :>> ', info))
-    //     )
-    // );
+      .xread('BLOCK', TIMEOUT, 'STREAMS', key, ID)
+      .then(() => addWarnings('anything else'))
+      // .then((id) => report(id))
+      .then(() => addWarnings('NOPE. ALL DONE'))
+      .then((id) => report(id))
+      .catch((e) => console.log(err(e)))
+  );
+}
+
+async function trimStream() {
+  return redis
+    .xtrim(key, 'MAXLEN', '~', 0)
+    .then((nr) => console.log(highlight(`${nr} messages deleted`)));
+}
+/**
+ * Given an array of values, return an array of promises that resolve to the values
+ * @param arr - An array of values to be passed to the function.
+ * @param fn - The function that will be called for each item in the array.
+ * @returns The resolved IDs.
+ */
+async function keepPromises(arr, fn) {
+  const unresolved = arr.map((val) => fn(val));
+
+  const resolved = await Promise.all(unresolved).catch((e) => {
+    console.log(e);
+  });
+  console.log(highlight('Promised IDs :>> ', resolved));
+  return resolved;
+}
+//#endregion
+
+async function init(proceed = false) {
+  if (proceed) {
+    await trimStream();
+    await keepPromises(['Fika', 'SCC', 'The Barn'], addWarnings);
   }
 }
 
-start();
+async function test() {
+  await init(true);
+  const x = await redis.xread('BLOCK', TIMEOUT, 'STREAMS', key, '$');
+  addWarnings('one more thing');
+  console.log('x :>> ', x);
+  // await blockForNewWarnings();
+}
+test();
