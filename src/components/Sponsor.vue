@@ -281,21 +281,12 @@
             <span class="text-caption text-left"> TQR Ver: {{ $version }}</span>
           </v-col>
 
-          <v-col cols="8">
-            <span class="text-caption">{{ userAgent }}</span></v-col
-          >
-
           <v-col cols="1">
             <v-icon right
               >{{ isConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
             </v-icon>
           </v-col>
         </v-row>
-        <!-- <v-row no-gutters justify="center">
-          <v-col cols="auto">
-            <span class="text-caption">{{ userAgent }}</span></v-col
-          ></v-row
-        > -->
 
         <v-row no-gutters justify="center" v-if="isConnected">
           <v-col cols="auto">
