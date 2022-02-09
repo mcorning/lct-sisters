@@ -259,7 +259,7 @@ const getLoyalists = async (key) => {
 
 const getCountries = () =>
   redis
-    .scan('0', 'MATCH', 'tqr:??')
+    .scan('0', 'MATCH', 'tqr:*')
     .then((countries) => countries.filter((v, i) => i > 0))
     .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4, 6))))
     .catch((e) => console.log('e :>> ', e));
