@@ -125,7 +125,7 @@ const setCacheItem = (key, to, val) => {
 };
 const getKey = ({ country, ssid, type, cid, context }) => {
   const customer = cid ? `:${cid}` : '';
-  const key = `tqr:${country}:${ssid}:${type}${customer}`;
+  const key = `${country}:${ssid}:${type}${customer}`;
   const msg = `getKey:>> ${key}`;
   const sourceKey = `${here}:${context}`;
   audit({ source: here, context, msg }).then((sid) =>
@@ -209,7 +209,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('deletePromo', ({ country, biz, ssid, sid }, ack) => {
-    const key = `tqr:${country}:${ssid}:promos`;
+    const key = `${country}:${ssid}:promos`;
     addToAudit('deletePromo', `key:>> ${key}`);
     deleteStream(key, sid).then((ct) => {
       if (ack) {
@@ -378,7 +378,7 @@ io.on('connection', (socket) => {
   //#endregion
 
   socket.on('addSponsor', ({ key, biz, uid }, ack) => {
-    console.log(key, biz, uid);
+    console.log('addSponsor()',key, biz, uid);
     // add to the Sponsor Stream
     addSponsor({
       key,

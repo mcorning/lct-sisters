@@ -714,7 +714,7 @@ export default {
       const uid = this.userID;
       const biz = this.sponsorName;
       const country = this.sponsorCountry;
-      const key = `tqr:${country}`;
+      const key = `${country}`;
       console.log(info('addSponsor() key :>> ', key));
 
       this.emitFromClient(

@@ -266,11 +266,13 @@ const getCountries = () =>
 
 // xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) =>
+{
+  console.log(`getSponsor(${country})`, country);
   redis
     .xrange(country, ssid, ssid)
     .then((stream) => objectFromStreamEntry(stream))
     .then((sponsor) => forThisSponsor(sponsor));
-
+}
 // xread STREAMS tqr:us:1642558471131-0:rewards:{cid} 0
 const getRewards = (key) =>
   redis
