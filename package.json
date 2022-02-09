@@ -1,12 +1,12 @@
 {
   "name": "lct-sisters",
-  "version": "1.02.0711",
+  "version": "1.02.0818",
   "scripts": {
     "localhost": "vue-cli-service serve",
     "start": "node srv/index.js",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "herokuLogsCvew": "heroku logs -a cvew"
+    "herokuLogsCvew": "heroku logs -a cvew --source app -n 500"
   },
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.3.4",

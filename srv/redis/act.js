@@ -3,7 +3,7 @@
 // SEE: https://github.com/luin/ioredis/blob/master/examples/redis_streams.js
 //#region Setup
 const { highlight } = require('../../src/utils/helpers');
-const { isEmpty, keepPromises } = require('../utils');
+const { isEmpty, entryFromStream } = require('../utils');
 const here = 'streams';
 const crypto = require('crypto');
 const randomId = () => crypto.randomBytes(8).toString('hex');
@@ -20,6 +20,7 @@ if (process.env.NODE_ENV === 'production') {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     password: process.env.REDIS_PASSWORD,
+    keyPrefix: 'act:',
   };
 } else {
   const lctJsonOptions = require('./redisJson.options.js');
@@ -27,6 +28,8 @@ if (process.env.NODE_ENV === 'production') {
     host: lctJsonOptions.redisHost,
     port: lctJsonOptions.redisPort,
     password: lctJsonOptions.redisPassword,
+    keyPrefix: 'act:',
+    showFriendlyErrorStack: true,
   };
 }
 console.log('Redis Options:', JSON.stringify(options, null, 3));
@@ -34,6 +37,42 @@ console.log('Redis Options:', JSON.stringify(options, null, 3));
 const Redis = require('ioredis');
 const redis = new Redis(options);
 //#endregion Setup
+
+const printJson = (json) => JSON.stringify(json, null, 2);
+
+const processMessage = (message) => {
+  console.log(message.key);
+  console.log(`Value: ${printJson(message.value)}`);
+};
+
+const handleRedisError = (err) => {
+  console.log('error :>> ', err.message);
+  console.log('command :>> ', JSON.stringify(err, null, 2));
+  console.log('stack :>> ', err.stack);
+};
+
+//keyPrefix option appends 'act:'
+const key = 'warnings';
+
+function listenForMessage(lastId = '$') {
+  // `results` is an array, each element of which corresponds to a key.
+  // Because we only listen to one key (act:warnings) here,
+  // `results` only contains a single element.
+  //See more: https://redis.io/commands/xread#return-value
+  redis
+    .xread('BLOCK', 0, 'STREAMS', key, lastId)
+    .then((results) => {
+      const [thisKey, messages] = results[0];
+      const x = entryFromStream(messages);
+      process.stdout.write(`Key :>> ${thisKey}:`);
+      x.forEach(processMessage);
+
+      // Pass the last id of the results to the next round.
+      const lastDeliveredId = messages[messages.length - 1][0];
+      listenForMessage(lastDeliveredId);
+    })
+    .catch((e) => handleRedisError(e));
+}
 
 const getNewWarnings = async (key, score, reliability, vals) => {
   const { place_id, start, end, id } = vals;
@@ -63,21 +102,22 @@ const addWarnings = async ({
   score = 76,
   reliability = 16,
 }) => {
-  const key = 'act:warnings';
   const context = 'addWarnings()';
   const source = 'act';
   audit({ context, msg: key, source });
-  const x = await keepPromises(
-    {
-      key,
-      score,
-      reliability,
-      arr: visitsWithoutWsid,
-    },
-    getNewWarnings
-  );
-  console.log('x', x);
-  return x;
+
+  const args = [
+    key,
+    '*',
+    'exposures',
+    `"${printJson(visitsWithoutWsid)}"`,
+    'score',
+    score,
+    'reliability',
+    reliability,
+  ];
+  console.log('XADD', args.join(' '));
+  return await redis.xadd(args).catch((e) => handleRedisError(e));
 };
 //#region Warnings
 // TODO shouldn't this be getAlerts()?
@@ -85,7 +125,7 @@ const getWarnings = () => {
   const safeGroup = (alerts) =>
     isEmpty(alerts) ? [] : groupBy(alerts, 'place_id');
 
-  const key = 'act:warnings';
+  const key = 'warnings';
   return redis
     .xread(['STREAMS', key, '0'])
     .then((stream) => objectFromStream(stream))
@@ -182,5 +222,6 @@ module.exports = {
   getRewardPoints,
   addWarnings,
   getWarnings,
+  listenForMessage,
   randomId,
 };

@@ -9,7 +9,7 @@ export default {
         .filter((v) => !v.wsid)
         .map((v) => {
           console.log(log(print(v.id, v.place_id, v.start, v.end)), 'warnings');
-          return { id: v.id, place_id: v.place_id, start: v.start, end: v.end };
+          return { vid: v.id, place_id: v.place_id, start: v.start, end: v.end };
         });
     },
   },

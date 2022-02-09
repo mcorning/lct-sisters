@@ -133,6 +133,12 @@ const {
 const print = (json) => JSON.stringify(json, null, 2);
 const log = (text, label = 'data') => console.log(`${label} :>> `, text, '\n');
 
+const handleRedisError = (redisErr) => {
+  console.log('redisError :>> ', redisErr.message);
+  console.log('command :>> ', JSON.stringify(redisErr, null, 2));
+  console.log('stack :>> ', redisErr.stack);
+};
+
 const forSponsor = (sponsor) =>
   sponsor.reduce((a, c) => {
     const { biz, uid, ssid } = c;
@@ -181,12 +187,26 @@ const getPromos = (key) =>
     .then((sponsors) => objectToKeyedArray(sponsors))
     .then((data) => forPromo(data));
 
-const getSponsors = (key) =>
-  redis
-    .xread('STREAMS', key, '0')
-    .then((stream) => objectFromStream(stream))
-    .then((sponsors) => objectToKeyedArray(sponsors))
-    .then((data) => forSponsor(data));
+// TODO this is weird. i used to be able to chain promises here
+// at least refactor this to use compose()...
+// and what happens if this chain fails at any point? how does the UI handle it?
+const getSponsors = async (key) => {
+  console.log(`XREAD STREAMS ${key} 0`);
+  const stream = await redis
+    .xread('STREAMS', key, 0)
+    .catch((e) => handleRedisError(e));
+  console.log(`getSponsors():stream = ${printJson(stream)}`);
+  const sponsors = await objectFromStream(stream);
+  if (sponsors) {
+    console.log(`getSponsors():sponsors = ${printJson(sponsors)}`);
+    const data = await objectToKeyedArray(sponsors);
+    if (data) {
+      return forSponsor(data);
+    }
+  } else {
+    console.log('oops');
+  }
+};
 
 // > xadd tqr:us1642558736304-0:rewards * biz "Fika" cid '9f8b77197764881a'
 const addReward = ({ key, biz, sid }) =>
@@ -241,7 +261,8 @@ const getCountries = () =>
   redis
     .scan('0', 'MATCH', 'tqr:??')
     .then((countries) => countries.filter((v, i) => i > 0))
-    .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4))));
+    .then((countryIDs) => countryIDs.map((v) => v.map((c) => c.slice(4, 6))))
+    .catch((e) => console.log('e :>> ', e));
 
 // xrange us 1642558471131-0 1642558471131-0
 const getSponsor = (country, ssid) =>
@@ -287,14 +308,14 @@ if (TESTING) {
     return updatedBid.sid;
   };
   // We archive tests when TESTING is false (default)
-  const COUNTRY = 'tqr:sg';
+  const COUNTRY = 'sg';
   const biz = bids[0].biz;
   const uid = bids[0].uid;
   const biz2 = bids[1].biz;
   const uid2 = bids[1].uid;
 
-  const p0 = addSponsor({ country: 'tqr:sg', biz, uid }).then(() =>
-    addSponsor({ country: 'tqr:sg', biz, uid })
+  const p0 = addSponsor({ country: 'sg', biz, uid }).then(() =>
+    addSponsor({ country: 'sg', biz, uid })
   );
 
   const p1 = addSponsor({ country: COUNTRY, biz, uid })

@@ -63,6 +63,7 @@ const {
   getVisits,
   randomId,
   audit,
+  listenForMessage,
 } = require('./redis/act');
 
 // tqr.js has the most efficient code
@@ -132,6 +133,7 @@ const getKey = ({ country, ssid, type, cid, context }) => {
   );
   return key;
 };
+
 //#endregion
 
 const server = express()
@@ -183,6 +185,10 @@ io.on('connection', (socket) => {
   // used in tqrHandshake event handler
   socket.userID = newUserID;
 
+  // for stream-based alerts
+  listenForMessage();
+
+  // for graph-based alerts
   getPendingAlerts(newUserID, socket.id);
 
   // notify existing users (this is only important if use has opted in to LCT Private Messaging)
@@ -220,8 +226,9 @@ io.on('connection', (socket) => {
     }
     console.log('index.js: visitsWithoutWsid', printJson(visitsWithoutWsid));
     // addWarnings returns an array of Stream IDs...
-    addWarnings({ visitsWithoutWsid, score, reliability });
-    //...that we ignore?
+    addWarnings({ visitsWithoutWsid, score, reliability }).then((results) =>
+      console.log('results :>> ', results)
+    );
 
     // now get all entries in the warnings stream
     // TODO shouldn't this be getAlerts() that returns alerts?
@@ -434,7 +441,7 @@ io.on('connection', (socket) => {
 
   socket.on('getSponsors', (country, ack) => {
     console.log(`getSponsors(${country})`);
-    const key = `tqr:${country}`;
+    const key = `${country}`;
     getSponsors(key).then((sponsors) => {
       console.log('sponsors :>> ', printJson(sponsors));
       if (ack) {
@@ -447,7 +454,7 @@ io.on('connection', (socket) => {
     getCountries()
       .then((countries) => {
         if (ack) {
-          console.log('countries :>> ', printJson(countries));
+          console.log('countries :>> ', printJson(countries.flat()));
           ack(countries);
         }
       })

@@ -646,7 +646,7 @@ export default {
     getCountries() {
       const self = this;
       this.emitFromClient('getCountries', null, (countries) => {
-        console.log('countries :>> ', printJson(countries));
+        console.log('countries :>> ', printJson(countries.flat()));
         self.countries = countries;
         self.countries = [...head(countries)];
         self.country = head(self.countries);
